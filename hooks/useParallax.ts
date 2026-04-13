@@ -1,21 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type RefObject } from 'react'
 
 /**
- * Returns a Y offset that moves at `factor` × scroll speed.
- * factor=0.3 means the element moves at 30% of scroll speed (parallax lag).
+ * Returns a Y offset relative to the element's position in the viewport.
+ * When the element is centered in the viewport, offset is 0.
+ * As it scrolls away, offset grows proportionally to `factor`.
  */
-export function useParallax(factor = 0.3) {
+export function useParallax(factor = 0.3, ref?: RefObject<HTMLElement | null>) {
   const [offset, setOffset] = useState(0)
 
   useEffect(() => {
     function onScroll() {
-      setOffset(window.scrollY * factor)
+      if (ref?.current) {
+        const rect = ref.current.getBoundingClientRect()
+        const centerY = rect.top + rect.height / 2
+        const viewportCenter = window.innerHeight / 2
+        setOffset((centerY - viewportCenter) * factor)
+      }
     }
     window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
     return () => window.removeEventListener('scroll', onScroll)
-  }, [factor])
+  }, [factor, ref])
 
   return offset
 }

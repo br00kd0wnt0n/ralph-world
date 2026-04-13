@@ -4,6 +4,19 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-13 — FRONTEND mode (Phase 2: Polish)
+
+**Session goal:** Visual polish — starfield, parallax fix, readability
+
+### Added
+- `components/layout/Starfield.tsx` — canvas-based 200-star field with twinkling and multi-plane scroll parallax (near stars drift faster). Fixed behind all content at z-0.
+
+### Fixed
+- Planet parallax now relative to each section's viewport position (was using global scrollY, causing sections to fly off the further down the page)
+- Lab flyout card: dark text on yellow background for readability. Auto-detects light accent colours and switches text/badge/CTA colours accordingly.
+
+---
+
 ## 2026-04-13 — FRONTEND mode (Phase 2: Homepage)
 
 **Session goal:** Build homepage planet scroll, module flyouts, hero, mobile layout

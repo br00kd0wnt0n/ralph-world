@@ -5,6 +5,7 @@ import { Providers } from './providers'
 import Nav from '@/components/layout/Nav'
 import CartDrawer from '@/components/layout/CartDrawer'
 import { BackgroundLayer } from '@/context/ThemeContext'
+import Starfield from '@/components/layout/Starfield'
 
 const playfair = Playfair_Display({
   variable: '--font-display',
@@ -30,6 +31,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Providers>
+          <Starfield />
           <Nav />
           <BackgroundLayer />
           <main className="flex-1">{children}</main>

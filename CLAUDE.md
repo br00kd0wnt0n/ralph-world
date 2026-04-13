@@ -10,10 +10,10 @@
 ~/context-base/projects/ralph-world.md
 
 ## Current persona
-SCAFFOLDER — ~/context-base/personas/scaffolder.md
+FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-Phase 1 complete — global shell scaffolded. Next: Phase 2 (Homepage)
+Phase 2 complete — homepage built. Next: Phase 3 (Magazine)
 
 ---
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useParallax } from '@/hooks/useParallax'
@@ -26,13 +26,31 @@ export default function PlanetSection({
   planetPosition,
   moduleCard,
 }: PlanetSectionProps) {
-  const parallaxOffset = useParallax(PLANET_PARALLAX_FACTOR)
+  // Light backgrounds (yellow, etc) need dark text
+  const lightBgs = ['#FFE566', '#FFE066', '#FFEB3B', '#FFF176']
+  const useDarkText = lightBgs.some(
+    (c) => c.toLowerCase() === accentColor.toLowerCase()
+  )
+  const textColor = useDarkText ? 'text-black' : 'text-white'
+  const textMuted = useDarkText ? 'text-black/70' : 'text-white/70'
+  const textSubtle = useDarkText ? 'text-black/80' : 'text-white/80'
+  const textFaint = useDarkText ? 'text-black/60' : 'text-white/60'
+  const cardBg = useDarkText ? 'bg-black/10' : 'bg-white/20'
+  const cardImgBg = useDarkText ? 'bg-black/5' : 'bg-white/10'
+  const ctaBg = useDarkText ? 'bg-black/10 hover:bg-black/20' : 'bg-white/20 hover:bg-white/30'
+
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const parallaxOffset = useParallax(PLANET_PARALLAX_FACTOR, sectionRef)
   const { ref, isVisible } = useScrollReveal(0.1)
   const [flyoutOpen, setFlyoutOpen] = useState(false)
 
   return (
     <motion.section
-      ref={ref}
+      ref={(node) => {
+        // Share DOM node between scroll reveal and parallax refs
+        (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+        sectionRef.current = node
+      }}
       variants={planetSectionVariants}
       initial="hidden"
       animate={isVisible ? 'visible' : 'hidden'}
@@ -81,13 +99,13 @@ export default function PlanetSection({
                 className="absolute z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 md:w-80 rounded-2xl p-5 shadow-2xl"
                 style={{ backgroundColor: accentColor }}
               >
-                <h3 className="text-lg font-bold text-white mb-1">
+                <h3 className={`text-lg font-bold ${textColor} mb-1`}>
                   {moduleCard.heading}
                 </h3>
-                <p className="text-white/80 text-xs mb-1">
+                <p className={`${textSubtle} text-xs mb-1`}>
                   {moduleCard.tagline}
                 </p>
-                <p className="text-white/70 text-sm mb-4 line-clamp-3">
+                <p className={`${textMuted} text-sm mb-4 line-clamp-3`}>
                   {moduleCard.description}
                 </p>
 
@@ -96,21 +114,21 @@ export default function PlanetSection({
                   {moduleCard.items.map((item) => (
                     <div
                       key={item.id}
-                      className="shrink-0 w-32 rounded-lg bg-white/20 overflow-hidden"
+                      className={`shrink-0 w-32 rounded-lg ${cardBg} overflow-hidden`}
                     >
-                      <div className="w-full h-20 bg-white/10 relative">
+                      <div className={`w-full h-20 ${cardImgBg} relative`}>
                         {item.badge && (
-                          <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-white text-[10px] font-bold rounded" style={{ color: accentColor }}>
+                          <span className={`absolute top-1 left-1 px-1.5 py-0.5 ${useDarkText ? 'bg-black text-ralph-yellow' : 'bg-white'} text-[10px] font-bold rounded`} style={useDarkText ? undefined : { color: accentColor }}>
                             {item.badge}
                           </span>
                         )}
                       </div>
                       <div className="p-2">
-                        <p className="text-white text-xs font-medium line-clamp-2">
+                        <p className={`${textColor} text-xs font-medium line-clamp-2`}>
                           {item.title}
                         </p>
                         {item.subtitle && (
-                          <p className="text-white/60 text-[10px] mt-0.5">
+                          <p className={`${textFaint} text-[10px] mt-0.5`}>
                             {item.subtitle}
                           </p>
                         )}
@@ -121,7 +139,7 @@ export default function PlanetSection({
 
                 <Link
                   href={moduleCard.href}
-                  className="block text-center text-sm font-medium text-white bg-white/20 rounded-full py-2 hover:bg-white/30 transition-colors"
+                  className={`block text-center text-sm font-medium ${textColor} ${ctaBg} rounded-full py-2 transition-colors`}
                 >
                   {moduleCard.ctaLabel}
                 </Link>

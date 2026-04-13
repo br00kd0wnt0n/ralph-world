@@ -1,6 +1,5 @@
 import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
-import Apple from 'next-auth/providers/apple'
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
 import { getDb } from '@/lib/db'
 import { profiles } from '@/lib/db/schema'
@@ -8,7 +7,7 @@ import { eq } from 'drizzle-orm'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: getDrizzleAdapter(),
-  providers: [Google, Apple],
+  providers: [Google],
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',

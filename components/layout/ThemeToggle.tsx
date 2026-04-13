@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTheme, THEMES } from '@/context/ThemeContext'
 
 const SWATCH_COLORS: Record<string, string[]> = {
-  'cosy-dynamics': ['#1A0A2E', '#7B2FBE', '#FF2D6B'],
+  'cosy-dynamics': ['#000000', '#7B2FBE', '#FF2098'],
   light: ['#FAFAFA', '#E0D8F0', '#FF2D6B'],
   '8-bit-nostalgia': ['#2D2D2D', '#00FF00', '#FF00FF'],
   '1980s-fever-dream': ['#FF00FF', '#00FFFF', '#FFFF00'],
@@ -32,20 +32,23 @@ export default function ThemeToggle() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-full border border-border/50 px-3 py-1.5 text-xs text-secondary hover:text-primary transition-colors"
+        className="flex items-center gap-2 text-xs text-secondary hover:text-primary transition-colors"
       >
         <span
-          className="h-4 w-8 rounded-full"
+          className="h-5 w-5 rounded-full shrink-0"
           style={{
-            background: `linear-gradient(90deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`,
+            background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`,
           }}
         />
-        <span className="hidden sm:inline">{activeTheme.label}</span>
+        <span>Theme</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2.5 4L5 6.5L7.5 4" />
+        </svg>
       </button>
 
       {isOpen && (
         <div className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-lg border border-border bg-surface p-1 shadow-xl">
-          {THEMES.map((t) => {
+          {THEMES.filter((t) => t.type === 'css-vars').map((t) => {
             const swatchColors = SWATCH_COLORS[t.id] ?? ['#888', '#888', '#888']
             return (
               <button

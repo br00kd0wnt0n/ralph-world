@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 
@@ -39,7 +40,7 @@ export default function MobileMenu({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#1A0A2E] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
       <div className="flex items-center justify-end p-4">
         <button
           onClick={onClose}
@@ -51,11 +52,14 @@ export default function MobileMenu({
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-2">
-        {/* ralph logo placeholder */}
         <div className="mb-8">
-          <div className="w-32 h-12 bg-ralph-pink/20 rounded flex items-center justify-center text-ralph-pink font-bold text-xl">
-            ralph
-          </div>
+          <Image
+            src="/ralph-logo.png"
+            alt="ralph world"
+            width={100}
+            height={100}
+            className="rounded-full"
+          />
         </div>
 
         <nav className="flex flex-col items-center gap-4">

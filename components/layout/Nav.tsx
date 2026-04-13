@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
@@ -18,6 +19,34 @@ const NAV_ITEMS = [
   { label: 'Shop', href: '/shop', color: 'bg-ralph-green' },
 ]
 
+function CartIcon({ count, onClick }: { count: number; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="relative text-primary hover:text-ralph-pink transition-colors"
+      aria-label="Cart"
+    >
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <path d="M16 10a4 4 0 01-8 0" />
+      </svg>
+      <span className="absolute -top-1.5 -right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-surface text-[9px] text-primary font-medium">
+        {count}
+      </span>
+    </button>
+  )
+}
+
 export default function Nav() {
   const pathname = usePathname()
   const { user, subscriptionStatus } = useAuth()
@@ -28,17 +57,22 @@ export default function Nav() {
   return (
     <>
       {/* ── Utility Bar (desktop) ── */}
-      <div className="hidden md:flex items-center justify-between px-6 py-2 bg-surface/80 backdrop-blur-sm border-b border-border/30 text-xs">
-        <ThemeToggle />
-
-        <Link
-          href="/play"
-          className="text-secondary hover:text-primary transition-colors"
-        >
-          Play with Ralph
+      <div className="hidden md:flex items-center justify-between px-6 py-2.5 bg-surface/80 backdrop-blur-sm border-b border-border/30 text-xs relative z-50">
+        {/* Left: ralph world circle logo */}
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/ralph-logo.png"
+            alt="ralph world"
+            width={36}
+            height={36}
+            className="rounded-full"
+            priority
+          />
         </Link>
 
-        <div className="flex items-center gap-4">
+        {/* Right: actions */}
+        <div className="flex items-center gap-5">
+          <ThemeToggle />
           {user ? (
             <Link
               href="/account"
@@ -51,9 +85,15 @@ export default function Nav() {
             </Link>
           ) : (
             <>
+              <Link
+                href="/play"
+                className="text-secondary hover:text-primary transition-colors"
+              >
+                Play with Ralph
+              </Link>
               <button
                 onClick={() => setSubscribeOpen(true)}
-                className="rounded-full bg-ralph-pink px-4 py-1.5 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
+                className="rounded-full border border-primary/80 px-4 py-1.5 text-primary font-medium hover:bg-primary/10 transition-colors"
               >
                 Get started
               </button>
@@ -73,61 +113,48 @@ export default function Nav() {
       <nav className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/30">
         {/* Desktop */}
         <div className="hidden md:block">
-          <div className="flex items-center justify-between px-6 py-3">
+          <div className="flex items-center justify-between px-6 py-4">
+            {/* Left: hamburger */}
             <button
               onClick={() => setMobileOpen(true)}
-              className="text-primary text-xl"
+              className="text-primary w-8"
               aria-label="Open menu"
             >
-              &#9776;
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
             </button>
 
+            {/* Center: ralph wordmark */}
             <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-              {/* ralph logo SVG placeholder */}
-              <div className="w-24 h-10 bg-ralph-pink/20 rounded flex items-center justify-center text-ralph-pink font-bold">
-                ralph
-              </div>
+              <Image
+                src="/ralph-wordmark.png"
+                alt="ralph"
+                width={160}
+                height={60}
+                className="h-12 w-auto"
+                priority
+              />
             </Link>
 
-            <button
-              onClick={openCart}
-              className="relative text-primary text-xl"
-              aria-label="Cart"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 01-8 0" />
-              </svg>
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-ralph-pink text-[10px] text-white font-bold">
-                  {itemCount}
-                </span>
-              )}
-            </button>
+            {/* Right: basket */}
+            <CartIcon count={itemCount} onClick={openCart} />
           </div>
 
           {/* Nav items */}
-          <div className="flex items-center justify-center gap-8 pb-3 relative">
+          <div className="flex items-center justify-center gap-10 pb-3">
             {NAV_ITEMS.map((item) => {
               const isActive = pathname.startsWith(item.href)
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative pb-1 text-sm font-medium transition-colors ${
+                  className={`relative pb-1.5 text-sm font-medium transition-colors ${
                     isActive
                       ? 'text-primary'
-                      : 'text-secondary hover:text-primary'
+                      : 'text-ralph-pink hover:text-primary'
                   }`}
                 >
                   {item.label}
@@ -139,11 +166,6 @@ export default function Nav() {
                 </Link>
               )
             })}
-
-            {/* Mascot placeholder */}
-            <div className="absolute right-6 -bottom-4 w-12 h-12 bg-ralph-pink/10 rounded-full flex items-center justify-center text-[10px] text-muted">
-              mascot
-            </div>
           </div>
         </div>
 
@@ -152,50 +174,28 @@ export default function Nav() {
           <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={() => setMobileOpen(true)}
-              className="text-primary text-xl"
+              className="text-primary"
               aria-label="Open menu"
             >
-              &#9776;
-            </button>
-
-            <button className="text-primary" aria-label="More options">
-              &#8942;
-            </button>
-
-            <button
-              onClick={openCart}
-              className="relative text-primary text-xl"
-              aria-label="Cart"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 01-8 0" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-ralph-pink text-[9px] text-white font-bold">
-                  {itemCount}
-                </span>
-              )}
             </button>
-          </div>
 
-          {/* Mobile logo */}
-          <div className="flex justify-center pb-2">
             <Link href="/">
-              <div className="w-20 h-8 bg-ralph-pink/20 rounded flex items-center justify-center text-ralph-pink font-bold text-sm">
-                ralph
-              </div>
+              <Image
+                src="/ralph-wordmark.png"
+                alt="ralph"
+                width={100}
+                height={38}
+                className="h-8 w-auto"
+                priority
+              />
             </Link>
+
+            <CartIcon count={itemCount} onClick={openCart} />
           </div>
 
           {/* Mobile nav items */}
@@ -209,7 +209,7 @@ export default function Nav() {
                   className={`relative whitespace-nowrap pb-1 text-xs font-medium transition-colors ${
                     isActive
                       ? 'text-primary'
-                      : 'text-secondary hover:text-primary'
+                      : 'text-ralph-pink hover:text-primary'
                   }`}
                 >
                   {item.label}

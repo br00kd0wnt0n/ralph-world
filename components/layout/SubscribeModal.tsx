@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getSupabaseBrowser } from '@/lib/supabase/client'
+import { signIn } from 'next-auth/react'
 
 interface SubscribeModalProps {
   isOpen: boolean
@@ -42,48 +42,34 @@ export default function SubscribeModal({ isOpen, onClose }: SubscribeModalProps)
     }
   }, [isOpen, onClose])
 
-  async function handleGoogleSignup() {
-    const supabase = getSupabaseBrowser()
-    const redirectTo = `${window.location.origin}/auth/callback`
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo },
-    })
+  function handleGoogleSignup() {
+    signIn('google', { callbackUrl: '/' })
   }
 
-  async function handleAppleSignup() {
-    const supabase = getSupabaseBrowser()
-    const redirectTo = `${window.location.origin}/auth/callback`
-    await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: { redirectTo },
-    })
+  function handleAppleSignup() {
+    signIn('apple', { callbackUrl: '/' })
   }
 
-  async function handleEmailContinue() {
+  function handleEmailContinue() {
     if (!email) return
     setPage('complete')
   }
 
   async function handleEmailSignup() {
-    if (!email || !password || !firstName) return
+    if (!email || !firstName) return
     setIsSubmitting(true)
     setError(null)
 
     try {
-      const supabase = getSupabaseBrowser()
-      const { error: signUpError } = await supabase.auth.signUp({
+      // Email sign-in via Auth.js magic link / credentials
+      const result = await signIn('email', {
         email,
-        password,
-        options: {
-          data: {
-            display_name: `${firstName} ${lastName}`.trim(),
-          },
-        },
+        callbackUrl: '/',
+        redirect: false,
       })
 
-      if (signUpError) {
-        setError(signUpError.message)
+      if (result?.error) {
+        setError(result.error)
       } else {
         onClose()
       }
@@ -99,7 +85,7 @@ export default function SubscribeModal({ isOpen, onClose }: SubscribeModalProps)
   return (
     <div className="fixed inset-0 z-50 flex items-stretch">
       {/* Background */}
-      <div className="absolute inset-0 bg-[#1A0A2E]">
+      <div className="absolute inset-0 bg-black">
         {/* Pink hill/arch at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-[40vh]">
           <svg
@@ -110,7 +96,7 @@ export default function SubscribeModal({ isOpen, onClose }: SubscribeModalProps)
             <path
               d="M0,400 L0,200 Q720,0 1440,200 L1440,400 Z"
               fill="none"
-              stroke="#FF2D6B"
+              stroke="#FF2098"
               strokeWidth="2"
             />
             <path

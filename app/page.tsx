@@ -1,4 +1,5 @@
 import Footer from '@/components/layout/Footer'
+import ScrollIndicator from '@/components/home/ScrollIndicator'
 
 export default function Home() {
   return (
@@ -18,11 +19,7 @@ export default function Home() {
           Stick around. Scroll down. See what we&apos;re about.
         </p>
 
-        {/* Scroll indicator */}
-        <div className="animate-bounce text-muted text-sm tracking-widest uppercase">
-          SCROLL
-          <div className="mt-1 text-center">&darr;</div>
-        </div>
+        <ScrollIndicator />
       </section>
 
       {/* Planet sections — Phase 2 */}

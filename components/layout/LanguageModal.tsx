@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { getSupabaseBrowser } from '@/lib/supabase/client'
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -11,7 +10,7 @@ const LANGUAGES = [
 ]
 
 export default function LanguageModal() {
-  const { user, profile } = useAuth()
+  const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [language, setLanguageState] = useState('en')
   const ref = useRef<HTMLDivElement>(null)
@@ -20,12 +19,6 @@ export default function LanguageModal() {
     const stored = localStorage.getItem('ralph-language')
     if (stored) setLanguageState(stored)
   }, [])
-
-  useEffect(() => {
-    if (profile?.language_preference) {
-      setLanguageState(profile.language_preference)
-    }
-  }, [profile])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -43,11 +36,12 @@ export default function LanguageModal() {
     setIsOpen(false)
 
     if (user) {
-      const supabase = getSupabaseBrowser()
-      await supabase
-        .from('profiles')
-        .update({ language_preference: code })
-        .eq('id', user.id)
+      // Server action to update profile language preference
+      await fetch('/api/profile/language', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: code }),
+      })
     }
   }
 
@@ -55,7 +49,7 @@ export default function LanguageModal() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="text-xs text-secondary hover:text-primary transition-colors font-medium"
+        className="flex items-center justify-center w-8 h-8 rounded-full border border-border/60 text-xs text-secondary hover:text-primary transition-colors font-medium"
         aria-label="Choose language"
       >
         A|B

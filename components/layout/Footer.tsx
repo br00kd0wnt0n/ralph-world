@@ -61,7 +61,7 @@ export default function Footer({ variant = 'dark' }: FooterProps) {
   }
 
   return (
-    <footer className="relative bg-[#1A0A2E] pt-32 pb-8 px-6 overflow-hidden">
+    <footer className="relative bg-black pt-32 pb-8 px-6 overflow-hidden">
       {/* Pink arch */}
       <div className="absolute top-0 left-0 right-0">
         <svg
@@ -72,7 +72,7 @@ export default function Footer({ variant = 'dark' }: FooterProps) {
           <path
             d="M0,200 Q720,0 1440,200"
             fill="none"
-            stroke="#FF2D6B"
+            stroke="#FF2098"
             strokeWidth="2"
           />
         </svg>
@@ -90,10 +90,13 @@ export default function Footer({ variant = 'dark' }: FooterProps) {
       </div>
 
       <div className="relative z-10 flex flex-col items-center text-center">
-        {/* ralph logo placeholder */}
-        <div className="w-32 h-12 bg-ralph-pink/20 rounded flex items-center justify-center text-ralph-pink font-bold text-xl mb-4">
-          ralph
-        </div>
+        <img
+          src="/ralph-logo.png"
+          alt="ralph world"
+          width={80}
+          height={80}
+          className="rounded-full mb-4"
+        />
         <p className="text-sm text-white/60 tracking-widest uppercase">
           The Entertainment People
         </p>

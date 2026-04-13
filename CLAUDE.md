@@ -26,15 +26,21 @@ Phase 1 complete — global shell scaffolded. Next: Phase 2 (Homepage)
 npm install
 npm run dev
 # Requires .env.local — copy from .env.example and fill in values
+# Minimum needed: DATABASE_URL, AUTH_SECRET, AUTH_URL
 ```
 
 ## Key files
 - Entry point: `app/layout.tsx`
 - Providers: `app/providers.tsx`
 - Root page: `app/page.tsx`
+- Auth config: `lib/auth.ts`
+- Auth route: `app/api/auth/[...nextauth]/route.ts`
 - Auth context: `context/AuthContext.tsx`
 - Theme context: `context/ThemeContext.tsx`
 - Cart context: `context/CartContext.tsx`
+- DB client: `lib/db/index.ts`
+- DB schema: `lib/db/schema.ts`
+- Drizzle config: `drizzle.config.ts`
 - Nav component: `components/layout/Nav.tsx`
 - Subscribe modal: `components/layout/SubscribeModal.tsx`
 - Theme toggle: `components/layout/ThemeToggle.tsx`
@@ -42,20 +48,20 @@ npm run dev
 - Mobile menu: `components/layout/MobileMenu.tsx`
 - Footer: `components/layout/Footer.tsx`
 - Cart drawer: `components/layout/CartDrawer.tsx`
-- Supabase server client: `lib/supabase/server.ts`
-- Supabase browser client: `lib/supabase/client.ts`
 - Health check: `app/api/health/route.ts`
-- Auth callback: `app/auth/callback/route.ts`
+- Profile language: `app/api/profile/language/route.ts`
 
 ## Environment variables
 ```
-NEXT_PUBLIC_SUPABASE_URL=           # Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=      # Supabase anon key (safe for browser)
-SUPABASE_SERVICE_ROLE_KEY=          # Service role (server-side only, never expose)
+DATABASE_URL=                       # Railway Postgres connection string
+AUTH_SECRET=                        # openssl rand -base64 32
+AUTH_URL=                           # http://localhost:3000 or https://ralph.world
+AUTH_GOOGLE_ID=                     # Google OAuth client ID
+AUTH_GOOGLE_SECRET=                 # Google OAuth client secret
 BROADCASTER_BACKEND_URL=            # Ralph TV backend Railway URL
 BROADCASTER_RELAY_URL=              # Ralph TV relay Railway URL
 BROADCASTER_SERVICE_TOKEN=          # X-Service-Token for Broadcaster API auth
-SHOPIFY_STOREFRONT_URL=             # https://store.myshopify.com/api/2024-01/graphql.json
+SHOPIFY_STOREFRONT_URL=             # Shopify Storefront GraphQL endpoint
 SHOPIFY_STOREFRONT_TOKEN=           # Shopify Storefront API token
 SHOPIFY_WEBHOOK_SECRET=             # For HMAC verification of Shopify webhooks
 NEXT_PUBLIC_APP_URL=                # https://ralph.world (or Railway URL in staging)
@@ -66,15 +72,17 @@ NEXT_PUBLIC_APP_URL=                # https://ralph.world (or Railway URL in sta
 ### Stack specifics
 - Next.js 16 App Router throughout — no Pages Router patterns
 - Server components by default, `'use client'` only when needed (interactivity, hooks, browser APIs)
-- All Supabase queries that need auth context: use `lib/supabase/server.ts` (cookies-based)
+- Auth: Auth.js (NextAuth v5) with Google OAuth, JWT sessions, DrizzleAdapter
+- Database: Railway Postgres via Drizzle ORM — all queries server-side
+- DB client lazy-init via `getDb()` — never top-level instantiation
 - All Broadcaster API calls: proxied through `app/api/broadcaster/` — never call Broadcaster directly from the browser
 - All Shopify mutations: proxied through `app/api/cart/` — Storefront token never exposed to browser
 - TypeScript strict mode on — no `any` without a comment explaining why
 
 ### Railway deployment
-- See `~/context-base/skills/railway-deploy-v2.md` for hard-won gotchas
-- Lazy-init all SDK clients — no top-level `const supabase = createClient(...)` in server modules
 - `railway.toml` present with healthcheck at `/api/health`
+- Railway Postgres plugin in same project — DATABASE_URL auto-injected
+- CMS (Phase 8) will be a second Railway service in the same project, same DB
 - All env vars set in Railway dashboard before first deploy
 
 ### Animation / handoff conventions
@@ -82,7 +90,7 @@ NEXT_PUBLIC_APP_URL=                # https://ralph.world (or Railway URL in sta
 - Every complex component has a `README.md` describing intended animation in plain English
 - Prop interfaces in `ComponentName.types.ts` alongside the component
 - Duffy's SVG illustrations: accepted as `illustration?: React.ComponentType` prop — placeholder rendered if not provided
-- Josh owns the frontend layer; Brook owns everything in `lib/`, `app/api/`, `context/`, `supabase/`
+- Josh owns the frontend layer; Brook owns everything in `lib/`, `app/api/`, `context/`
 
 ### Access gating pattern
 ```typescript
@@ -95,6 +103,7 @@ const { user, subscriptionStatus } = useAuth()
 ### Theme system
 - CSS custom properties on `:root`, toggled by `data-theme` on `<html>`
 - Tailwind v4 — theme tokens defined in `@theme inline` block in `globals.css`
+- Brand pink: #FF2098, background: black (#000000)
 - V1 themes: `cosy-dynamics` (default dark), `light`
 - Future themes: `8-bit-nostalgia`, `1980s-fever-dream` — in THEMES config array, BackgroundLayer scaffolded
 - All Tailwind classes use CSS var references: `bg-background`, `text-primary`, etc.

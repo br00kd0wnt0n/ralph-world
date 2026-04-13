@@ -4,7 +4,48 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
-## 2026-04-13 — SCAFFOLDER mode
+## 2026-04-13 — SCAFFOLDER mode (session 2: pivot + design)
+
+**Session goal:** Pivot from Supabase to Railway Postgres + Auth.js + Drizzle. Redesign nav to match brand.
+
+### Changed
+- **Stack pivot**: removed Supabase entirely, replaced with Railway Postgres (Drizzle ORM) + Auth.js (NextAuth v5)
+- Auth: Google OAuth via Auth.js with JWT sessions, DrizzleAdapter for user/account/session tables
+- DB: Drizzle schema covers all 12 tables (auth + app), pushed to Railway Postgres
+- AuthContext now wraps next-auth `SessionProvider` instead of Supabase client
+- SubscribeModal uses `signIn('google')` instead of Supabase OAuth
+- LanguageModal calls `/api/profile/language` server route instead of Supabase client
+- Health check pings Postgres directly
+- Nav redesign to match Tim's designs: utility bar (circle logo left, Theme dropdown + actions right), main bar (hamburger left, ralph wordmark center, basket right), nav items in brand pink
+- Brand pink updated to #FF2098 (matched from logo), background to black
+- ScrollIndicator fades on scroll
+- Apple OAuth removed from MVP scope
+
+### Added
+- `lib/auth.ts` — NextAuth config with Google provider, DrizzleAdapter, JWT callbacks, auto profile creation
+- `lib/db/schema.ts` — full Drizzle schema (users, accounts, sessions, profiles, articles, events, event_rsvps, tv_vod, lab_items, homepage_config, webhook_log, verification_tokens)
+- `lib/db/index.ts` — lazy-init Drizzle client
+- `drizzle.config.ts` — Drizzle Kit config for migrations
+- `app/api/auth/[...nextauth]/route.ts` — Auth.js route handler
+- `app/api/profile/language/route.ts` — language preference update
+- `components/home/ScrollIndicator.tsx` — fades on scroll
+- Real logo assets: `ralph-logo.png` (circle), `ralph-wordmark.png` (script)
+
+### Removed
+- `@supabase/ssr`, `@supabase/supabase-js` packages
+- `lib/supabase/client.ts`, `lib/supabase/server.ts`
+- `app/auth/callback/route.ts` (replaced by Auth.js route)
+- Apple OAuth provider (deferred to post-MVP)
+
+### Decisions made
+- Railway Postgres over Supabase: fewer moving parts, DB in same Railway project, no vendor lock-in
+- Auth.js over Supabase Auth: works with any Postgres, mature ecosystem
+- Google-only OAuth for MVP: Apple requires $99/yr developer account
+- JWT sessions over database sessions: faster, no DB round-trip per request
+
+---
+
+## 2026-04-13 — SCAFFOLDER mode (session 1: initial scaffold)
 
 **Session goal:** Scaffold ralph-world and build the global shell (Phase 1)
 

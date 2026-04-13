@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* ── Theme: Cosy Dynamics (default dark) ── */
+:root,
+:root[data-theme="cosy-dynamics"] {
+  --color-background: #1A0A2E;
+  --color-surface: #2A1548;
+  --color-primary: #FFFFFF;
+  --color-secondary: #B8A9D0;
+  --color-border: #3D2560;
+  --color-muted: #6B5B8A;
+
+  --color-ralph-pink: #FF2D6B;
+  --color-ralph-teal: #00C4B4;
+  --color-ralph-yellow: #FFE566;
+  --color-ralph-green: #4CAF50;
+  --color-ralph-orange: #FF6B35;
+  --color-ralph-purple: #7B2FBE;
+}
+
+/* ── Theme: Light ── */
+:root[data-theme="light"] {
+  --color-background: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-primary: #1A0A2E;
+  --color-secondary: #4A3A6A;
+  --color-border: #E0D8F0;
+  --color-muted: #8A7AA8;
+
+  --color-ralph-pink: #FF2D6B;
+  --color-ralph-teal: #00C4B4;
+  --color-ralph-yellow: #FFE566;
+  --color-ralph-green: #4CAF50;
+  --color-ralph-orange: #FF6B35;
+  --color-ralph-purple: #7B2FBE;
+}
+
+/* ── Theme: 8-bit Nostalgia (future) ── */
+:root[data-theme="8-bit-nostalgia"] {
+  /* TODO: immersive theme — design pending */
+}
+
+/* ── Theme: 1980s Fever Dream (future) ── */
+:root[data-theme="1980s-fever-dream"] {
+  /* TODO: immersive theme — design pending */
+}
+
+/* ── Tailwind theme tokens ── */
+@theme inline {
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-border: var(--color-border);
+  --color-muted: var(--color-muted);
+
+  --color-ralph-pink: var(--color-ralph-pink);
+  --color-ralph-teal: var(--color-ralph-teal);
+  --color-ralph-yellow: var(--color-ralph-yellow);
+  --color-ralph-green: var(--color-ralph-green);
+  --color-ralph-orange: var(--color-ralph-orange);
+  --color-ralph-purple: var(--color-ralph-purple);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-primary);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ── Utility ── */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -4,47 +4,42 @@ import Link from 'next/link'
 
 export default function MagazineHero() {
   return (
-    <section className="relative bg-black px-6 pt-16 pb-32 overflow-hidden">
-      <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-8">
+    <section className="relative px-6 pt-12 pb-16 overflow-hidden">
+      <div className="max-w-5xl mx-auto relative">
         {/* Left: character placeholder */}
-        <div className="shrink-0 w-32 h-40 bg-ralph-orange/10 rounded-lg flex items-center justify-center text-[10px] text-muted">
-          reading char
-        </div>
-
-        {/* Center: heading + copy */}
-        <div className="flex-1 text-center md:text-left">
-          <h1 className="text-4xl md:text-6xl font-bold text-primary mb-4 font-[family-name:var(--font-display)]">
-            OUR FUN, GLOSSY MAG
-          </h1>
-          <p className="text-secondary max-w-lg mb-2">
-            Stories, interviews and photo essays about the people and things
-            that make pop culture worth caring about.
-          </p>
-          <p className="text-muted text-sm">
-            Edited by the Ralph team
-          </p>
+        <div className="absolute left-0 bottom-0 hidden md:block">
+          <div className="w-28 h-36 bg-ralph-pink/10 rounded-lg flex items-center justify-center text-[10px] text-muted">
+            reading char
+          </div>
         </div>
 
         {/* Right: starburst badge */}
-        <Link
-          href="/shop"
-          className="shrink-0 w-28 h-28 rounded-full bg-ralph-orange flex items-center justify-center text-center text-white text-xs font-bold leading-tight p-3 hover:scale-105 transition-transform"
-        >
-          Got coin?<br />Get mag
-        </Link>
-      </div>
+        <div className="absolute right-0 top-8 hidden md:block">
+          <Link
+            href="/shop"
+            className="w-24 h-24 rounded-full bg-black border-2 border-primary flex items-center justify-center text-center text-white text-[10px] font-bold leading-tight p-2 hover:scale-105 transition-transform rotate-12"
+          >
+            Got coin?<br />Get mag
+          </Link>
+        </div>
 
-      {/* Pink arch transition */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="w-full block">
-          <path
-            d="M0,120 Q720,0 1440,120"
-            fill="none"
-            stroke="#FF2098"
-            strokeWidth="2"
-          />
-          <path d="M0,120 Q720,20 1440,120 L1440,120 L0,120 Z" fill="#FAFAFA" />
-        </svg>
+        {/* Center content */}
+        <div className="text-center max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-6xl font-bold text-primary mb-6 font-[family-name:var(--font-display)]">
+            OUR FUN, GLOSSY MAG
+          </h1>
+
+          <p className="text-secondary text-sm md:text-base mb-2">
+            Get your actual hands on a physically printed, wonderful smelling, quarterly magazine.
+          </p>
+          <p className="text-secondary text-sm md:text-base mb-4">
+            Editor Josh Jones curates joyously interesting content, brought by a host of fantastic writers, photographers,
+            artists, foodies, comedians and many more marvellous people &amp; stories from around the world.
+          </p>
+          <p className="text-muted text-sm font-medium">
+            Ralph Mag: Pop Culture For The Fun Of It
+          </p>
+        </div>
       </div>
     </section>
   )

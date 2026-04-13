@@ -1,30 +1,38 @@
-# Magazine — Claw Mechanic Animation Intent
+# Magazine — Animation Intent
 
-## What it does
-When the user hovers over any article card in the grid, an illustrated
-robotic claw descends from the top of the viewport. The hovered card
-lifts slightly and tilts. A white preview card appears "held" by the
-claw, showing the article's issue number, title, and excerpt at a
-15-degree tilt.
+## Grid cards
+- **Default state**: image fills entire cell, no text visible. Tight grid with dark borders.
+- **Hover**: yellow dashed border frame appears inside card (inset 8px). Article info (tags, title, excerpt) fades in as overlay at bottom with gradient from transparent to black/90.
+- **Click**: opens article overlay.
 
-## Animation sequence
-1. **Mouse enters card**: card lifts (y: -40px, rotate: -3deg, 0.3s)
-2. **Claw descends**: from y: -200 to y: 0, 0.4s easeOut
-3. **Preview card appears**: fades in + rotates to 15deg, 0.35s, 0.15s delay
-4. **Mouse leaves card**: everything reverses — claw retracts, card settles
+## Claw mechanic (future — awaiting Duffy asset)
+When the claw SVG is delivered:
+- Claw descends from above the viewport to the hovered card
+- The card gets "grabbed" — lifts up, tilts slightly
+- A styled preview card appears held by the claw with article info
+- On mouse leave, claw retracts and card settles back
+
+Animation variants are already defined in `lib/animation/magazine.ts`:
+- `clawVariants` — descend/retract (y: -200 → 0)
+- `grabbedCardVariants` — lift + tilt (y: -40, rotate: -3)
+- `clawPreviewVariants` — fade in + rotate 15deg
+
+Drop-in the claw SVG at `/public/illustrations/claw.svg`.
+
+## Cover story
+- Pink-tinted section with bordered card layout
+- HOT badge top-left of thumbnail
+- CTA button: "Sign up to read" (guest) or "Read now" (subscriber)
+
+## Article overlay
+- Full-screen overlay, background colour from article's `background_canvas_colour`
+- URL updates via pushState to `/magazine/[slug]`
+- Escape key or close button closes, back button works
+- Guest access gate: content blurs after ~200 words with signup CTA
+- BlockRenderer handles 7 block types
 
 ## Duffy asset slots
-- Claw illustration: replace the grey placeholder div with SVG.
-  Drop-in at `/public/illustrations/claw.svg`.
-  The claw sits inside a `fixed` container at top-center of viewport.
-- Article thumbnails: each grid card has an aspect-[3/2] placeholder area.
-
-## How to adjust
-- All variants in `lib/animation/magazine.ts`
-- Claw preview tilt: change `rotate: 15` in `clawPreviewVariants`
-- Card lift height: change `y: -40` in `grabbedCardVariants`
-
-## States
-- **Resting**: card at normal position, no claw
-- **Lifted**: card elevated + tilted, claw descended, preview visible
-- Only one card can be in "lifted" state at a time
+- Reading character: left side of hero
+- "Got coin?" character: right side of hero (currently starburst placeholder)
+- Claw: `/public/illustrations/claw.svg`
+- Article thumbnails: each grid cell

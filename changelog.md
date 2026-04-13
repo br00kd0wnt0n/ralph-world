@@ -4,6 +4,24 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-13 — FRONTEND mode (Phase 3: Design alignment)
+
+**Session goal:** Align magazine layout to Tim's designs and wireframes
+
+### Changed
+- Article grid: image-only cards by default (no text), tight edge-to-edge layout with dark borders. Info reveals as overlay on hover with yellow dashed border frame + gradient text overlay
+- Magazine hero: stays on dark site background, character placeholder left, "Got coin? Get mag" starburst right, centered copy
+- Cover story: pink tinted background section, bordered card with HOT badge, squared CTA button
+- Category tabs: removed "All" tab, dotted separator above, centered layout, click active tab to deselect
+- Removed claw mechanic positioning code — hover reveal handles interaction until Duffy delivers claw SVG. Claw animation variants retained in lib/animation/magazine.ts for future use
+
+### Decisions made
+- Grid cards show no text by default per designs — info only on hover/interaction
+- Claw mechanic deferred to asset delivery — current hover overlay matches the "reveal" intent from wireframes
+- Category tabs toggle (click active to clear) rather than requiring "All" button
+
+---
+
 ## 2026-04-13 — FRONTEND mode (Phase 3: Magazine)
 
 **Session goal:** Magazine listing, category filtering, claw mechanic, article overlay, block renderer

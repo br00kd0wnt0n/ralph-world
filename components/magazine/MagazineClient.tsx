@@ -62,20 +62,19 @@ export default function MagazineClient({
       )}
 
       {!showCoverStory && (
-        <section className="bg-[#FAFAFA] px-6 pt-12 pb-4">
+        <section className="px-6 pt-12 pb-4">
           <div className="max-w-5xl mx-auto">
-            <h1 className="text-3xl font-bold text-black">Magazine</h1>
+            <h1 className="text-3xl font-bold text-primary">Magazine</h1>
           </div>
         </section>
       )}
 
-      <div className="bg-[#FAFAFA]">
+      <section className="bg-[#FAFAFA] pt-4 pb-0">
         <Suspense>
           <CategoryTabs />
         </Suspense>
-      </div>
-
-      <ArticleGrid articles={gridArticles} onArticleClick={openArticle} />
+        <ArticleGrid articles={gridArticles} onArticleClick={openArticle} />
+      </section>
 
       <Footer variant="light" />
 

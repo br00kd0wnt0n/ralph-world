@@ -1,9 +1,8 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 
 const CATEGORIES = [
-  { value: '', label: 'All' },
   { value: 'comedy', label: 'Comedy' },
   { value: 'music', label: 'Music' },
   { value: 'food', label: 'Food' },
@@ -12,32 +11,49 @@ const CATEGORIES = [
 
 export default function CategoryTabs() {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const active = searchParams.get('category') ?? ''
 
+  function handleClick(value: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value && value !== active) {
+      params.set('category', value)
+    } else {
+      params.delete('category')
+    }
+    const query = params.toString()
+    router.push(query ? `${pathname}?${query}` : pathname)
+  }
+
   return (
-    <div className="flex gap-6 px-6 py-4 max-w-5xl mx-auto border-b border-gray-200">
-      {CATEGORIES.map((cat) => (
-        <button
-          key={cat.value}
-          onClick={() => {
-            const url = cat.value
-              ? `/magazine?category=${cat.value}`
-              : '/magazine'
-            router.push(url)
-          }}
-          className={`relative pb-2 text-sm font-medium transition-colors ${
-            active === cat.value
-              ? 'text-ralph-orange'
-              : 'text-gray-500 hover:text-gray-800'
-          }`}
-        >
-          {cat.label}
-          {active === cat.value && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-ralph-orange rounded" />
-          )}
-        </button>
-      ))}
+    <div className="max-w-5xl mx-auto px-6">
+      {/* Dotted separator */}
+      <div className="border-t border-dashed border-gray-400 mb-4" />
+
+      <div className="flex justify-center gap-8 pb-4">
+        {CATEGORIES.map((cat) => {
+          const isActive = active === cat.value
+          return (
+            <button
+              key={cat.value}
+              onClick={() => handleClick(cat.value)}
+              className={`relative pb-1 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'text-ralph-orange'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {cat.label}
+              <span
+                className={`absolute bottom-0 left-0 right-0 h-0.5 rounded transition-colors ${
+                  isActive ? 'bg-ralph-orange' : 'bg-transparent'
+                }`}
+              />
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -13,15 +13,23 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
   const { user } = useAuth()
 
   return (
-    <section className="bg-[#FAFAFA] px-6 py-12">
+    <section className="bg-ralph-pink/10 px-6 py-10">
       <div className="max-w-5xl mx-auto">
-        <p className="text-ralph-orange font-bold text-sm mb-4 tracking-wide uppercase">
-          <span className="border-b-2 border-ralph-orange pb-1">Cover Story</span>
-        </p>
+        {/* Section label */}
+        <h2 className="text-2xl md:text-3xl font-bold text-ralph-pink mb-6 font-[family-name:var(--font-display)] italic">
+          <span className="border-b-2 border-ralph-orange pb-1">COVER STORY</span>
+        </h2>
 
-        <div className="flex flex-col md:flex-row gap-6 bg-white rounded-2xl overflow-hidden shadow-sm">
+        {/* Issue label */}
+        {article.issueNumber && (
+          <p className="text-sm text-primary/70 mb-4">
+            Issue #{article.issueNumber}: Cover Story
+          </p>
+        )}
+
+        <div className="flex flex-col md:flex-row gap-0 border border-gray-900 bg-white overflow-hidden">
           {/* Thumbnail */}
-          <div className="md:w-[40%] aspect-[4/3] bg-ralph-orange/10 flex items-center justify-center text-muted text-sm">
+          <div className="md:w-[40%] aspect-[4/3] md:aspect-auto relative bg-gray-200">
             {article.leadMediaUrl ? (
               <img
                 src={article.leadMediaUrl}
@@ -29,18 +37,25 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
                 className="w-full h-full object-cover"
               />
             ) : (
-              'Cover image'
+              <div className="w-full h-full flex items-center justify-center text-muted text-sm">
+                Cover image
+              </div>
             )}
+            {/* HOT badge */}
+            <div className="absolute top-0 left-0 bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wide">
+              HOT
+            </div>
           </div>
 
           {/* Content */}
-          <div className="md:w-[60%] p-6 flex flex-col justify-center">
+          <div className="md:w-[60%] p-6 md:p-8 flex flex-col justify-center">
+            {/* Category tags */}
             {article.contentTags && article.contentTags.length > 0 && (
-              <div className="flex gap-2 mb-3">
+              <div className="flex flex-wrap gap-2 mb-3">
                 {article.contentTags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-ralph-orange/10 text-ralph-orange"
+                    className="text-[10px] font-bold uppercase tracking-wide text-gray-500"
                   >
                     {tag}
                   </span>
@@ -48,12 +63,16 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
               </div>
             )}
 
-            <h2 className="text-2xl md:text-3xl font-bold text-black mb-3">
+            <p className="text-xs text-gray-500 mb-2 font-medium">
+              All the information is on the task.
+            </p>
+
+            <h3 className="text-xl md:text-2xl font-bold text-black mb-3 leading-tight">
               {article.title}
-            </h2>
+            </h3>
 
             {article.intro && (
-              <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+              <p className="text-gray-600 text-sm mb-6 leading-relaxed">
                 {article.intro}
               </p>
             )}
@@ -61,14 +80,14 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
             {user ? (
               <button
                 onClick={() => onRead(article.slug)}
-                className="self-start rounded-full bg-ralph-orange px-6 py-2.5 text-white font-medium text-sm hover:bg-ralph-orange/90 transition-colors"
+                className="self-start border border-black px-5 py-2 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors"
               >
                 Read now
               </button>
             ) : (
               <button
                 onClick={onSubscribe}
-                className="self-start rounded-full bg-ralph-pink px-6 py-2.5 text-white font-medium text-sm hover:bg-ralph-pink/90 transition-colors"
+                className="self-start border border-black px-5 py-2 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors"
               >
                 Sign up to read
               </button>

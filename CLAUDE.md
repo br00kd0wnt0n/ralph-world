@@ -13,7 +13,7 @@
 FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-Phase 2 complete — homepage built. Next: Phase 3 (Magazine)
+Phase 3 complete — magazine built. Next: Phase 4 (Ralph TV)
 
 ---
 

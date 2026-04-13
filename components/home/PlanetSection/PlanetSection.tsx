@@ -48,8 +48,8 @@ export default function PlanetSection({
     <motion.section
       ref={(node) => {
         // Share DOM node between scroll reveal and parallax refs
-        (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
-        sectionRef.current = node
+        (ref as React.MutableRefObject<HTMLDivElement | null>).current = node as HTMLDivElement | null
+        ;(sectionRef as React.MutableRefObject<HTMLDivElement | null>).current = node as HTMLDivElement | null
       }}
       variants={planetSectionVariants}
       initial="hidden"

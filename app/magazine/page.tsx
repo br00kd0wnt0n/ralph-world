@@ -1,13 +1,23 @@
-import Footer from '@/components/layout/Footer'
+import { getPublishedArticles, getCoverStory } from '@/lib/data/magazine'
+import MagazineClient from '@/components/magazine/MagazineClient'
 
-export default function Magazine() {
+export const revalidate = 3600
+
+interface PageProps {
+  searchParams: Promise<{ category?: string }>
+}
+
+export default async function MagazinePage({ searchParams }: PageProps) {
+  const { category } = await searchParams
+  const articles = await getPublishedArticles(category)
+  const coverStory = !category ? getCoverStory(articles) : null
+  const showCoverStory = !category
+
   return (
-    <>
-      <section className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-        <h1 className="text-4xl font-bold text-primary mb-4">Magazine</h1>
-        <p className="text-secondary">Coming in Phase 3</p>
-      </section>
-      <Footer variant="light" />
-    </>
+    <MagazineClient
+      articles={articles}
+      coverStory={coverStory}
+      showCoverStory={showCoverStory}
+    />
   )
 }

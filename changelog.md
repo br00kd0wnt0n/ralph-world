@@ -4,6 +4,31 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-13 — FRONTEND mode (Phase 3: Magazine)
+
+**Session goal:** Magazine listing, category filtering, claw mechanic, article overlay, block renderer
+
+### Added
+- `lib/animation/magazine.ts` — Framer Motion variants for claw mechanic (descend/retract, card lift, preview tilt), grid stagger, overlay transitions
+- `lib/data/magazine.ts` — fetch published articles from Postgres with category filter, get article by slug, cover story detection
+- `components/magazine/MagazineHero.tsx` — dark hero with heading, reading character placeholder, "Got coin? Get mag" starburst, pink arch transition
+- `components/magazine/CoverStory.tsx` — full-width cover story card with access-gated CTA (guest: "Sign up to read", subscriber: "Read now")
+- `components/magazine/CategoryTabs.tsx` — Comedy / Music / Food / Film & TV horizontal tabs, URL-driven filter
+- `components/magazine/ArticleGrid.tsx` — 3-column grid with claw mechanic hover interaction (card lifts, claw descends, preview card appears tilted)
+- `components/magazine/BlockRenderer.tsx` — renders 7 block types: ArticleText, ArticleImage1Col, ArticleImage2ColLeft/Right, ArticleVideo, ArticleQuote, RalphSignoff
+- `components/magazine/ArticleOverlay.tsx` — full-screen overlay with URL update via pushState, badge pills, bylines, lead image, block content, guest access gate (blur after ~200 words)
+- `components/magazine/MagazineClient.tsx` — client shell wiring hero, cover story, tabs, grid, overlay, subscribe modal
+- `app/api/articles/[slug]/route.ts` — fetch single article for overlay
+- `components/magazine/README.md` — claw mechanic animation intent for Josh
+- Magazine page now server-fetches from Postgres with 1hr revalidation
+
+### Decisions made
+- Article overlay uses pushState (not parallel routes) for URL update — simpler, back button works
+- Claw mechanic is desktop-only hover interaction — on mobile, cards just click through
+- Guest access gate counts words across ArticleText blocks, triggers blur at ~200 words
+
+---
+
 ## 2026-04-13 — FRONTEND mode (Phase 2: Polish)
 
 **Session goal:** Visual polish — starfield, parallax fix, readability

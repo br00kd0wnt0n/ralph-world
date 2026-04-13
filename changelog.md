@@ -4,6 +4,29 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-13 — FRONTEND mode (Phase 2: Homepage)
+
+**Session goal:** Build homepage planet scroll, module flyouts, hero, mobile layout
+
+### Added
+- `lib/animation/homepage.ts` — all Framer Motion variants (hero stagger, planet section reveal, module card scale+fade, floating character bob, mobile card fade-in)
+- `hooks/useParallax.ts` — scroll-driven Y offset at configurable factor
+- `hooks/useScrollReveal.ts` — IntersectionObserver-based one-shot reveal
+- `components/home/Hero.tsx` — staggered heading + body text with gradient bg (black → teal)
+- `components/home/PlanetSection/` — full component with types, parallax planet, scroll reveal, hover/click flyout cards, README for Josh
+- `components/home/FloatingCharacter.tsx` — subtle vertical bob animation, Duffy asset slot
+- `components/home/MobileHome.tsx` — linear card layout (TV, Magazine carousel, Shop grid, Events, Lab) with staggered fade-in
+- `lib/data/homepage.ts` — server-side data fetch from Postgres (articles, events, lab_items) with fallback placeholder data
+- Homepage wired: Hero → 4 PlanetSections (Magazine/Events/Shop/Lab) with floating chars between → Footer (desktop). MobileHome for mobile.
+- `revalidate = 3600` on homepage (1 hour cache)
+
+### Decisions made
+- Shop items are Shopify products (not in DB yet) — placeholder data for now, Phase 6 will fetch from Storefront API
+- Data fetching gracefully falls back to placeholder content if DB has no published rows
+- Mobile layout has no parallax/planets — linear cards per spec
+
+---
+
 ## 2026-04-13 — SCAFFOLDER mode (session 2: pivot + design)
 
 **Session goal:** Pivot from Supabase to Railway Postgres + Auth.js + Drizzle. Redesign nav to match brand.

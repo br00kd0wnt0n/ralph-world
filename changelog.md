@@ -4,6 +4,42 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-14 — ARCHITECT mode (Phase 4: Ralph TV)
+
+**Session goal:** Broadcaster integration, TV set component, live player, teletext overlays, access gating
+
+### Added
+- `lib/broadcaster/client.ts` — server-side Broadcaster API client with 3s timeout, graceful failure (never throws, returns safe defaults when BROADCASTER_BACKEND_URL not set)
+- `lib/broadcaster/types.ts` — RelayStatus, ScheduleItem, BroadcasterAsset types
+- `lib/animation/tv.ts` — screen state transitions, static flicker, teletext header reveal
+- `hooks/useLiveStatus.ts` — polls /api/broadcaster/relay-status every 30s, returns isLive
+- `hooks/useHls.ts` — HLS playback with native Safari + hls.js fallback
+- Broadcaster proxy routes: `relay-status` (public), `schedule` (public), `assets` (session), `vod-url` (paid only, with subscriptionStatus gate)
+- `components/tv/LivePlayer.tsx` — HLS video player with volume control, play/pause overlay
+- `components/tv/TVStatic.tsx` — canvas-based TV static effect (animated noise)
+- `components/tv/SubscribeGate.tsx` — purple card overlay on static for guest users
+- `components/tv/TeletextShowInfo.tsx` — RALPHFAX 100 overlay with blocky RALPH logo, show info, progress bar
+- `components/tv/TeletextSchedule.tsx` — RALPHFAX 101 overlay with full schedule, current show highlighted
+- `components/tv/TVControls.tsx` — right panel: Show Info / Schedule / Fullscreen / Volume slider
+- `components/tv/TVSet.tsx` — main TV frame with bezel, screen, character placeholders, status bar, 5 screen states
+- `components/tv/RalphTVClient.tsx` — page shell with heading + TV + subscribe modal
+- `components/tv/README.md` — Duffy asset slots and component intent
+- `hls.js` package
+
+### Access gating
+- Guest (no session) + stream live → SUBSCRIBE GATE with static
+- Free/paid user + stream live → LIVE player
+- Stream offline → OFFLINE fallback (all users)
+- VOD endpoint requires paid subscription (not surfaced in MVP UI)
+
+### Decisions made
+- TV set uses illustrated bezel via CSS until Duffy SVG arrives — structure ready for drop-in
+- Graceful degradation: no Broadcaster credentials = OFFLINE state on TV page, no errors
+- Volume persisted to localStorage
+- Schedule only fetched when user opens an overlay (no unnecessary polling)
+
+---
+
 ## 2026-04-13 — FRONTEND mode (Phase 3: Design alignment)
 
 **Session goal:** Align magazine layout to Tim's designs and wireframes

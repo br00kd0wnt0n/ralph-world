@@ -1,13 +1,9 @@
-import Footer from '@/components/layout/Footer'
+import { getPublishedLabItems } from '@/lib/data/lab'
+import LabClient from '@/components/lab/LabClient'
 
-export default function Lab() {
-  return (
-    <>
-      <section className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-        <h1 className="text-4xl font-bold text-primary mb-4">Lab</h1>
-        <p className="text-secondary">Coming in Phase 7</p>
-      </section>
-      <Footer variant="light" />
-    </>
-  )
+export const revalidate = 3600
+
+export default async function LabPage() {
+  const items = await getPublishedLabItems()
+  return <LabClient items={items} />
 }

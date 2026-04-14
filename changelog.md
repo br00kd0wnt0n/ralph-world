@@ -4,6 +4,29 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-14 — FRONTEND mode (Phase 7: Lab)
+
+**Session goal:** Lab page with RalphOMatic machine state shell and items grid
+
+### Added
+- `lib/animation/lab.ts` — lever rotate, lights flash, conveyor scroll, bell jar hop, lab card reveal variants. SPIN_DURATION_MS constant
+- `lib/data/lab.ts` — getPublishedLabItems from Postgres, sorted by sort_order then published_at desc
+- `lib/data/lab-utils.ts` — isFresh() utility (client-safe, no DB dependency) — checks if item published within 30 days
+- `components/lab/RalphOMatic.tsx` — bespoke interaction machine with 4 states (idle → lever-pulled → spinning → settled). Lever click triggers 3-step transition. Random item lands under center bell jar when settled. Illustration slots via `machineIllustration` and `conveyorIllustration` props (receive state). CSS placeholder when no illustration provided
+- `components/lab/RalphOMatic.types.ts` — MachineState type + props interface
+- `components/lab/LabHero.tsx` — "LAB" heading in yellow with intro copy and lever CTA hint
+- `components/lab/LabGrid.tsx` — responsive grid (1/2/3 col) with FRESH (auto, <30 days) and NEW badges, paid-subscriber lock overlay for gated items
+- `components/lab/LabClient.tsx` — wires machine state → timed state transitions → random item selection, external URL opens in new tab
+- `components/lab/README.md` — full handoff contract for Josh (state diagram, asset slots, animation intent)
+
+### Decisions made
+- State machine managed via setTimeout chain (300ms lever-pull → 2500ms spin → settle) — no external state library
+- Split `isFresh` into separate file so it can be imported into client components without pulling DB module into bundle (Turbopack was otherwise trying to bundle postgres driver for the client)
+- Machine picks a random item on each pull — no sequential carousel
+- Settled bell jar bobs + scales in loop to signal interactivity
+
+---
+
 ## 2026-04-14 — ARCHITECT mode (Phase 6: Shop)
 
 **Session goal:** Shopify Storefront API integration, CartContext, product grid, overlay, subscription webhook

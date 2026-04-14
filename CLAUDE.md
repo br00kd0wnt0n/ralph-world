@@ -13,7 +13,7 @@
 FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-Phase 6 complete — Shop + Shopify integration. Next: Phase 7 (Lab)
+Phase 7 complete — Lab built. Next: Phase 8 (ralph-cms) or Phase 9 (deploy/audit)
 
 ---
 

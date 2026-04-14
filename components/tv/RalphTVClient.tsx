@@ -4,8 +4,27 @@ import { useState } from 'react'
 import TVSet from './TVSet'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import Footer from '@/components/layout/Footer'
+import type { SiteCopy } from '@/lib/data/site-copy'
 
-export default function RalphTVClient() {
+interface RalphTVClientProps {
+  heading?: string
+  intro?: string
+  offlineLabel?: string
+  offlineMessage?: string
+  subscribeHeading?: string
+  subscribeBody?: string
+  copy?: Partial<SiteCopy>
+}
+
+export default function RalphTVClient({
+  heading = 'Ralph TV',
+  intro = "Our little TV channel. Switch on, tune in, and see what we're playing right now.",
+  offlineLabel,
+  offlineMessage,
+  subscribeHeading,
+  subscribeBody,
+  copy,
+}: RalphTVClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
 
   return (
@@ -14,15 +33,20 @@ export default function RalphTVClient() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8 md:mb-12">
             <h1 className="text-4xl md:text-6xl font-bold text-primary mb-4 font-[family-name:var(--font-display)]">
-              Ralph TV
+              {heading}
             </h1>
             <p className="text-secondary max-w-xl mx-auto">
-              Our little TV channel. Switch on, tune in, and see what we&apos;re
-              playing right now.
+              {intro}
             </p>
           </div>
 
-          <TVSet onSubscribe={() => setSubscribeOpen(true)} />
+          <TVSet
+            onSubscribe={() => setSubscribeOpen(true)}
+            offlineLabel={offlineLabel}
+            offlineMessage={offlineMessage}
+            subscribeHeading={subscribeHeading}
+            subscribeBody={subscribeBody}
+          />
         </div>
 
         {/* London globe placeholder */}
@@ -33,7 +57,7 @@ export default function RalphTVClient() {
         </div>
       </section>
 
-      <Footer variant="dark" />
+      <Footer variant="dark" copy={copy} />
 
       <SubscribeModal
         isOpen={subscribeOpen}

@@ -7,6 +7,7 @@ import ProductOverlay from './ProductOverlay'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import Footer from '@/components/layout/Footer'
 import type { ProductSummary, ShopifyProduct } from '@/lib/shopify/types'
+import type { SiteCopy } from '@/lib/data/site-copy'
 
 const CATEGORIES = [
   { handle: 'ralph-magazine', label: 'The Mag' },
@@ -16,9 +17,21 @@ const CATEGORIES = [
 
 interface ShopClientProps {
   collections: Record<string, ProductSummary[]>
+  heading?: string
+  intro?: string
+  soldoutHeading?: string
+  soldoutBody?: string
+  copy?: Partial<SiteCopy>
 }
 
-export default function ShopClient({ collections }: ShopClientProps) {
+export default function ShopClient({
+  collections,
+  heading = 'BUY RALPH STUFF',
+  intro = 'Magazines, merch, and random things we think are brilliant.',
+  soldoutHeading,
+  soldoutBody,
+  copy,
+}: ShopClientProps) {
   const [activeCollection, setActiveCollection] = useState(CATEGORIES[0].handle)
   const [overlayProduct, setOverlayProduct] = useState<ShopifyProduct | null>(null)
   const [overlayOpen, setOverlayOpen] = useState(false)
@@ -39,10 +52,10 @@ export default function ShopClient({ collections }: ShopClientProps) {
     <>
       <section className="bg-[#E5E5E5] px-6 py-16 text-center">
         <h1 className="text-5xl md:text-7xl font-bold text-black mb-4 font-[family-name:var(--font-display)]">
-          BUY RALPH STUFF
+          {heading}
         </h1>
         <p className="text-gray-600 max-w-xl mx-auto">
-          Magazines, merch, and random things we think are brilliant.
+          {intro}
         </p>
       </section>
 
@@ -98,7 +111,7 @@ export default function ShopClient({ collections }: ShopClientProps) {
         )}
       </section>
 
-      <Footer variant="light" />
+      <Footer variant="light" copy={copy} />
 
       <ProductOverlay
         product={overlayProduct}
@@ -108,6 +121,8 @@ export default function ShopClient({ collections }: ShopClientProps) {
           setOverlayOpen(false)
           setSubscribeOpen(true)
         }}
+        soldoutHeading={soldoutHeading}
+        soldoutBody={soldoutBody}
       />
 
       <SubscribeModal

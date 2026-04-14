@@ -16,9 +16,19 @@ export type TVOverlayState = 'none' | 'show-info' | 'schedule'
 
 interface TVSetProps {
   onSubscribe: () => void
+  offlineLabel?: string
+  offlineMessage?: string
+  subscribeHeading?: string
+  subscribeBody?: string
 }
 
-export default function TVSet({ onSubscribe }: TVSetProps) {
+export default function TVSet({
+  onSubscribe,
+  offlineLabel = 'OFFLINE',
+  offlineMessage = 'Tune in later',
+  subscribeHeading,
+  subscribeBody,
+}: TVSetProps) {
   const { user } = useAuth()
   const { isLive } = useLiveStatus()
   const [overlay, setOverlay] = useState<TVOverlayState>('none')
@@ -108,6 +118,8 @@ export default function TVSet({ onSubscribe }: TVSetProps) {
                   <LivePlayer
                     volume={volume}
                     onVolumeChange={setVolume}
+                    offlineLabel={offlineLabel}
+                    offlineMessage={offlineMessage}
                   />
                 </motion.div>
               )}
@@ -121,7 +133,11 @@ export default function TVSet({ onSubscribe }: TVSetProps) {
                   exit="exit"
                   className="absolute inset-0"
                 >
-                  <SubscribeGate onSubscribe={onSubscribe} />
+                  <SubscribeGate
+                    onSubscribe={onSubscribe}
+                    heading={subscribeHeading}
+                    body={subscribeBody}
+                  />
                 </motion.div>
               )}
 
@@ -136,9 +152,9 @@ export default function TVSet({ onSubscribe }: TVSetProps) {
                 >
                   <div className="text-center">
                     <div className="text-ralph-pink text-lg mb-2 tracking-widest font-mono">
-                      OFFLINE
+                      {offlineLabel}
                     </div>
-                    <p className="text-white/40 text-xs">Tune in later</p>
+                    <p className="text-white/40 text-xs">{offlineMessage}</p>
                   </div>
                 </motion.div>
               )}

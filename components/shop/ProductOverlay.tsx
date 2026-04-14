@@ -10,6 +10,8 @@ interface ProductOverlayProps {
   isOpen: boolean
   onClose: () => void
   onSubscribe: () => void
+  soldoutHeading?: string
+  soldoutBody?: string
 }
 
 export default function ProductOverlay({
@@ -17,6 +19,8 @@ export default function ProductOverlay({
   isOpen,
   onClose,
   onSubscribe,
+  soldoutHeading = 'You snooze, you lose',
+  soldoutBody = 'This issue is out in the world, being enjoyed by others, not in your hand...',
 }: ProductOverlayProps) {
   const { addItem, openCart, isLoading } = useCart()
   const [selectedImage, setSelectedImage] = useState(0)
@@ -173,11 +177,10 @@ export default function ProductOverlay({
                     </button>
                     <div className="bg-white border border-gray-900 p-5">
                       <p className="font-bold text-black mb-2">
-                        You snooze, you lose
+                        {soldoutHeading}
                       </p>
                       <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                        This issue is out in the world, being enjoyed by others,
-                        not in your hand...
+                        {soldoutBody}
                       </p>
                       <button
                         onClick={onSubscribe}

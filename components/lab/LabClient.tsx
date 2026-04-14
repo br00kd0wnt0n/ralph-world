@@ -9,12 +9,14 @@ import Footer from '@/components/layout/Footer'
 import { SPIN_DURATION_MS } from '@/lib/animation/lab'
 import type { LabItem } from '@/lib/data/lab'
 import type { MachineState } from './RalphOMatic.types'
+import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface LabClientProps {
   items: LabItem[]
+  copy?: Partial<SiteCopy>
 }
 
-export default function LabClient({ items }: LabClientProps) {
+export default function LabClient({ items, copy }: LabClientProps) {
   const [state, setState] = useState<MachineState>('idle')
   const [settledItemId, setSettledItemId] = useState<string | null>(null)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
@@ -50,7 +52,11 @@ export default function LabClient({ items }: LabClientProps) {
 
   return (
     <>
-      <LabHero />
+      <LabHero
+        heading={copy?.lab_hero_heading}
+        intro={copy?.lab_hero_intro}
+        cta={copy?.lab_hero_cta}
+      />
 
       <section className="px-6 pb-8">
         <div className="max-w-6xl mx-auto">
@@ -69,7 +75,7 @@ export default function LabClient({ items }: LabClientProps) {
         onSubscribe={() => setSubscribeOpen(true)}
       />
 
-      <Footer variant="dark" />
+      <Footer variant="dark" copy={copy} />
 
       <SubscribeModal
         isOpen={subscribeOpen}

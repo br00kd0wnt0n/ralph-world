@@ -11,10 +11,12 @@ import SubscribeModal from '@/components/layout/SubscribeModal'
 import Footer from '@/components/layout/Footer'
 import type { EventRow } from '@/lib/data/events'
 import type { EventCreatureData } from './EventCreature.types'
+import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface EventsClientProps {
   activeEvents: EventRow[]
   pastEvents: EventRow[]
+  copy?: Partial<SiteCopy>
 }
 
 function toCreatureData(row: EventRow): EventCreatureData {
@@ -37,6 +39,7 @@ function toCreatureData(row: EventRow): EventCreatureData {
 export default function EventsClient({
   activeEvents,
   pastEvents,
+  copy,
 }: EventsClientProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [stage, setStage] = useState<FlyoutStage>('minimal')
@@ -62,7 +65,11 @@ export default function EventsClient({
 
   return (
     <>
-      <EventsHero />
+      <EventsHero
+        heading={copy?.events_hero_heading}
+        subtitle={copy?.events_hero_subtitle}
+        helper={copy?.events_hero_helper}
+      />
 
       <section className="relative" onClick={handleClose}>
         <CrowdBackground>
@@ -97,7 +104,7 @@ export default function EventsClient({
         )}
       </AnimatePresence>
 
-      <PastEvents events={pastEvents} />
+      <PastEvents events={pastEvents} heading={copy?.events_past_heading} />
 
       <Footer variant="light" />
 

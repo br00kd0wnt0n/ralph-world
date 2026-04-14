@@ -7,6 +7,7 @@ import type { EventRow } from '@/lib/data/events'
 
 interface PastEventsProps {
   events: EventRow[]
+  heading?: string
 }
 
 function formatDate(date: Date | null): string {
@@ -18,7 +19,10 @@ function formatDate(date: Date | null): string {
   })
 }
 
-export default function PastEvents({ events }: PastEventsProps) {
+export default function PastEvents({
+  events,
+  heading = 'Mate, you missed a classic, check these out',
+}: PastEventsProps) {
   const { ref, isVisible } = useScrollReveal(0.1)
 
   if (events.length === 0) return null
@@ -27,7 +31,7 @@ export default function PastEvents({ events }: PastEventsProps) {
     <section className="bg-[#FAFAFA] px-6 py-16">
       <div ref={ref} className="max-w-5xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-bold text-black mb-8 font-[family-name:var(--font-display)]">
-          Mate, you missed a classic, check these out
+          {heading}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

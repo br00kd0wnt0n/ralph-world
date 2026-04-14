@@ -1,12 +1,17 @@
 'use client'
 
 import Link from 'next/link'
+import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface FooterProps {
   variant?: 'dark' | 'light'
+  copy?: Partial<SiteCopy>
 }
 
-export default function Footer({ variant = 'dark' }: FooterProps) {
+export default function Footer({ variant = 'dark', copy }: FooterProps) {
+  const tagline = copy?.footer_tagline ?? 'The Entertainment People'
+  const agencyCta = copy?.footer_agency_cta ?? "Hey. Aren't you an agency?"
+
   if (variant === 'light') {
     return (
       <footer className="bg-surface py-8 px-6 border-t border-border/30">
@@ -52,7 +57,7 @@ export default function Footer({ variant = 'dark' }: FooterProps) {
             </Link>
             <span>|</span>
             <Link href="/play" className="hover:text-primary transition-colors">
-              Hey. Aren&apos;t you an agency?
+              {agencyCta}
             </Link>
           </div>
         </div>
@@ -98,7 +103,7 @@ export default function Footer({ variant = 'dark' }: FooterProps) {
           className="rounded-full mb-4"
         />
         <p className="text-sm text-white/60 tracking-widest uppercase">
-          The Entertainment People
+          {tagline}
         </p>
       </div>
 

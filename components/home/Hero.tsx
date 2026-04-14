@@ -4,10 +4,16 @@ import { motion } from 'framer-motion'
 import { heroContainerVariants, heroChildVariants } from '@/lib/animation/homepage'
 import ScrollIndicator from './ScrollIndicator'
 
-export default function Hero() {
+interface HeroProps {
+  heading: string
+  line1: string
+  line2: string
+  line3: string
+}
+
+export default function Hero({ heading, line1, line2, line3 }: HeroProps) {
   return (
     <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 text-center overflow-hidden">
-      {/* Gradient background — black to dark teal as page scrolls (CSS handles it) */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-[#0F3D5C]/30 pointer-events-none" />
 
       <motion.div
@@ -20,22 +26,19 @@ export default function Hero() {
           variants={heroChildVariants}
           className="text-5xl md:text-7xl font-bold text-primary mb-8 font-[family-name:var(--font-display)]"
         >
-          Welcome to our World
+          {heading}
         </motion.h1>
 
         <motion.p variants={heroChildVariants} className="text-secondary text-lg mb-4">
-          We make entertainment that brings people together and celebrates the
-          things that make life feel good.
+          {line1}
         </motion.p>
 
         <motion.p variants={heroChildVariants} className="text-secondary mb-4">
-          From TV and live events to digital content and print, we partner with
-          creatives and brands who share our belief that great ideas come from
-          taking creative risks, not feeding the algorithm.
+          {line2}
         </motion.p>
 
         <motion.p variants={heroChildVariants} className="text-secondary mb-10">
-          If it&apos;s new, different or makes you smile, we&apos;re into it.
+          {line3}
         </motion.p>
 
         <motion.div variants={heroChildVariants}>

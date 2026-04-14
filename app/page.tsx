@@ -1,4 +1,5 @@
 import { getHomepageData } from '@/lib/data/homepage'
+import { getSiteCopy } from '@/lib/data/site-copy'
 import Hero from '@/components/home/Hero'
 import PlanetSection from '@/components/home/PlanetSection'
 import FloatingCharacter from '@/components/home/FloatingCharacter'
@@ -9,7 +10,10 @@ import type { ModuleCardData } from '@/components/home/PlanetSection'
 export const revalidate = 3600
 
 export default async function Home() {
-  const { magazineItems, eventItems, labItems } = await getHomepageData()
+  const [{ magazineItems, eventItems, labItems }, copy] = await Promise.all([
+    getHomepageData(),
+    getSiteCopy(),
+  ])
 
   const sections: {
     id: string
@@ -28,8 +32,7 @@ export default async function Home() {
       moduleCard: {
         heading: 'Magazine',
         tagline: 'Words and pictures',
-        description:
-          'Pop culture stories, interviews and photo essays from the people who make the things we love.',
+        description: copy.magazine_description,
         items: magazineItems,
         href: '/magazine',
         ctaLabel: 'Show me more',
@@ -44,8 +47,7 @@ export default async function Home() {
       moduleCard: {
         heading: 'Events',
         tagline: 'For real. IRL.',
-        description:
-          'Live events, screenings, parties and pop-ups. Check below for the latest.',
+        description: copy.events_description,
         items: eventItems,
         href: '/events',
         ctaLabel: 'Show me more',
@@ -60,8 +62,7 @@ export default async function Home() {
       moduleCard: {
         heading: 'Shop',
         tagline: 'Merch, mags and more',
-        description:
-          'Physical magazines, merch and random things we think are brilliant.',
+        description: copy.shop_description,
         items: [
           { id: 'shop-1', title: 'Coming soon...' },
           { id: 'shop-2', title: 'More products on the way' },
@@ -79,8 +80,7 @@ export default async function Home() {
       moduleCard: {
         heading: 'Lab',
         tagline: 'Try something new',
-        description:
-          'Interactive experiments, tools, and weird wonderful things from the Ralph team.',
+        description: copy.lab_description,
         items: labItems,
         href: '/lab',
         ctaLabel: 'Show me more',
@@ -90,18 +90,19 @@ export default async function Home() {
 
   return (
     <>
-      <Hero />
+      <Hero
+        heading={copy.home_hero_heading}
+        line1={copy.home_hero_line_1}
+        line2={copy.home_hero_line_2}
+        line3={copy.home_hero_line_3}
+      />
 
-      {/* Desktop: Planet sections with floating characters between */}
       <div className="hidden md:block">
         {sections.map((section, i) => (
           <div key={section.id}>
             {i > 0 && (
               <div className="relative h-16 flex justify-center">
-                <FloatingCharacter
-                  index={i}
-                  className="absolute"
-                />
+                <FloatingCharacter index={i} className="absolute" />
               </div>
             )}
             <PlanetSection {...section} />
@@ -109,14 +110,13 @@ export default async function Home() {
         ))}
       </div>
 
-      {/* Mobile: Linear card layout */}
       <MobileHome
         magazineItems={magazineItems}
         eventItems={eventItems}
         labItems={labItems}
       />
 
-      <Footer variant="dark" />
+      <Footer variant="dark" copy={copy} />
     </>
   )
 }

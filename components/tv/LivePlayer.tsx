@@ -9,6 +9,8 @@ interface LivePlayerProps {
   onLiveChange?: (isLive: boolean) => void
   volume: number
   onVolumeChange: (v: number) => void
+  offlineLabel?: string
+  offlineMessage?: string
 }
 
 export default function LivePlayer({
@@ -17,6 +19,8 @@ export default function LivePlayer({
   onLiveChange,
   volume,
   onVolumeChange,
+  offlineLabel = 'OFFLINE',
+  offlineMessage = 'Tune in later',
 }: LivePlayerProps) {
   const streamUrl = relayUrl ?? process.env.NEXT_PUBLIC_BROADCASTER_RELAY_URL ?? null
   const { videoRef, isReady, error } = useHls(streamUrl)
@@ -53,8 +57,8 @@ export default function LivePlayer({
     return (
       <div className={`w-full h-full bg-black flex items-center justify-center ${className}`}>
         <div className="text-center">
-          <div className="text-ralph-pink text-sm mb-2 tracking-widest">OFFLINE</div>
-          <p className="text-white/40 text-xs">Tune in later</p>
+          <div className="text-ralph-pink text-sm mb-2 tracking-widest">{offlineLabel}</div>
+          <p className="text-white/40 text-xs">{offlineMessage}</p>
         </div>
       </div>
     )

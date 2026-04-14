@@ -2,7 +2,13 @@ import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
 import { getDb } from '@/lib/db'
-import { profiles } from '@/lib/db/schema'
+import {
+  profiles,
+  users,
+  accounts,
+  sessions,
+  verificationTokens,
+} from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -70,7 +76,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
 function getDrizzleAdapter() {
   try {
-    return DrizzleAdapter(getDb())
+    return DrizzleAdapter(getDb(), {
+      usersTable: users,
+      accountsTable: accounts,
+      sessionsTable: sessions,
+      verificationTokensTable: verificationTokens,
+    })
   } catch {
     // DB not configured yet — return undefined so app still boots
     return undefined as unknown as ReturnType<typeof DrizzleAdapter>

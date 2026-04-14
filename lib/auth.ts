@@ -82,8 +82,10 @@ function getDrizzleAdapter() {
       sessionsTable: sessions,
       verificationTokensTable: verificationTokens,
     })
-  } catch {
-    // DB not configured yet — return undefined so app still boots
+  } catch (error) {
+    // Log — build-time page data collection runs without env vars, so we can't throw.
+    // At real runtime this will cause auth requests to fail visibly in logs.
+    console.error('[auth] Drizzle adapter failed to initialise:', error)
     return undefined as unknown as ReturnType<typeof DrizzleAdapter>
   }
 }

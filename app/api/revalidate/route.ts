@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
+import crypto from 'crypto'
+
+function verifyBearer(authHeader: string | null, secret: string): boolean {
+  if (!authHeader) return false
+  const expected = `Bearer ${secret}`
+  const a = Buffer.from(authHeader)
+  const b = Buffer.from(expected)
+  if (a.length !== b.length) return false
+  try {
+    return crypto.timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}
 
 /**
  * On-demand revalidation triggered by the CMS after content changes.
@@ -14,8 +28,7 @@ export async function POST(request: Request) {
     )
   }
 
-  const auth = request.headers.get('authorization')
-  if (auth !== `Bearer ${secret}`) {
+  if (!verifyBearer(request.headers.get('authorization'), secret)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

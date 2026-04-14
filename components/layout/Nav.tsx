@@ -1,9 +1,9 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import ThemeToggle from './ThemeToggle'
@@ -45,25 +45,6 @@ function CartIcon({ count, onClick }: { count: number; onClick: () => void }) {
       </span>
     </button>
   )
-}
-
-// Reads ?subscribe=1 and triggers the modal. Separated so it can sit behind
-// Suspense — useSearchParams bails page-level static prerendering otherwise.
-function SubscribeParamWatcher({
-  onOpen,
-}: {
-  onOpen: () => void
-}) {
-  const searchParams = useSearchParams()
-  useEffect(() => {
-    if (searchParams.get('subscribe') === '1') {
-      onOpen()
-      const url = new URL(window.location.href)
-      url.searchParams.delete('subscribe')
-      window.history.replaceState(null, '', url.toString())
-    }
-  }, [searchParams, onOpen])
-  return null
 }
 
 export default function Nav() {
@@ -248,11 +229,6 @@ export default function Nav() {
         isOpen={subscribeOpen}
         onClose={() => setSubscribeOpen(false)}
       />
-
-      {/* Auto-opens modal when /subscribe redirects with ?subscribe=1 */}
-      <Suspense fallback={null}>
-        <SubscribeParamWatcher onOpen={() => setSubscribeOpen(true)} />
-      </Suspense>
     </>
   )
 }

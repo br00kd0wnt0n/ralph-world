@@ -105,60 +105,44 @@ export default function TVSet({
             className="relative aspect-[4/3] flex-1 bg-black rounded-lg overflow-hidden border-2 border-black"
             style={{ maxHeight: '60vh' }}
           >
-            <AnimatePresence mode="wait">
-              {screenState === 'live' && overlay === 'none' && (
-                <motion.div
-                  key="live"
-                  variants={screenStateVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  className="absolute inset-0"
-                >
-                  <LivePlayer
-                    volume={volume}
-                    onVolumeChange={setVolume}
-                    offlineLabel={offlineLabel}
-                    offlineMessage={offlineMessage}
-                  />
-                </motion.div>
-              )}
+            {/* LivePlayer stays mounted whenever we have a live stream, so */}
+            {/* HLS isn't torn down when overlays open or status blips */}
+            {screenState === 'live' && (
+              <div className="absolute inset-0">
+                <LivePlayer
+                  volume={volume}
+                  onVolumeChange={setVolume}
+                  offlineLabel={offlineLabel}
+                  offlineMessage={offlineMessage}
+                />
+              </div>
+            )}
 
-              {screenState === 'subscribe-gate' && overlay === 'none' && (
-                <motion.div
-                  key="gate"
-                  variants={screenStateVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  className="absolute inset-0"
-                >
-                  <SubscribeGate
-                    onSubscribe={onSubscribe}
-                    heading={subscribeHeading}
-                    body={subscribeBody}
-                  />
-                </motion.div>
-              )}
+            {/* Subscribe gate also stays mounted when active */}
+            {screenState === 'subscribe-gate' && (
+              <div className="absolute inset-0">
+                <SubscribeGate
+                  onSubscribe={onSubscribe}
+                  heading={subscribeHeading}
+                  body={subscribeBody}
+                />
+              </div>
+            )}
 
-              {screenState === 'offline' && overlay === 'none' && (
-                <motion.div
-                  key="offline"
-                  variants={screenStateVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  className="absolute inset-0 flex items-center justify-center bg-black"
-                >
-                  <div className="text-center">
-                    <div className="text-ralph-pink text-lg mb-2 tracking-widest font-mono">
-                      {offlineLabel}
-                    </div>
-                    <p className="text-white/40 text-xs">{offlineMessage}</p>
+            {/* Offline fallback */}
+            {screenState === 'offline' && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black">
+                <div className="text-center">
+                  <div className="text-ralph-pink text-lg mb-2 tracking-widest font-mono">
+                    {offlineLabel}
                   </div>
-                </motion.div>
-              )}
+                  <p className="text-white/40 text-xs">{offlineMessage}</p>
+                </div>
+              </div>
+            )}
 
+            {/* Overlays render ON TOP of the player — don't replace it */}
+            <AnimatePresence>
               {overlay === 'show-info' && (
                 <motion.div
                   key="show-info"
@@ -166,6 +150,7 @@ export default function TVSet({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
+                  className="absolute inset-0 z-10"
                 >
                   <TeletextShowInfo current={currentShow} />
                 </motion.div>
@@ -178,6 +163,7 @@ export default function TVSet({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
+                  className="absolute inset-0 z-10"
                 >
                   <TeletextSchedule schedule={schedule} />
                 </motion.div>

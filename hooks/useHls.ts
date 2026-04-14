@@ -27,7 +27,13 @@ export function useHls(streamUrl: string | null) {
     // Native HLS support (Safari)
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = streamUrl
-      const onLoaded = () => setIsReady(true)
+      const onLoaded = () => {
+        setIsReady(true)
+        // Muted autoplay should be allowed everywhere
+        video.play().catch((err) => {
+          console.warn('[hls] autoplay blocked:', err)
+        })
+      }
       video.addEventListener('loadedmetadata', onLoaded)
       return () => {
         video.removeEventListener('loadedmetadata', onLoaded)
@@ -57,7 +63,13 @@ export function useHls(streamUrl: string | null) {
       hls.loadSource(streamUrl)
       hls.attachMedia(video)
 
-      hls.on(Hls.Events.MANIFEST_PARSED, () => setIsReady(true))
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setIsReady(true)
+        // Kick off playback (muted autoplay is allowed)
+        video.play().catch((err) => {
+          console.warn('[hls] autoplay blocked:', err)
+        })
+      })
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (!data.fatal) return

@@ -114,6 +114,7 @@ export default async function Home() {
         magazineItems={magazineItems}
         eventItems={eventItems}
         labItems={labItems}
+        copy={copy}
       />
 
       <Footer variant="dark" copy={copy} />

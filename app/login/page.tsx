@@ -7,11 +7,24 @@ interface LoginPageProps {
   searchParams: Promise<{ callbackUrl?: string; error?: string }>
 }
 
+/**
+ * Only accept same-origin relative paths as a callback.
+ * Blocks absolute URLs (open-redirect), protocol-relative, and anything suspicious.
+ */
+function safeCallback(raw: string | undefined): string {
+  if (!raw) return '/'
+  if (!raw.startsWith('/') || raw.startsWith('//')) return '/'
+  // Reject any URL-ish strings that could trick the browser
+  if (raw.includes('://') || raw.includes('\\')) return '/'
+  return raw
+}
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await auth()
-  const { callbackUrl = '/', error } = await searchParams
+  const { callbackUrl: rawCallback, error } = await searchParams
+  const callbackUrl = safeCallback(rawCallback)
 
-  // If already signed in, bounce to destination
+  // If already signed in, bounce to destination (now guaranteed same-origin)
   if (session?.user) {
     redirect(callbackUrl)
   }

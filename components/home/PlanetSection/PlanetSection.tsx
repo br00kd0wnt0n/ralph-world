@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useParallax } from '@/hooks/useParallax'
@@ -48,6 +48,29 @@ export default function PlanetSection({
   const { ref, isVisible } = useScrollReveal(0.1)
   const [isOpen, setIsOpen] = useState(false)
 
+  // Detect touch devices so we don't fire synthetic hover events on tap.
+  // Hover-to-open makes no sense on touch — clicks toggle instead.
+  const [isTouch, setIsTouch] = useState(false)
+  useEffect(() => {
+    const detect = () => {
+      if (
+        typeof window !== 'undefined' &&
+        (window.matchMedia('(hover: none)').matches ||
+          'ontouchstart' in window)
+      ) {
+        setIsTouch(true)
+      }
+    }
+    detect()
+  }, [])
+
+  const hoverHandlers = isTouch
+    ? {}
+    : {
+        onMouseEnter: () => setIsOpen(true),
+        onMouseLeave: () => setIsOpen(false),
+      }
+
   const planetOnRight = POSITION_LAYOUTS[planetPosition] === 'right'
   const [carouselIndex, setCarouselIndex] = useState(0)
 
@@ -70,8 +93,7 @@ export default function PlanetSection({
       variants={planetSectionVariants}
       initial="hidden"
       animate={isVisible ? 'visible' : 'hidden'}
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
+      {...hoverHandlers}
       className={`relative flex items-center gap-6 md:gap-0 px-6 md:px-16 py-16 md:py-24 max-w-7xl mx-auto ${
         planetOnRight ? 'flex-row' : 'flex-row-reverse'
       }`}

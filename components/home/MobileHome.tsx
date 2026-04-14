@@ -5,11 +5,13 @@ import { motion } from 'framer-motion'
 import { mobileCardVariants } from '@/lib/animation/homepage'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import type { ModuleItem } from './PlanetSection'
+import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface MobileHomeProps {
   magazineItems: ModuleItem[]
   eventItems: ModuleItem[]
   labItems: ModuleItem[]
+  copy?: Partial<SiteCopy>
 }
 
 function MobileCard({
@@ -37,35 +39,39 @@ export default function MobileHome({
   magazineItems,
   eventItems,
   labItems,
+  copy,
 }: MobileHomeProps) {
+  const tvHeading = copy?.tv_hero_heading ?? 'Ralph TV'
+  const magDesc = copy?.magazine_description
+  const eventsDesc = copy?.events_description
+  const shopDesc = copy?.shop_description
+  const labDesc = copy?.lab_description
+
   return (
     <div className="md:hidden flex flex-col gap-6 px-4 py-8">
       {/* TV Card */}
       <MobileCard>
-        <div className="rounded-2xl bg-surface p-5">
+        <Link
+          href="/tv"
+          className="block rounded-2xl bg-surface p-5 hover:bg-surface-hover transition-colors"
+        >
           <h3 className="text-lg font-bold text-ralph-yellow mb-2">
-            Wait, Ralph has a TV channel &mdash; what the f**k, bro?
+            {tvHeading}
           </h3>
-          <div className="w-full aspect-video bg-black/50 rounded-lg mb-3 flex items-center justify-center text-muted text-sm">
-            Player placeholder
-          </div>
-          <div className="flex gap-2">
-            {['Show Info', 'Now', 'Next', 'Schedule'].map((btn) => (
-              <button
-                key={btn}
-                className="flex-1 text-[10px] py-1.5 rounded-full border border-border text-secondary hover:text-primary transition-colors"
-              >
-                {btn}
-              </button>
-            ))}
-          </div>
-        </div>
+          <p className="text-secondary text-sm">
+            {copy?.tv_hero_intro ??
+              "Our little TV channel. Switch on, tune in, and see what we're playing."}
+          </p>
+        </Link>
       </MobileCard>
 
       {/* Magazine Card */}
       <MobileCard delay={0.1}>
         <div className="rounded-2xl bg-ralph-orange p-5">
-          <h3 className="text-lg font-bold text-white mb-3">Magazine</h3>
+          <h3 className="text-lg font-bold text-white mb-1">Magazine</h3>
+          {magDesc && (
+            <p className="text-white/80 text-xs mb-3 line-clamp-2">{magDesc}</p>
+          )}
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
             {magazineItems.map((item) => (
               <div
@@ -99,20 +105,15 @@ export default function MobileHome({
       {/* Shop Card */}
       <MobileCard delay={0.2}>
         <div className="rounded-2xl bg-ralph-green p-5">
-          <h3 className="text-lg font-bold text-white mb-3">Shop</h3>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className="rounded-lg bg-white/20 h-32 flex items-center justify-center text-white/40 text-xs">
-              Product
-            </div>
-            <div className="rounded-lg bg-white/20 h-32 flex items-center justify-center text-white/40 text-xs">
-              Product
-            </div>
-          </div>
+          <h3 className="text-lg font-bold text-white mb-1">Shop</h3>
+          {shopDesc && (
+            <p className="text-white/80 text-xs mb-3 line-clamp-2">{shopDesc}</p>
+          )}
           <Link
             href="/shop"
             className="block text-center text-sm font-medium text-white bg-white/20 rounded-full py-2 hover:bg-white/30 transition-colors"
           >
-            More f**king great stuff
+            Show me more
           </Link>
         </div>
       </MobileCard>
@@ -120,7 +121,12 @@ export default function MobileHome({
       {/* Events Card */}
       <MobileCard delay={0.3}>
         <div className="rounded-2xl bg-ralph-teal p-5">
-          <h3 className="text-lg font-bold text-white mb-3">Events</h3>
+          <h3 className="text-lg font-bold text-white mb-1">Events</h3>
+          {eventsDesc && (
+            <p className="text-white/80 text-xs mb-3 line-clamp-2">
+              {eventsDesc}
+            </p>
+          )}
           {eventItems.map((item) => (
             <div key={item.id} className="rounded-lg bg-white/20 p-3 mb-3">
               <p className="text-white text-sm font-medium">{item.title}</p>
@@ -141,7 +147,10 @@ export default function MobileHome({
       {/* Lab Card */}
       <MobileCard delay={0.4}>
         <div className="rounded-2xl bg-ralph-yellow p-5">
-          <h3 className="text-lg font-bold text-black mb-3">Lab</h3>
+          <h3 className="text-lg font-bold text-black mb-1">Lab</h3>
+          {labDesc && (
+            <p className="text-black/70 text-xs mb-3 line-clamp-2">{labDesc}</p>
+          )}
           {labItems.map((item) => (
             <div key={item.id} className="rounded-lg bg-black/10 p-3 mb-3">
               <div className="flex items-center gap-2">

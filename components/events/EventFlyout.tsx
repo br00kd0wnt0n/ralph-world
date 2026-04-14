@@ -168,15 +168,34 @@ export default function EventFlyout({
                 <p className="text-xs text-white/70 pl-12">{event.location_address}</p>
               )}
             </motion.div>
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.35 }}
-              onClick={handleTicketClick}
-              className="w-full md:w-auto rounded-full bg-white text-black px-6 py-3 font-medium text-sm hover:bg-white/90 transition-colors"
-            >
-              {user ? 'Get tickets ↗' : 'Subscribe for ticket access'}
-            </motion.button>
+            {(() => {
+              // Button states:
+              //  - no user + no URL: "Subscribe for ticket access" → modal
+              //  - no user + URL:    "Subscribe for ticket access" → modal
+              //  - user + URL:       "Get tickets ↗" → new tab
+              //  - user + no URL:    disabled "Tickets coming soon"
+              const ticketsAvailable =
+                Boolean(user) && !event.external_ticket_url
+              const isDisabled = ticketsAvailable
+              const label = !user
+                ? 'Subscribe for ticket access'
+                : event.external_ticket_url
+                ? 'Get tickets ↗'
+                : 'Tickets coming soon'
+
+              return (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.35 }}
+                  onClick={handleTicketClick}
+                  disabled={isDisabled}
+                  className="w-full md:w-auto rounded-full bg-white text-black px-6 py-3 font-medium text-sm hover:bg-white/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-white"
+                >
+                  {label}
+                </motion.button>
+              )
+            })()}
           </motion.div>
 
           <motion.div

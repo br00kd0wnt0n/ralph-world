@@ -61,11 +61,19 @@ export default function ArticleOverlay({
     signoffText?: string
   }>
 
-  // Guest access gate: count words across text blocks
+  // Access gating:
+  // - Guest (no user): ~200 word preview, then sign-up gate
+  // - Free user reading a paid article: full preview but subscribe gate
+  // - Free user reading a free article: full access
+  // - Paid user: full access, optional PDF
   const isGuest = !user
+  const isPaidArticle = article.accessTier === 'paid'
+  const hasPaidAccess = subscriptionStatus === 'paid'
+  const needsUpgrade = isPaidArticle && !hasPaidAccess && !isGuest
+
   let wordCount = 0
   let gateIndex = blocks.length
-  if (isGuest) {
+  if (isGuest || needsUpgrade) {
     for (let i = 0; i < blocks.length; i++) {
       if (blocks[i].type === 'ArticleText' && blocks[i].text) {
         wordCount += blocks[i].text!.split(/\s+/).length
@@ -77,7 +85,8 @@ export default function ArticleOverlay({
     }
   }
 
-  const visibleBlocks = isGuest ? blocks.slice(0, gateIndex) : blocks
+  const isGated = isGuest || needsUpgrade
+  const visibleBlocks = isGated ? blocks.slice(0, gateIndex) : blocks
 
   return (
     <motion.div
@@ -165,24 +174,47 @@ export default function ArticleOverlay({
         {/* Content blocks */}
         <BlockRenderer blocks={visibleBlocks} />
 
-        {/* Guest access gate */}
-        {isGuest && gateIndex < blocks.length && (
+        {/* Access gate */}
+        {isGated && gateIndex < blocks.length && (
           <div className="relative mt-8">
-            <div className="absolute inset-x-0 -top-24 h-24 bg-gradient-to-t from-[#FAFAFA] to-transparent pointer-events-none" />
-            <div className="text-center py-12 px-6 rounded-2xl bg-white shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Sign up to keep reading
-              </h3>
-              <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto">
-                Create a free account to read the full article and access all
-                of Ralph&apos;s magazine content.
-              </p>
-              <button
-                onClick={onSubscribe}
-                className="rounded-full bg-ralph-pink px-8 py-3 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
-              >
-                Sign up to read
-              </button>
+            <div className="absolute inset-x-0 -top-24 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+            <div className="text-center py-12 px-6 rounded-2xl bg-white shadow-lg border border-ralph-pink/20">
+              {isGuest ? (
+                <>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Sign up to keep reading
+                  </h3>
+                  <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto">
+                    Create a free account to read the full article and access all
+                    of Ralph&apos;s magazine content.
+                  </p>
+                  <button
+                    onClick={onSubscribe}
+                    className="rounded-full bg-ralph-pink px-8 py-3 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
+                  >
+                    Sign up to read
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="inline-block text-[10px] font-bold text-ralph-pink uppercase tracking-widest mb-3 px-2 py-0.5 rounded-full border border-ralph-pink/40">
+                    Subscriber story
+                  </span>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Upgrade to finish reading
+                  </h3>
+                  <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto">
+                    This piece is for paid subscribers. Upgrade for £3/month to
+                    read the whole thing plus every future issue.
+                  </p>
+                  <button
+                    onClick={onSubscribe}
+                    className="rounded-full bg-ralph-pink px-8 py-3 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
+                  >
+                    Upgrade to paid
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

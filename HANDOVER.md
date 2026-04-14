@@ -1,6 +1,8 @@
 # Ralph.World — Frontend Handover (for Josh)
 
-Welcome. The scaffold, data layer, auth, routing, and CMS integration are done. Your job is to polish the visual / animation layer and drop in Duffy's illustrations. This page is everything you need.
+Welcome. The plumbing is done: scaffold, routing, auth, database, CMS integration, Shopify hooks, Broadcaster wiring. Every piece of data is flowing. What's in the browser today is placeholder-quality — that's your canvas.
+
+**Your scope:** full visual design pass, all animations, illustration integration, responsive polish. You have a free hand across everything visual.
 
 ## Getting started
 
@@ -13,106 +15,105 @@ npm run dev                  # http://localhost:3000
 ```
 
 **Stack**: Next.js 16 App Router, TypeScript strict, Tailwind v4, Framer Motion, hls.js.
-Deployed via Railway from `main`. Every push triggers a rebuild.
+Deployed via Railway from `main` — every push triggers a rebuild, preview live within ~60s.
 
-## Repo shape
+## Where you work
 
-```
-app/                    # routes — pages and API
-components/
-  layout/               # Nav, Footer, modals (shared)
-  home/                 # PlanetSection, Hero, MobileHome, FloatingCharacter, ScrollIndicator
-  magazine/             # ArticleGrid, ArticleOverlay, BlockRenderer, CoverStory, CategoryTabs
-  events/               # EventCreature, CrowdBackground, EventFlyout, EventsHero, PastEvents
-  tv/                   # TVSet, LivePlayer, TeletextShowInfo/Schedule, SubscribeGate, TVControls
-  shop/                 # ProductCard, ProductOverlay, ShopClient
-  lab/                  # RalphOMatic, LabGrid, LabHero
-lib/
-  animation/            # ← YOU LIVE HERE. One file per section, all Framer variants.
-  data/                 # server-side data fetchers (Brook)
-  db/, shopify/, broadcaster/   # backend glue (Brook)
-hooks/                  # useParallax, useScrollReveal, useHls, useLiveStatus
-public/
-  ralph-logo.png        # circle logo
-  ralph-wordmark.png    # "ralph" script
-  illustrations/        # drop Duffy's SVGs here as React components
-```
-
-## What's yours vs. what's mine
-
-| You own | Brook owns |
+| You own | Brook owns (don't edit without asking) |
 |---|---|
-| `components/**/*.tsx` (except `layout/Nav.tsx` and modals) | `lib/`, `app/api/`, `context/`, `middleware.ts` |
-| `lib/animation/*.ts` — all Framer Motion variants | `lib/data/*.ts`, `lib/db/*.ts`, `lib/shopify/*.ts`, `lib/broadcaster/*.ts` |
-| Tailwind config, `app/globals.css` | Auth, sessions, Server Actions |
-| All SVG/illustration integration | Railway deploys, env vars |
+| All of `components/` — styling, layout, animation, structure | `app/api/*` — API routes |
+| `app/globals.css`, Tailwind tokens, brand colours, theme system | `lib/db/`, `lib/auth.ts`, `lib/shopify/*`, `lib/broadcaster/*`, `lib/data/*` — data + backend glue |
+| `lib/animation/*.ts` — all Framer Motion variants | `middleware.ts`, `context/` (except visual tweaks) |
+| `public/illustrations/` — Duffy's SVG drops | Server Actions in `lib/actions/*` (CMS only) |
+| Responsive breakpoints, mobile layouts | Env vars, Railway config |
+| Typography, microcopy polish | DB schema |
 
-Ask before touching my side. I'll ask before restyling yours.
+Any *feature* change that touches data flow or API, loop me in. Anything purely visual/animation is your call — push straight to `main`.
+
+## The codebase at a glance
+
+```
+app/                # routes. Each page is mostly a data-fetch + render of a *Client component
+components/
+  layout/           # Nav, Footer, Starfield, SubscribeModal — shared across all pages
+  home/             # Hero, PlanetSection, MobileHome, FloatingCharacter, ScrollIndicator
+  magazine/         # ArticleGrid (claw mechanic here), ArticleOverlay, BlockRenderer, CoverStory, CategoryTabs
+  events/           # EventCreature, CrowdBackground, EventFlyout, PastEvents, EventsHero
+  tv/               # TVSet (the retro frame), LivePlayer, Teletext overlays, SubscribeGate, TVControls
+  shop/             # ProductCard, ProductOverlay, ShopClient
+  lab/              # RalphOMatic (the lever/conveyor machine), LabGrid, LabHero
+lib/
+  animation/        # One file per section — every Framer variant lives here
+  data/             # server-side fetchers (Brook's side; you read the types)
+hooks/              # useParallax, useScrollReveal, useHls, useLiveStatus
+public/
+  ralph-logo.png       # pink circle "ralph world" logo
+  ralph-wordmark.png   # "ralph" script
+  illustrations/       # drop Duffy's SVGs here
+```
+
+Every complex component (PlanetSection, RalphOMatic, Magazine, TV, Events) has a `README.md` alongside it describing **animation intent** and **asset slots**. Read those first — they explain what the placeholders are meant to become.
 
 ## Animation conventions
 
-Every section has a single animation config file in `lib/animation/`:
+- **All Framer Motion variants live in `lib/animation/*.ts`** — one file per section. Don't inline variants in components. If a section doesn't have the variant you need, add it there.
+- Current files: `homepage.ts`, `magazine.ts`, `events.ts`, `tv.ts`, `lab.ts`
+- Timings, easings, stagger delays — all in those files, clearly named
 
-- `homepage.ts` — hero stagger, planet parallax factor, module card, floating char
-- `magazine.ts` — claw mechanic variants, grid stagger, overlay
-- `events.ts` — creature bob, flyout stages, parallax factor, past event reveal
-- `tv.ts` — screen state transitions, static flicker, teletext header
-- `lab.ts` — lever, lights, conveyor, bell jar, card reveal
+## Illustration slots
 
-**Always edit timings and easings in these files**, not inline in components. Variants are imported by name.
+Every bespoke illustration is a placeholder today, and most complex components accept an `illustration?: React.ComponentType` prop. Drop in Duffy's SVG components as you get them.
 
-## Duffy asset slots
+Main slots:
 
-Every bespoke illustration is a placeholder today. Each component that expects Duffy's work takes an `illustration?: React.ComponentType` prop. Replace the placeholder by rendering that component.
+- **Planets** (4x on homepage) — `components/home/PlanetSection/PlanetSection.tsx`, currently a circle with an accent-coloured border
+- **Floating characters** between sections — `FloatingCharacter.tsx`
+- **Event creatures** — `components/events/EventCreature.tsx`, per-event arm+wristband
+- **Crowd scene** — `components/events/CrowdBackground.tsx`
+- **TV set frame + flanking characters** — `components/tv/TVSet.tsx`
+- **Ralph-O-Matic machine + conveyor** — `components/lab/RalphOMatic.tsx` (takes `machineIllustration` and `conveyorIllustration` props that receive a `state` prop for animation variants)
+- **Footer arch characters, London globe** — `components/layout/Footer.tsx`
+- **Subscribe modal characters, magazine covers, astronaut** — `components/layout/SubscribeModal.tsx`
+- **Claw mechanic** for magazine cards — `components/magazine/` (spec'd but not visually implemented)
+- **Reading character + "Got coin?" starburst** — `components/magazine/MagazineHero.tsx`
 
-| Where | Slot | Current placeholder |
-|---|---|---|
-| `components/home/PlanetSection/PlanetSection.tsx` | Planet illustration (4x — Magazine/Events/Shop/Lab) | Circle with border |
-| `components/home/FloatingCharacter.tsx` | Characters between sections | Pink circle |
-| `components/events/EventCreature.tsx` | Per-event wristband creature | Styled div with accent colour |
-| `components/events/CrowdBackground.tsx` | Full crowd scene | Gradient rectangle |
-| `components/events/EventsHero.tsx` | Planet / satellite / London globe decorative | Faded circles |
-| `components/tv/TVSet.tsx` | Retro TV frame, flanking alien + robot characters | CSS bezel |
-| `components/magazine/MagazineHero.tsx` | "Reading character" + "Got coin?" starburst | Boxes |
-| `components/lab/RalphOMatic.tsx` | The machine + conveyor belt (props: `machineIllustration`, `conveyorIllustration`, receive `state`) | CSS placeholder with debug label |
-| `components/layout/Footer.tsx` | Characters sitting on the pink arch + London globe | Coloured circles |
-| `components/layout/SubscribeModal.tsx` | Characters on arch, astronaut, magazine covers | Boxes |
+## Brand foundations
 
-Each complex component has a `README.md` next to it describing animation intent and asset slots in plain English. **Read those first.**
+Brand colours exposed as Tailwind classes (defined in `app/globals.css`):
 
-## Brand colours
-
-Defined as CSS variables in `app/globals.css`, exposed as Tailwind classes:
-
-- `ralph-pink` `#FF2098` — primary brand accent
-- `ralph-orange` `#FF6B35` — Magazine
+- `ralph-pink` `#FF2098` — primary accent, CTAs
+- `ralph-orange` `#FF6B35` — Magazine section
 - `ralph-teal` `#00C4B4` — Events
 - `ralph-green` `#4CAF50` — Shop
-- `ralph-yellow` `#FFE566` — Lab (uses dark text)
+- `ralph-yellow` `#FFE566` — Lab (requires dark text)
 - `ralph-purple` `#7B2FBE` — secondary
 
-Themes live in `context/ThemeContext.tsx`. MVP themes: `cosy-dynamics` (default dark, labelled "Starfield") and `light`. Two more are scaffolded for later.
+Theme system lives in `context/ThemeContext.tsx`. MVP: `cosy-dynamics` (dark, labelled "Starfield") and `light`. Two more are scaffolded (`8-bit-nostalgia`, `1980s-fever-dream`) — empty CSS blocks ready for you to fill when designs land.
 
-## Running with real content
+Type tokens are unset beyond a Playfair Display font var (`--font-display`) used for hand-drawn-style headings. Whole type system is yours to define.
 
-The CMS (`cms.ralph.world`) writes to the same Postgres, so you can log in, create articles / events / lab items, and see them appear. Content changes propagate within ~60s; the CMS also triggers immediate revalidation on save.
+## Working with real content
 
-Shopify isn't connected — the shop uses mock products from `lib/shopify/mock.ts`.
+Content comes from the CMS (`cms.ralph.world`) — same Postgres database. Articles, events, lab items, TV VOD, homepage copy, global site copy all editable there. Changes propagate to the public site within ~60s or immediately via on-save revalidation.
 
-Broadcaster is live — when someone's streaming via `broadcaster.ralph.world`, the TV page plays automatically.
+- **Shopify** isn't live — shop shows 12 mock products from `lib/shopify/mock.ts` so you can build the visual pass. Buy flow is disabled in demo mode.
+- **Broadcaster** is live at `broadcaster.ralph.world` — TV page plays automatically when someone's streaming.
+- **All site copy** is editable in the CMS under Site Copy. Don't hardcode strings; use the `copy` prop pattern already wired up.
 
 ## Things to be careful about
 
-- **TypeScript strict**: no `any` without a comment. `npx next build` must pass before pushing.
-- **Server vs. client**: a component is server by default. Add `'use client'` only when you need state, effects, or browser APIs. Don't import from `lib/db/**` or `lib/auth.ts` in a client component — the bundler will reject it.
-- **`useSearchParams`** needs a Suspense boundary. If you add one, wrap it or it breaks static prerendering.
-- **Hover logic** on sections: desktop-only. Use the pattern in `PlanetSection.tsx` that checks `matchMedia('(hover: none)')`.
-- **HLS / `LivePlayer`**: do not unmount/remount when a user opens the Show Info or Schedule overlays. Overlays render on top; player stays mounted.
+- **TypeScript strict mode** — `npx next build` must pass before pushing. No `any` without a comment.
+- **Server vs. client components**: components are server by default. Add `'use client'` only when you need state, effects, refs, or browser APIs. A client component can't import from `lib/db/*` or `lib/auth.ts`.
+- **`useSearchParams`** needs a Suspense boundary. Wrap it in `<Suspense>` or you break static prerendering for the whole app.
+- **Hover interactions** should check for touch devices (see `PlanetSection.tsx` for the `matchMedia('(hover: none)')` pattern). Don't let touch users get stuck on hover-only states.
+- **HLS / `LivePlayer`** should not unmount when overlays open — overlays render on top at `z-10`. Breaking this forces the stream to re-tune.
+- **`revalidatePath`** is Brook's domain — don't add calls to `revalidatePublicSite` from client code. If you think you need to invalidate cache, ping me.
 
-## Questions / escalation
+## Questions
 
-Anything that isn't purely visual — auth flows, DB queries, API routes, deploy issues, CMS UX — ping me (Brook). I'll be quick.
+- **Animation / visual / illustration / type / responsive / microcopy** — your call, push to main.
+- **Data shape, API, auth, CMS behaviour, deploy, env vars, anything breaking in prod** — ping Brook.
 
-Animation approvals, illustration integration, microcopy tone, responsive breakpoints — your call. Push to main, Railway auto-deploys, preview within a minute.
+Push regularly, even WIP. Railway rebuilds fast, it's cheap to iterate live.
 
 Welcome aboard.

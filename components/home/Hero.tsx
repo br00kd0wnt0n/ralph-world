@@ -14,7 +14,8 @@ interface HeroProps {
 export default function Hero({ heading, line1, line2, line3 }: HeroProps) {
   return (
     <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 text-center overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-[#0F3D5C]/30 pointer-events-none" />
+      {/* Subtle background tint — no hard edge when scrolling out */}
+      <div className="absolute inset-0 bg-black pointer-events-none" />
 
       <motion.div
         variants={heroContainerVariants}

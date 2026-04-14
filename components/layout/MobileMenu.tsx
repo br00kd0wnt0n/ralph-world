@@ -75,14 +75,6 @@ export default function MobileMenu({
           ))}
         </nav>
 
-        <Link
-          href="/play"
-          onClick={onClose}
-          className="mt-6 text-lg text-ralph-teal hover:text-ralph-pink transition-colors"
-        >
-          Play with Ralph
-        </Link>
-
         <div className="mt-8 w-48 border-t border-white/20" />
 
         <div className="mt-6 flex flex-col items-center gap-3">

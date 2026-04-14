@@ -85,12 +85,6 @@ export default function Nav() {
             </Link>
           ) : (
             <>
-              <Link
-                href="/play"
-                className="text-secondary hover:text-primary transition-colors"
-              >
-                Play with Ralph
-              </Link>
               <button
                 onClick={() => setSubscribeOpen(true)}
                 className="rounded-full border border-primary/80 px-4 py-1.5 text-primary font-medium hover:bg-primary/10 transition-colors"

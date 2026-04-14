@@ -77,6 +77,10 @@ export const DEFAULT_COPY = {
   // Footer
   footer_tagline: 'The Entertainment People',
   footer_agency_cta: "Hey. Aren't you an agency?",
+  footer_contact_email: 'mailto:hello@ralph.world',
+  footer_tiktok_url: '',
+  footer_instagram_url: '',
+  footer_youtube_url: '',
 } as const
 
 export type SiteCopyKey = keyof typeof DEFAULT_COPY

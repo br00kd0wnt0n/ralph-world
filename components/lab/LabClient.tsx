@@ -21,24 +21,26 @@ export default function LabClient({ items, copy }: LabClientProps) {
   const [settledItemId, setSettledItemId] = useState<string | null>(null)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
 
+  // Only items with an external URL are valid candidates for the machine —
+  // otherwise tapping the settled bell jar would do nothing.
+  const machineItems = items.filter((i) => Boolean(i.externalUrl))
+
   const handleLeverPull = useCallback(() => {
     if (state === 'spinning') return
+    if (machineItems.length === 0) return
 
     setState('lever-pulled')
     setSettledItemId(null)
 
-    // Transition to spinning
     setTimeout(() => setState('spinning'), 300)
 
-    // Pick a random item after spin completes
     setTimeout(() => {
-      if (items.length > 0) {
-        const picked = items[Math.floor(Math.random() * items.length)]
-        setSettledItemId(picked.id)
-      }
+      const picked =
+        machineItems[Math.floor(Math.random() * machineItems.length)]
+      setSettledItemId(picked.id)
       setState('settled')
     }, 300 + SPIN_DURATION_MS)
-  }, [state, items])
+  }, [state, machineItems])
 
   const handleItemSelect = useCallback(
     (itemId: string) => {
@@ -61,7 +63,7 @@ export default function LabClient({ items, copy }: LabClientProps) {
       <section className="px-6 pb-8">
         <div className="max-w-6xl mx-auto">
           <RalphOMatic
-            items={items}
+            items={machineItems}
             state={state}
             onLeverPull={handleLeverPull}
             onItemSelect={handleItemSelect}

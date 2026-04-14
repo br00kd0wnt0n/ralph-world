@@ -55,6 +55,9 @@ export default function ProductOverlay({
   const firstVariant = product.variants.edges[0]?.node
   const price = product.priceRange.minVariantPrice
   const isAvailable = product.availableForSale
+  // Mock products come from lib/shopify/mock.ts when Shopify isn't configured.
+  // Disable Buy Now for them to avoid the cart create 503.
+  const isDemoMode = product.id.startsWith('gid://mock/')
 
   async function handleBuy() {
     if (!firstVariant) return
@@ -159,7 +162,19 @@ export default function ProductOverlay({
                   </div>
                 </dl>
 
-                {isAvailable ? (
+                {isDemoMode ? (
+                  <div className="space-y-3">
+                    <button
+                      disabled
+                      className="w-full rounded-full bg-gray-300 text-gray-500 py-4 font-medium cursor-not-allowed"
+                    >
+                      Buy Now
+                    </button>
+                    <p className="text-xs text-gray-500 text-center">
+                      Shop is in demo mode. Checkout goes live once Shopify is connected.
+                    </p>
+                  </div>
+                ) : isAvailable ? (
                   <button
                     onClick={handleBuy}
                     disabled={isLoading || !firstVariant}

@@ -11,45 +11,55 @@ interface FooterProps {
 export default function Footer({ variant = 'dark', copy }: FooterProps) {
   const tagline = copy?.footer_tagline ?? 'The Entertainment People'
   const agencyCta = copy?.footer_agency_cta ?? "Hey. Aren't you an agency?"
+  const contactHref = copy?.footer_contact_email || '/contact'
+  const tiktokUrl = copy?.footer_tiktok_url
+  const instagramUrl = copy?.footer_instagram_url
+  const youtubeUrl = copy?.footer_youtube_url
 
   if (variant === 'light') {
     return (
       <footer className="bg-surface py-8 px-6 border-t border-border/30">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-wrap items-center justify-center gap-6 mb-4">
-            <Link
-              href="/contact"
+            <a
+              href={contactHref}
               className="text-sm text-secondary hover:text-primary transition-colors"
             >
               Contact us
-            </Link>
-            <a
-              href="https://tiktok.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-secondary hover:text-primary transition-colors"
-              aria-label="TikTok"
-            >
-              TikTok
             </a>
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-secondary hover:text-primary transition-colors"
-              aria-label="Instagram"
-            >
-              Instagram
-            </a>
-            <a
-              href="https://youtube.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-secondary hover:text-primary transition-colors"
-              aria-label="YouTube"
-            >
-              YouTube
-            </a>
+            {tiktokUrl && (
+              <a
+                href={tiktokUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-secondary hover:text-primary transition-colors"
+                aria-label="TikTok"
+              >
+                TikTok
+              </a>
+            )}
+            {instagramUrl && (
+              <a
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-secondary hover:text-primary transition-colors"
+                aria-label="Instagram"
+              >
+                Instagram
+              </a>
+            )}
+            {youtubeUrl && (
+              <a
+                href={youtubeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-secondary hover:text-primary transition-colors"
+                aria-label="YouTube"
+              >
+                YouTube
+              </a>
+            )}
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted">
             <Link href="/subscribe" className="hover:text-primary transition-colors">

@@ -11,7 +11,7 @@ export interface ThemeOption {
 }
 
 export const THEMES: ThemeOption[] = [
-  { id: 'cosy-dynamics', label: 'Cosy dynamics', type: 'css-vars' },
+  { id: 'cosy-dynamics', label: 'Starfield', type: 'css-vars' },
   { id: 'light', label: 'Light', type: 'css-vars' },
   { id: '8-bit-nostalgia', label: '8-bit nostalgia', type: 'immersive' },
   { id: '1980s-fever-dream', label: '1980s fever dream', type: 'immersive' },

@@ -22,42 +22,66 @@ export default function LivePlayer({
   offlineLabel = 'OFFLINE',
   offlineMessage = 'Tune in later',
 }: LivePlayerProps) {
-  const streamUrl = relayUrl ?? process.env.NEXT_PUBLIC_BROADCASTER_RELAY_URL ?? null
+  const streamUrl =
+    relayUrl ?? process.env.NEXT_PUBLIC_BROADCASTER_RELAY_URL ?? null
   const { videoRef, isReady, error } = useHls(streamUrl)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isMutedForAutoplay, setIsMutedForAutoplay] = useState(true)
 
+  // Apply volume when it changes
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.volume = volume
-    }
+    const v = videoRef.current
+    if (!v) return
+    v.volume = volume
   }, [volume, videoRef])
+
+  // Sync isPlaying with real video element events (not our local guess)
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return
+    const onPlay = () => setIsPlaying(true)
+    const onPause = () => setIsPlaying(false)
+    v.addEventListener('play', onPlay)
+    v.addEventListener('pause', onPause)
+    return () => {
+      v.removeEventListener('play', onPlay)
+      v.removeEventListener('pause', onPause)
+    }
+  }, [videoRef])
 
   useEffect(() => {
     onLiveChange?.(isReady && !error)
   }, [isReady, error, onLiveChange])
 
-  async function handlePlay() {
+  async function handleClick() {
     const v = videoRef.current
     if (!v) return
+    // First click unmutes (in case autoplay started muted)
+    if (isMutedForAutoplay) {
+      v.muted = false
+      setIsMutedForAutoplay(false)
+    }
     try {
-      if (isPlaying) {
-        v.pause()
-        setIsPlaying(false)
-      } else {
+      if (v.paused) {
         await v.play()
-        setIsPlaying(true)
+      } else {
+        v.pause()
       }
     } catch {
-      // Autoplay blocked — user must interact
+      // Play blocked — leave state as-is
     }
   }
 
-  // No stream URL or error: show offline fallback
+  // No stream URL or error: offline fallback
   if (!streamUrl || error) {
     return (
-      <div className={`w-full h-full bg-black flex items-center justify-center ${className}`}>
+      <div
+        className={`w-full h-full bg-black flex items-center justify-center ${className}`}
+      >
         <div className="text-center">
-          <div className="text-ralph-pink text-sm mb-2 tracking-widest">{offlineLabel}</div>
+          <div className="text-ralph-pink text-sm mb-2 tracking-widest">
+            {offlineLabel}
+          </div>
           <p className="text-white/40 text-xs">{offlineMessage}</p>
         </div>
       </div>
@@ -70,24 +94,46 @@ export default function LivePlayer({
         ref={videoRef}
         className="w-full h-full object-cover"
         playsInline
-        muted={volume === 0}
+        muted={isMutedForAutoplay || volume === 0}
         autoPlay
       />
+
       {!isReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black">
-          <div className="text-white/50 text-xs tracking-widest">TUNING IN...</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-black pointer-events-none">
+          <div className="text-white/50 text-xs tracking-widest">
+            TUNING IN...
+          </div>
         </div>
       )}
+
+      {/* Click-through overlay */}
       {isReady && (
         <button
-          onClick={handlePlay}
-          className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 transition-opacity"
+          onClick={handleClick}
+          className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity"
           aria-label={isPlaying ? 'Pause' : 'Play'}
         >
-          <div className="text-white text-4xl">{isPlaying ? '❚❚' : '▶'}</div>
+          <div className="text-white text-4xl drop-shadow-lg">
+            {isPlaying ? '❚❚' : '▶'}
+          </div>
         </button>
       )}
-      <input type="hidden" value={volume} onChange={(e) => onVolumeChange(Number(e.target.value))} />
+
+      {/* Persistent unmute pill until user interacts */}
+      {isReady && isMutedForAutoplay && (
+        <button
+          onClick={handleClick}
+          className="absolute bottom-3 right-3 bg-black/70 border border-white/20 text-white text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur hover:bg-black/90 transition-colors"
+        >
+          🔇 Tap to unmute
+        </button>
+      )}
+
+      <input
+        type="hidden"
+        value={volume}
+        onChange={(e) => onVolumeChange(Number(e.target.value))}
+      />
     </div>
   )
 }

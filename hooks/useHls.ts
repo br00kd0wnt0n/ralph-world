@@ -5,6 +5,7 @@ import Hls from 'hls.js'
 
 /**
  * Attaches HLS stream to a video element. Handles native HLS (Safari) and hls.js (everywhere else).
+ * Tuned for low-latency live streams with small segments.
  * Returns videoRef, isReady, and error state.
  */
 export function useHls(streamUrl: string | null) {
@@ -26,25 +27,52 @@ export function useHls(streamUrl: string | null) {
     // Native HLS support (Safari)
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = streamUrl
-      video.addEventListener('loadedmetadata', () => setIsReady(true))
+      const onLoaded = () => setIsReady(true)
+      video.addEventListener('loadedmetadata', onLoaded)
       return () => {
+        video.removeEventListener('loadedmetadata', onLoaded)
         video.removeAttribute('src')
         video.load()
       }
     }
 
-    // hls.js fallback
+    // hls.js for everyone else — tuned for low-latency live
     if (Hls.isSupported()) {
-      const hls = new Hls({ enableWorker: true })
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        liveDurationInfinity: true,
+        // Buffer targets for 1s segments
+        liveSyncDuration: 4,
+        liveMaxLatencyDuration: 10,
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        // Retry network blips
+        manifestLoadingMaxRetry: 6,
+        levelLoadingMaxRetry: 6,
+        fragLoadingMaxRetry: 6,
+      })
       hlsRef.current = hls
 
       hls.loadSource(streamUrl)
       hls.attachMedia(video)
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => setIsReady(true))
+
       hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) {
-          setError(data.type)
+        if (!data.fatal) return
+
+        // Auto-recover on fatal errors before giving up
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            hls.startLoad()
+            break
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            hls.recoverMediaError()
+            break
+          default:
+            setError(data.type)
+            hls.destroy()
         }
       })
 

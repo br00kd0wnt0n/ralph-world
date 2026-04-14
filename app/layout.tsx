@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: 'Ralph — The Entertainment People',
   description:
     'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
+  icons: {
+    icon: '/ralph-logo.png',
+    shortcut: '/ralph-logo.png',
+    apple: '/ralph-logo.png',
+  },
 }
 
 export default function RootLayout({

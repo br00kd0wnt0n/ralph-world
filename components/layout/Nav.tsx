@@ -87,7 +87,7 @@ export default function Nav() {
             <>
               <button
                 onClick={() => setSubscribeOpen(true)}
-                className="rounded-full border border-primary/80 px-4 py-1.5 text-primary font-medium hover:bg-primary/10 transition-colors"
+                className="rounded-full bg-ralph-pink px-4 py-1.5 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
               >
                 Get started
               </button>

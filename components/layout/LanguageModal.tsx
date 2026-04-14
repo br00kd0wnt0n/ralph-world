@@ -52,7 +52,7 @@ export default function LanguageModal() {
         className="flex items-center justify-center w-8 h-8 rounded-full border border-border/60 text-xs text-secondary hover:text-primary transition-colors font-medium"
         aria-label="Choose language"
       >
-        A|B
+        Aβ
       </button>
 
       {isOpen && (

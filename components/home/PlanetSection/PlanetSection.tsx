@@ -131,13 +131,13 @@ export default function PlanetSection({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: planetOnRight ? -40 : 40 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="rounded-md shadow-2xl relative overflow-visible"
+              className="rounded-md shadow-2xl relative overflow-hidden"
               style={{ backgroundColor: accentColor }}
             >
               {/* Close tab */}
               <button
                 onClick={() => setIsOpen(false)}
-                className={`absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
                   useDarkText
                     ? 'bg-black text-white'
                     : 'bg-white text-black'
@@ -147,92 +147,93 @@ export default function PlanetSection({
                 ✕
               </button>
 
-              <div className="p-5 md:p-7">
-                <h3
-                  className={`text-2xl md:text-3xl font-bold ${textColor} mb-1 font-[family-name:var(--font-display)]`}
-                >
-                  {moduleCard.heading}
-                </h3>
-                <p
-                  className={`${textColor} font-medium text-sm md:text-base mb-2`}
-                >
-                  {moduleCard.tagline}
-                </p>
-                <p
-                  className={`${textMuted} text-sm mb-5 leading-relaxed max-w-md`}
-                >
-                  {moduleCard.description}
-                </p>
+              {/* Content row: text + carousel, both inside the colored box */}
+              <div className="flex flex-col md:flex-row">
+                {/* Text block */}
+                <div className="p-5 md:p-7 md:pr-4 flex-1 min-w-0">
+                  <h3
+                    className={`text-2xl md:text-3xl font-bold ${textColor} mb-1 font-[family-name:var(--font-display)]`}
+                  >
+                    {moduleCard.heading}
+                  </h3>
+                  <p
+                    className={`${textColor} font-medium text-sm md:text-base mb-2`}
+                  >
+                    {moduleCard.tagline}
+                  </p>
+                  <p
+                    className={`${textMuted} text-sm mb-5 leading-relaxed`}
+                  >
+                    {moduleCard.description}
+                  </p>
 
-                <Link
-                  href={moduleCard.href}
-                  className={`inline-block rounded-full px-5 py-2 font-medium text-sm ${ctaBg} transition-colors`}
-                >
-                  {moduleCard.ctaLabel}
-                </Link>
-              </div>
-
-              {/* Item carousel — extends out from the panel on desktop */}
-              {moduleCard.items.length > 0 && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 hidden md:flex items-center gap-3 ${
-                    planetOnRight ? 'left-full ml-4' : 'right-full mr-4'
-                  }`}
-                >
-                  {hasMoreBack && (
-                    <button
-                      onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
-                      className={`w-8 h-8 rounded-full ${ctaBg} flex items-center justify-center text-sm shadow-lg`}
-                      aria-label="Previous"
-                    >
-                      ←
-                    </button>
-                  )}
-                  <div className="flex gap-3">
-                    {visibleItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`w-28 md:w-32 ${cardBg} overflow-hidden shadow-lg`}
-                        style={{
-                          borderLeft: `3px solid ${accentColor}`,
-                          backgroundColor: useDarkText ? '#fff' : '#fff',
-                        }}
-                      >
-                        <div className="aspect-[4/5] bg-gray-200 relative">
-                          {item.thumbnailUrl && (
-                            <img
-                              src={item.thumbnailUrl}
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                          {item.badge && (
-                            <span
-                              className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 ${badgeColors} text-[9px] font-bold rounded`}
-                            >
-                              {item.badge}
-                            </span>
-                          )}
-                        </div>
-                        <div className="p-2">
-                          <p className="text-black text-[11px] font-medium line-clamp-2 leading-tight">
-                            {item.title}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {hasMoreForward && (
-                    <button
-                      onClick={() => setCarouselIndex((i) => i + 1)}
-                      className={`w-8 h-8 rounded-full ${ctaBg} flex items-center justify-center text-sm shadow-lg`}
-                      aria-label="Next"
-                    >
-                      →
-                    </button>
-                  )}
+                  <Link
+                    href={moduleCard.href}
+                    className={`inline-block rounded-full px-5 py-2 font-medium text-sm ${ctaBg} transition-colors`}
+                  >
+                    {moduleCard.ctaLabel}
+                  </Link>
                 </div>
-              )}
+
+                {/* Carousel inside the box */}
+                {moduleCard.items.length > 0 && (
+                  <div className="p-5 md:p-4 md:pl-0 md:pr-5 flex items-center gap-2 shrink-0">
+                    {hasMoreBack && (
+                      <button
+                        onClick={() =>
+                          setCarouselIndex((i) => Math.max(0, i - 1))
+                        }
+                        className={`w-7 h-7 rounded-full ${ctaBg} flex items-center justify-center text-xs shadow-md shrink-0`}
+                        aria-label="Previous"
+                      >
+                        ←
+                      </button>
+                    )}
+                    <div className="flex gap-2">
+                      {visibleItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="w-24 md:w-28 bg-white overflow-hidden shadow-lg shrink-0"
+                          style={{
+                            borderLeft: `3px solid ${accentColor}`,
+                          }}
+                        >
+                          <div className="aspect-[4/5] bg-gray-200 relative">
+                            {item.thumbnailUrl && (
+                              <img
+                                src={item.thumbnailUrl}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
+                            {item.badge && (
+                              <span
+                                className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 ${badgeColors} text-[9px] font-bold rounded`}
+                              >
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="p-2">
+                            <p className="text-black text-[11px] font-medium line-clamp-2 leading-tight">
+                              {item.title}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {hasMoreForward && (
+                      <button
+                        onClick={() => setCarouselIndex((i) => i + 1)}
+                        className={`w-7 h-7 rounded-full ${ctaBg} flex items-center justify-center text-xs shadow-md shrink-0`}
+                        aria-label="Next"
+                      >
+                        →
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -260,33 +261,6 @@ export default function PlanetSection({
         </button>
       </div>
 
-      {/* Mobile item carousel (below, full width) */}
-      {isOpen && moduleCard.items.length > 0 && (
-        <div className="md:hidden absolute left-6 right-6 bottom-4 flex gap-3 overflow-x-auto scrollbar-hide">
-          {moduleCard.items.map((item) => (
-            <div
-              key={item.id}
-              className="shrink-0 w-28 bg-white overflow-hidden shadow-lg"
-              style={{ borderLeft: `3px solid ${accentColor}` }}
-            >
-              <div className="aspect-[4/5] bg-gray-200 relative">
-                {item.thumbnailUrl && (
-                  <img
-                    src={item.thumbnailUrl}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-              <div className="p-2">
-                <p className="text-black text-[11px] font-medium line-clamp-2">
-                  {item.title}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </motion.section>
   )
 }

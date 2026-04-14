@@ -1,13 +1,19 @@
-import Footer from '@/components/layout/Footer'
+import { getProductsByCollection } from '@/lib/shopify/client'
+import ShopClient from '@/components/shop/ShopClient'
 
-export default function Shop() {
-  return (
-    <>
-      <section className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-        <h1 className="text-4xl font-bold text-primary mb-4">Shop</h1>
-        <p className="text-secondary">Coming in Phase 6</p>
-      </section>
-      <Footer variant="light" />
-    </>
+export const revalidate = 300
+
+const COLLECTION_HANDLES = ['ralph-magazine', 'ralph-merch', 'ralph-random']
+
+export default async function ShopPage() {
+  const results = await Promise.all(
+    COLLECTION_HANDLES.map((h) => getProductsByCollection(h, 20))
   )
+
+  const collections = COLLECTION_HANDLES.reduce(
+    (acc, handle, i) => ({ ...acc, [handle]: results[i] }),
+    {} as Record<string, Awaited<ReturnType<typeof getProductsByCollection>>>
+  )
+
+  return <ShopClient collections={collections} />
 }

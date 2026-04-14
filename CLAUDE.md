@@ -13,7 +13,7 @@
 FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-Phase 5 complete — Events built. Next: Phase 6 (Shop)
+Phase 6 complete — Shop + Shopify integration. Next: Phase 7 (Lab)
 
 ---
 

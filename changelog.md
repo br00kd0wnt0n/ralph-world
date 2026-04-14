@@ -4,6 +4,41 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-14 — ARCHITECT mode (Phase 6: Shop)
+
+**Session goal:** Shopify Storefront API integration, CartContext, product grid, overlay, subscription webhook
+
+### Added
+- `lib/shopify/types.ts` — ShopifyProduct, ShopifyCart, ShopifyVariant, ProductSummary types
+- `lib/shopify/queries.ts` — GraphQL fragments and queries/mutations (GET_PRODUCTS_BY_COLLECTION, GET_PRODUCT_BY_HANDLE, CREATE_CART, ADD/UPDATE/REMOVE_CART_LINES, GET_CART)
+- `lib/shopify/client.ts` — server-side storefront() fetch with 5s timeout, lazy-init, graceful failure (returns null/empty when credentials missing)
+- Cart API routes (all server-side, Storefront token never in browser):
+  - POST `/api/cart/create` — new cart with optional variant
+  - POST `/api/cart/add` — add lines
+  - PATCH `/api/cart/update` — update line quantity
+  - DELETE `/api/cart/remove` — remove line IDs
+  - GET `/api/cart/[cartId]` — fetch existing cart
+- GET `/api/shop/[handle]` — full product details for overlay
+- POST `/api/webhooks/shopify` — HMAC-verified webhook handler (orders/paid → 'paid', subscriptions/cancelled → 'free'), logs all events to webhook_log, matches users by email
+- `context/CartContext.tsx` — wired to real Shopify actions, persists cartId to localStorage, auto-recovers expired carts
+- `components/layout/CartDrawer.tsx` — real Shopify cart display with qty controls, remove, checkout URL link
+- `components/shop/ProductCard.tsx` — bordered card with diagonal ribbon badges (NEW/HOT/LIMITED from product tags), sold-out overlay
+- `components/shop/ProductOverlay.tsx` — full-screen overlay with image + thumbnails, description, price, Buy Now → addItem → open drawer. Sold-out state with "You snooze, you lose" subscribe CTA
+- `components/shop/ShopClient.tsx` — hero "BUY RALPH STUFF", category tabs (The Mag / Merch / Random S**t), 4-col grid, fetches 3 collections in parallel
+
+### Decisions made
+- Shopify client returns null on any error — shop page renders "Products coming soon" placeholder when credentials unset
+- Webhook timing-safe HMAC compare prevents signature forgery timing attacks
+- cartId in localStorage only (no DB persistence for guest carts) — Shopify owns cart state
+- 5min revalidation on /shop (product updates propagate fast)
+
+### Known issues (awaiting config)
+- Shopify webhook must be manually registered in Shopify admin → `/api/webhooks/shopify` with topics: orders/paid, subscriptions/create, subscriptions/cancelled
+- Shopify collections `ralph-magazine`, `ralph-merch`, `ralph-random` must exist in the store
+- SHOPIFY_STOREFRONT_URL, SHOPIFY_STOREFRONT_TOKEN, SHOPIFY_WEBHOOK_SECRET required in Railway env
+
+---
+
 ## 2026-04-14 — FRONTEND mode (Phase 5: Events)
 
 **Session goal:** Events hero with creature system, multi-state flyouts, past events grid, RSVP flow

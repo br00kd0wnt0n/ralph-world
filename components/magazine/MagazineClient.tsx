@@ -13,17 +13,27 @@ import type { ArticleSummary, ArticleFull } from '@/lib/data/magazine'
 interface MagazineClientProps {
   articles: ArticleSummary[]
   coverStory: ArticleSummary | null
-  showCoverStory: boolean
 }
 
 export default function MagazineClient({
   articles,
   coverStory,
-  showCoverStory,
 }: MagazineClientProps) {
   const [overlayArticle, setOverlayArticle] = useState<ArticleFull | null>(null)
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
+  const [activeCategory, setActiveCategory] = useState('')
+
+  // Sync category from URL on mount + popstate
+  useEffect(() => {
+    function sync() {
+      const params = new URLSearchParams(window.location.search)
+      setActiveCategory(params.get('category') ?? '')
+    }
+    sync()
+    window.addEventListener('popstate', sync)
+    return () => window.removeEventListener('popstate', sync)
+  }, [])
 
   async function openArticle(slug: string) {
     const res = await fetch(`/api/articles/${slug}`)
@@ -45,15 +55,22 @@ export default function MagazineClient({
     return () => window.removeEventListener('popstate', onPopState)
   }, [overlayOpen])
 
-  const gridArticles = coverStory
-    ? articles.filter((a) => a.id !== coverStory.id)
+  // Client-side category filtering
+  const filteredArticles = activeCategory
+    ? articles.filter((a) => a.contentTags?.includes(activeCategory))
     : articles
+
+  const gridArticles = coverStory
+    ? filteredArticles.filter((a) => a.id !== coverStory.id)
+    : filteredArticles
 
   return (
     <>
-      {showCoverStory && <MagazineHero />}
+      {/* Hero always visible */}
+      <MagazineHero />
 
-      {showCoverStory && coverStory && (
+      {/* Cover story — always visible */}
+      {coverStory && (
         <CoverStory
           article={coverStory}
           onRead={openArticle}
@@ -61,17 +78,13 @@ export default function MagazineClient({
         />
       )}
 
-      {!showCoverStory && (
-        <section className="px-6 pt-12 pb-4">
-          <div className="max-w-5xl mx-auto">
-            <h1 className="text-3xl font-bold text-primary">Magazine</h1>
-          </div>
-        </section>
-      )}
-
-      <section className="bg-[#FAFAFA] pt-4 pb-0">
+      {/* Tabs + Grid on light bg */}
+      <section className="bg-[#FAFAFA] pt-4 pb-8 min-h-[50vh]">
         <Suspense>
-          <CategoryTabs />
+          <CategoryTabs
+            active={activeCategory}
+            onChange={setActiveCategory}
+          />
         </Suspense>
         <ArticleGrid articles={gridArticles} onArticleClick={openArticle} />
       </section>

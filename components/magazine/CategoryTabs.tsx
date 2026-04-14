@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 const CATEGORIES = [
   { value: 'comedy', label: 'Comedy' },
@@ -9,26 +9,24 @@ const CATEGORIES = [
   { value: 'film-tv', label: 'Film & TV' },
 ]
 
-export default function CategoryTabs() {
-  const router = useRouter()
+interface CategoryTabsProps {
+  active: string
+  onChange: (category: string) => void
+}
+
+export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const active = searchParams.get('category') ?? ''
 
   function handleClick(value: string) {
-    const params = new URLSearchParams(searchParams.toString())
-    if (value && value !== active) {
-      params.set('category', value)
-    } else {
-      params.delete('category')
-    }
-    const query = params.toString()
-    router.push(query ? `${pathname}?${query}` : pathname)
+    const next = value === active ? '' : value
+    onChange(next)
+    // Update URL without server re-fetch
+    const url = next ? `${pathname}?category=${next}` : pathname
+    window.history.pushState(null, '', url)
   }
 
   return (
     <div className="max-w-5xl mx-auto px-6">
-      {/* Dotted separator */}
       <div className="border-t border-dashed border-gray-400 mb-4" />
 
       <div className="flex justify-center gap-8 pb-4">

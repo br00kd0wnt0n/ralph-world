@@ -1,13 +1,13 @@
-import Footer from '@/components/layout/Footer'
+import { getActiveEvents, getPastEvents } from '@/lib/data/events'
+import EventsClient from '@/components/events/EventsClient'
 
-export default function Events() {
-  return (
-    <>
-      <section className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-        <h1 className="text-4xl font-bold text-primary mb-4">Events</h1>
-        <p className="text-secondary">Coming in Phase 5</p>
-      </section>
-      <Footer variant="light" />
-    </>
-  )
+export const revalidate = 3600
+
+export default async function EventsPage() {
+  const [activeEvents, pastEvents] = await Promise.all([
+    getActiveEvents(),
+    getPastEvents(),
+  ])
+
+  return <EventsClient activeEvents={activeEvents} pastEvents={pastEvents} />
 }

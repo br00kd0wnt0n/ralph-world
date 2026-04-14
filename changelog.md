@@ -4,6 +4,35 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-14 — FRONTEND mode (Phase 5: Events)
+
+**Session goal:** Events hero with creature system, multi-state flyouts, past events grid, RSVP flow
+
+### Added
+- `lib/animation/events.ts` — creature bob, flyout stage variants, past event scroll reveal, CROWD_PARALLAX_FACTOR
+- `lib/data/events.ts` — getActiveEvents, getPastEvents (filtered by is_past flag)
+- `components/events/EventCreature.types.ts` — prop interfaces for EventCreature + CrowdBackground with `illustration` slots for Duffy assets
+- `components/events/EventCreature.tsx` — positioned wristband/arm placeholder at creature_x/y, accent colour styling, badge, idle bob animation
+- `components/events/CrowdBackground.tsx` — 60vh container with teal curved arch top, mouse-opposite parallax via useMotionValue + useSpring (damping 30, stiffness 100)
+- `components/events/EventFlyout.tsx` — 3-stage flyout: minimal pill → expanded card → full modal with flyer/address/ticket CTA
+- `components/events/EventsHero.tsx` — "LET'S MEET UP" heading with planet/satellite/globe placeholders
+- `components/events/PastEvents.tsx` — 2-col grid with MISSED diagonal ribbon, thumbnail + content + verdict button
+- `components/events/EventsClient.tsx` — state machine for creature selection + flyout stage, backdrop for stage 3, subscribe modal integration
+- `components/events/README.md` — Duffy asset slot documentation for Josh
+- Seeded 2 past events for testing
+
+### Access gating
+- Guest clicks "Subscribe for ticket access" → subscribe modal (free tier)
+- Logged-in user clicks "Get tickets ↗" → opens external_ticket_url in new tab
+- `event_rsvps` table exists but not wired in MVP (tickets external only)
+
+### Decisions made
+- Parallax uses Framer Motion useMotionValue/useSpring (smoother than raw state updates)
+- Stage 3 flyout is a centered modal (not anchored to creature) with backdrop — better for full content
+- All three flyout stages share the same AnimatePresence key to avoid stale mount flash
+
+---
+
 ## 2026-04-14 — ARCHITECT mode (Phase 4: Ralph TV)
 
 **Session goal:** Broadcaster integration, TV set component, live player, teletext overlays, access gating

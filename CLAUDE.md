@@ -13,7 +13,7 @@
 FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-Phase 4 complete — Ralph TV built. Next: Phase 5 (Events)
+Phase 5 complete — Events built. Next: Phase 6 (Shop)
 
 ---
 

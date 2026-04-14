@@ -70,6 +70,8 @@ export default function PlanetSection({
       variants={planetSectionVariants}
       initial="hidden"
       animate={isVisible ? 'visible' : 'hidden'}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
       className={`relative flex items-center gap-6 md:gap-0 px-6 md:px-16 py-16 md:py-24 max-w-7xl mx-auto ${
         planetOnRight ? 'flex-row' : 'flex-row-reverse'
       }`}

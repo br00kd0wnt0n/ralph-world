@@ -1,11 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import {
-  leverVariants,
-  lightsVariants,
-  bellJarVariants,
-} from '@/lib/animation/lab'
+import { leverVariants, bellJarVariants } from '@/lib/animation/lab'
 import type { RalphOMaticProps } from './RalphOMatic.types'
 
 export default function RalphOMatic({
@@ -25,8 +21,6 @@ export default function RalphOMatic({
 
   const leverAnimate: 'pulled' | 'idle' =
     state === 'lever-pulled' || state === 'spinning' ? 'pulled' : 'idle'
-  const lightsAnimate =
-    state === 'idle' ? 'idle' : state === 'settled' ? 'settled' : 'active'
 
   return (
     <div className="w-full flex flex-col lg:flex-row items-stretch gap-4">
@@ -41,30 +35,6 @@ export default function RalphOMatic({
               <div className="inline-block bg-ralph-yellow text-black px-4 py-1 rounded-md font-bold text-sm tracking-wider border-2 border-black">
                 RALPH-O-MATIC
               </div>
-            </div>
-
-            {/* Lights + Clock */}
-            <div className="flex items-center justify-between mb-6">
-              <motion.div
-                variants={lightsVariants}
-                animate={lightsAnimate}
-                className="flex gap-2"
-              >
-                <div className="w-3 h-3 rounded-full bg-ralph-pink" />
-                <div className="w-3 h-3 rounded-full bg-ralph-yellow" />
-                <div className="w-3 h-3 rounded-full bg-ralph-teal" />
-              </motion.div>
-
-              <div className="w-12 h-12 rounded-full border-2 border-black bg-white flex items-center justify-center text-[10px] font-mono">
-                <span className="text-black">12:00</span>
-              </div>
-            </div>
-
-            {/* Rollers decorative */}
-            <div className="flex gap-1 mb-6 opacity-40">
-              <div className="w-4 h-4 rounded-full bg-black" />
-              <div className="w-4 h-4 rounded-full bg-black" />
-              <div className="w-4 h-4 rounded-full bg-black" />
             </div>
 
             {/* Lever */}

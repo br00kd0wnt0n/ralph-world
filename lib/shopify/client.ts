@@ -8,6 +8,7 @@ import {
   REMOVE_CART_LINES,
   GET_CART,
 } from './queries'
+import { getMockProducts, getMockProduct, isShopifyConfigured } from './mock'
 
 interface ShopifyResponse<T> {
   data?: T
@@ -74,6 +75,10 @@ export async function getProductsByCollection(
   handle: string,
   first = 20
 ): Promise<ProductSummary[]> {
+  if (!isShopifyConfigured()) {
+    return getMockProducts(handle)
+  }
+
   const data = await storefront<{
     collection: { products: { edges: { node: ShopifyProduct }[] } } | null
   }>(GET_PRODUCTS_BY_COLLECTION, { handle, first })
@@ -83,6 +88,10 @@ export async function getProductsByCollection(
 }
 
 export async function getProductByHandle(handle: string): Promise<ShopifyProduct | null> {
+  if (!isShopifyConfigured()) {
+    return getMockProduct(handle)
+  }
+
   const data = await storefront<{ product: ShopifyProduct | null }>(
     GET_PRODUCT_BY_HANDLE,
     { handle }

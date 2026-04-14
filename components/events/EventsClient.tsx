@@ -47,7 +47,6 @@ export default function EventsClient({
 
   function handleSelect(eventId: string) {
     if (selectedId === eventId) {
-      // Toggle off
       setSelectedId(null)
       setStage('minimal')
     } else {
@@ -75,39 +74,26 @@ export default function EventsClient({
               onSelect={handleSelect}
             />
           ))}
-
-          <AnimatePresence>
-            {selectedEvent && stage !== 'full' && (
-              <EventFlyout
-                key={`${selectedEvent.id}-${stage}`}
-                event={selectedEvent}
-                stage={stage}
-                onStageChange={setStage}
-                onClose={handleClose}
-                onSubscribe={() => setSubscribeOpen(true)}
-              />
-            )}
-          </AnimatePresence>
         </CrowdBackground>
       </section>
 
-      {/* Stage 3 full detail renders above everything */}
+      {/* Single flyout that morphs minimal → expanded → full via layout animation */}
       <AnimatePresence>
         {selectedEvent && stage === 'full' && (
-          <>
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 z-40 bg-black/60"
-              onClick={handleClose}
-            />
-            <EventFlyout
-              event={selectedEvent}
-              stage={stage}
-              onStageChange={setStage}
-              onClose={handleClose}
-              onSubscribe={() => setSubscribeOpen(true)}
-            />
-          </>
+          <div
+            className="fixed inset-0 z-40 bg-black/60"
+            onClick={handleClose}
+          />
+        )}
+        {selectedEvent && (
+          <EventFlyout
+            key={selectedEvent.id}
+            event={selectedEvent}
+            stage={stage}
+            onStageChange={setStage}
+            onClose={handleClose}
+            onSubscribe={() => setSubscribeOpen(true)}
+          />
         )}
       </AnimatePresence>
 

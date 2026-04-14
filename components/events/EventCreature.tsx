@@ -29,25 +29,19 @@ export default function EventCreature({
       {Illustration ? (
         <Illustration />
       ) : (
-        <>
-          {/* Arm placeholder */}
-          <div className="w-3 h-16 bg-white/20 rounded-full mb-1" />
-
-          {/* Wristband */}
-          <div
-            className="relative px-3 py-1.5 rounded-md shadow-lg"
-            style={{ backgroundColor: event.accent_colour }}
-          >
-            <span className="text-white text-xs font-bold uppercase tracking-widest">
-              Event
+        <div
+          className="relative px-3 py-1.5 rounded-md shadow-lg"
+          style={{ backgroundColor: event.accent_colour }}
+        >
+          <span className="text-white text-xs font-bold uppercase tracking-widest">
+            Event
+          </span>
+          {event.badge && (
+            <span className="absolute -top-2 -right-2 bg-ralph-pink text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+              {event.badge}
             </span>
-            {event.badge && (
-              <span className="absolute -top-2 -right-2 bg-ralph-pink text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
-                {event.badge}
-              </span>
-            )}
-          </div>
-        </>
+          )}
+        </div>
       )}
     </motion.button>
   )

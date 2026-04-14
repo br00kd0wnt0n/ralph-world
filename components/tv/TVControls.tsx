@@ -47,8 +47,13 @@ export default function TVControls({
       </button>
 
       {/* Volume slider */}
-      <div className="flex flex-col items-center gap-2 mt-2 py-3 border border-white/20 rounded-md bg-black/50">
-        <span className="text-[10px] text-white/60 uppercase tracking-wide">Vol</span>
+      <div className="flex flex-col items-center gap-2 mt-2 px-3 py-3 border border-white/20 rounded-md bg-black/50">
+        <div className="flex items-center justify-between w-full">
+          <span className="text-[10px] text-white/60 uppercase tracking-wide">Vol</span>
+          <span className="text-[10px] text-white/40 font-mono">
+            {Math.round(volume * 100)}
+          </span>
+        </div>
         <input
           type="range"
           min="0"
@@ -56,8 +61,7 @@ export default function TVControls({
           step="0.05"
           value={volume}
           onChange={(e) => onVolumeChange(Number(e.target.value))}
-          className="w-20 accent-ralph-pink"
-          style={{ writingMode: 'vertical-lr' as const }}
+          className="w-full accent-ralph-pink"
         />
       </div>
     </div>

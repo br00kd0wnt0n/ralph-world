@@ -1,7 +1,7 @@
 import { getSiteCopy } from '@/lib/data/site-copy'
 import RalphTVClient from '@/components/tv/RalphTVClient'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export default async function RalphTVPage() {
   const copy = await getSiteCopy()

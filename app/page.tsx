@@ -7,7 +7,7 @@ import MobileHome from '@/components/home/MobileHome'
 import Footer from '@/components/layout/Footer'
 import type { ModuleCardData } from '@/components/home/PlanetSection'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export default async function Home() {
   const [{ magazineItems, eventItems, labItems }, copy] = await Promise.all([

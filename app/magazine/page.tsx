@@ -2,7 +2,7 @@ import { getPublishedArticles, getCoverStory } from '@/lib/data/magazine'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import MagazineClient from '@/components/magazine/MagazineClient'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export default async function MagazinePage() {
   const [articles, copy] = await Promise.all([

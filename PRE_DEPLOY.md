@@ -43,6 +43,21 @@ interacts with real URLs, final visual design, or live analytics.
       checkout → webhook fires → `profiles.subscriptionStatus`
       flips to `paid`.
 
+## Account management
+
+- [ ] **Shopify customer portal** — paid users currently get a mailto
+      when they click "Manage subscription" on /account. Replace with a
+      proper flow against Shopify's Customer Account API so they can
+      update card, change address, cancel self-serve. See
+      `app/account/page.tsx` — the paid-tier branch of the Subscription
+      section is where this slots in.
+- [ ] **GDPR-compliant account deletion** — "Request account deletion"
+      on /account is currently a mailto. Real implementation needs:
+      delete from `profiles`, `accounts`, `sessions`; scrub/anonymise
+      the Shopify customer record; handle any webhook-delivered orders
+      that arrive post-deletion. This is a meaningful piece of work —
+      don't underestimate. See `app/account/page.tsx` danger zone.
+
 ## Content + data
 
 - [ ] Seed real homepage copy via the CMS (site_copy table)

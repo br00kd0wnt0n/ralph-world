@@ -28,5 +28,3 @@ export async function getPublishedLabItems(): Promise<LabItem[]> {
     return []
   }
 }
-
-export { isFresh } from './lab-utils'

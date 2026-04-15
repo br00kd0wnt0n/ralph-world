@@ -44,8 +44,7 @@ If `machineIllustration` or `conveyorIllustration` are not provided, the CSS pla
 ## Items
 Fetched from `lab_items` table where `status='published'`, ordered by `sort_order` then `published_at desc`.
 
-- **FRESH badge**: `isFresh(publishedAt)` — true if within last 30 days
-- **NEW badge**: from `badge` field in DB
+- **Badge**: fully CMS-controlled via the `badge` field. `FRESH` → yellow, `NEW` → teal, other values → pink fallback
 - **Paid gate**: if `accessTier === 'paid'` and user not paid, lock overlay on card
 
 ## Flow

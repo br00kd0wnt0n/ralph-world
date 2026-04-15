@@ -4,12 +4,22 @@ import { motion } from 'framer-motion'
 import { labCardVariants } from '@/lib/animation/lab'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useAuth } from '@/context/AuthContext'
-import { isFresh } from '@/lib/data/lab-utils'
 import type { LabItem } from '@/lib/data/lab'
 
 interface LabGridProps {
   items: LabItem[]
   onSubscribe: () => void
+}
+
+function badgeClasses(badge: string) {
+  switch (badge.toUpperCase()) {
+    case 'FRESH':
+      return 'bg-ralph-yellow text-black'
+    case 'NEW':
+      return 'bg-ralph-teal text-black'
+    default:
+      return 'bg-ralph-pink text-white'
+  }
 }
 
 export default function LabGrid({ items, onSubscribe }: LabGridProps) {
@@ -29,7 +39,6 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
           {items.map((item, i) => {
             const isLocked =
               item.accessTier === 'paid' && subscriptionStatus !== 'paid'
-            const showFresh = isFresh(item.publishedAt)
 
             return (
               <motion.article
@@ -40,19 +49,17 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
                 transition={{ delay: i * 0.08 }}
                 className="relative bg-surface rounded-xl overflow-hidden border border-border/30 flex flex-col group"
               >
-                {/* Badges */}
-                <div className="absolute top-3 left-3 z-10 flex gap-1.5">
-                  {item.badge && (
-                    <span className="px-2 py-0.5 bg-ralph-pink text-white text-[10px] font-bold rounded uppercase tracking-wider">
+                {/* Badge — fully CMS-controlled. FRESH/NEW/etc. pick the
+                    colour; unknown values fall back to pink. */}
+                {item.badge && (
+                  <div className="absolute top-3 left-3 z-10">
+                    <span
+                      className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${badgeClasses(item.badge)}`}
+                    >
                       {item.badge}
                     </span>
-                  )}
-                  {showFresh && (
-                    <span className="px-2 py-0.5 bg-ralph-yellow text-black text-[10px] font-bold rounded uppercase tracking-wider">
-                      Fresh
-                    </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Thumbnail */}
                 <div className="aspect-video bg-background relative">

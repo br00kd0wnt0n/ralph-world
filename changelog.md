@@ -4,6 +4,25 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-13 — Paid-tier checkout flow
+
+**Session goal:** Wire the `SubscribeModal` paid button end-to-end so it actually takes money once Shopify admin is configured.
+
+### Added
+- `CREATE_SUBSCRIPTION_CART` mutation in `lib/shopify/queries.ts` — variant of `CREATE_CART` that accepts `buyerIdentity.email` so the Shopify-hosted checkout is pre-filled with the signed-in user's email
+- `createSubscriptionCheckout(email)` in `lib/shopify/client.ts` — reads `SHOPIFY_SUBSCRIPTION_VARIANT_ID`, creates a cart, returns `checkoutUrl`. Returns null (not throws) if env missing or Storefront unreachable — caller degrades gracefully
+- `app/api/account/upgrade/route.ts` — auth-gated GET that creates the subscription cart and 303-redirects to Shopify checkout. Redirects to `/account?upgrade=error` on failure
+- `app/account/page.tsx` — detects `?upgrade=paid` (used as OAuth callback from `SubscribeModal`) and auto-redirects free/guest users into `/api/account/upgrade`. Paid users skip. Free users also see a visible "Upgrade to paid — £3/month" CTA on the account card
+- `SHOPIFY_SUBSCRIPTION_VARIANT_ID` in `.env.example`
+- `docs/shopify-subscriptions.md` — admin-side setup doc (install subscriptions app, create product, grab variant GID, register three webhook topics, test flow)
+
+### Decisions made
+- Shopify Storefront API doesn't natively support recurring billing — docs punt to an installed subscriptions app (Shopify Subscriptions, Recharge, etc.) attaching a plan to the variant. The mutation and checkout URL work the same
+- Flagged in setup doc: SubscribeModal copy says "£3 a month" but also "Payment is taken once per quarter" — the two are inconsistent. Needs a copy/pricing decision before launch
+- Chose a GET route (not POST) for `/api/account/upgrade` so the account page can trigger it with a plain redirect rather than a form submit
+
+---
+
 ## 2026-04-14 — FRONTEND mode (Phase 7: Lab)
 
 **Session goal:** Lab page with RalphOMatic machine state shell and items grid

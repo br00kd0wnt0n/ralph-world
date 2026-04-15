@@ -93,6 +93,26 @@ export const CREATE_CART = `
   }
 `
 
+// Subscription carts pre-fill buyerIdentity.email so the Shopify checkout
+// doesn't ask a logged-in Ralph user to retype the email they just used.
+export const CREATE_SUBSCRIPTION_CART = `
+  ${CART_FRAGMENT}
+  mutation CreateSubscriptionCart(
+    $lines: [CartLineInput!]!
+    $email: String!
+  ) {
+    cartCreate(
+      input: {
+        lines: $lines
+        buyerIdentity: { email: $email }
+      }
+    ) {
+      cart { ...CartFields }
+      userErrors { field message }
+    }
+  }
+`
+
 export const ADD_CART_LINES = `
   ${CART_FRAGMENT}
   mutation AddCartLines($cartId: ID!, $lines: [CartLineInput!]!) {

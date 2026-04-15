@@ -3,6 +3,7 @@ import {
   GET_PRODUCTS_BY_COLLECTION,
   GET_PRODUCT_BY_HANDLE,
   CREATE_CART,
+  CREATE_SUBSCRIPTION_CART,
   ADD_CART_LINES,
   UPDATE_CART_LINES,
   REMOVE_CART_LINES,
@@ -143,6 +144,31 @@ export async function removeCartLines(
     cartLinesRemove: { cart: ShopifyCart | null; userErrors: unknown[] }
   }>(REMOVE_CART_LINES, { cartId, lineIds })
   return data?.cartLinesRemove?.cart ?? null
+}
+
+// Creates a checkout for the paid subscription tier.
+// Returns the Shopify-hosted checkoutUrl to redirect to, or null if the
+// store isn't configured or the Storefront call failed. The caller
+// (usually /api/account/upgrade) should fall back gracefully.
+export async function createSubscriptionCheckout(
+  email: string
+): Promise<string | null> {
+  const variantId = process.env.SHOPIFY_SUBSCRIPTION_VARIANT_ID
+  if (!variantId) {
+    console.warn(
+      'SHOPIFY_SUBSCRIPTION_VARIANT_ID not set — cannot start subscription checkout'
+    )
+    return null
+  }
+
+  const data = await storefront<{
+    cartCreate: { cart: ShopifyCart | null; userErrors: unknown[] }
+  }>(CREATE_SUBSCRIPTION_CART, {
+    lines: [{ merchandiseId: variantId, quantity: 1 }],
+    email,
+  })
+
+  return data?.cartCreate?.cart?.checkoutUrl ?? null
 }
 
 export async function getCart(cartId: string): Promise<ShopifyCart | null> {

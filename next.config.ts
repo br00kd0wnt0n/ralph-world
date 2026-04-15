@@ -13,9 +13,8 @@ export default withSentryConfig(nextConfig, {
 
   widenClientFileUpload: true,
 
-  // Route browser error reports through /monitoring to dodge ad-blockers.
-  // Adds a bit of Railway egress but ensures we actually see client errors.
-  tunnelRoute: '/monitoring',
+  // tunnelRoute removed — was returning 403 on Railway. Can re-add later
+  // if ad-blockers become a measurable problem.
 
   // Skip source-map upload on non-CI / local builds so every `next build`
   // doesn't try to auth to Sentry.

@@ -1,7 +1,19 @@
+import type { Metadata } from 'next'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import RalphTVClient from '@/components/tv/RalphTVClient'
 
 export const revalidate = 60
+
+export const metadata: Metadata = {
+  title: 'Ralph TV',
+  description:
+    'Live and on-demand — Ralph TV streams culture, interviews, and nonsense around the clock.',
+  openGraph: {
+    title: 'Ralph TV',
+    description:
+      'Live and on-demand. Culture, interviews, and nonsense around the clock.',
+  },
+}
 
 export default async function RalphTVPage() {
   const copy = await getSiteCopy()

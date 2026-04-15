@@ -1,4 +1,10 @@
+import type { Metadata } from 'next'
 import Footer from '@/components/layout/Footer'
+
+export const metadata: Metadata = {
+  title: 'Contact',
+  description: 'Get in touch with the Ralph team.',
+}
 
 export default function ContactPage() {
   return (

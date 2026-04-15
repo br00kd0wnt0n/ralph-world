@@ -4,6 +4,24 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-15 — SEO foundations
+
+**Session goal:** robots, sitemap, per-route OG metadata, and a default OG image so links look right when shared.
+
+### Added
+- `app/robots.ts` — allow-all with /api, /account, /login disallowed; points at `/sitemap.xml`
+- `app/sitemap.ts` — nine public top-level routes with per-route priority and change frequency. Individual article/event/lab detail pages don't exist yet; when they do, extend by concatenating DB-sourced slugs
+- Root `metadata` in `app/layout.tsx` now includes `metadataBase`, `title.template` (`%s | Ralph`), `openGraph`, and `twitter` defaults
+- Per-page `metadata` on magazine, tv, events, shop, lab, contact, play — each with a distinct title and description suitable for sharing
+- `app/opengraph-image.tsx` — edge-rendered 1200×630 PNG with the Ralph pink arches, wordmark, and tagline. Per-route OG images can be added by dropping another `opengraph-image.tsx` into the relevant app folder
+
+### Decisions made
+- Skipped individual `opengraph-image.tsx` per route for now — the default image is on-brand enough that article/event/lab detail pages are the right time to add custom ones (when those pages exist)
+- Used `NEXT_PUBLIC_APP_URL` for the site URL rather than hardcoding `ralph.world` so staging deploys get their own sitemap URLs
+- `title.template` means per-route titles like "Magazine" auto-render as "Magazine | Ralph" in the browser tab
+
+---
+
 ## 2026-04-13 — Paid-tier checkout flow
 
 **Session goal:** Wire the `SubscribeModal` paid button end-to-end so it actually takes money once Shopify admin is configured.

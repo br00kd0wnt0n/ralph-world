@@ -1,8 +1,20 @@
+import type { Metadata } from 'next'
 import { getProductsByCollection } from '@/lib/shopify/client'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import ShopClient from '@/components/shop/ShopClient'
 
 export const revalidate = 300
+
+export const metadata: Metadata = {
+  title: 'Shop',
+  description:
+    'The Ralph magazine, merch, and limited runs — made for people who like good stuff.',
+  openGraph: {
+    title: 'Ralph Shop',
+    description:
+      'The magazine, merch, and limited runs.',
+  },
+}
 
 const COLLECTION_HANDLES = ['ralph-magazine', 'ralph-merch', 'ralph-random']
 

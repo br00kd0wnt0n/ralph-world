@@ -12,14 +12,35 @@ const playfair = Playfair_Display({
   subsets: ['latin'],
 })
 
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://ralph.world'
+
 export const metadata: Metadata = {
-  title: 'Ralph — The Entertainment People',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Ralph — The Entertainment People',
+    template: '%s | Ralph',
+  },
   description:
     'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
   icons: {
     icon: '/ralph-logo.png',
     shortcut: '/ralph-logo.png',
     apple: '/ralph-logo.png',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Ralph',
+    locale: 'en_GB',
+    url: SITE_URL,
+    title: 'Ralph — The Entertainment People',
+    description:
+      'Pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ralph — The Entertainment People',
+    description:
+      'Pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
   },
 }
 

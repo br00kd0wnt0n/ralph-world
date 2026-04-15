@@ -45,19 +45,27 @@ Ralph.World is a Next.js 16 App Router application serving a public entertainmen
 ```
 ralph-world/
 ├── app/
-│   ├── layout.tsx              # Root layout — providers, nav, theme
+│   ├── layout.tsx              # Root layout — providers, nav, theme, OG defaults
 │   ├── providers.tsx           # Client providers: Theme → Auth → Cart
 │   ├── page.tsx                # Homepage
+│   ├── robots.ts               # /robots.txt (disallow api/account/login)
+│   ├── sitemap.ts              # /sitemap.xml (public top-level routes)
+│   ├── opengraph-image.tsx     # Default 1200x630 OG image (edge-rendered)
 │   ├── tv/page.tsx             # Ralph TV (Phase 4)
 │   ├── magazine/page.tsx       # Magazine listing (Phase 3)
 │   ├── events/page.tsx         # Events (Phase 5)
 │   ├── shop/page.tsx           # Shop (Phase 6)
 │   ├── lab/page.tsx            # Lab (Phase 7)
+│   ├── account/page.tsx        # Profile + subscription + preferences + danger zone
 │   ├── play/page.tsx           # Play with Ralph (agency)
+│   ├── sentry.*.config.ts      # Sentry client/server/edge init (parked — see PRE_DEPLOY.md)
+│   ├── instrumentation*.ts     # Sentry instrumentation hooks
 │   └── api/
 │       ├── auth/[...nextauth]/ # Auth.js route handler
 │       ├── health/             # Railway health check
 │       ├── profile/language/   # Update language preference
+│       ├── profile/theme/      # Update theme preference
+│       ├── account/upgrade/    # Auth'd redirect into Shopify subscription checkout
 │       ├── broadcaster/        # Broadcaster API proxies (Phase 4)
 │       ├── cart/               # Shopify cart proxies (Phase 6)
 │       └── webhooks/shopify/   # Subscription webhook (Phase 6)
@@ -79,6 +87,7 @@ ralph-world/
 │   ├── events/                 # Phase 5
 │   ├── shop/                   # Phase 6
 │   ├── lab/                    # Phase 7
+│   ├── account/                # AccountPreferences (theme + language)
 │   └── ui/
 ├── context/
 │   ├── AuthContext.tsx          # Wraps next-auth SessionProvider
@@ -92,12 +101,16 @@ ralph-world/
 │   ├── animation/              # Framer Motion variant configs
 │   ├── broadcaster/            # Phase 4
 │   └── shopify/                # Phase 6
+├── docs/                      # Admin setup guides (shopify-subscriptions, etc.)
 ├── drizzle.config.ts
+├── next.config.ts             # Wrapped with withSentryConfig
 ├── .env.example
 ├── railway.toml
 ├── CLAUDE.md
 ├── architecture.md
-└── changelog.md
+├── changelog.md
+├── HANDOVER.md                # Frontend brief for Josh
+└── PRE_DEPLOY.md              # Checklist parked until post-Josh / pre-cutover
 ```
 
 ## Database schema (Railway Postgres via Drizzle)

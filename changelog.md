@@ -4,6 +4,28 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-15 — Pre-Josh hardening
+
+**Session goal:** Work through the pre-launch backend list — Shopify subscription checkout, R2 image uploads for CMS, SEO foundations, Sentry, account page — so Josh can do the visual pass against a production-ready backend.
+
+### Added
+- **Shopify subscriptions end-to-end** (commit `2cc13f0`): CREATE_SUBSCRIPTION_CART mutation, createSubscriptionCheckout helper, `/api/account/upgrade` auth-gated redirect, account page handling of `?upgrade=paid`, visible upgrade CTA, docs/shopify-subscriptions.md
+- **SEO foundations** (commit `8e85992`): `app/robots.ts`, `app/sitemap.ts`, root metadata with metadataBase + title.template + openGraph + twitter defaults, per-page metadata on magazine/tv/events/shop/lab/contact/play, `app/opengraph-image.tsx` with edge-rendered branded PNG
+- **Account page rebuild** (commit `e6bf635`): Google avatar in profile header, Subscription section (upgrade for free, mailto for paid), Preferences section (theme + language both server-persisted, UI updates immediately), Danger zone (sign out + mailto deletion). New `/api/profile/theme` mirroring the language route. AccountPreferences client component
+- **Sentry wizard + tightened config** (commits `efbfd24`, `f11d0ca`, `f54e27b`): DSN via env var, 0.1 prod sample rate, sendDefaultPii off, noise filter (ResizeObserver / network aborts / extensions), environment tag. Then parked: browser submissions 403 despite valid DSN (confirmed via direct curl), need to sort Allowed Domains in Sentry project config. Test pages deleted after parking
+- **PRE_DEPLOY.md** (commit `3d2a79e`, updated `e3f34b2`): Single checklist of everything deferred until post-Josh / pre-DNS-cutover — GA4 wiring, cookie consent, Sentry fix, Shopify admin config, Shopify customer portal, GDPR account deletion, content seed, cutover steps
+
+### Decisions made
+- **Sentry parked, not fixed.** Direct curl against the ingest URL proves the DSN is valid (returns 400 "invalid envelope" for a malformed payload). Browser submissions get 403 — origin-based rejection inside Sentry's project config. The Allowed Domains setting in the dashboard either isn't where Sentry docs claim or needs support to resolve. Not launch-critical — code is correct, will start working the moment the project is right
+- **Theme + language preferences are server-first.** `ThemeContext` still reads localStorage as source of truth on the client, but `/account` writes to both the DB and localStorage. Cross-device sync on next login is a future enhancement
+- **"Manage subscription" and "Request account deletion" are mailtos for now.** Real implementations (Shopify Customer Account API, GDPR-compliant deletion) are flagged in PRE_DEPLOY.md as must-do before launch
+- **Tunnel route `/monitoring` removed from next.config.** Was returning 403 on Railway (separate from the Sentry project 403). Adblockers may skip events now but unblocking error capture matters more
+
+### Shared with ralph-cms this session
+- Cloudflare R2 image uploads — direct browser → R2 via presigned PUT. `ImageUploader` component replaced the plain "paste a URL" inputs across Event/Lab/TvVod/Article editors and article inline images. Auth-gated signing route. Free-text URL kept as fallback for externally-hosted images (see ralph-cms changelog + docs/r2-uploads.md)
+
+---
+
 ## 2026-04-15 — SEO foundations
 
 **Session goal:** robots, sitemap, per-route OG metadata, and a default OG image so links look right when shared.

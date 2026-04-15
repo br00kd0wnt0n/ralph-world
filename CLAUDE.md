@@ -13,13 +13,18 @@
 FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-Phase 7 complete — Lab built. Next: Phase 8 (ralph-cms) or Phase 9 (deploy/audit)
+Pre-Josh hardening done: Shopify subscriptions end-to-end, R2 uploads
+(CMS), SEO foundations, account page rebuilt, Sentry parked.
+Josh doing full visual/animation pass next; remaining backend items in
+PRE_DEPLOY.md.
 
 ---
 
 ## Foundation documents
 - [architecture.md](architecture.md) — system structure, data flow, decisions
 - [changelog.md](changelog.md) — session-by-session change history
+- [PRE_DEPLOY.md](PRE_DEPLOY.md) — checklist of items parked until after Josh's pass / before DNS cutover
+- [HANDOVER.md](HANDOVER.md) — one-pager brief for Josh on scope and conventions
 
 ## Quick start
 ```bash

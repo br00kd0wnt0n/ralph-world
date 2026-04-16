@@ -13,10 +13,10 @@
 FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-Pre-Josh hardening done: Shopify subscriptions end-to-end, R2 uploads
-(CMS), SEO foundations, account page rebuilt, Sentry parked.
-Josh doing full visual/animation pass next; remaining backend items in
-PRE_DEPLOY.md.
+Shopify subscription checkout flow live end-to-end up to the hosted
+checkout page (2026-04-16). Still to do: register webhooks and
+complete a real payment test. See PRE_DEPLOY.md for the full
+remaining-items checklist.
 
 ---
 

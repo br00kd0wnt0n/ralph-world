@@ -27,21 +27,35 @@ interacts with real URLs, final visual design, or live analytics.
       `npx @sentry/wizard@latest -i nextjs --saas --org ralph-ck --project ralph-cms`
       (create the second project first).
 
-## Shopify subscriptions (blocked on admin config)
+## Shopify subscriptions
 
-- [ ] Install Shopify Subscriptions app (or Recharge), create the
-      £3/month subscription variant, copy GID to
-      `SHOPIFY_SUBSCRIPTION_VARIANT_ID` in Railway.
-- [ ] Register `orders/paid`, `subscriptions/create`,
-      `subscriptions/cancelled` webhooks pointing at
-      `https://ralph.world/api/webhooks/shopify`. Copy the webhook
-      secret to `SHOPIFY_WEBHOOK_SECRET`.
-- [ ] Reconcile SubscribeModal copy — currently says both "£3 a
-      month" and "payment once per quarter". Pick one and update the
-      Shopify plan + modal text to match.
-- [ ] End-to-end test: join via modal → Google OAuth → Shopify
-      checkout → webhook fires → `profiles.subscriptionStatus`
-      flips to `paid`.
+Admin config partly done 2026-04-16.
+
+- [x] Install Shopify Subscriptions app, create Ralph World Membership
+      product (£3, Active, Online Store + custom app sales channels),
+      attach Monthly Membership plan (1 month, no discount, no trial).
+      Variant: `gid://shopify/ProductVariant/53320223228247`. Selling
+      plan: `gid://shopify/SellingPlan/691806110039`.
+- [x] Set `SHOPIFY_STOREFRONT_URL`, `SHOPIFY_STOREFRONT_TOKEN`,
+      `SHOPIFY_SUBSCRIPTION_VARIANT_ID` on Railway.
+- [x] Reconcile SubscribeModal copy to monthly-only (commit `9b7d7a1`).
+- [x] Checkout flow tested — customer hits the modal → OAuth → Shopify
+      checkout renders "£3.00 every month". Payment itself not yet
+      completed end-to-end.
+- [ ] Register webhooks: `Order payment` (orders/paid),
+      `Subscription contract created`, `Subscription contract
+      cancelled`. All pointing at
+      `https://ralph-world-production.up.railway.app/api/webhooks/shopify`
+      for now. **Update URL to `https://ralph.world/api/webhooks/shopify`
+      after DNS cutover** or Shopify will keep firing at the Railway
+      domain.
+- [ ] Copy the webhook signing secret (shown once on first webhook
+      create) into Railway as `SHOPIFY_WEBHOOK_SECRET`.
+- [ ] Complete one real payment (test mode via Shopify Payments, or
+      live £3 refunded within a minute) and confirm:
+      - Webhook reaches `/api/webhooks/shopify` (check Railway logs)
+      - `profiles.subscriptionStatus` flips to `paid`
+      - `/account` tier badge updates from free → paid on refresh
 
 ## Account management
 

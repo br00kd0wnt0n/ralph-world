@@ -4,6 +4,39 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-16 — Shopify subscription checkout live
+
+**Session goal:** Work through the Shopify admin config for subscriptions so the paid tier actually hits Shopify checkout end-to-end.
+
+### Added
+- **`sellingPlanId` on the subscription cart line** (commit `e47984f`): without it, Shopify would treat the cart as a one-time £3 purchase rather than a recurring subscription. New `GET_VARIANT_SELLING_PLANS` query + `getSubscriptionSellingPlanId` helper looks up the first plan attached to the variant and fails closed with a clear console warning if no plan is attached.
+- **Subscribe modal copy reconciled to monthly-only** (commit `9b7d7a1`): removed the "payment taken once per quarter" footnote and the "equivalent of just £3" hedge. Copy now matches what Shopify actually charges.
+- **Sentry deprecation cleanup** (commit `11916ad`): moved `disableLogger` into `webpack.treeshake.removeDebugLogging`, silencing the Railway log warning.
+
+### Shopify admin setup (on Brook's side, done this session)
+- Installed Shopify Subscriptions app (free, official).
+- Created Ralph World Membership product (£3, Active, Online Store + legacy custom app sales channels, digital — no shipping or inventory tracking).
+- Attached Monthly Membership plan (every 1 month, no discount, no trial) via the app.
+- Variant GID: `gid://shopify/ProductVariant/53320223228247`.
+- Selling plan GID: `gid://shopify/SellingPlan/691806110039`.
+- Railway ralph-world service: `SHOPIFY_STOREFRONT_URL`, `SHOPIFY_STOREFRONT_TOKEN`, `SHOPIFY_SUBSCRIPTION_VARIANT_ID` all set and deployed.
+- Manually verified checkout flow end-to-end up to the Shopify hosted checkout page (didn't complete payment — webhooks not registered yet).
+
+### Decisions made
+- **Kept the membership product as a digital subscription**, not physical. Quarterly mag fulfilment happens outside Shopify's auto-fulfilment — operationally Brook exports active subscribers + their billing addresses when an issue ships. Simpler billing, decoupled from per-issue physical logistics.
+- **Hunted an invisibility bug** where the new membership product was Active on Online Store but the Storefront API returned null. Root cause: the legacy custom app has its own sales channel separate from Online Store, and new products aren't published to it by default. Fix was to enable the custom app channel in the product's Publishing settings.
+- **Noted that a legacy custom app Storefront token is still valid** even on stores where new legacy apps can no longer be created (Shopify deprecated creation 2026-01-01, existing apps still work). Our `ralphworld` legacy app is grandfathered and issues tokens with the scopes we need, including `unauthenticated_read_selling_plans`.
+
+### Pending (for the next session)
+- Register three webhooks (`Order payment`, `Subscription contract created`, `Subscription contract cancelled`) pointing at the Railway URL.
+- Set `SHOPIFY_WEBHOOK_SECRET` on Railway from the signing secret Shopify shows once on first webhook creation.
+- Complete one real payment (test mode or live-and-refund) and verify the webhook flips `profiles.subscriptionStatus` to `paid`.
+- Post-DNS-cutover: update webhook URLs to `https://ralph.world/...`.
+
+See `PRE_DEPLOY.md` for the full checklist.
+
+---
+
 ## 2026-04-15 — Pre-Josh hardening
 
 **Session goal:** Work through the pre-launch backend list — Shopify subscription checkout, R2 image uploads for CMS, SEO foundations, Sentry, account page — so Josh can do the visual pass against a production-ready backend.

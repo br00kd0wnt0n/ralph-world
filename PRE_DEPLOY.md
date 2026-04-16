@@ -42,13 +42,14 @@ Admin config partly done 2026-04-16.
 - [x] Checkout flow tested — customer hits the modal → OAuth → Shopify
       checkout renders "£3.00 every month". Payment itself not yet
       completed end-to-end.
-- [ ] Register webhooks: `Order payment` (orders/paid),
-      `Subscription contract created`, `Subscription contract
-      cancelled`. All pointing at
-      `https://ralph-world-production.up.railway.app/api/webhooks/shopify`
-      for now. **Update URL to `https://ralph.world/api/webhooks/shopify`
-      after DNS cutover** or Shopify will keep firing at the Railway
-      domain.
+- [ ] Register `Order payment` webhook pointing at
+      `https://ralph-world-production.up.railway.app/api/webhooks/shopify`.
+      **Update URL to `https://ralph.world/api/webhooks/shopify` after
+      DNS cutover** or Shopify will keep firing at the Railway domain.
+      (Subscription-specific topics like `subscription_contracts/cancel`
+      aren't exposed in the standard admin webhook dropdown — they
+      require programmatic Admin API registration. Flagged as a
+      post-MVP task below.)
 - [ ] Copy the webhook signing secret (shown once on first webhook
       create) into Railway as `SHOPIFY_WEBHOOK_SECRET`.
 - [ ] Complete one real payment (test mode via Shopify Payments, or
@@ -56,6 +57,21 @@ Admin config partly done 2026-04-16.
       - Webhook reaches `/api/webhooks/shopify` (check Railway logs)
       - `profiles.subscriptionStatus` flips to `paid`
       - `/account` tier badge updates from free → paid on refresh
+
+## Subscription lifecycle (post-MVP)
+
+- [ ] **Cancellation handling.** `orders/paid` keeps flipping to `paid`
+      on renewal, but nothing fires when a customer cancels their
+      Shopify subscription contract. Right now: cancelled customers
+      keep `paid` access forever. Two options when we get to this:
+      (a) register `subscription_contracts/cancel` via the Admin API
+      (`POST /admin/api/2024-01/webhooks.json` with topic
+      `subscription_contracts/cancel`) — the topic isn't in the admin
+      UI dropdown but the API accepts it; or (b) run a daily cron job
+      that diffs our `paid` users against Shopify's active contract
+      list and flips the delta to `free`. (a) is lower-latency; (b) is
+      simpler and more robust to missed webhooks. Pick one closer to
+      launch.
 
 ## Account management
 

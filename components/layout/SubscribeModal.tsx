@@ -156,10 +156,10 @@ export default function SubscribeModal({ isOpen, onClose }: SubscribeModalProps)
                 Prefer your culture more hands-on?
               </h3>
               <p className="text-sm text-gray-700 mb-4 leading-relaxed">
-                Then you need a bit of The Ralph&trade; in your life. For the
-                equivalent of just £3 a month* you&apos;ll get our quarterly
-                fun, glossy mag straight through your letterbox. On top of
-                that, we&apos;ll switch on our TV channel for you, plus
+                Then you need a bit of The Ralph&trade; in your life. For
+                just £3 a month you&apos;ll get our quarterly fun, glossy
+                mag straight through your letterbox. On top of that,
+                we&apos;ll switch on our TV channel for you, plus
                 everything else Ralph World has to offer.
               </p>
               <button
@@ -175,7 +175,7 @@ export default function SubscribeModal({ isOpen, onClose }: SubscribeModalProps)
 
         {/* Fine print */}
         <p className="max-w-5xl mx-auto text-xs text-gray-500 mt-12 md:pl-[55%]">
-          * Payment is taken once per quarter &mdash; not monthly. Includes VAT and postage.
+          Billed monthly at £3. Includes VAT and UK postage for the quarterly magazine.
         </p>
       </div>
     </div>

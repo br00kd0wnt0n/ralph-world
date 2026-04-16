@@ -95,6 +95,8 @@ export const CREATE_CART = `
 
 // Subscription carts pre-fill buyerIdentity.email so the Shopify checkout
 // doesn't ask a logged-in Ralph user to retype the email they just used.
+// Line must include sellingPlanId — without it, Shopify treats the cart as
+// a one-time purchase at face value rather than a recurring subscription.
 export const CREATE_SUBSCRIPTION_CART = `
   ${CART_FRAGMENT}
   mutation CreateSubscriptionCart(
@@ -109,6 +111,26 @@ export const CREATE_SUBSCRIPTION_CART = `
     ) {
       cart { ...CartFields }
       userErrors { field message }
+    }
+  }
+`
+
+// Reads the selling plans attached to a variant so we know which
+// plan ID to include in the cart line. Storefront API exposes these
+// as sellingPlanGroups → sellingPlans.
+export const GET_VARIANT_SELLING_PLANS = `
+  query GetVariantSellingPlans($variantId: ID!) {
+    node(id: $variantId) {
+      ... on ProductVariant {
+        id
+        sellingPlanAllocations(first: 10) {
+          edges {
+            node {
+              sellingPlan { id name }
+            }
+          }
+        }
+      }
     }
   }
 `

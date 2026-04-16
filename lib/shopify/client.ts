@@ -4,6 +4,7 @@ import {
   GET_PRODUCT_BY_HANDLE,
   CREATE_CART,
   CREATE_SUBSCRIPTION_CART,
+  GET_VARIANT_SELLING_PLANS,
   ADD_CART_LINES,
   UPDATE_CART_LINES,
   REMOVE_CART_LINES,
@@ -146,6 +147,30 @@ export async function removeCartLines(
   return data?.cartLinesRemove?.cart ?? null
 }
 
+interface VariantSellingPlansResponse {
+  node: {
+    id: string
+    sellingPlanAllocations: {
+      edges: { node: { sellingPlan: { id: string; name: string } } }[]
+    }
+  } | null
+}
+
+// Looks up the first selling plan attached to the subscription variant.
+// We take "first" because the expectation is one variant = one plan
+// (£3/mo); if that assumption changes we'd need to pick a specific plan
+// by name or add a separate env var.
+async function getSubscriptionSellingPlanId(
+  variantId: string
+): Promise<string | null> {
+  const data = await storefront<VariantSellingPlansResponse>(
+    GET_VARIANT_SELLING_PLANS,
+    { variantId }
+  )
+  const plan = data?.node?.sellingPlanAllocations.edges[0]?.node.sellingPlan
+  return plan?.id ?? null
+}
+
 // Creates a checkout for the paid subscription tier.
 // Returns the Shopify-hosted checkoutUrl to redirect to, or null if the
 // store isn't configured or the Storefront call failed. The caller
@@ -161,10 +186,20 @@ export async function createSubscriptionCheckout(
     return null
   }
 
+  const sellingPlanId = await getSubscriptionSellingPlanId(variantId)
+  if (!sellingPlanId) {
+    console.warn(
+      'No selling plan attached to subscription variant — cart would be a one-time purchase. Attach a subscription plan via Shopify Subscriptions app.'
+    )
+    return null
+  }
+
   const data = await storefront<{
     cartCreate: { cart: ShopifyCart | null; userErrors: unknown[] }
   }>(CREATE_SUBSCRIPTION_CART, {
-    lines: [{ merchandiseId: variantId, quantity: 1 }],
+    lines: [
+      { merchandiseId: variantId, quantity: 1, sellingPlanId },
+    ],
     email,
   })
 

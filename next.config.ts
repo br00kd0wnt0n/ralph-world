@@ -16,12 +16,9 @@ export default withSentryConfig(nextConfig, {
   // tunnelRoute removed — was returning 403 on Railway. Can re-add later
   // if ad-blockers become a measurable problem.
 
-  // Skip source-map upload on non-CI / local builds so every `next build`
-  // doesn't try to auth to Sentry.
-  disableLogger: true,
-
   webpack: {
     treeshake: {
+      // Replaces the deprecated top-level disableLogger option.
       removeDebugLogging: true,
     },
   },

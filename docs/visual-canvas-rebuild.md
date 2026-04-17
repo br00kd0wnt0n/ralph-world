@@ -23,34 +23,82 @@ Non-goal: re-implement canvas-lab feature-for-feature. If a feature isn't in the
 
 The single biggest lesson from previous rebuild attempts: **lock the target before writing code.** Graphics work without a concrete reference becomes an unbounded aesthetic hunt.
 
-### 2.1 Canonical reference
-- **LANDING preset** (canvas-lab) is the v1 target.
-- Brook to capture a **reference pack** before the rebuild session starts:
-  - 3–5 still screenshots at known viewport sizes (1440×900, 375×812 mobile).
-  - 1 × 10-second MP4 capture at 1440×900, 60fps if possible — covers the auto-pan camera cycle.
-  - Optional: screen recordings of 2–3 other presets that worked well, for v2+ targets.
-- Store reference pack in `docs/visual-canvas-refs/` (git-ignored or LFS if large).
+### 2.1 Reference pack (captured 2026-04-17)
 
-### 2.2 Acceptance criteria
-- Side-by-side with the reference at the captured camera angles: **≥95% perceived visual match** (Brook's judgement call — no numeric metric).
-- Same "liveness" — auto-pan cadence, glow pulse, particle movement feel — matches within perceptual tolerance.
+Stored at `public/visual canvas refs/` — **gitignored** (big binaries, local-only).
+
+| File | Content | Apparent preset |
+|---|---|---|
+| `Screenshot 2026-04-17 at 12.17.51 PM.png` | Warm organic reds/oranges/pinks. Heavy bloom, soft DOF, blob-dominant composition. Dark background with magenta atmospheric fog. | **LANDING** — v1 target |
+| `Screenshot 2026-04-17 at 12.18.00 PM.png` | Hot magenta/pink with dark cube silhouettes backlit through bloom. Dramatic contrast. | **LANDING** (different camera angle) |
+| `Screenshot 2026-04-17 at 12.19.44 PM.png` | Clearly geometric — cubes with visible edges in purples/teals/greens. Less bloom, more defined forms, particle specks visible. | **MultiColor** — v2+ target |
+| `Screenshot 2026-04-17 at 12.20.12 PM.png` | Black background with flowing red trail curves. Near-zero bloom. Very cinematic. | **TRAILS** — v2+ target (if scoped in) |
+| `visual canvas capture.mov` | 10s+ screen capture. Auto-pan cadence reference. | — |
+
+Brook to confirm the preset→image mapping before Phase 1 starts.
+
+### 2.2 Visual character (what makes it Ralph's canvas)
+
+Across the references, a consistent aesthetic:
+
+- **Bloom is the signature.** Almost every shape has a soft halo that blends with its neighbours. Not a subtle post-effect — it's doing most of the perceived "lighting."
+- **Volumetric fog tints the air.** LANDING's enabled `volumetric` effect (magenta fog at density 0.6) gives the reds/pinks that hazy glow in images 1–2. Without it the shapes feel floaty and disconnected.
+- **Shapes are organic, not geometric-perfect.** `organicness` values of 0.6–2.0 on spheres/cubes/toruses deform the geometry so nothing reads as a textbook primitive.
+- **Motion is slow and orbital.** Camera auto-pans in a gentle circle; shapes follow `verticalSine` or `orbit` movement patterns. No jitter, no flash cuts.
+- **Palettes are hand-picked per preset** — LANDING is warm (yellow, orange, pink, magenta); MultiColor is cool (teal, purple, green); TRAILS is monochrome red. The engine has to render any palette convincingly.
+
+### 2.3 Acceptance criteria
+- Side-by-side with the LANDING reference at the captured camera angles: **≥95% perceived visual match** (Brook's judgement call — no numeric metric).
+- Same "liveness" — auto-pan cadence, glow pulse, particle movement feel — matches within perceptual tolerance. Use `visual canvas capture.mov` to calibrate.
 - Works on Chrome (desktop + Android), Safari (macOS + iOS 16+), Firefox desktop.
 
-### 2.3 What "95%" rules out
+### 2.4 What "95%" rules out
 Don't chase: subtle shader noise variations, exact RNG seeds, pixel-accurate bloom kernels. Do chase: overall palette, composition, motion character, depth/atmosphere, bloom+DOF interaction.
 
 ---
 
 ## 3. Scope
 
-### In
-- Geometric shapes: spheres, cubes, toruses (the three canvas-lab supports today).
-- Particle system (count, size, movement, colour, blend).
-- Post-processing stack: **bloom, depth-of-field, vignette** (from `postprocessing` or equivalent).
-- Camera: auto-pan orbit around origin. No manual controls for v1.
-- Presets: LANDING in v1. 4 more in v2 (Brook picks from canvas-lab screenshots).
-- Preset format: static JSON files, committed in-repo.
-- Theme integration: `BackgroundLayer` swaps to this canvas when `theme === 'ralph-world'`.
+### LANDING preset parameter inventory (from canvas-lab cloud preset `68b1c687dd68f9f4d2c5503e`)
+
+This is the actual JSON LANDING uses — the v1 engine must support every enabled item here.
+
+**Geometric shapes (all five types enabled):**
+```
+spheres:  count 18,  size 13.4, color #fbc000, opacity 0.3, organicness 0.6, movement verticalSine, distance 2
+cubes:    count 11,  size 12,   color #31bdbf, opacity 0.8, organicness 1.8, movement verticalSine, distance 1.2
+toruses:  count 17,  size 8.7,  color #eb008b, opacity 0.7, organicness 2,   movement orbit,        distance 6.4
+blobs:    count 7,   size 12.3, color #f16524, opacity 1,   organicness 2,   movement orbit,        distance 7.9
+crystals: count 8,   size 1,    color #4ecdc4, opacity 0.9, complexity 16,   organicness 0.2
+```
+
+**Particles:** count 453, size 4.05, color #ffffff, speed 4.8, opacity 1, spread 75.9, movement orbit.
+
+**Global effects enabled in LANDING:**
+- `volumetric` — fog 0.5, density 0.6, color #eb00eb (magenta atmospheric)
+- Per-shape trails (sphereTrails, cubeTrails, etc. — each has enabled:true with length/opacity/width/fadeRate)
+
+**Global effects disabled in LANDING** (but in the canvas-lab and potentially used by other presets):
+- `atmosphericBlur`, `colorBlending`, `shapeGlow`, `chromatic`, `distortion`, `particleInteraction`, `waveInterference`, `metamorphosis`, `fireflies`, `layeredSineWaves`
+
+**Bloom / DOF / vignette** aren't in the preset JSON — they're on by default in the canvas-lab's post-processing chain with global-defaults values. Rebuild must include them with per-preset override capability.
+
+### Movement patterns to support
+Five patterns seen across LANDING + MultiColor + TRAILS presets: `verticalSine`, `orbit`, `random`, `drift`, `static`. Each takes `speed` and `distance` as primary params.
+
+### In (v1 — LANDING)
+- **Five shape types:** spheres, cubes, toruses, blobs, crystals — each with count/size/color/opacity/organicness/movement/distance.
+- **Particle system** — count/size/color/speed/opacity/spread/movement/distance.
+- **Post-processing stack:** bloom + DOF + vignette + **volumetric fog** (fog colour tints the whole scene).
+- **Per-shape trails** — length/opacity/width/fadeRate per shape type. LANDING uses these heavily.
+- **Camera:** auto-pan orbit around origin. No manual controls.
+- **Preset format:** static JSON, committed in-repo. Schema in §6.3.
+- Theme integration via `BackgroundLayer` when `theme === 'ralph-world'`.
+
+### In (v2 — additional presets)
+Scope pending Brook's v2 picks. Likely:
+- **MultiColor** — same engine, different palette and shape mix. Probably no new systems needed.
+- **TRAILS** — trail-heavy look. v1 already needs trails for LANDING; TRAILS just pushes trail length/opacity higher.
 
 ### Out (hard cut)
 - ~~AI theme analysis / OpenAI integration~~
@@ -58,10 +106,9 @@ Don't chase: subtle shader noise variations, exact RNG seeds, pixel-accurate blo
 - ~~Cloud presets / MongoDB~~
 - ~~Preset share URLs / QR codes~~
 - ~~In-canvas admin UI, dashboards, sliders, tooltips~~
-- ~~Preset transitions (v2, not v1)~~
-- ~~Manual camera controls~~
-- ~~Object trails~~
-- ~~Sine wave layers, metamorphosis, blobs, fireflies~~ (revisit case-by-case if a preset needs them)
+- ~~Preset transitions (animate between presets) — v3 if ever~~
+- ~~Manual camera controls (orbit controls, zoom)~~
+- ~~`waveInterference`, `metamorphosis`, `fireflies`, `layeredSineWaves` effects~~ — unless a chosen v2 preset needs them, in which case scope bump.
 
 ---
 
@@ -152,7 +199,7 @@ docs/
   visual-canvas-refs/        # reference screenshots + video
 ```
 
-### 6.3 Preset schema (JSON)
+### 6.3 Preset schema (JSON) — mirrors canvas-lab field names to ease porting
 ```json
 {
   "name": "LANDING",
@@ -165,29 +212,44 @@ docs/
     "panRadius": 3
   },
   "shapes": {
-    "spheres":  { "count": 40, "size": 0.6, "color": "#FF2098", "organicness": 0.3, "glow": 0.8 },
-    "cubes":    { "count": 20, "size": 0.4, "color": "#7B2FBE", "rotationSpeed": 0.02 },
-    "toruses":  { "count": 10, "size": 0.8, "color": "#00C4B4", "tube": 0.2 }
+    "spheres":  { "count": 18, "size": 13.4, "color": "#fbc000", "speed": 0.5, "rotation": 0.92, "opacity": 0.3, "organicness": 0.6, "movementPattern": "verticalSine", "distance": 2 },
+    "cubes":    { "count": 11, "size": 12,   "color": "#31bdbf", "speed": 0.1, "rotation": 0.1,  "opacity": 0.8, "organicness": 1.8, "movementPattern": "verticalSine", "distance": 1.2 },
+    "toruses":  { "count": 17, "size": 8.7,  "color": "#eb008b", "speed": 0.1, "rotation": 0,    "opacity": 0.7, "organicness": 2,   "movementPattern": "orbit",        "distance": 6.4 },
+    "blobs":    { "count": 7,  "size": 12.3, "color": "#f16524", "speed": 0.1, "opacity": 1,     "organicness": 2, "movementPattern": "orbit", "distance": 7.9 },
+    "crystals": { "count": 8,  "size": 1,    "color": "#4ecdc4", "opacity": 0.9, "complexity": 16, "organicness": 0.2 }
   },
-  "particles": { "count": 800, "size": 0.05, "color": "#FFFFFF", "movement": "drift" },
+  "particles": {
+    "count": 453, "size": 4.05, "color": "#ffffff",
+    "speed": 4.8, "opacity": 1, "spread": 75.9,
+    "movementPattern": "orbit", "distance": 8.8
+  },
+  "trails": {
+    "spheres":   { "enabled": true, "length": 150, "opacity": 0.6, "width": 0.8, "fadeRate": 0.3 },
+    "cubes":     { "enabled": true, "length": 120, "opacity": 0.5, "width": 0.7, "fadeRate": 0.4 },
+    "toruses":   { "enabled": true, "length": 100, "opacity": 0.5, "width": 0.6, "fadeRate": 0.5 },
+    "blobs":     { "enabled": true, "length": 200, "opacity": 0.7, "width": 0.9, "fadeRate": 0.2 },
+    "particles": { "enabled": true, "length": 300, "opacity": 0.8, "width": 0.3, "fadeRate": 0.1 }
+  },
   "effects": {
-    "bloom":     { "intensity": 1.2, "threshold": 0.4, "smoothing": 0.2 },
-    "dof":       { "focusDistance": 0.01, "focalLength": 0.05, "bokehScale": 3 },
-    "vignette":  { "offset": 0.3, "darkness": 0.6 }
+    "bloom":      { "intensity": 1.2, "threshold": 0.4, "smoothing": 0.2 },
+    "dof":        { "focusDistance": 0.01, "focalLength": 0.05, "bokehScale": 3 },
+    "vignette":   { "offset": 0.3, "darkness": 0.6 },
+    "volumetric": { "fog": 0.5, "density": 0.6, "color": "#eb00eb" }
   }
 }
 ```
-- Fields mirror canvas-lab param names where possible to ease porting.
-- Brook or future-Brook hand-converts each preset from canvas-lab's store dump. No automatic importer.
+- Fields mirror canvas-lab param names so preset porting is mostly copy-paste.
+- `bloom` / `dof` / `vignette` aren't in canvas-lab preset JSON — Brook tunes defaults in the rebuild to match the LANDING look, then exposes per-preset overrides.
+- Brook hand-converts each preset from canvas-lab's store dump. No automatic importer.
 
 ---
 
 ## 7. Phases (vertical slices, not layer-by-layer)
 
-**Phase 0 — Reference pack (Brook, async, ~30min)**
-- Capture LANDING screenshots + MP4 at target viewports.
-- Export canvas-lab LANDING preset JSON from the store.
-- Commit to `docs/visual-canvas-refs/`.
+**Phase 0 — Reference pack (DONE 2026-04-17)**
+- ✅ 4 screenshots + 10s+ MP4 capture in `public/visual canvas refs/` (gitignored).
+- ✅ LANDING preset JSON captured inline in §3 of this doc.
+- ☐ Brook to confirm the screenshot→preset mapping and sign off on LANDING as v1 target.
 
 **Phase 1 — Scaffolding (1 day)**
 - Install R3F v9, three, postprocessing, zustand in ralph-world.
@@ -196,15 +258,19 @@ docs/
 - Verify bundle split: confirm no canvas code in the main chunk.
 - **Gate:** measure current gzipped size of the canvas chunk (should be <200KB with only a sphere).
 
-**Phase 2 — LANDING vertical slice (2–3 days)**
-- Implement all shapes + particles + camera + effects **end-to-end** with hard-coded parameters close to LANDING reference.
-- Wire preset JSON loading.
-- Don't tune — just get the full stack rendering.
-- **Gate:** compare against reference screenshots. Document the delta (lighting wrong? DOF too strong? particles too dense?).
+**Phase 2 — LANDING vertical slice (3–4 days — bumped for 5 shape types + trails + volumetric)**
+- Implement all 5 shape types (spheres, cubes, toruses, blobs, crystals) with organic deformation.
+- Particle system (single system supporting all movement patterns).
+- Per-shape trails (render as line strips from position history).
+- Auto-pan camera (orbit around origin at fixed radius + slow Y drift).
+- Post-processing chain: bloom → DOF → vignette → volumetric fog.
+- Preset JSON loader that maps JSON → scene state.
+- Don't tune — just get every enabled LANDING feature rendering end-to-end.
+- **Gate:** side-by-side against images 1–2. Document every visible delta (fog wrong colour? trails too short? cube organicness too weak?).
 
-**Phase 3 — Visual parity (2–4 days, the messy one)**
-- Tune parameters until side-by-side match is ≥95%.
-- This is where previous rebuilds stalled. Budget a full day to just stare at the reference and adjust bloom/DOF/vignette values.
+**Phase 3 — Visual parity (3–5 days, the messy one — bumped)**
+- Tune until side-by-side match is ≥95%.
+- Previous rebuilds stalled here. Budget a full day each for: (a) bloom/DOF tuning, (b) volumetric fog + colour grading, (c) shape organicness + trails, (d) camera cadence against the MP4.
 - **Gate:** Brook signs off on LANDING match.
 
 **Phase 4 — Perf tuning (1–2 days)**
@@ -221,7 +287,7 @@ docs/
 **Phase 6 — More presets (v2, not v1)**
 - Each additional preset: capture reference → tune params → ship. ~half day each.
 
-**Total v1:** 6–10 days focused work, comparable to canvas-lab's original INTEGRATION_PLAN.md estimate but producing a production-grade result rather than an AI-first prototype.
+**Total v1:** 8–13 days focused work (revised up from 6–10 after parameter inventory — 5 shape types + trails + volumetric fog is bigger than initially scoped).
 
 ---
 
@@ -240,10 +306,14 @@ docs/
 
 ## 9. Open decisions
 
-- **Preset v2+ target set.** LANDING is v1. Which 3–4 others? Brook to pick from canvas-lab screenshots once v1 ships.
-- **Mobile behavior.** Full canvas on mobile, or a lighter fallback (e.g., static gradient + subtle particles)? Decide at start of Phase 4.
-- **Reduced-motion preference.** Honour `prefers-reduced-motion` — slow down or freeze the camera? Probably freeze. Decide at Phase 5.
-- **Scroll behavior.** Does the canvas pause when the page scrolls far past the hero? Likely yes (CPU saver). Decide at Phase 4.
+- **Preset→screenshot mapping.** Brook to confirm which reference image corresponds to which preset. Current guess in §2.1.
+- **Preset v2+ target set.** LANDING is v1. MultiColor + TRAILS are likely v2 (both shown in the reference pack). Anything else?
+- **Crystals shape.** LANDING uses 8 crystals at size 1 with `complexity 16`. The canvas-lab implements these as procedurally-generated geometry — non-trivial. If they barely contribute visually at that size, consider dropping from v1 and adding in v2.
+- **Blob geometry.** Blobs in canvas-lab are soft metaball-style. Implementing properly needs marching cubes or a sphere-merge shader. For v1 could fake as large low-res spheres with high organicness — verify acceptability during Phase 3.
+- **Mobile behavior.** Full canvas, or a lighter fallback (e.g., static gradient + subtle particles)? Decide at start of Phase 4.
+- **Reduced-motion preference.** Honour `prefers-reduced-motion` — slow down or freeze the camera? Probably freeze.
+- **Scroll behavior.** Pause canvas when the page scrolls far past the hero? Likely yes (CPU saver).
+- **Iframe theme fate.** When the bundled version ships, do we remove the iframe-backed `ralph-world` theme entirely, or keep it as a fallback (e.g., feature flag)? Probably remove — one way to do a thing.
 
 ---
 

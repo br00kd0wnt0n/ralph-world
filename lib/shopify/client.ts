@@ -1,6 +1,7 @@
 import type { ShopifyProduct, ShopifyCart, ProductSummary } from './types'
 import {
   GET_PRODUCTS_BY_COLLECTION,
+  GET_ALL_PRODUCTS,
   GET_PRODUCT_BY_HANDLE,
   CREATE_CART,
   CREATE_SUBSCRIPTION_CART,
@@ -10,7 +11,12 @@ import {
   REMOVE_CART_LINES,
   GET_CART,
 } from './queries'
-import { getMockProducts, getMockProduct, isShopifyConfigured } from './mock'
+import {
+  getMockProducts,
+  getAllMockProducts,
+  getMockProduct,
+  isShopifyConfigured,
+} from './mock'
 
 interface ShopifyResponse<T> {
   data?: T
@@ -68,9 +74,23 @@ export function toProductSummary(p: ShopifyProduct): ProductSummary {
     currency: p.priceRange.minVariantPrice.currencyCode,
     imageUrl: p.featuredImage?.url ?? null,
     available: p.availableForSale,
+    productType: p.productType ?? '',
     tags: p.tags ?? [],
     variantId: firstVariant?.id ?? '',
   }
+}
+
+export async function getAllProducts(first = 50): Promise<ProductSummary[]> {
+  if (!isShopifyConfigured()) {
+    return getAllMockProducts()
+  }
+
+  const data = await storefront<{
+    products: { edges: { node: ShopifyProduct }[] }
+  }>(GET_ALL_PRODUCTS, { first })
+
+  if (!data?.products) return []
+  return data.products.edges.map((e) => toProductSummary(e.node))
 }
 
 export async function getProductsByCollection(

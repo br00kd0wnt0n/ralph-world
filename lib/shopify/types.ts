@@ -26,6 +26,7 @@ export interface ShopifyProduct {
   description: string
   descriptionHtml: string
   availableForSale: boolean
+  productType: string
   tags: string[]
   featuredImage: ShopifyImage | null
   images: { edges: { node: ShopifyImage }[] }
@@ -73,6 +74,9 @@ export interface ProductSummary {
   currency: string
   imageUrl: string | null
   available: boolean
+  productType: string
   tags: string[]
   variantId: string
 }
+
+export type ShopCategory = 'magazine' | 'merch' | 'random'

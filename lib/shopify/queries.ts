@@ -6,6 +6,7 @@ export const PRODUCT_FRAGMENT = `
     description
     descriptionHtml
     availableForSale
+    productType
     tags
     featuredImage { url altText width height }
     images(first: 8) { edges { node { url altText width height } } }
@@ -72,6 +73,15 @@ export const GET_PRODUCTS_BY_COLLECTION = `
       products(first: $first) {
         edges { node { ...ProductFields } }
       }
+    }
+  }
+`
+
+export const GET_ALL_PRODUCTS = `
+  ${PRODUCT_FRAGMENT}
+  query GetAllProducts($first: Int!) {
+    products(first: $first) {
+      edges { node { ...ProductFields } }
     }
   }
 `

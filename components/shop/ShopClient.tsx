@@ -6,17 +6,33 @@ import ProductCard from './ProductCard'
 import ProductOverlay from './ProductOverlay'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import Footer from '@/components/layout/Footer'
-import type { ProductSummary, ShopifyProduct } from '@/lib/shopify/types'
+import type {
+  ProductSummary,
+  ShopifyProduct,
+  ShopCategory,
+} from '@/lib/shopify/types'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
-const CATEGORIES = [
-  { handle: 'ralph-magazine', label: 'The Mag' },
-  { handle: 'ralph-merch', label: 'Merch' },
-  { handle: 'ralph-random', label: 'Random S**t' },
+const CATEGORIES: { handle: ShopCategory; label: string; hint: string }[] = [
+  {
+    handle: 'magazine',
+    label: 'The Mag',
+    hint: 'Magazines / Magazines & Newspapers',
+  },
+  {
+    handle: 'merch',
+    label: 'Merch',
+    hint: 'Apparel, Hats, Hoodies, Tote Bags, Socks, etc.',
+  },
+  {
+    handle: 'random',
+    label: 'Random S**t',
+    hint: 'Anything else (Pins, Stickers, Mugs, Candles, Prints…)',
+  },
 ]
 
 interface ShopClientProps {
-  collections: Record<string, ProductSummary[]>
+  collections: Record<ShopCategory, ProductSummary[]>
   heading?: string
   intro?: string
   soldoutHeading?: string
@@ -32,7 +48,10 @@ export default function ShopClient({
   soldoutBody,
   copy,
 }: ShopClientProps) {
-  const [activeCollection, setActiveCollection] = useState(CATEGORIES[0].handle)
+  const [activeCollection, setActiveCollection] = useState<ShopCategory>(
+    CATEGORIES[0].handle
+  )
+  const activeCategory = CATEGORIES.find((c) => c.handle === activeCollection)
   const [overlayProduct, setOverlayProduct] = useState<ShopifyProduct | null>(null)
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
@@ -89,8 +108,13 @@ export default function ShopClient({
       {/* Product grid */}
       <section className="bg-[#FAFAFA] px-6 py-8 min-h-[50vh]">
         {products.length === 0 ? (
-          <div className="max-w-6xl mx-auto text-center py-16 text-gray-500 text-sm">
-            Products coming soon.
+          <div className="max-w-2xl mx-auto text-center py-16 space-y-3">
+            <p className="text-gray-500 text-sm">Products coming soon.</p>
+            <p className="text-gray-400 text-xs italic">
+              Content team: products appear here once their <strong>Category</strong>{' '}
+              in Shopify Admin matches this tab
+              {activeCategory ? ` (${activeCategory.hint})` : ''}.
+            </p>
           </div>
         ) : (
           <motion.div

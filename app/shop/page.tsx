@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { getProductsByCollection } from '@/lib/shopify/client'
+import { getAllProducts } from '@/lib/shopify/client'
+import { groupProducts } from '@/lib/shopify/categorize'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import ShopClient from '@/components/shop/ShopClient'
 
@@ -16,18 +17,13 @@ export const metadata: Metadata = {
   },
 }
 
-const COLLECTION_HANDLES = ['ralph-magazine', 'ralph-merch', 'ralph-random']
-
 export default async function ShopPage() {
-  const [results, copy] = await Promise.all([
-    Promise.all(COLLECTION_HANDLES.map((h) => getProductsByCollection(h, 20))),
+  const [products, copy] = await Promise.all([
+    getAllProducts(50),
     getSiteCopy(),
   ])
 
-  const collections = COLLECTION_HANDLES.reduce(
-    (acc, handle, i) => ({ ...acc, [handle]: results[i] }),
-    {} as Record<string, Awaited<ReturnType<typeof getProductsByCollection>>>
-  )
+  const collections = groupProducts(products)
 
   return (
     <ShopClient

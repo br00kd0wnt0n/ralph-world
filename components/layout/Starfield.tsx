@@ -10,6 +10,11 @@ export default function Starfield() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    // Re-run on every theme change so the effect rebuilds the animation
+    // when the user switches back to cosy-dynamics after having been on
+    // another theme. Without the theme dep, the old `canvasRef` closure
+    // points at a detached canvas and the new one stays blank.
+    if (theme !== 'cosy-dynamics') return
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -76,7 +81,7 @@ export default function Starfield() {
       window.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(animationId)
     }
-  }, [])
+  }, [theme])
 
   // Only render for themes that want a starfield — otherwise it would
   // stack on top of other theme backgrounds (e.g. the ralph-world 3D canvas).

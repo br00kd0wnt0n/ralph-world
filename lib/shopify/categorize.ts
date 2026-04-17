@@ -3,7 +3,20 @@ import type { ProductSummary, ShopCategory } from './types'
 // Products excluded from /shop — recurring subscriptions whose checkout
 // flows live elsewhere. Add handles here when a subscription product
 // gets created in Shopify with a non-Subscription-Services Category.
-const EXCLUDED_HANDLES = new Set<string>(['mag-subscription'])
+const EXCLUDED_HANDLES = new Set<string>([
+  'mag-subscription',
+  'ralph-world-membership',
+  '2027-a-year-in-review',
+])
+
+// Belt-and-braces filter — Shopify Admin's "Category" field uses the
+// new structured taxonomy, which doesn't always populate Storefront's
+// productType. So we also match by title/handle for anything that
+// looks like a recurring subscription.
+function looksLikeSubscription(p: ProductSummary): boolean {
+  const haystack = `${p.handle} ${p.title}`.toLowerCase()
+  return haystack.includes('subscription') || haystack.includes('membership')
+}
 
 // Maps a Shopify productType to one of the three /shop tabs.
 // Returns null when the product should be hidden from /shop entirely
@@ -40,6 +53,7 @@ export function groupProducts(
   }
   for (const p of products) {
     if (EXCLUDED_HANDLES.has(p.handle)) continue
+    if (looksLikeSubscription(p)) continue
     const cat = categorize(p.productType)
     if (cat) groups[cat].push(p)
   }

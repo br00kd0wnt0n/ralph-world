@@ -10,7 +10,12 @@
 //   CRASH_ANALYSIS.md) from the main app
 // - canvas-lab can keep evolving independently; we just swap the URL
 
-const CANVAS_URL = 'https://ralph-visual-canvas-production.up.railway.app/?p=LANDING'
+// Using ?preset=<mongo-id> (cloud preset) rather than ?p=LANDING,
+// because ?p= only reads from the canvas-lab's localStorage — first-time
+// visitors have no localStorage entry and would get the default preset.
+// Cloud preset IDs can be listed via /api/presets on the canvas deploy.
+const LANDING_PRESET_ID = '68b1c687dd68f9f4d2c5503e'
+const CANVAS_URL = `https://ralph-visual-canvas-production.up.railway.app/?preset=${LANDING_PRESET_ID}`
 
 export default function CanvasBackground() {
   return (

@@ -109,6 +109,16 @@ Admin config partly done 2026-04-16.
       schedule pipeline. Generate a new one in the broadcaster admin
       and update `BROADCASTER_SERVICE_TOKEN` on Railway.
 
+## Visual canvas rebuild (parked)
+
+- [ ] **Rebuild the visual canvas as a bundled, lazy-loaded R3F scene
+      inside ralph-world** (currently iframed from the separate
+      `visual-canvas-lab` Railway service via the RALPH WORLD theme).
+      Full scope, phases, perf budget, and acceptance criteria in
+      [`docs/visual-canvas-rebuild.md`](docs/visual-canvas-rebuild.md).
+      Blocked on Brook capturing the LANDING reference pack
+      (screenshots + MP4 + preset JSON) — Phase 0 in the doc.
+
 ## Ralph TV
 
 - [ ] **Verify Fullscreen button goes to actual fullscreen.** The

@@ -131,12 +131,31 @@ export default function TVSet({
 
             {/* Offline fallback */}
             {screenState === 'offline' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black">
-                <div className="text-center">
-                  <div className="text-ralph-pink text-lg mb-2 tracking-widest font-mono">
-                    {offlineLabel}
+              <div className="absolute inset-0 bg-black">
+                {/* SMPTE test-card GIF fills the screen */}
+                <img
+                  src="/offline.gif"
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                {/* Dark scrim so the OFFLINE label stays readable */}
+                <div className="absolute inset-0 bg-black/55" />
+                <div className="relative z-10 h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div
+                      className="text-ralph-pink text-2xl md:text-3xl mb-2 tracking-widest font-mono font-bold"
+                      style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}
+                    >
+                      {offlineLabel}
+                    </div>
+                    <p
+                      className="text-white text-xs md:text-sm"
+                      style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}
+                    >
+                      {offlineMessage}
+                    </p>
                   </div>
-                  <p className="text-white/40 text-xs">{offlineMessage}</p>
                 </div>
               </div>
             )}

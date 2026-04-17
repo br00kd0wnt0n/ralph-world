@@ -4,6 +4,77 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-17 — Shop + Ralph TV redesign and broadcaster wiring
+
+Two streams of work this session: finished `/shop` with live Shopify
+products, then redesigned Ralph TV's teletext overlays and fixed the
+broadcaster schedule pipeline that was silently returning empty.
+
+### Ralph TV — teletext overlays redesigned
+- **Schedule overlay** (`components/tv/TeletextSchedule.tsx`) — uses
+  `public/illustrations/SCHEDULE.png` for the chunky pixel title
+  (purple highlight bar baked into the asset). Header ticks with
+  seconds (`RALPHFAX 101 · Fri 17 Apr · 15:36:12`). Current show
+  rendered under an `ON NOW:` label with pink text and purple
+  underline; remaining items grouped under `UP NEXT:`. Scroll hint
+  moved to bottom-left.
+- **Show Info overlay** (`components/tv/TeletextShowInfo.tsx`) —
+  uses `public/illustrations/RALPHTV.png` for the CEEFAX block title.
+  Playback bar below the description: pink→purple gradient fill,
+  current time floats on the bar at the playback position, start/end
+  labels below. Progress ticks every second.
+- **OFFLINE state** (`components/tv/TVSet.tsx`) — replaced the
+  flat-black fallback with `public/offline.gif` (SMPTE colour bars)
+  filling the TV screen, plus a 55% black scrim and text-shadow on
+  the label so it stays readable.
+
+### Ralph TV — broadcaster schedule pipeline fix
+Schedule and Show Info always rendered empty because we were calling
+the wrong URL.
+- **Wrong URL**: `/feed/default/current/{ISO_DATE}/playlist` (date
+  shape like `2026-04-17`). The broadcaster route is
+  `/feed/{channel}/{week}/{day}/playlist` where `:day` is a
+  full weekday name. The date-shaped path still returned 200 with a
+  stub empty `items` array, so there was no signal the wiring was
+  broken.
+- **Fix** (`lib/broadcaster/client.ts`) — derive `day` from
+  `new Date().getDay()` as `Sunday…Saturday`. `CHANNEL` and `WEEK`
+  left as `'default'` and `'current'` (broadcaster doesn't yet
+  support multi-week — see PRE_DEPLOY.md).
+- **Enrichment** — broadcaster playlist only returns `{assetId,
+  durationSec, …}`. We now fetch `/assets` in parallel and join on
+  `assetId` so each `ScheduleItem` carries a `showName`
+  (asset.file_name with the video extension stripped).
+- **Wall-clock times** — ported `backend/src/feed.js:computePointer`
+  to TS. Returned list starts with the currently-playing item and
+  rolls `startTime`/`endTime` forward from the current loop
+  iteration's start. Works for both `loop` and `playthru` playback
+  modes.
+- **BroadcasterAsset type** (`lib/broadcaster/types.ts`) brought in
+  line with the actual API response (snake_case fields) with
+  camelCase aliases populated by `getAssets()` for backward compat.
+
+### Decisions made
+- **No broadcaster-side changes required** for this session. The
+  route was always correct — we were calling it with a wrong path
+  shape. Kept the fix entirely in `lib/broadcaster/client.ts`.
+- **Rolling wall-clock times from current pointer, not fixed "start
+  of day" times.** Matches how a live TV schedule is normally read
+  ("it's 3:36, so X is on until 3:44, then Y at 3:44"), and means
+  loop mode has the same UX as schedule mode without needing
+  special-casing in the UI.
+
+### Pending
+- **Broadcaster multi-week support.** `WEEK` constant in
+  `lib/broadcaster/client.ts` is hard-coded to `'current'`. Tracked
+  in PRE_DEPLOY.md.
+- **Show names in playlist response.** Minor perf: eliminate the
+  `/assets` join by having the broadcaster include `file_name` on
+  playlist items. Tracked in PRE_DEPLOY.md.
+- Rotate broadcaster service token (pasted in working session).
+
+---
+
 ## 2026-04-17 — Shop pulls live products from Shopify
 
 **Session goal:** Wire `/shop` to real Shopify products instead of the mock fallback, and bucket them into the Mag / Merch / Random tabs without depending on Shopify Collections (none exist in the store yet).

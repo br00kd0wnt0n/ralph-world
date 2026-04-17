@@ -13,13 +13,13 @@
 FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-`/shop` pulls live products from Shopify and buckets them into the
-Mag / Merch / Random tabs (2026-04-17). Categorisation lives in
-`lib/shopify/categorize.ts` as a code-side workaround until the
-Shopify store sweep populates `productType` on every product. See
-`changelog.md` for what shipped and `PRE_DEPLOY.md` for the
-remaining-items checklist (still includes Shopify webhook
-registration and a real-payment test from the previous session).
+`/shop` pulls live Shopify products bucketed into Mag / Merch /
+Random; Ralph TV teletext overlays redesigned (Schedule, Show Info,
+OFFLINE SMPTE bars) with working broadcaster schedule pipeline
+(2026-04-17). See `changelog.md` for what shipped and `PRE_DEPLOY.md`
+for the remaining-items checklist (Shopify store sweep, multi-week
+broadcaster scheduling, webhook registration, real-payment test,
+token rotations).
 
 ---
 

@@ -104,6 +104,26 @@ Admin config partly done 2026-04-16.
       pasted into a working session and should be considered exposed.
       Generate a new one in the legacy `ralphworld` custom app and
       update `SHOPIFY_STOREFRONT_TOKEN` on Railway.
+- [ ] **Rotate Broadcaster service token** — the one in Railway was
+      pasted into a working session 2026-04-17 while debugging the
+      schedule pipeline. Generate a new one in the broadcaster admin
+      and update `BROADCASTER_SERVICE_TOKEN` on Railway.
+
+## Ralph TV
+
+- [ ] **Multi-week broadcaster scheduling.** `lib/broadcaster/client.ts`
+      hard-codes `WEEK = 'current'` because the broadcaster only
+      supports one "current" week at a time. When the broadcaster
+      adds real week keys (likely ISO week strings, e.g. `2026-W16`),
+      swap the constant for a computed value derived from today's
+      date. No other changes needed on the ralph-world side — the
+      schedule pipeline already handles loop and playthru modes.
+- [ ] **Broadcaster-side: expose show names on playlist items.** Today
+      `getSchedule()` makes two calls (playlist + full asset list) and
+      joins in our process. If the broadcaster adds `file_name` (or a
+      proper `show_name`) to the playlist response directly, we can
+      drop the `/assets` fetch from `getSchedule()`. Minor perf win,
+      not blocking.
 
 ## DNS cutover
 

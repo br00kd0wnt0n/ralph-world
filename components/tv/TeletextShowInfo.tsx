@@ -1,79 +1,96 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { teletextHeaderVariants } from '@/lib/animation/tv'
+import { useEffect, useState } from 'react'
 import type { ScheduleItem } from '@/lib/broadcaster/types'
 
 interface TeletextShowInfoProps {
   current?: ScheduleItem
 }
 
+// Parses an HH:MM time string into minutes since midnight.
+// Returns null if the string isn't parseable.
+function parseHHMM(s: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim())
+  if (!m) return null
+  return Number(m[1]) * 60 + Number(m[2])
+}
+
 export default function TeletextShowInfo({ current }: TeletextShowInfoProps) {
-  const now = new Date()
-  const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-  const dateStr = now.toLocaleDateString('en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
+  const [now, setNow] = useState(() => new Date())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const timeStr = now.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
   })
 
+  const startMin = current ? parseHHMM(current.startTime) : null
+  const endMin = current ? parseHHMM(current.endTime) : null
+  const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60
+
+  let progress = 0
+  if (startMin !== null && endMin !== null && endMin > startMin) {
+    progress = Math.max(0, Math.min(1, (nowMin - startMin) / (endMin - startMin)))
+  }
+  const progressPct = Math.round(progress * 100)
+
   return (
-    <div className="absolute inset-0 bg-black font-mono p-4 md:p-6 overflow-hidden">
-      {/* Header */}
-      <motion.div
-        variants={teletextHeaderVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex items-center justify-between text-xs mb-4"
-      >
-        <span className="text-ralph-pink font-bold">RALPHFAX 100</span>
-        <span className="text-ralph-teal">{dateStr}</span>
-        <span className="text-ralph-yellow">{timeStr}</span>
-      </motion.div>
-
-      {/* Blocky RALPH logo */}
-      <div className="flex items-center justify-center py-4 md:py-8">
-        <div className="text-3xl md:text-5xl font-bold tracking-widest">
-          <span className="text-ralph-pink">R</span>
-          <span className="text-ralph-purple">A</span>
-          <span className="text-ralph-pink">L</span>
-          <span className="text-ralph-purple">P</span>
-          <span className="text-ralph-pink">H</span>
-        </div>
-      </div>
-
-      <div className="text-ralph-teal text-[10px] mb-1 uppercase tracking-widest">
-        Now Showing
+    <div className="absolute inset-0 bg-black font-mono p-4 md:p-6 overflow-hidden flex flex-col">
+      {/* RALPH TV CEEFAX block letters — pixel asset */}
+      <div className="mb-5 md:mb-6">
+        <img
+          src="/illustrations/RALPHTV.png"
+          alt="Ralph TV"
+          className="block h-8 md:h-12 w-auto"
+          style={{ imageRendering: 'pixelated' }}
+        />
       </div>
 
       {current ? (
-        <>
-          <div className="text-white/60 text-xs mb-1">
-            {current.startTime}&mdash;{current.endTime}
+        <div className="flex-1 min-h-0">
+          <div className="text-white/80 text-xs md:text-sm mb-1 tabular-nums">
+            {current.startTime}-{current.endTime}
           </div>
-          <h3 className="text-white text-base md:text-lg font-bold mb-2">
+          <h3 className="text-white text-xl md:text-3xl font-bold uppercase tracking-wide mb-3">
             {current.showName}
           </h3>
           {current.description && (
-            <p className="text-white/70 text-xs leading-relaxed line-clamp-3">
+            <p className="text-white/80 text-xs md:text-sm leading-relaxed">
               {current.description}
             </p>
           )}
-        </>
-      ) : (
-        <div className="text-white/60 text-xs">
-          Schedule unavailable
         </div>
+      ) : (
+        <div className="flex-1 text-white/60 text-xs">Schedule unavailable</div>
       )}
 
-      {/* Progress bar */}
-      <div className="absolute bottom-4 md:bottom-6 left-4 right-4 md:left-6 md:right-6">
-        <div className="h-1 bg-white/10 rounded">
-          <div className="h-full w-1/3 bg-ralph-pink rounded" />
+      {/* Playback bar */}
+      <div className="relative pt-5 mt-3">
+        {/* Floating current-time marker on the bar */}
+        {startMin !== null && endMin !== null && (
+          <div
+            className="absolute top-0 -translate-x-1/2 text-white text-[10px] md:text-xs font-bold tabular-nums whitespace-nowrap"
+            style={{ left: `${progressPct}%` }}
+          >
+            {timeStr}
+          </div>
+        )}
+
+        {/* Bar — pink → purple gradient fill */}
+        <div className="h-1.5 md:h-2 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-ralph-pink to-ralph-purple transition-all duration-1000 ease-linear"
+            style={{ width: `${progressPct}%` }}
+          />
         </div>
-        <div className="flex justify-between text-[10px] text-white/40 mt-1 font-mono">
+
+        {/* Start / end labels under bar */}
+        <div className="flex justify-between text-[10px] md:text-xs text-white/70 mt-1 font-mono tabular-nums">
           <span>{current?.startTime ?? '--:--'}</span>
-          <span className="text-ralph-pink">{timeStr}</span>
           <span>{current?.endTime ?? '--:--'}</span>
         </div>
       </div>

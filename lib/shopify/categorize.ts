@@ -1,5 +1,10 @@
 import type { ProductSummary, ShopCategory } from './types'
 
+// Products excluded from /shop — recurring subscriptions whose checkout
+// flows live elsewhere. Add handles here when a subscription product
+// gets created in Shopify with a non-Subscription-Services Category.
+const EXCLUDED_HANDLES = new Set<string>(['mag-subscription'])
+
 // Maps a Shopify productType to one of the three /shop tabs.
 // Returns null when the product should be hidden from /shop entirely
 // (e.g. the £3 site membership lives in the /subscribe flow).
@@ -34,6 +39,7 @@ export function groupProducts(
     random: [],
   }
   for (const p of products) {
+    if (EXCLUDED_HANDLES.has(p.handle)) continue
     const cat = categorize(p.productType)
     if (cat) groups[cat].push(p)
   }

@@ -111,6 +111,14 @@ Admin config partly done 2026-04-16.
 
 ## Ralph TV
 
+- [ ] **Verify Fullscreen button goes to actual fullscreen.** The
+      handler in `components/tv/TVSet.tsx:handleFullscreen` calls
+      `el.requestFullscreen()` on the TV container div. Needs a live
+      test across Chrome + Safari + Firefox. Safari historically
+      requires `webkitRequestFullscreen`; add a fallback if the
+      standard API doesn't fire. Also verify the overlay dashboards
+      (Schedule / Show Info) render correctly in fullscreen — the
+      absolute-positioned inner panels may need a stacking fix.
 - [ ] **Multi-week broadcaster scheduling.** `lib/broadcaster/client.ts`
       hard-codes `WEEK = 'current'` because the broadcaster only
       supports one "current" week at a time. When the broadcaster

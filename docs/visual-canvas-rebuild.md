@@ -308,8 +308,8 @@ docs/
 
 - **Preset→screenshot mapping.** Brook to confirm which reference image corresponds to which preset. Current guess in §2.1.
 - **Preset v2+ target set.** LANDING is v1. MultiColor + TRAILS are likely v2 (both shown in the reference pack). Anything else?
-- **Crystals shape.** LANDING uses 8 crystals at size 1 with `complexity 16`. The canvas-lab implements these as procedurally-generated geometry — non-trivial. If they barely contribute visually at that size, consider dropping from v1 and adding in v2.
-- **Blob geometry.** Blobs in canvas-lab are soft metaball-style. Implementing properly needs marching cubes or a sphere-merge shader. For v1 could fake as large low-res spheres with high organicness — verify acceptability during Phase 3.
+- **Crystals shape.** LANDING uses 8 crystals at size 1 with `complexity 16`. The canvas-lab implements these as procedurally-generated geometry — non-trivial. If they barely contribute visually at that size, consider dropping from v1 and adding in v2. **Related decision (decided):** faking with simpler geometry is acceptable where it reads the same visually — see Blob geometry below.
+- **Blob geometry** — **Decided 2026-04-17:** fake blobs as large low-poly spheres with high `organicness` for v1 rather than implementing true metaballs / marching cubes. Saves ~2 days of shader work. Revisit in v2 if the read is wrong under heavy bloom. Applies to crystals too — fake with distorted icosahedrons before building procedural crystal geometry.
 - **Mobile behavior.** Full canvas, or a lighter fallback (e.g., static gradient + subtle particles)? Decide at start of Phase 4.
 - **Reduced-motion preference.** Honour `prefers-reduced-motion` — slow down or freeze the camera? Probably freeze.
 - **Scroll behavior.** Pause canvas when the page scrolls far past the hero? Likely yes (CPU saver).

@@ -19,13 +19,14 @@ function looksLikeSubscription(p: ProductSummary): boolean {
 }
 
 // Maps a Shopify productType to one of the three /shop tabs.
-// Returns null when the product should be hidden from /shop entirely
-// (e.g. the £3 site membership lives in the /subscribe flow).
+// Returns null when the productType is empty/unrecognised (caller should
+// fall back to title/handle matching) or when the product should be
+// hidden from /shop entirely (e.g. Subscription Services).
 //
-// Add productType strings here as the catalog grows — anything not
-// listed falls through to 'random'.
+// Add productType strings here as the catalog grows.
 export function categorize(productType: string): ShopCategory | null {
-  const t = productType.toLowerCase()
+  const t = productType.toLowerCase().trim()
+  if (!t) return null
   if (t === 'subscription services') return null
   if (t.includes('magazine') || t.includes('newspaper')) return 'magazine'
   if (
@@ -43,6 +44,19 @@ export function categorize(productType: string): ShopCategory | null {
   return 'random'
 }
 
+// Fallback when Storefront returns an empty productType — Shopify Admin's
+// new structured "Category" taxonomy doesn't populate the legacy
+// productType field, so until the store sweep sets productType on every
+// product we infer the bucket from title/handle.
+function categorizeByTitle(p: ProductSummary): ShopCategory {
+  const h = `${p.handle} ${p.title}`.toLowerCase()
+  if (/\b(mag|magazine|magazines|newspaper|issue)\b/.test(h)) return 'magazine'
+  if (/\b(tee|t-shirt|shirt|hoodie|tote|cap|hat|sock|socks|apparel)\b/.test(h)) {
+    return 'merch'
+  }
+  return 'random'
+}
+
 export function groupProducts(
   products: ProductSummary[]
 ): Record<ShopCategory, ProductSummary[]> {
@@ -54,8 +68,8 @@ export function groupProducts(
   for (const p of products) {
     if (EXCLUDED_HANDLES.has(p.handle)) continue
     if (looksLikeSubscription(p)) continue
-    const cat = categorize(p.productType)
-    if (cat) groups[cat].push(p)
+    const cat = categorize(p.productType) ?? categorizeByTitle(p)
+    groups[cat].push(p)
   }
   return groups
 }

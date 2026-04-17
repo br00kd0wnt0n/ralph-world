@@ -4,6 +4,39 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-17 — Shop pulls live products from Shopify
+
+**Session goal:** Wire `/shop` to real Shopify products instead of the mock fallback, and bucket them into the Mag / Merch / Random tabs without depending on Shopify Collections (none exist in the store yet).
+
+### Added
+- **`getAllProducts()`** in `lib/shopify/client.ts` + `GET_ALL_PRODUCTS` query — fetches the full active catalogue in one call, no collection dependency.
+- **`lib/shopify/categorize.ts`** — maps Shopify `productType` → `ShopCategory` (`'magazine' | 'merch' | 'random'`), with a title/handle fallback when `productType` is empty (see Decisions). Exposes `groupProducts()` for the page to consume.
+- **Content-team note** in the empty-tab state of `ShopClient.tsx`: tells whoever's running the store which Category values populate each tab.
+- **`productType`** added to `PRODUCT_FRAGMENT`, `ShopifyProduct`, and `ProductSummary` types.
+
+### Changed
+- `/shop` now calls `getAllProducts(50)` once instead of three `GET_PRODUCTS_BY_COLLECTION` queries against handles (`ralph-magazine`, `ralph-merch`, `ralph-random`) that didn't exist in the store.
+- `ShopClient` tab handles renamed: `ralph-magazine` / `ralph-merch` / `ralph-random` → `magazine` / `merch` / `random`.
+- Mock products tagged with realistic productTypes (Magazines, Apparel, Hats, Mugs, etc.) so the local-dev fallback exercises the same categorisation path as production.
+
+### Excluded from `/shop`
+Handles in `EXCLUDED_HANDLES` (in `categorize.ts`) — purely a code-side workaround until the Shopify store sweep:
+- `mag-subscription`
+- `ralph-world-membership`
+- `2027-a-year-in-review`
+
+Plus a belt-and-braces title/handle match (`looksLikeSubscription`) for anything containing "subscription" or "membership", in case new subscription products get added.
+
+### Decisions made
+- **Categorisation lives in code, not Shopify** — for now. The store has no collections, and Shopify Admin's new structured "Category" taxonomy doesn't reliably populate Storefront's legacy `productType` field. So the page reads `productType` when present and falls back to title/handle pattern matching (e.g. `/\b(mag|magazine|issue)\b/` → `magazine`). Once `productType` is set on every product (or collections get configured), the fallback can come out.
+- **Subscription products are out of `/shop` entirely.** Membership belongs in `/subscribe`; "Mag Subscription" was being treated as a one-time cart add (would have charged once, not recurringly) which is the wrong UX. Subscription-aware product cards are deferred until the catalog actually grows.
+
+### Pending
+- **Shopify store sweep** — set `productType` on every product so `/shop` categorisation grounds in Shopify, not code patterns. Then `EXCLUDED_HANDLES` and `categorizeByTitle` can be deleted. Added to `PRE_DEPLOY.md`.
+- Rotate the Storefront API token that was pasted in the working session (now exposed in chat history).
+
+---
+
 ## 2026-04-16 — Shopify subscription checkout live
 
 **Session goal:** Work through the Shopify admin config for subscriptions so the paid tier actually hits Shopify checkout end-to-end.

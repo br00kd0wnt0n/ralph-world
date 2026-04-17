@@ -93,6 +93,17 @@ Admin config partly done 2026-04-16.
 - [ ] Seed real homepage copy via the CMS (site_copy table)
 - [ ] Seed real articles, events, lab items
 - [ ] Upload real illustrations / placeholders that Josh signed off
+- [ ] **Shopify store sweep** — set `productType` on every product (the
+      legacy free-text field, separate from the new "Category" taxonomy
+      in Shopify Admin) so `/shop` categorisation runs off Shopify data
+      instead of code patterns. Once done, delete `EXCLUDED_HANDLES`
+      and `categorizeByTitle()` from `lib/shopify/categorize.ts`.
+      Decide whether subscription products (Ralph World membership, Mag
+      Subscription) belong in the catalog at all, or only in `/subscribe`.
+- [ ] **Rotate Storefront API token** — the one created 2026-04-16 was
+      pasted into a working session and should be considered exposed.
+      Generate a new one in the legacy `ralphworld` custom app and
+      update `SHOPIFY_STOREFRONT_TOKEN` on Railway.
 
 ## DNS cutover
 

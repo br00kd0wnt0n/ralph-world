@@ -13,10 +13,13 @@
 FRONTEND — ~/context-base/personas/frontend.md
 
 ## Session goal
-Shopify subscription checkout flow live end-to-end up to the hosted
-checkout page (2026-04-16). Still to do: register webhooks and
-complete a real payment test. See PRE_DEPLOY.md for the full
-remaining-items checklist.
+`/shop` pulls live products from Shopify and buckets them into the
+Mag / Merch / Random tabs (2026-04-17). Categorisation lives in
+`lib/shopify/categorize.ts` as a code-side workaround until the
+Shopify store sweep populates `productType` on every product. See
+`changelog.md` for what shipped and `PRE_DEPLOY.md` for the
+remaining-items checklist (still includes Shopify webhook
+registration and a real-payment test from the previous session).
 
 ---
 
@@ -46,6 +49,11 @@ npm run dev
 - DB client: `lib/db/index.ts`
 - DB schema: `lib/db/schema.ts`
 - Drizzle config: `drizzle.config.ts`
+- Shopify client: `lib/shopify/client.ts`
+- Shopify queries: `lib/shopify/queries.ts`
+- Shop categorisation: `lib/shopify/categorize.ts`
+- Shop page: `app/shop/page.tsx`
+- Shop UI: `components/shop/ShopClient.tsx`
 - Nav component: `components/layout/Nav.tsx`
 - Subscribe modal: `components/layout/SubscribeModal.tsx`
 - Theme toggle: `components/layout/ThemeToggle.tsx`

@@ -16,7 +16,8 @@ export interface ThemeOption {
 export const THEMES: ThemeOption[] = [
   { id: 'cosy-dynamics', label: 'Starfield', type: 'css-vars' },
   { id: 'light', label: 'Light', type: 'css-vars' },
-  { id: 'ralph-world', label: 'RALPH WORLD', type: 'immersive' },
+  { id: 'ralph-world', label: 'Ralph World', type: 'immersive' },
+  { id: 'multicolor', label: 'Multicolor', type: 'immersive' },
   { id: '8-bit-nostalgia', label: '8-bit nostalgia', type: 'immersive', disabled: true },
   { id: '1980s-fever-dream', label: '1980s fever dream', type: 'immersive', disabled: true },
 ]
@@ -62,7 +63,8 @@ export function useTheme() {
 
 export function BackgroundLayer() {
   const { theme } = useTheme()
-  if (theme === 'ralph-world') return <CanvasBackground />
+  if (theme === 'ralph-world') return <CanvasBackground presetKey="ralph-world" />
+  if (theme === 'multicolor') return <CanvasBackground presetKey="multicolor" />
   // Future: immersive theme backgrounds (8-bit, fever dream)
   return null
 }

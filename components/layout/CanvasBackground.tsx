@@ -10,17 +10,30 @@
 //   CRASH_ANALYSIS.md) from the main app
 // - canvas-lab can keep evolving independently; we just swap the URL
 
-// Using ?preset=<mongo-id> (cloud preset) rather than ?p=LANDING,
-// because ?p= only reads from the canvas-lab's localStorage — first-time
-// visitors have no localStorage entry and would get the default preset.
-// Cloud preset IDs can be listed via /api/presets on the canvas deploy.
-const LANDING_PRESET_ID = '68b1c687dd68f9f4d2c5503e'
-const CANVAS_URL = `https://ralph-visual-canvas-production.up.railway.app/?preset=${LANDING_PRESET_ID}`
+// Canvas preset IDs. Using ?preset=<mongo-id> (cloud preset) rather than
+// ?p=NAME, because ?p= only reads from the canvas-lab's localStorage —
+// first-time visitors have no localStorage entry and would get the
+// default preset. List cloud IDs via /api/presets on the canvas deploy.
+const CANVAS_ORIGIN = 'https://ralph-visual-canvas-production.up.railway.app'
+const PRESET_IDS: Record<string, string> = {
+  'ralph-world': '68b1c687dd68f9f4d2c5503e', // LANDING / Basic
+  multicolor: '69e25beddd68f9f4d2c5503f',    // MultiColor
+}
 
-export default function CanvasBackground() {
+interface CanvasBackgroundProps {
+  presetKey?: keyof typeof PRESET_IDS
+}
+
+export default function CanvasBackground({
+  presetKey = 'ralph-world',
+}: CanvasBackgroundProps) {
+  const presetId = PRESET_IDS[presetKey] ?? PRESET_IDS['ralph-world']
+  // key forces iframe remount when the preset changes, so the canvas
+  // reloads with the new preset rather than keeping the old one cached.
   return (
     <iframe
-      src={CANVAS_URL}
+      key={presetId}
+      src={`${CANVAS_ORIGIN}/?preset=${presetId}`}
       title="Ralph visual canvas"
       aria-hidden
       tabIndex={-1}

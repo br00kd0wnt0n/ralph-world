@@ -6,7 +6,8 @@ import { useTheme, THEMES } from '@/context/ThemeContext'
 const SWATCH_COLORS: Record<string, string[]> = {
   'cosy-dynamics': ['#000000', '#7B2FBE', '#FF2098'],
   light: ['#FAFAFA', '#E0D8F0', '#FF2D6B'],
-  'ralph-world': ['#FF2098', '#00C4B4', '#7B2FBE'],
+  'ralph-world': ['#FBC000', '#31BDBF', '#EB008B'],
+  multicolor: ['#EB008B', '#FBC000', '#31BDBF', '#F16524'],
   '8-bit-nostalgia': ['#2D2D2D', '#00FF00', '#FF00FF'],
   '1980s-fever-dream': ['#FF00FF', '#00FFFF', '#FFFF00'],
 }

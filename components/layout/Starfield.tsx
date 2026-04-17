@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useTheme } from '@/context/ThemeContext'
 
 const STAR_COUNT = 200
 
 export default function Starfield() {
+  const { theme } = useTheme()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -75,6 +77,10 @@ export default function Starfield() {
       cancelAnimationFrame(animationId)
     }
   }, [])
+
+  // Only render for themes that want a starfield — otherwise it would
+  // stack on top of other theme backgrounds (e.g. the ralph-world 3D canvas).
+  if (theme !== 'cosy-dynamics') return null
 
   return (
     <canvas

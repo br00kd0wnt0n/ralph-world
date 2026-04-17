@@ -6,6 +6,7 @@ import { useTheme, THEMES } from '@/context/ThemeContext'
 const SWATCH_COLORS: Record<string, string[]> = {
   'cosy-dynamics': ['#000000', '#7B2FBE', '#FF2098'],
   light: ['#FAFAFA', '#E0D8F0', '#FF2D6B'],
+  'ralph-world': ['#FF2098', '#00C4B4', '#7B2FBE'],
   '8-bit-nostalgia': ['#2D2D2D', '#00FF00', '#FF00FF'],
   '1980s-fever-dream': ['#FF00FF', '#00FFFF', '#FFFF00'],
 }
@@ -48,7 +49,7 @@ export default function ThemeToggle() {
 
       {isOpen && (
         <div className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-lg border border-border bg-surface p-1 shadow-xl">
-          {THEMES.filter((t) => t.type === 'css-vars').map((t) => {
+          {THEMES.filter((t) => !t.disabled).map((t) => {
             const swatchColors = SWATCH_COLORS[t.id] ?? ['#888', '#888', '#888']
             return (
               <button

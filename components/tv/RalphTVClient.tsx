@@ -29,13 +29,13 @@ export default function RalphTVClient({
 
   return (
     <>
-      <section className="relative px-4 md:px-6 py-8 md:py-16">
+      <section className="relative px-2 md:px-6 py-6 md:py-16">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8 md:mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold text-primary mb-4 font-[family-name:var(--font-display)]">
+          <div className="text-center mb-4 md:mb-12 px-2">
+            <h1 className="text-3xl md:text-6xl font-bold text-primary mb-2 md:mb-4 font-[family-name:var(--font-display)]">
               {heading}
             </h1>
-            <p className="text-secondary max-w-xl mx-auto">
+            <p className="text-secondary max-w-xl mx-auto text-sm md:text-base">
               {intro}
             </p>
           </div>

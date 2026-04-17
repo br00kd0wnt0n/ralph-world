@@ -86,15 +86,15 @@ export default function TVSet({
       {/* TV SET */}
       <div
         ref={containerRef}
-        className="relative flex-1 bg-surface rounded-3xl p-4 md:p-6 border-4 border-white/10 shadow-2xl"
+        className="relative flex-1 w-full bg-surface rounded-xl md:rounded-3xl p-2 md:p-6 border-2 md:border-4 border-white/10 shadow-2xl"
       >
         {/* Bezel top: knobs */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-3 h-3 rounded-full bg-ralph-pink" />
-          <div className="w-3 h-3 rounded-full bg-ralph-yellow" />
-          <div className="w-3 h-3 rounded-full bg-ralph-teal" />
+        <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-3">
+          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-ralph-pink" />
+          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-ralph-yellow" />
+          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-ralph-teal" />
           <div className="flex-1" />
-          <div className="text-[10px] text-white/40 tracking-widest font-mono">
+          <div className="text-[9px] md:text-[10px] text-white/40 tracking-widest font-mono">
             CH.01
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function TVSet({
         <div className="flex gap-4">
           {/* Screen */}
           <div
-            className="relative aspect-[4/3] flex-1 bg-black rounded-lg overflow-hidden border-2 border-black"
+            className="relative aspect-[4/3] flex-1 bg-black rounded md:rounded-lg overflow-hidden border-2 border-black"
             style={{ maxHeight: '60vh' }}
           >
             {/* LivePlayer stays mounted whenever we have a live stream, so */}
@@ -219,8 +219,8 @@ export default function TVSet({
           </div>
         )}
 
-        {/* Bezel bottom: RALPH text */}
-        <div className="flex items-center justify-center gap-1 mt-3 pt-2 border-t border-white/5">
+        {/* Bezel bottom: RALPH text — hidden on mobile to give the screen more room */}
+        <div className="hidden md:flex items-center justify-center gap-1 mt-3 pt-2 border-t border-white/5">
           <span className="text-white/30 text-xs tracking-[0.5em] font-mono">
             R A L P H
           </span>
@@ -233,11 +233,11 @@ export default function TVSet({
       </div>
 
       {/* Mobile controls (below TV) */}
-      <div className="md:hidden w-full">
+      <div className="md:hidden w-full mt-2">
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => setOverlay(overlay === 'show-info' ? 'none' : 'show-info')}
-            className={`rounded-md px-3 py-2 text-[10px] font-bold uppercase tracking-wide border ${
+            className={`rounded-md px-2 py-2.5 text-[11px] font-bold uppercase tracking-wide border min-h-[44px] ${
               overlay === 'show-info'
                 ? 'bg-ralph-pink text-white border-ralph-pink'
                 : 'bg-black/50 text-white border-white/20'
@@ -247,7 +247,7 @@ export default function TVSet({
           </button>
           <button
             onClick={() => setOverlay(overlay === 'schedule' ? 'none' : 'schedule')}
-            className={`rounded-md px-3 py-2 text-[10px] font-bold uppercase tracking-wide border ${
+            className={`rounded-md px-2 py-2.5 text-[11px] font-bold uppercase tracking-wide border min-h-[44px] ${
               overlay === 'schedule'
                 ? 'bg-ralph-teal text-white border-ralph-teal'
                 : 'bg-black/50 text-white border-white/20'
@@ -257,7 +257,7 @@ export default function TVSet({
           </button>
           <button
             onClick={handleFullscreen}
-            className="rounded-md px-3 py-2 text-[10px] font-bold uppercase tracking-wide border bg-black/50 text-white border-white/20"
+            className="rounded-md px-2 py-2.5 text-[11px] font-bold uppercase tracking-wide border bg-black/50 text-white border-white/20 min-h-[44px]"
           >
             Fullscreen
           </button>

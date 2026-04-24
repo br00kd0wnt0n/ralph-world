@@ -122,11 +122,6 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                           {tag}
                         </span>
                       ))}
-                      {article.issueNumber && (
-                        <span className="text-[9px] font-bold uppercase tracking-wide text-ralph-orange">
-                          Issue #{article.issueNumber}
-                        </span>
-                      )}
                     </div>
                   )}
 

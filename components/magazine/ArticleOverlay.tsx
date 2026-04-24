@@ -133,11 +133,6 @@ export default function ArticleOverlay({
               {tag}
             </span>
           ))}
-          {article.issueNumber && (
-            <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-              Issue #{article.issueNumber}
-            </span>
-          )}
         </div>
 
         {/* Bylines */}

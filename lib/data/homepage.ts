@@ -116,7 +116,6 @@ export async function getHomepageData() {
             .select({
               id: articles.id,
               title: articles.title,
-              issueNumber: articles.issueNumber,
               leadMediaUrl: articles.leadMediaUrl,
             })
             .from(articles)
@@ -126,7 +125,6 @@ export async function getHomepageData() {
             .select({
               id: articles.id,
               title: articles.title,
-              issueNumber: articles.issueNumber,
               leadMediaUrl: articles.leadMediaUrl,
             })
             .from(articles)
@@ -190,7 +188,6 @@ export async function getHomepageData() {
       title: a.title ?? 'Untitled',
       thumbnailUrl: a.leadMediaUrl ?? undefined,
       badge: i === 0 ? 'NEW' : undefined,
-      subtitle: a.issueNumber ? `Issue #${a.issueNumber}` : undefined,
     }))
 
     const eventItems: ModuleItem[] = eventRows.map((e) => ({

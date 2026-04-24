@@ -20,13 +20,6 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
           <span className="border-b-2 border-ralph-orange pb-1">COVER STORY</span>
         </h2>
 
-        {/* Issue label */}
-        {article.issueNumber && (
-          <p className="text-sm text-primary/70 mb-4">
-            Issue #{article.issueNumber}: Cover Story
-          </p>
-        )}
-
         <div className="flex flex-col md:flex-row gap-0 border border-gray-900 bg-white overflow-hidden">
           {/* Thumbnail */}
           <div className="md:w-[40%] aspect-[4/3] md:aspect-auto relative bg-gray-200">

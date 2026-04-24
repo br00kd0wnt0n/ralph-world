@@ -64,22 +64,28 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
         {articles.slice(0, 6).map((article, i) => {
           const isHovered = hoveredId === article.id
           const vec = vectors[i] ?? { dx: 0, dy: 0 }
-          const transform = isHovered
+          // motion.article below owns `transform` for its entry animation
+          // (y:20→0), so the hover offset lives on an outer wrapper div.
+          // Same element would mean framer-motion overwrites the hover.
+          const hoverTransform = isHovered
             ? `translate(${vec.dx * EXPLODE_PX}px, ${vec.dy * EXPLODE_PX}px) scale(1.04)`
             : 'translate(0, 0) scale(1)'
           return (
-            <motion.article
+            <div
               key={article.id}
-              variants={gridCardVariants}
-              className="relative cursor-pointer border border-gray-900 aspect-square overflow-hidden"
+              className="relative"
               style={{
-                transform,
+                transform: hoverTransform,
                 transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
                 zIndex: isHovered ? 10 : 1,
               }}
               onMouseEnter={() => setHoveredId(article.id)}
               onMouseLeave={() => setHoveredId(null)}
               onClick={() => onArticleClick(article.slug)}
+            >
+            <motion.article
+              variants={gridCardVariants}
+              className="relative cursor-pointer border border-gray-900 aspect-square overflow-hidden block"
             >
               {/* Image fills entire cell */}
               <div className="absolute inset-0">
@@ -136,6 +142,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                 </div>
               </div>
             </motion.article>
+            </div>
           )
         })}
       </motion.div>

@@ -71,6 +71,7 @@ export default function EventsClient({
         heading={copy?.events_hero_heading}
         subtitle={copy?.events_hero_subtitle}
         helper={copy?.events_hero_helper}
+        themeKey={copy?.events_hero_theme}
       />
 
       <section className="relative" onClick={handleClose}>

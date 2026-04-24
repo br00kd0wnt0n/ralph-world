@@ -7,6 +7,16 @@ import { homepageConfig } from '@/lib/db/schema'
  * These are the fallback when no DB override exists.
  */
 export const DEFAULT_COPY = {
+  // Per-section theme keys (see lib/section-themes.ts for allowed values
+  // per key). Defaults match the brand colours in the design.
+  home_hero_theme: 'midnight',
+  magazine_hero_theme: 'ralph-orange',
+  events_hero_theme: 'ralph-teal',
+  tv_hero_theme: 'ralph-pink',
+  lab_hero_theme: 'ralph-yellow',
+  shop_hero_theme: 'ralph-green',
+  subscribe_modal_theme: 'ralph-purple',
+
   // Homepage hero
   home_hero_heading: 'Welcome to our World',
   home_hero_line_1:

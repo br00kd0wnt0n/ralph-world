@@ -75,6 +75,7 @@ export default function MagazineClient({
         intro1={copy?.magazine_hero_intro_1}
         intro2={copy?.magazine_hero_intro_2}
         shopCta={copy?.magazine_shop_cta}
+        themeKey={copy?.magazine_hero_theme}
       />
 
       {/* Cover story — always visible */}

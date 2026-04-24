@@ -50,11 +50,14 @@ export default function MagazineClient({
 
   // Re-open the article overlay when the URL carries ?read=slug — covers
   // the "subscribe from gated article → OAuth → back to article" flow.
+  // openArticle calls setState inside an async fetch callback, not
+  // synchronously in this effect body, so the lint warning is a false
+  // positive.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const slug = params.get('read')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (slug) openArticle(slug)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Handle back button closing overlay

@@ -23,6 +23,10 @@ export default function ArticleOverlay({
   onSubscribe,
 }: ArticleOverlayProps) {
   const { user, subscriptionStatus } = useAuth()
+  // All hooks must run unconditionally before any early return (Rules of
+  // Hooks). The focus trap is a no-op when `isOpen` is false, so it's
+  // safe to always call.
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   const handleEsc = useCallback(
     (e: KeyboardEvent) => {
@@ -36,7 +40,9 @@ export default function ArticleOverlay({
       document.body.style.overflow = 'hidden'
       window.addEventListener('keydown', handleEsc)
       // Update URL without navigation
-      window.history.pushState(null, '', `/magazine/${article?.slug ?? ''}`)
+      if (article?.slug) {
+        window.history.pushState(null, '', `/magazine/${article.slug}`)
+      }
     } else {
       document.body.style.overflow = ''
       // Only restore URL if we were showing an article
@@ -91,7 +97,6 @@ export default function ArticleOverlay({
   const visibleBlocks = isGated ? blocks.slice(0, gateIndex) : blocks
 
   const theme = resolveTheme(article.backgroundCanvasColour)
-  const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   return (
     <motion.div

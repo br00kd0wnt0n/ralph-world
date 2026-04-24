@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import * as Sentry from '@sentry/nextjs'
 
 // Per-route error boundary. Any component throw inside a route renders
@@ -34,12 +35,12 @@ export default function RouteError({
           >
             Try again
           </button>
-          <a
+          <Link
             href="/"
             className="rounded-full border border-border text-secondary hover:text-primary px-5 py-2.5 text-sm font-medium transition-colors"
           >
             Go home
-          </a>
+          </Link>
         </div>
         {error.digest && (
           <p className="mt-8 text-[10px] text-muted">Ref: {error.digest}</p>

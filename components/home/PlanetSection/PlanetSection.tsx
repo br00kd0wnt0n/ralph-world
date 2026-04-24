@@ -29,20 +29,11 @@ export default function PlanetSection({
   planetPosition,
   moduleCard,
 }: PlanetSectionProps) {
-  const lightBgs = ['#FFE566', '#FFE066', '#FFEB3B', '#FFF176']
-  const useDarkText = lightBgs.some(
-    (c) => c.toLowerCase() === accentColor.toLowerCase()
-  )
-  const textColor = useDarkText ? 'text-black' : 'text-white'
-  const textMuted = useDarkText ? 'text-black/70' : 'text-white/70'
-  const cardBg = useDarkText ? 'bg-black/10' : 'bg-white/20'
-  const cardImgBg = useDarkText ? 'bg-black/5' : 'bg-white/10'
-  const ctaBg = useDarkText
-    ? 'bg-black text-white hover:bg-black/80'
-    : 'bg-white text-black hover:bg-white/90'
-  const badgeColors = useDarkText
-    ? 'bg-black text-white'
-    : 'bg-white'
+  // Design spec: all slideouts use black copy over the accent colour.
+  const textColor = 'text-black'
+  const textMuted = 'text-black/70'
+  const ctaBg = 'bg-white text-black hover:bg-white/90'
+  const badgeColors = 'bg-white text-black'
 
   const sectionRef = useRef<HTMLDivElement>(null)
   const parallaxOffset = useParallax(PLANET_PARALLAX_FACTOR, sectionRef)
@@ -138,11 +129,7 @@ export default function PlanetSection({
               {/* Close tab */}
               <button
                 onClick={() => setIsOpen(false)}
-                className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                  useDarkText
-                    ? 'bg-black text-white'
-                    : 'bg-white text-black'
-                } shadow-lg z-10`}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold bg-white text-black shadow-lg z-10"
                 aria-label="Close"
               >
                 ✕

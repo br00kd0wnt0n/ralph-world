@@ -1,8 +1,9 @@
 import { getDb } from '@/lib/db'
-import { articles, events, labItems } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { articles, events, labItems, homepageConfig } from '@/lib/db/schema'
+import { eq, desc, inArray } from 'drizzle-orm'
 import type { ModuleItem } from '@/components/home/PlanetSection'
 import { getSchedule } from '@/lib/broadcaster/client'
+import { getAllProducts } from '@/lib/shopify/client'
 
 async function getTVItems(): Promise<ModuleItem[]> {
   try {
@@ -20,47 +21,121 @@ async function getTVItems(): Promise<ModuleItem[]> {
   }
 }
 
+type PickMap = Record<string, string[]>
+
+async function readPicks(): Promise<PickMap> {
+  try {
+    const db = getDb()
+    const rows = await db
+      .select({ key: homepageConfig.key, value: homepageConfig.value })
+      .from(homepageConfig)
+      .where(
+        inArray(homepageConfig.key, [
+          'home_magazine_picks',
+          'home_events_picks',
+          'home_lab_picks',
+          'home_shop_picks',
+        ])
+      )
+    const out: PickMap = {}
+    for (const r of rows) {
+      if (Array.isArray(r.value)) {
+        out[r.key] = r.value.filter((v): v is string => typeof v === 'string')
+      }
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
+// Re-order DB rows to match the picks order, dropping anything missing.
+function orderByIds<T extends { id: string }>(rows: T[], ids: string[]): T[] {
+  const byId = new Map(rows.map((r) => [r.id, r]))
+  return ids.map((id) => byId.get(id)).filter((x): x is T => Boolean(x))
+}
+
 export async function getHomepageData() {
   try {
     const db = getDb()
+    const picks = await readPicks()
+
+    const magPickIds = picks['home_magazine_picks'] ?? []
+    const eventPickIds = picks['home_events_picks'] ?? []
+    const labPickIds = picks['home_lab_picks'] ?? []
+    const shopPickHandles = picks['home_shop_picks'] ?? []
 
     const [magazineRows, eventRows, labRows, tvItems] = await Promise.all([
-      db
-        .select({
-          id: articles.id,
-          title: articles.title,
-          issueNumber: articles.issueNumber,
-          leadMediaUrl: articles.leadMediaUrl,
-        })
-        .from(articles)
-        .where(eq(articles.status, 'published'))
-        .orderBy(desc(articles.publishedAt))
-        .limit(2),
+      magPickIds.length > 0
+        ? db
+            .select({
+              id: articles.id,
+              title: articles.title,
+              issueNumber: articles.issueNumber,
+              leadMediaUrl: articles.leadMediaUrl,
+            })
+            .from(articles)
+            .where(inArray(articles.id, magPickIds))
+            .then((rows) => orderByIds(rows, magPickIds))
+        : db
+            .select({
+              id: articles.id,
+              title: articles.title,
+              issueNumber: articles.issueNumber,
+              leadMediaUrl: articles.leadMediaUrl,
+            })
+            .from(articles)
+            .where(eq(articles.status, 'published'))
+            .orderBy(desc(articles.publishedAt))
+            .limit(2),
 
-      db
-        .select({
-          id: events.id,
-          title: events.title,
-          eventDate: events.eventDate,
-          thumbnailUrl: events.thumbnailUrl,
-          badge: events.badge,
-        })
-        .from(events)
-        .where(eq(events.status, 'published'))
-        .orderBy(desc(events.eventDate))
-        .limit(1),
+      eventPickIds.length > 0
+        ? db
+            .select({
+              id: events.id,
+              title: events.title,
+              eventDate: events.eventDate,
+              thumbnailUrl: events.thumbnailUrl,
+              badge: events.badge,
+            })
+            .from(events)
+            .where(inArray(events.id, eventPickIds))
+            .then((rows) => orderByIds(rows, eventPickIds))
+        : db
+            .select({
+              id: events.id,
+              title: events.title,
+              eventDate: events.eventDate,
+              thumbnailUrl: events.thumbnailUrl,
+              badge: events.badge,
+            })
+            .from(events)
+            .where(eq(events.status, 'published'))
+            .orderBy(desc(events.eventDate))
+            .limit(1),
 
-      db
-        .select({
-          id: labItems.id,
-          title: labItems.title,
-          thumbnailUrl: labItems.thumbnailUrl,
-          badge: labItems.badge,
-        })
-        .from(labItems)
-        .where(eq(labItems.status, 'published'))
-        .orderBy(desc(labItems.publishedAt))
-        .limit(1),
+      labPickIds.length > 0
+        ? db
+            .select({
+              id: labItems.id,
+              title: labItems.title,
+              thumbnailUrl: labItems.thumbnailUrl,
+              badge: labItems.badge,
+            })
+            .from(labItems)
+            .where(inArray(labItems.id, labPickIds))
+            .then((rows) => orderByIds(rows, labPickIds))
+        : db
+            .select({
+              id: labItems.id,
+              title: labItems.title,
+              thumbnailUrl: labItems.thumbnailUrl,
+              badge: labItems.badge,
+            })
+            .from(labItems)
+            .where(eq(labItems.status, 'published'))
+            .orderBy(desc(labItems.publishedAt))
+            .limit(1),
 
       getTVItems(),
     ])
@@ -94,10 +169,18 @@ export async function getHomepageData() {
       badge: l.badge ?? 'FRESH',
     }))
 
-    return { magazineItems, eventItems, labItems: labItemsList, tvItems }
+    // Shop: only explicit picks. No "recent products" fallback — shop items
+    // aren't time-ordered meaningfully, so we don't want random picks.
+    const shopItems: ModuleItem[] = await getShopItems(shopPickHandles)
+
+    return {
+      magazineItems,
+      eventItems,
+      labItems: labItemsList,
+      tvItems,
+      shopItems,
+    }
   } catch {
-    // DB not available — return empty placeholder data. TV comes from the
-    // broadcaster (not the DB), so try it independently.
     return {
       magazineItems: [
         { id: '1', title: 'Coming soon...', badge: 'NEW' },
@@ -110,6 +193,27 @@ export async function getHomepageData() {
         { id: '1', title: 'Lab experiments loading...', badge: 'FRESH' },
       ] as ModuleItem[],
       tvItems: await getTVItems(),
+      shopItems: [] as ModuleItem[],
     }
+  }
+}
+
+async function getShopItems(handles: string[]): Promise<ModuleItem[]> {
+  if (handles.length === 0) return []
+  try {
+    const products = await getAllProducts(100)
+    const byHandle = new Map(products.map((p) => [p.handle, p]))
+    return handles
+      .map((h) => byHandle.get(h))
+      .filter((p): p is NonNullable<typeof p> => Boolean(p))
+      .map((p) => ({
+        id: p.id,
+        title: p.title,
+        thumbnailUrl: p.imageUrl ?? undefined,
+        badge: p.available ? undefined : 'SOLD OUT',
+        subtitle: `${p.price} ${p.currency}`,
+      }))
+  } catch {
+    return []
   }
 }

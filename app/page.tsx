@@ -10,10 +10,8 @@ import type { ModuleCardData } from '@/components/home/PlanetSection'
 export const revalidate = 60
 
 export default async function Home() {
-  const [{ magazineItems, eventItems, labItems, tvItems }, copy] = await Promise.all([
-    getHomepageData(),
-    getSiteCopy(),
-  ])
+  const [{ magazineItems, eventItems, labItems, tvItems, shopItems }, copy] =
+    await Promise.all([getHomepageData(), getSiteCopy()])
 
   const tvFallback: ModuleCardData['items'] = [
     { id: 'tv-fallback-1', title: 'Tune in later', badge: 'OFFLINE' },
@@ -82,10 +80,13 @@ export default async function Home() {
         heading: 'Shop',
         tagline: 'Merch, mags and more',
         description: copy.shop_description,
-        items: [
-          { id: 'shop-1', title: 'Coming soon...' },
-          { id: 'shop-2', title: 'More products on the way' },
-        ],
+        items:
+          shopItems.length > 0
+            ? shopItems
+            : [
+                { id: 'shop-1', title: 'Coming soon...' },
+                { id: 'shop-2', title: 'More products on the way' },
+              ],
         href: '/shop',
         ctaLabel: 'Show me more',
       },

@@ -8,6 +8,8 @@ export interface ScheduleItem {
   endTime: string
   showName: string
   description?: string
+  assetId?: string
+  thumbnailUrl?: string | null
 }
 
 // Shape returned by GET /assets on the broadcaster backend. Field names

@@ -16,6 +16,8 @@ export const DEFAULT_COPY = {
   home_hero_line_3: "If it's new, different or makes you smile, we're into it.",
 
   // Module descriptions
+  tv_description:
+    "Our little TV channel — switch on, tune in, and see what we're playing right now.",
   magazine_description:
     'Pop culture stories, interviews and photo essays from the people who make the things we love.',
   events_description:

@@ -193,6 +193,8 @@ export async function getSchedule(
         startTime: formatHHMM(new Date(startMs)),
         endTime: formatHHMM(new Date(endMs)),
         showName: name,
+        assetId: items[i].assetId,
+        thumbnailUrl: asset?.thumbnailUrl ?? null,
       })
     }
 

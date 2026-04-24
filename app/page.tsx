@@ -10,19 +10,38 @@ import type { ModuleCardData } from '@/components/home/PlanetSection'
 export const revalidate = 60
 
 export default async function Home() {
-  const [{ magazineItems, eventItems, labItems }, copy] = await Promise.all([
+  const [{ magazineItems, eventItems, labItems, tvItems }, copy] = await Promise.all([
     getHomepageData(),
     getSiteCopy(),
   ])
+
+  const tvFallback: ModuleCardData['items'] = [
+    { id: 'tv-fallback-1', title: 'Tune in later', badge: 'OFFLINE' },
+  ]
 
   const sections: {
     id: string
     label: string
     tagline: string
     accentColor: string
-    planetPosition: 'upper-right' | 'lower-left' | 'lower-right'
+    planetPosition: 'upper-left' | 'upper-right' | 'lower-left' | 'lower-right'
     moduleCard: ModuleCardData
   }[] = [
+    {
+      id: 'tv',
+      label: copy.tv_hero_heading,
+      tagline: 'Switch on, tune in',
+      accentColor: '#FF2098',
+      planetPosition: 'upper-left',
+      moduleCard: {
+        heading: copy.tv_hero_heading,
+        tagline: 'Switch on, tune in',
+        description: copy.tv_description,
+        items: tvItems.length > 0 ? tvItems : tvFallback,
+        href: '/tv',
+        ctaLabel: 'Watch now',
+      },
+    },
     {
       id: 'magazine',
       label: 'Magazine',
@@ -111,6 +130,7 @@ export default async function Home() {
       </div>
 
       <MobileHome
+        tvItems={tvItems.length > 0 ? tvItems : tvFallback}
         magazineItems={magazineItems}
         eventItems={eventItems}
         labItems={labItems}

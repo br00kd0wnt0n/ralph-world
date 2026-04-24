@@ -22,7 +22,7 @@ export interface PlanetSectionProps {
   label: string
   tagline: string
   accentColor: string
-  planetPosition: 'upper-right' | 'lower-left' | 'lower-right'
+  planetPosition: 'upper-left' | 'upper-right' | 'lower-left' | 'lower-right'
   moduleCard: ModuleCardData
   illustration?: React.ComponentType
   children?: ReactNode

@@ -15,6 +15,7 @@ import type { PlanetSectionProps } from './PlanetSection.types'
 // 'right' = planet right, text/panel left.
 // 'left' = planet left, text/panel right.
 const POSITION_LAYOUTS = {
+  'upper-left': 'left',
   'upper-right': 'right',
   'lower-left': 'left',
   'lower-right': 'right',

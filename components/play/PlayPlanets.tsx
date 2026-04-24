@@ -1,9 +1,12 @@
 'use client'
 
-import {
-  resolveCaseStudyUrl,
-  type CaseStudyRow,
-} from '@/lib/data/case-studies'
+export interface PlayPlanetItem {
+  id: string
+  title: string | null
+  subtitle: string | null
+  thumbnailUrl: string | null
+  url: string
+}
 
 // Layout presets for 4–8 planets. Desktop only — mobile gets a compact grid.
 // Positions are percentages within the planets container; sizes are px.
@@ -29,11 +32,11 @@ function layoutPlanets(
 }
 
 interface PlayPlanetsProps {
-  caseStudies: CaseStudyRow[]
+  items: PlayPlanetItem[]
 }
 
-export default function PlayPlanets({ caseStudies }: PlayPlanetsProps) {
-  const visible = caseStudies.slice(0, 8)
+export default function PlayPlanets({ items }: PlayPlanetsProps) {
+  const visible = items.slice(0, 8)
   const positions = layoutPlanets(visible.length)
 
   if (visible.length === 0) return null
@@ -45,7 +48,7 @@ export default function PlayPlanets({ caseStudies }: PlayPlanetsProps) {
         {visible.map((cs, i) => {
           const pos = positions[i]
           if (!pos) return null
-          const url = resolveCaseStudyUrl(cs)
+          const url = cs.url
           // Stagger float animation per planet so they don't move in sync.
           const duration = 5 + (i % 3) * 1.2
           const delay = (i * 0.37) % 2
@@ -115,7 +118,7 @@ export default function PlayPlanets({ caseStudies }: PlayPlanetsProps) {
       {/* Mobile: 2-col compact grid */}
       <div className="md:hidden grid grid-cols-2 gap-4 px-4 py-6">
         {visible.map((cs) => {
-          const url = resolveCaseStudyUrl(cs)
+          const url = cs.url
           return (
             <a
               key={cs.id}

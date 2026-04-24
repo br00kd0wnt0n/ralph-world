@@ -3,7 +3,10 @@ import Footer from '@/components/layout/Footer'
 import PlayPlanets from '@/components/play/PlayPlanets'
 import WhatsNextPlanet from '@/components/play/WhatsNextPlanet'
 import ExpertisePlanet from '@/components/play/ExpertisePlanet'
-import { getPublishedCaseStudies } from '@/lib/data/case-studies'
+import {
+  getPublishedCaseStudies,
+  resolveCaseStudyUrl,
+} from '@/lib/data/case-studies'
 import { getSiteCopy } from '@/lib/data/site-copy'
 
 export const revalidate = 60
@@ -23,6 +26,14 @@ export default async function PlayWithRalph() {
     getPublishedCaseStudies(),
     getSiteCopy(),
   ])
+
+  const planetItems = caseStudies.map((cs) => ({
+    id: cs.id,
+    title: cs.title,
+    subtitle: cs.subtitle,
+    thumbnailUrl: cs.thumbnailUrl,
+    url: resolveCaseStudyUrl(cs),
+  }))
 
   const bullets = [
     { heading: copy.play_expertise_1_heading, body: copy.play_expertise_1_body },
@@ -45,7 +56,7 @@ export default async function PlayWithRalph() {
         </p>
       </section>
 
-      <PlayPlanets caseStudies={caseStudies} />
+      <PlayPlanets items={planetItems} />
 
       <section className="relative px-6 py-16 md:py-24">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 md:gap-[-60px] items-center justify-center">

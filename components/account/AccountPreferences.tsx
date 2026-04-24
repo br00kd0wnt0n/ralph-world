@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTheme, THEMES } from '@/context/ThemeContext'
+import { safeSet } from '@/lib/safe-storage'
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -70,7 +71,7 @@ export default function AccountPreferences({
         setLanguage(prev)
         setError('Could not save language — try again.')
       } else {
-        localStorage.setItem('ralph-language', next)
+        safeSet('ralph-language', next)
       }
     } catch {
       setLanguage(prev)

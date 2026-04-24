@@ -11,6 +11,7 @@ import TeletextSchedule from './TeletextSchedule'
 import SubscribeGate from './SubscribeGate'
 import TVControls from './TVControls'
 import type { ScheduleItem } from '@/lib/broadcaster/types'
+import { safeGet, safeSet } from '@/lib/safe-storage'
 
 export type TVOverlayState = 'none' | 'show-info' | 'schedule'
 
@@ -37,12 +38,15 @@ export default function TVSet({
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('ralph-tv-volume')
-    if (stored) setVolume(Number(stored))
+    const stored = safeGet('ralph-tv-volume')
+    if (stored) {
+      const n = Number(stored)
+      if (Number.isFinite(n) && n >= 0 && n <= 1) setVolume(n)
+    }
   }, [])
 
   useEffect(() => {
-    localStorage.setItem('ralph-tv-volume', String(volume))
+    safeSet('ralph-tv-volume', String(volume))
   }, [volume])
 
   // Poll schedule continuously — Show Info, Schedule overlay, and the

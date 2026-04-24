@@ -8,12 +8,28 @@ interface SubscribeModalProps {
   isOpen: boolean
   onClose: () => void
   themeKey?: string
+  /** Where to send the user after OAuth completes (in-site path). Defaults
+   * to /account so they land on their new subscription page. Pass the
+   * current path from gated surfaces (article overlays, paid content) so
+   * users return to what they were reading. */
+  returnTo?: string
+}
+
+// Internal-only redirect guard. We trust returnTo only when it's a
+// same-site relative path (starts with '/', no '//', no ':').
+function safeReturnTo(returnTo: string | undefined): string {
+  if (!returnTo) return '/account'
+  if (!returnTo.startsWith('/')) return '/account'
+  if (returnTo.startsWith('//')) return '/account'
+  if (returnTo.includes(':')) return '/account'
+  return returnTo
 }
 
 export default function SubscribeModal({
   isOpen,
   onClose,
   themeKey,
+  returnTo,
 }: SubscribeModalProps) {
   const theme = resolveSectionTheme('subscribe_modal', themeKey)
   // Default (ralph-purple) keeps the hard-coded #0F0420 palette the
@@ -46,12 +62,15 @@ export default function SubscribeModal({
 
   function handleFreeSignup() {
     setIsLoading('free')
-    signIn('google', { callbackUrl: '/' })
+    signIn('google', { callbackUrl: safeReturnTo(returnTo) })
   }
 
   function handlePaidSignup() {
     setIsLoading('paid')
-    signIn('google', { callbackUrl: '/account?upgrade=paid' })
+    // Paid signup always lands on the upgrade flow first, then bounces
+    // the user back to the original page after checkout.
+    const after = encodeURIComponent(safeReturnTo(returnTo))
+    signIn('google', { callbackUrl: `/account?upgrade=paid&returnTo=${after}` })
   }
 
   if (!isOpen) return null

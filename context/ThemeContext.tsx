@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import CanvasBackground from '@/components/layout/CanvasBackground'
+import { safeGet, safeSet } from '@/lib/safe-storage'
 
 export type ThemeType = 'css-vars' | 'immersive'
 
@@ -33,7 +34,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState('cosy-dynamics')
 
   useEffect(() => {
-    const stored = localStorage.getItem('ralph-theme')
+    const stored = safeGet('ralph-theme')
     if (stored && THEMES.some((t) => t.id === stored)) {
       setThemeState(stored)
       document.documentElement.setAttribute('data-theme', stored)
@@ -44,7 +45,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   function setTheme(id: string) {
     setThemeState(id)
-    localStorage.setItem('ralph-theme', id)
+    safeSet('ralph-theme', id)
     document.documentElement.setAttribute('data-theme', id)
   }
 

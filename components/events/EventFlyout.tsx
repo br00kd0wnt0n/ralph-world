@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { flagEmoji } from './flag'
+import { isSafeUrl } from '@/lib/safe-url'
 import type { EventCreatureData } from './EventCreature.types'
 
 // Two stages: 'card' anchored near the creature with a Show Me More CTA,
@@ -81,7 +82,7 @@ export default function EventFlyout({
       onSubscribe()
       return
     }
-    if (event.external_ticket_url) {
+    if (event.external_ticket_url && isSafeUrl(event.external_ticket_url)) {
       window.open(event.external_ticket_url, '_blank', 'noopener,noreferrer')
     }
   }

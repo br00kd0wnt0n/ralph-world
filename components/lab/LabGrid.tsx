@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { labCardVariants } from '@/lib/animation/lab'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useAuth } from '@/context/AuthContext'
+import { isSafeUrl } from '@/lib/safe-url'
 import type { LabItem } from '@/lib/data/lab'
 
 interface LabGridProps {
@@ -114,7 +115,7 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
                       Subscribe to access &rarr;
                     </button>
                   ) : (
-                    item.externalUrl && (
+                    item.externalUrl && isSafeUrl(item.externalUrl) && (
                       <a
                         href={item.externalUrl}
                         target="_blank"

@@ -39,13 +39,23 @@ export default function MagazineClient({
   }, [])
 
   async function openArticle(slug: string) {
-    const res = await fetch(`/api/articles/${slug}`)
+    if (!slug) return
+    const res = await fetch(`/api/articles/${encodeURIComponent(slug)}`)
     if (res.ok) {
       const data = await res.json()
       setOverlayArticle(data)
       setOverlayOpen(true)
     }
   }
+
+  // Re-open the article overlay when the URL carries ?read=slug — covers
+  // the "subscribe from gated article → OAuth → back to article" flow.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const slug = params.get('read')
+    if (slug) openArticle(slug)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Handle back button closing overlay
   useEffect(() => {
@@ -110,6 +120,11 @@ export default function MagazineClient({
       <SubscribeModal
         isOpen={subscribeOpen}
         onClose={() => setSubscribeOpen(false)}
+        returnTo={
+          overlayArticle?.slug
+            ? `/magazine?read=${encodeURIComponent(overlayArticle.slug)}`
+            : '/magazine'
+        }
       />
     </>
   )

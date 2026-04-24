@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server'
 import { removeCartLines } from '@/lib/shopify/client'
 
 export async function DELETE(request: Request) {
-  const { cartId, lineIds } = await request.json()
-  if (!cartId || !Array.isArray(lineIds)) {
+  const body = await request.json().catch(() => null)
+  if (!body || typeof body !== 'object') {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+  const { cartId, lineIds } = body as Record<string, unknown>
+  if (typeof cartId !== 'string' || !Array.isArray(lineIds)) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
-  const cart = await removeCartLines(cartId, lineIds)
+  const cart = await removeCartLines(cartId, lineIds as string[])
   if (!cart) {
     return NextResponse.json({ error: 'Remove failed' }, { status: 502 })
   }

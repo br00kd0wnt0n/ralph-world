@@ -108,14 +108,21 @@ export default function CartDrawer() {
               </span>
             </div>
           )}
-          {cart?.checkoutUrl && lines.length > 0 && (
-            <a
-              href={cart.checkoutUrl}
-              className="block w-full rounded-full bg-ralph-pink py-3 text-center text-white font-medium hover:bg-ralph-pink/90 transition-colors"
-            >
-              {isLoading ? 'Updating…' : 'Checkout'}
-            </a>
-          )}
+          {lines.length > 0 ? (
+            cart?.checkoutUrl ? (
+              <a
+                href={cart.checkoutUrl}
+                className="block w-full rounded-full bg-ralph-pink py-3 text-center text-white font-medium hover:bg-ralph-pink/90 transition-colors"
+              >
+                {isLoading ? 'Updating…' : 'Checkout'}
+              </a>
+            ) : (
+              <div className="text-center text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-md py-2 px-3">
+                Checkout temporarily unavailable — please try again in a
+                moment.
+              </div>
+            )
+          ) : null}
         </div>
       </div>
     </>

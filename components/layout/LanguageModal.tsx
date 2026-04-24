@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
+import { safeGet, safeSet } from '@/lib/safe-storage'
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -16,7 +17,7 @@ export default function LanguageModal() {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('ralph-language')
+    const stored = safeGet('ralph-language')
     if (stored) setLanguageState(stored)
   }, [])
 
@@ -32,7 +33,7 @@ export default function LanguageModal() {
 
   async function setLanguage(code: string) {
     setLanguageState(code)
-    localStorage.setItem('ralph-language', code)
+    safeSet('ralph-language', code)
     setIsOpen(false)
 
     if (user) {

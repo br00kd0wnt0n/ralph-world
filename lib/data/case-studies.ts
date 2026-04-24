@@ -1,6 +1,7 @@
 import { getDb } from '@/lib/db'
 import { caseStudies } from '@/lib/db/schema'
 import { eq, asc } from 'drizzle-orm'
+import { isSafeUrl } from '@/lib/safe-url'
 
 export interface CaseStudyRow {
   id: string
@@ -20,7 +21,11 @@ export function resolveCaseStudyUrl(row: {
   slug: string
   externalUrlOverride: string | null
 }): string {
-  return row.externalUrlOverride?.trim() || `${CASE_STUDY_VIEWER_URL}/${row.slug}`
+  const override = row.externalUrlOverride?.trim()
+  // Guard legacy rows — if the stored override is unsafe (javascript:,
+  // data:, unparseable), fall back to the default viewer URL.
+  if (override && isSafeUrl(override)) return override
+  return `${CASE_STUDY_VIEWER_URL}/${encodeURIComponent(row.slug)}`
 }
 
 export async function getPublishedCaseStudies(): Promise<CaseStudyRow[]> {

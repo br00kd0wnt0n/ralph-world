@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { ShopifyCart } from '@/lib/shopify/types'
+import { safeGet, safeSet, safeRemove } from '@/lib/safe-storage'
 
 interface CartContextValue {
   cart: ShopifyCart | null
@@ -33,7 +34,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem(CART_ID_KEY)
+    const stored = safeGet(CART_ID_KEY)
     if (!stored) return
 
     fetch(`/api/cart/${stored}`)
@@ -43,11 +44,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
           setCart(data as ShopifyCart)
         } else {
           // Cart expired — clear localStorage
-          localStorage.removeItem(CART_ID_KEY)
+          safeRemove(CART_ID_KEY)
         }
       })
       .catch(() => {
-        localStorage.removeItem(CART_ID_KEY)
+        safeRemove(CART_ID_KEY)
       })
   }, [])
 
@@ -62,7 +63,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (!res.ok) return null
     const newCart = (await res.json()) as ShopifyCart
-    localStorage.setItem(CART_ID_KEY, newCart.id)
+    safeSet(CART_ID_KEY, newCart.id)
     setCart(newCart)
     return newCart
   }, [cart])

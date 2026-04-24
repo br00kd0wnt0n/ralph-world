@@ -7,6 +7,7 @@ import LabGrid from './LabGrid'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import Footer from '@/components/layout/Footer'
 import { SPIN_DURATION_MS } from '@/lib/animation/lab'
+import { isSafeUrl } from '@/lib/safe-url'
 import type { LabItem } from '@/lib/data/lab'
 import type { MachineState } from './RalphOMatic.types'
 import type { SiteCopy } from '@/lib/data/site-copy'
@@ -45,7 +46,7 @@ export default function LabClient({ items, copy }: LabClientProps) {
   const handleItemSelect = useCallback(
     (itemId: string) => {
       const item = items.find((i) => i.id === itemId)
-      if (item?.externalUrl) {
+      if (item?.externalUrl && isSafeUrl(item.externalUrl)) {
         window.open(item.externalUrl, '_blank', 'noopener,noreferrer')
       }
     },

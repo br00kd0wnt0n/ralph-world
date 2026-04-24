@@ -118,6 +118,7 @@ export default async function Home() {
         line1={copy.home_hero_line_1}
         line2={copy.home_hero_line_2}
         line3={copy.home_hero_line_3}
+        themeKey={copy.home_hero_theme}
       />
 
       <div className="hidden md:block">

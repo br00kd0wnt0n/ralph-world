@@ -2,13 +2,24 @@
 
 import { useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
+import { resolveSectionTheme } from '@/lib/section-themes'
 
 interface SubscribeModalProps {
   isOpen: boolean
   onClose: () => void
+  themeKey?: string
 }
 
-export default function SubscribeModal({ isOpen, onClose }: SubscribeModalProps) {
+export default function SubscribeModal({
+  isOpen,
+  onClose,
+  themeKey,
+}: SubscribeModalProps) {
+  const theme = resolveSectionTheme('subscribe_modal', themeKey)
+  // Default (ralph-purple) keeps the hard-coded #0F0420 palette the
+  // embedded SVG illustrations are matched to. Any other theme swaps
+  // the outer canvas only.
+  const isDefault = theme.key === 'ralph-purple'
   const [isLoading, setIsLoading] = useState<'free' | 'paid' | null>(null)
 
   useEffect(() => {
@@ -46,7 +57,14 @@ export default function SubscribeModal({ isOpen, onClose }: SubscribeModalProps)
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0F0420] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto"
+      style={
+        isDefault
+          ? { backgroundColor: '#0F0420' }
+          : { backgroundColor: theme.bg, color: theme.text }
+      }
+    >
       {/* Close button */}
       <button
         onClick={onClose}

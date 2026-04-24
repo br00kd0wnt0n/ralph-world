@@ -35,18 +35,26 @@ function formatTime(date: string | null): string {
   return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
+// Folded-corner flag badge. The design shows a white triangle in the card's
+// top-right corner, "folded in" like a page dog-ear, with the country flag
+// sitting on top.
 function FlagCornerBanner({ countryCode }: { countryCode: string | null }) {
   const flag = flagEmoji(countryCode)
   if (!flag) return null
   return (
     <div
       aria-hidden
-      className="absolute top-0 right-0 w-16 h-16 overflow-hidden pointer-events-none z-10"
+      className="absolute top-0 right-0 w-14 h-14 pointer-events-none z-10"
     >
-      {/* Diagonal ribbon in the top-right corner. The flag emoji rides on it. */}
-      <div className="absolute top-[10px] -right-[18px] rotate-45 w-[90px] text-center bg-white/95 shadow-md py-1">
-        <span className="text-base leading-none">{flag}</span>
-      </div>
+      {/* White triangular fold — top-right corner, hypotenuse running
+          from top-left to bottom-right of the badge box. */}
+      <div
+        className="absolute inset-0 bg-white"
+        style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
+      />
+      <span className="absolute top-1 right-1.5 text-base leading-none">
+        {flag}
+      </span>
     </div>
   )
 }
@@ -92,12 +100,12 @@ export default function EventFlyout({
     }
   } else {
     containerClass =
-      'absolute z-30 rounded-xl shadow-2xl overflow-hidden w-[280px]'
+      'absolute z-30 rounded-xl shadow-2xl overflow-hidden w-[320px]'
     containerStyle = {
       ...containerStyle,
       left: `${event.creature_x}%`,
       top: `${event.creature_y}%`,
-      transform: 'translate(-50%, -115%)',
+      transform: 'translate(-50%, -110%)',
     }
   }
 
@@ -215,26 +223,37 @@ export default function EventFlyout({
         </>
       ) : (
         // ── STAGE 1: Detail card ──
-        <motion.div layout className="p-4 pr-6">
-          <motion.p layout="position" className="text-black font-bold text-base mb-1 pr-10">
+        <motion.div layout className="p-5 pr-14">
+          <motion.h3
+            layout="position"
+            className="text-black font-bold text-xl leading-tight mb-2"
+          >
             {event.title}
-          </motion.p>
-          <p className="text-black/70 text-xs mb-2">
-            {formatDate(event.event_date)}
-          </p>
+          </motion.h3>
+
           {event.description_short && (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="text-black/85 text-xs mb-3 leading-relaxed line-clamp-3"
+              className="text-black/90 text-sm leading-snug mb-3"
             >
               {event.description_short}
             </motion.p>
           )}
+
+          <div className="text-black text-sm mb-5 space-y-0.5">
+            {event.location_name && (
+              <p className="font-semibold">{event.location_name}</p>
+            )}
+            {event.event_date && (
+              <p className="opacity-85">{formatDate(event.event_date)}</p>
+            )}
+          </div>
+
           <button
             onClick={() => onStageChange('full')}
-            className="w-full text-center text-xs font-medium text-black bg-white rounded-full py-2 hover:bg-white/90 transition-colors"
+            className="inline-block rounded-md bg-white text-black font-medium text-sm px-4 py-2 hover:bg-white/90 transition-colors"
           >
             Show me more
           </button>

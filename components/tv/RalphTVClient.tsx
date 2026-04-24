@@ -4,6 +4,7 @@ import { useState } from 'react'
 import TVSet from './TVSet'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import Footer from '@/components/layout/Footer'
+import { resolveSectionTheme } from '@/lib/section-themes'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface RalphTVClientProps {
@@ -13,6 +14,7 @@ interface RalphTVClientProps {
   offlineMessage?: string
   subscribeHeading?: string
   subscribeBody?: string
+  themeKey?: string
   copy?: Partial<SiteCopy>
 }
 
@@ -23,19 +25,24 @@ export default function RalphTVClient({
   offlineMessage,
   subscribeHeading,
   subscribeBody,
+  themeKey,
   copy,
 }: RalphTVClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
+  const theme = resolveSectionTheme('tv_hero', themeKey)
 
   return (
     <>
-      <section className="relative px-2 md:px-6 py-6 md:py-16">
+      <section
+        className="relative px-2 md:px-6 py-6 md:py-16"
+        style={{ backgroundColor: theme.bg, color: theme.text }}
+      >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-4 md:mb-12 px-2">
-            <h1 className="text-3xl md:text-6xl font-bold text-primary mb-2 md:mb-4 font-[family-name:var(--font-display)]">
+            <h1 className="text-3xl md:text-6xl font-bold mb-2 md:mb-4 font-[family-name:var(--font-display)]">
               {heading}
             </h1>
-            <p className="text-secondary max-w-xl mx-auto text-sm md:text-base">
+            <p className="max-w-xl mx-auto text-sm md:text-base opacity-85">
               {intro}
             </p>
           </div>

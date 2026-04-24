@@ -58,6 +58,7 @@ export default function LabClient({ items, copy }: LabClientProps) {
         heading={copy?.lab_hero_heading}
         intro={copy?.lab_hero_intro}
         cta={copy?.lab_hero_cta}
+        themeKey={copy?.lab_hero_theme}
       />
 
       <section className="px-6 pb-8">

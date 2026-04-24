@@ -23,7 +23,13 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}) {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal })
+    // Broadcaster data (schedule pointer, live status, asset list) is
+    // real-time — never let Next's fetch cache serve a stale response.
+    const res = await fetch(url, {
+      ...options,
+      cache: 'no-store',
+      signal: controller.signal,
+    })
     return res
   } finally {
     clearTimeout(timeout)

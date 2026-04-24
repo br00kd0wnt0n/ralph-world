@@ -45,14 +45,32 @@ export default function TVSet({
     localStorage.setItem('ralph-tv-volume', String(volume))
   }, [volume])
 
-  // Fetch schedule when overlay opens
+  // Poll schedule continuously — Show Info, Schedule overlay, and the
+  // "On now / Up next" status bar all read from this single state. The
+  // broadcaster pointer advances in real time, so a one-shot fetch goes
+  // stale fast (one show ends, the overlay keeps showing the old one).
   useEffect(() => {
-    if (overlay === 'none') return
-    fetch('/api/broadcaster/schedule')
-      .then((r) => r.json())
-      .then((data) => setSchedule(Array.isArray(data) ? data : []))
-      .catch(() => setSchedule([]))
-  }, [overlay])
+    let mounted = true
+
+    async function fetchSchedule() {
+      try {
+        const res = await fetch('/api/broadcaster/schedule', {
+          cache: 'no-store',
+        })
+        const data = await res.json()
+        if (mounted) setSchedule(Array.isArray(data) ? data : [])
+      } catch {
+        if (mounted) setSchedule([])
+      }
+    }
+
+    fetchSchedule()
+    const interval = setInterval(fetchSchedule, 30_000)
+    return () => {
+      mounted = false
+      clearInterval(interval)
+    }
+  }, [])
 
   function handleFullscreen() {
     const el = containerRef.current

@@ -58,17 +58,33 @@ export default function Nav() {
     <>
       {/* ── Utility Bar (desktop) ── */}
       <div className="hidden md:flex items-center justify-between px-6 py-2.5 bg-surface/80 backdrop-blur-sm border-b border-border/30 text-xs relative z-50">
-        {/* Left: ralph world circle logo */}
-        <Link href="/" className="shrink-0">
-          <Image
-            src="/ralph-logo.png"
-            alt="ralph world"
-            width={36}
-            height={36}
-            className="rounded-full"
-            priority
-          />
-        </Link>
+        {/* Left: ralph world circle logo + Get started + Play with Ralph */}
+        <div className="flex items-center gap-4">
+          <Link href="/" className="shrink-0">
+            <Image
+              src="/ralph-logo.png"
+              alt="ralph world"
+              width={36}
+              height={36}
+              className="rounded-full"
+              priority
+            />
+          </Link>
+          {!user && (
+            <button
+              onClick={() => setSubscribeOpen(true)}
+              className="rounded-full bg-ralph-pink px-4 py-1.5 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
+            >
+              Get started
+            </button>
+          )}
+          <Link
+            href="/play"
+            className="text-primary hover:text-ralph-pink transition-colors font-medium"
+          >
+            Play with Ralph
+          </Link>
+        </div>
 
         {/* Right: actions */}
         <div className="flex items-center gap-5">
@@ -85,12 +101,6 @@ export default function Nav() {
             </Link>
           ) : (
             <>
-              <button
-                onClick={() => setSubscribeOpen(true)}
-                className="rounded-full bg-ralph-pink px-4 py-1.5 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
-              >
-                Get started
-              </button>
               <LanguageModal />
               <Link
                 href="/login"

@@ -114,6 +114,7 @@ export const events = pgTable('events', {
   locationName: text('location_name'),
   locationAddress: text('location_address'),
   locationPostcode: text('location_postcode'),
+  countryCode: text('country_code'),
   accentColour: text('accent_colour'),
   thumbnailUrl: text('thumbnail_url'),
   badge: text('badge'),

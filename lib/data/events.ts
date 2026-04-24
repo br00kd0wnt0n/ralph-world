@@ -11,6 +11,7 @@ export interface EventRow {
   locationName: string | null
   locationAddress: string | null
   locationPostcode: string | null
+  countryCode: string | null
   accentColour: string | null
   thumbnailUrl: string | null
   badge: string | null

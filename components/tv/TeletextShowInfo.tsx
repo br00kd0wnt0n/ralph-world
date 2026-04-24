@@ -39,7 +39,7 @@ export default function TeletextShowInfo({ current }: TeletextShowInfoProps) {
   const progressPct = Math.round(progress * 100)
 
   return (
-    <div className="absolute inset-0 bg-black font-mono p-2.5 md:p-6 overflow-hidden flex flex-col">
+    <div className="absolute inset-0 bg-black/70 font-mono p-2.5 md:p-6 overflow-hidden flex flex-col">
       {/* RALPH TV CEEFAX block letters — pixel asset */}
       <div className="mb-5 md:mb-6">
         <img

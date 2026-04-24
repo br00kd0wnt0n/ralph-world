@@ -33,6 +33,7 @@ function toCreatureData(row: EventRow): EventCreatureData {
     location_name: row.locationName,
     location_address: row.locationAddress,
     thumbnail_url: row.thumbnailUrl,
+    country_code: row.countryCode,
   }
 }
 
@@ -42,25 +43,26 @@ export default function EventsClient({
   copy,
 }: EventsClientProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [stage, setStage] = useState<FlyoutStage>('minimal')
+  const [stage, setStage] = useState<FlyoutStage>('card')
   const [subscribeOpen, setSubscribeOpen] = useState(false)
 
   const creatureEvents = activeEvents.map(toCreatureData)
   const selectedEvent = creatureEvents.find((e) => e.id === selectedId) ?? null
+  const isFullOpen = Boolean(selectedEvent) && stage === 'full'
 
   function handleSelect(eventId: string) {
     if (selectedId === eventId) {
       setSelectedId(null)
-      setStage('minimal')
+      setStage('card')
     } else {
       setSelectedId(eventId)
-      setStage('minimal')
+      setStage('card')
     }
   }
 
   function handleClose() {
     setSelectedId(null)
-    setStage('minimal')
+    setStage('card')
   }
 
   return (
@@ -73,20 +75,27 @@ export default function EventsClient({
 
       <section className="relative" onClick={handleClose}>
         <CrowdBackground>
-          {creatureEvents.map((event) => (
-            <EventCreature
-              key={event.id}
-              event={event}
-              isSelected={selectedId === event.id}
-              onSelect={handleSelect}
-            />
-          ))}
+          {creatureEvents.map((event) => {
+            const isSelected = selectedId === event.id
+            // When the full modal is open, fade the other creatures away
+            // so attention stays on the centred card.
+            const dimmed = isFullOpen && !isSelected
+            return (
+              <EventCreature
+                key={event.id}
+                event={event}
+                isSelected={isSelected}
+                isDimmed={dimmed}
+                onSelect={handleSelect}
+              />
+            )
+          })}
         </CrowdBackground>
       </section>
 
-      {/* Single flyout that morphs minimal → expanded → full via layout animation */}
+      {/* Single flyout that morphs card → full via layout animation */}
       <AnimatePresence>
-        {selectedEvent && stage === 'full' && (
+        {isFullOpen && (
           <div
             className="fixed inset-0 z-40 bg-black/60"
             onClick={handleClose}

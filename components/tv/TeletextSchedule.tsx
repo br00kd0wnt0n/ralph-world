@@ -36,7 +36,7 @@ export default function TeletextSchedule({
   const upcoming = schedule.slice(currentIndex + 1)
 
   return (
-    <div className="absolute inset-0 bg-black font-mono p-2.5 md:p-6 overflow-hidden">
+    <div className="absolute inset-0 bg-black/70 font-mono p-2.5 md:p-6 overflow-hidden">
       {/* RALPHFAX header */}
       <motion.div
         variants={teletextHeaderVariants}

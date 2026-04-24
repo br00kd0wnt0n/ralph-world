@@ -13,11 +13,13 @@ export interface EventCreatureData {
   location_name: string | null
   location_address: string | null
   thumbnail_url: string | null
+  country_code: string | null
 }
 
 export interface EventCreatureProps {
   event: EventCreatureData
   isSelected: boolean
+  isDimmed?: boolean
   onSelect: (eventId: string) => void
   illustration?: ComponentType
 }

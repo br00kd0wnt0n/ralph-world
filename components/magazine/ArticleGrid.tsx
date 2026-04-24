@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   gridContainerVariants,
@@ -14,9 +14,43 @@ interface ArticleGridProps {
   onArticleClick: (slug: string) => void
 }
 
+// Explode-on-hover: each of the 6 tiles pushes outward from the centre of
+// the 3×2 desktop grid by a fixed vector. Locked to 6 tiles per the design.
+// Mobile falls back to 2×3 — the vectors are generated for both layouts
+// and we switch between them via a resize listener.
+const GRID_3x2 = [
+  { dx: -1, dy: -1 },
+  { dx: 0, dy: -1 },
+  { dx: 1, dy: -1 },
+  { dx: -1, dy: 1 },
+  { dx: 0, dy: 1 },
+  { dx: 1, dy: 1 },
+]
+const GRID_2x3 = [
+  { dx: -1, dy: -1 },
+  { dx: 1, dy: -1 },
+  { dx: -1, dy: 0 },
+  { dx: 1, dy: 0 },
+  { dx: -1, dy: 1 },
+  { dx: 1, dy: 1 },
+]
+const EXPLODE_PX = 16
+
 export default function ArticleGrid({ articles, onArticleClick }: ArticleGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [isLargeViewport, setIsLargeViewport] = useState(true)
   const { ref, isVisible } = useScrollReveal(0.05)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const update = () => setIsLargeViewport(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  const vectors = isLargeViewport ? GRID_3x2 : GRID_2x3
 
   return (
     <section className="bg-[#FAFAFA] px-6 py-0">
@@ -27,13 +61,22 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
         animate={isVisible ? 'visible' : 'hidden'}
         className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-3 border border-gray-900"
       >
-        {articles.map((article) => {
+        {articles.slice(0, 6).map((article, i) => {
           const isHovered = hoveredId === article.id
+          const vec = vectors[i] ?? { dx: 0, dy: 0 }
+          const transform = isHovered
+            ? `translate(${vec.dx * EXPLODE_PX}px, ${vec.dy * EXPLODE_PX}px) scale(1.04)`
+            : 'translate(0, 0) scale(1)'
           return (
             <motion.article
               key={article.id}
               variants={gridCardVariants}
               className="relative cursor-pointer border border-gray-900 aspect-square overflow-hidden"
+              style={{
+                transform,
+                transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
+                zIndex: isHovered ? 10 : 1,
+              }}
               onMouseEnter={() => setHoveredId(article.id)}
               onMouseLeave={() => setHoveredId(null)}
               onClick={() => onArticleClick(article.slug)}

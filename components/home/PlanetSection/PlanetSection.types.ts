@@ -25,5 +25,7 @@ export interface PlanetSectionProps {
   planetPosition: 'upper-left' | 'upper-right' | 'lower-left' | 'lower-right'
   moduleCard: ModuleCardData
   illustration?: React.ComponentType
+  /** Editor-uploaded planet asset (SVG/PNG). Overrides the placeholder. */
+  planetImageUrl?: string | null
   children?: ReactNode
 }

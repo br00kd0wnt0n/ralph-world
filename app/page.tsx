@@ -1,4 +1,4 @@
-import { getHomepageData } from '@/lib/data/homepage'
+import { getHomepageData, getPlanetImages } from '@/lib/data/homepage'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import Hero from '@/components/home/Hero'
 import PlanetSection from '@/components/home/PlanetSection'
@@ -10,8 +10,11 @@ import type { ModuleCardData } from '@/components/home/PlanetSection'
 export const revalidate = 60
 
 export default async function Home() {
-  const [{ magazineItems, eventItems, labItems, tvItems, shopItems }, copy] =
-    await Promise.all([getHomepageData(), getSiteCopy()])
+  const [
+    { magazineItems, eventItems, labItems, tvItems, shopItems },
+    copy,
+    planetImages,
+  ] = await Promise.all([getHomepageData(), getSiteCopy(), getPlanetImages()])
 
   const tvFallback: ModuleCardData['items'] = [
     { id: 'tv-fallback-1', title: 'Tune in later', badge: 'OFFLINE' },
@@ -125,7 +128,12 @@ export default async function Home() {
                 <FloatingCharacter index={i} className="absolute" />
               </div>
             )}
-            <PlanetSection {...section} />
+            <PlanetSection
+              {...section}
+              planetImageUrl={
+                planetImages[section.id as keyof typeof planetImages] ?? null
+              }
+            />
           </div>
         ))}
       </div>

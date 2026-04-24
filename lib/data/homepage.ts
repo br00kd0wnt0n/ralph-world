@@ -21,6 +21,51 @@ async function getTVItems(): Promise<ModuleItem[]> {
   }
 }
 
+export type PlanetModuleKey = 'tv' | 'magazine' | 'events' | 'shop' | 'lab'
+export type PlanetImages = Record<PlanetModuleKey, string | null>
+
+const PLANET_MODULE_KEYS: PlanetModuleKey[] = [
+  'tv',
+  'magazine',
+  'events',
+  'shop',
+  'lab',
+]
+
+export async function getPlanetImages(): Promise<PlanetImages> {
+  const base: PlanetImages = {
+    tv: null,
+    magazine: null,
+    events: null,
+    shop: null,
+    lab: null,
+  }
+  try {
+    const db = getDb()
+    const rows = await db
+      .select({ key: homepageConfig.key, value: homepageConfig.value })
+      .from(homepageConfig)
+      .where(
+        inArray(
+          homepageConfig.key,
+          PLANET_MODULE_KEYS.map((k) => `planet_${k}_url`)
+        )
+      )
+    for (const r of rows) {
+      const match = r.key.match(/^planet_(\w+)_url$/)
+      if (!match) continue
+      const mod = match[1] as PlanetModuleKey
+      if (!PLANET_MODULE_KEYS.includes(mod)) continue
+      if (typeof r.value === 'string' && r.value.trim()) {
+        base[mod] = r.value.trim()
+      }
+    }
+  } catch {
+    // keep defaults
+  }
+  return base
+}
+
 type PickMap = Record<string, string[]>
 
 async function readPicks(): Promise<PickMap> {

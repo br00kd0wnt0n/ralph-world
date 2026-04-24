@@ -28,6 +28,7 @@ export default function PlanetSection({
   accentColor,
   planetPosition,
   moduleCard,
+  planetImageUrl,
 }: PlanetSectionProps) {
   // Design spec: all slideouts use black copy over the accent colour.
   const textColor = 'text-black'
@@ -235,17 +236,26 @@ export default function PlanetSection({
           style={{ transform: `translateY(${-parallaxOffset}px)` }}
           aria-label={`Open ${label}`}
         >
-          {/* Planet placeholder — Duffy SVG drop-in */}
-          <div
-            className="w-48 h-48 md:w-72 md:h-72 rounded-full border-4 flex items-center justify-center text-sm transition-transform group-hover:scale-[1.03]"
-            style={{
-              borderColor: accentColor,
-              backgroundColor: `${accentColor}15`,
-              color: accentColor,
-            }}
-          >
-            <span className="opacity-50">planet-{id}</span>
-          </div>
+          {/* Planet illustration (editor-uploaded) or coloured-circle placeholder */}
+          {planetImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={planetImageUrl}
+              alt={`${label} planet`}
+              className="w-48 h-48 md:w-72 md:h-72 object-contain transition-transform group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div
+              className="w-48 h-48 md:w-72 md:h-72 rounded-full border-4 flex items-center justify-center text-sm transition-transform group-hover:scale-[1.03]"
+              style={{
+                borderColor: accentColor,
+                backgroundColor: `${accentColor}15`,
+                color: accentColor,
+              }}
+            >
+              <span className="opacity-50">planet-{id}</span>
+            </div>
+          )}
         </button>
       </div>
 

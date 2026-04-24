@@ -76,3 +76,12 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ── Focus ring — keyboard users only ── */
+/* Consistent visible focus indicator across every focusable element. */
+/* :focus-visible never fires on mouse clicks, only tab/keyboard. */
+:focus-visible {
+  outline: 2px solid var(--color-ralph-pink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

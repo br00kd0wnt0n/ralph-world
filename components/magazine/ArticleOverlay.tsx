@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import BlockRenderer from './BlockRenderer'
 import type { ArticleFull } from '@/lib/data/magazine'
 import { resolveTheme } from '@/lib/article-themes'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface ArticleOverlayProps {
   article: ArticleFull | null
@@ -90,9 +91,14 @@ export default function ArticleOverlay({
   const visibleBlocks = isGated ? blocks.slice(0, gateIndex) : blocks
 
   const theme = resolveTheme(article.backgroundCanvasColour)
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   return (
     <motion.div
+      ref={trapRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={article.title ?? 'Article'}
       variants={overlayVariants}
       initial="hidden"
       animate="visible"

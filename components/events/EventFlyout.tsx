@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { flagEmoji } from './flag'
 import { isSafeUrl } from '@/lib/safe-url'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { EventCreatureData } from './EventCreature.types'
 
 // Two stages: 'card' anchored near the creature with a Show Me More CTA,
@@ -88,6 +89,7 @@ export default function EventFlyout({
   }
 
   const isFull = stage === 'full'
+  const trapRef = useFocusTrap<HTMLDivElement>(isFull)
 
   let containerClass: string
   let containerStyle: React.CSSProperties = { backgroundColor: event.accent_colour }
@@ -112,6 +114,10 @@ export default function EventFlyout({
 
   return (
     <motion.div
+      ref={trapRef}
+      role={isFull ? 'dialog' : undefined}
+      aria-modal={isFull || undefined}
+      aria-label={isFull ? event.title : undefined}
       layout
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createCart } from '@/lib/shopify/client'
 import { isShopifyConfigured } from '@/lib/shopify/mock'
+import { signCartToken } from '@/lib/cart-token'
 
 export async function POST(request: Request) {
   if (!isShopifyConfigured()) {
@@ -13,10 +14,16 @@ export async function POST(request: Request) {
       { status: 503 }
     )
   }
-  const { variantId } = await request.json().catch(() => ({}))
+  const body = await request.json().catch(() => ({}))
+  const variantId =
+    typeof (body as { variantId?: unknown }).variantId === 'string'
+      ? (body as { variantId: string }).variantId
+      : undefined
   const cart = await createCart(variantId)
   if (!cart) {
     return NextResponse.json({ error: 'Cart creation failed' }, { status: 502 })
   }
-  return NextResponse.json(cart)
+  // Attach an HMAC token so subsequent writes can prove ownership of
+  // this cart id. Client stores both in localStorage.
+  return NextResponse.json({ ...cart, token: signCartToken(cart.id) })
 }

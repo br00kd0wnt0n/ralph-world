@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { resolveSectionTheme } from '@/lib/section-themes'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface SubscribeModalProps {
   isOpen: boolean
@@ -37,6 +38,7 @@ export default function SubscribeModal({
   // the outer canvas only.
   const isDefault = theme.key === 'ralph-purple'
   const [isLoading, setIsLoading] = useState<'free' | 'paid' | null>(null)
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   useEffect(() => {
     if (isOpen) {
@@ -77,6 +79,10 @@ export default function SubscribeModal({
 
   return (
     <div
+      ref={trapRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="subscribe-modal-title"
       className="fixed inset-0 z-50 overflow-y-auto"
       style={
         isDefault
@@ -146,6 +152,7 @@ export default function SubscribeModal({
             </div>
 
             <h1
+              id="subscribe-modal-title"
               className="relative text-6xl md:text-[7rem] font-bold text-black mb-4 z-10 font-[family-name:var(--font-display)] leading-[0.9]"
               style={{ transform: 'rotate(-3deg)' }}
             >

@@ -1,9 +1,22 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useCart } from '@/context/CartContext'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 export default function CartDrawer() {
   const { cart, isOpen, closeCart, removeItem, updateQty, isLoading } = useCart()
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
+
+  // ESC closes the drawer while open.
+  useEffect(() => {
+    if (!isOpen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeCart()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [isOpen, closeCart])
 
   if (!isOpen) return null
 
@@ -17,9 +30,17 @@ export default function CartDrawer() {
         onClick={closeCart}
       />
 
-      <div className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-surface border-l border-border shadow-xl flex flex-col">
+      <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-drawer-title"
+        className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-surface border-l border-border shadow-xl flex flex-col"
+      >
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-bold text-primary">Your basket</h2>
+          <h2 id="cart-drawer-title" className="text-lg font-bold text-primary">
+            Your basket
+          </h2>
           <button
             onClick={closeCart}
             className="text-secondary hover:text-primary text-xl"

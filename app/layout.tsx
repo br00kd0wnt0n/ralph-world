@@ -1,15 +1,23 @@
 import type { Metadata } from 'next'
-import { Playfair_Display } from 'next/font/google'
+import { Playfair_Display, Roboto } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import Nav from '@/components/layout/Nav'
 import CartDrawer from '@/components/layout/CartDrawer'
 import { BackgroundLayer } from '@/context/ThemeContext'
 import Starfield from '@/components/layout/Starfield'
+import ForegroundLayer from '@/components/layout/ForegroundLayer'
+import MidgroundLayer from '@/components/layout/MidgroundLayer'
 
 const playfair = Playfair_Display({
   variable: '--font-display',
   subsets: ['latin'],
+})
+
+const roboto = Roboto({
+  variable: '--font-body',
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
 })
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://ralph.world'
@@ -53,14 +61,16 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="cosy-dynamics"
-      className={`${playfair.variable} h-full antialiased`}
+      className={`${playfair.variable} ${roboto.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Providers>
           <Starfield />
+          <MidgroundLayer />
           <Nav />
           <BackgroundLayer />
           <main className="flex-1">{children}</main>
+          <ForegroundLayer />
           <CartDrawer />
         </Providers>
       </body>

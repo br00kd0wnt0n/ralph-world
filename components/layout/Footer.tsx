@@ -76,50 +76,77 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   }
 
   return (
-    <footer className="relative bg-black pt-32 pb-8 px-6 overflow-hidden">
-      {/* Pink arch */}
-      <div className="absolute top-0 left-0 right-0">
-        <svg
-          viewBox="0 0 1440 200"
-          className="w-full"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0,200 Q720,0 1440,200"
-            fill="none"
-            stroke="#FF2098"
-            strokeWidth="2"
-          />
-        </svg>
-      </div>
-
-      {/* Character placeholders on arch */}
-      <div className="absolute top-8 left-1/4 w-16 h-16 bg-ralph-pink/10 rounded-full flex items-center justify-center text-[8px] text-muted">
-        char
-      </div>
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-16 bg-ralph-teal/10 rounded-full flex items-center justify-center text-[8px] text-muted">
-        char
-      </div>
-      <div className="absolute top-8 right-1/4 w-16 h-16 bg-ralph-yellow/10 rounded-full flex items-center justify-center text-[8px] text-muted">
-        char
-      </div>
-
-      <div className="relative z-10 flex flex-col items-center text-center">
+    <footer className="relative overflow-hidden" style={{ paddingTop: 180 }}>
+      {/* Planet section with logo + tagline overlaid */}
+      <div className="relative flex justify-center" style={{ marginBottom: -1 }}>
         <img
-          src="/ralph-logo.png"
-          alt="ralph world"
-          width={80}
-          height={80}
-          className="rounded-full mb-4"
+          src="/imgs/footer_planet.png"
+          alt=""
+          style={{ width: 2898 / 2, height: 484 / 2 }}
+          className="max-w-none"
         />
-        <p className="text-sm text-white/60 tracking-widest uppercase">
-          {tagline}
-        </p>
+        {/* Logo + text centred on the planet */}
+        <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ paddingBottom: 28 }}>
+          <img
+            src="/ralph-wordmark.png"
+            alt="ralph"
+            style={{ height: 76, width: 'auto', filter: 'brightness(0)' }}
+            className="mb-3"
+          />
+          <img
+            src="/imgs/text_the_entertainment_people.png"
+            alt={tagline}
+            style={{ width: 958 / 2, height: 79 / 2 }}
+          />
+        </div>
       </div>
 
-      {/* London globe placeholder — bottom left */}
-      <div className="absolute bottom-4 left-6 w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-[7px] text-muted">
-        globe
+      {/* Black bar with pink top border */}
+      <div
+        className="relative bg-black flex items-center justify-center px-6"
+        style={{ height: 103, borderTop: '4px solid #EA128B' }}
+      >
+        <div className="flex items-center gap-5">
+          <a
+            href={contactHref}
+            className="text-sm text-white/40 hover:text-white transition-colors"
+          >
+            Contact us
+          </a>
+          {tiktokUrl && (
+            <a
+              href={tiktokUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/40 hover:text-white transition-colors"
+              aria-label="TikTok"
+            >
+              TikTok
+            </a>
+          )}
+          {instagramUrl && (
+            <a
+              href={instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/40 hover:text-white transition-colors"
+              aria-label="Instagram"
+            >
+              Instagram
+            </a>
+          )}
+          {youtubeUrl && (
+            <a
+              href={youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/40 hover:text-white transition-colors"
+              aria-label="YouTube"
+            >
+              YouTube
+            </a>
+          )}
+        </div>
       </div>
     </footer>
   )

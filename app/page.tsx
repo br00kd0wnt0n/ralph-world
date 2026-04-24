@@ -5,6 +5,7 @@ import PlanetSection from '@/components/home/PlanetSection'
 import FloatingCharacter from '@/components/home/FloatingCharacter'
 import MobileHome from '@/components/home/MobileHome'
 import Footer from '@/components/layout/Footer'
+import PageNav from '@/components/layout/PageNav'
 import type { ModuleCardData } from '@/components/home/PlanetSection'
 
 export const revalidate = 60
@@ -27,7 +28,7 @@ export default async function Home() {
       id: 'magazine',
       label: 'Magazine',
       tagline: 'Our fun, glossy mag',
-      accentColor: '#FF6B35',
+      accentColor: '#EE6626',
       planetPosition: 'upper-right',
       moduleCard: {
         heading: 'Magazine',
@@ -42,7 +43,7 @@ export default async function Home() {
       id: 'events',
       label: 'Events',
       tagline: "Let's meet up",
-      accentColor: '#00C4B4',
+      accentColor: '#5FBCBF',
       planetPosition: 'lower-left',
       moduleCard: {
         heading: 'Events',
@@ -57,7 +58,7 @@ export default async function Home() {
       id: 'shop',
       label: 'Shop',
       tagline: 'Buy Ralph stuff',
-      accentColor: '#4CAF50',
+      accentColor: '#44B758',
       planetPosition: 'lower-right',
       moduleCard: {
         heading: 'Shop',
@@ -75,7 +76,7 @@ export default async function Home() {
       id: 'lab',
       label: 'Lab',
       tagline: 'Experiments in fun',
-      accentColor: '#FFE566',
+      accentColor: '#FBC000',
       planetPosition: 'lower-left',
       moduleCard: {
         heading: 'Lab',
@@ -90,6 +91,7 @@ export default async function Home() {
 
   return (
     <>
+      <PageNav />
       <Hero
         heading={copy.home_hero_heading}
         line1={copy.home_hero_line_1}
@@ -99,14 +101,7 @@ export default async function Home() {
 
       <div className="hidden md:block">
         {sections.map((section, i) => (
-          <div key={section.id}>
-            {i > 0 && (
-              <div className="relative h-16 flex justify-center">
-                <FloatingCharacter index={i} className="absolute" />
-              </div>
-            )}
-            <PlanetSection {...section} />
-          </div>
+          <PlanetSection key={section.id} {...section} />
         ))}
       </div>
 

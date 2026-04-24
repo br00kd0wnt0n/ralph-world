@@ -6,6 +6,7 @@ import { overlayVariants, overlayContentVariants } from '@/lib/animation/magazin
 import { useAuth } from '@/context/AuthContext'
 import BlockRenderer from './BlockRenderer'
 import type { ArticleFull } from '@/lib/data/magazine'
+import { resolveTheme } from '@/lib/article-themes'
 
 interface ArticleOverlayProps {
   article: ArticleFull | null
@@ -88,6 +89,8 @@ export default function ArticleOverlay({
   const isGated = isGuest || needsUpgrade
   const visibleBlocks = isGated ? blocks.slice(0, gateIndex) : blocks
 
+  const theme = resolveTheme(article.backgroundCanvasColour)
+
   return (
     <motion.div
       variants={overlayVariants}
@@ -96,7 +99,8 @@ export default function ArticleOverlay({
       exit="exit"
       className="fixed inset-0 z-50 overflow-y-auto"
       style={{
-        backgroundColor: article.backgroundCanvasColour || '#FAFAFA',
+        backgroundColor: theme.bg,
+        color: theme.text,
       }}
     >
       {/* Close button */}
@@ -114,8 +118,8 @@ export default function ArticleOverlay({
         animate="visible"
         className="max-w-[720px] mx-auto px-6 py-16"
       >
-        {/* Title */}
-        <h1 className="text-3xl md:text-5xl font-bold text-center mb-6 text-gray-900">
+        {/* Title — inherits theme.text from the parent overlay */}
+        <h1 className="text-3xl md:text-5xl font-bold text-center mb-6">
           {article.title}
         </h1>
 

@@ -54,7 +54,9 @@ export default function TVSet({
 
     async function fetchSchedule() {
       try {
-        const res = await fetch('/api/broadcaster/schedule', {
+        // Timestamp query param defeats any intermediate cache (browser,
+        // proxy, Railway edge) regardless of Cache-Control headers.
+        const res = await fetch(`/api/broadcaster/schedule?t=${Date.now()}`, {
           cache: 'no-store',
         })
         const data = await res.json()
@@ -66,9 +68,19 @@ export default function TVSet({
 
     fetchSchedule()
     const interval = setInterval(fetchSchedule, 30_000)
+
+    // Refetch immediately when the tab becomes visible — otherwise a user
+    // who switches tabs for a minute comes back to the show that was on
+    // when they left, even though the pointer has moved.
+    function onVisible() {
+      if (document.visibilityState === 'visible') fetchSchedule()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
     return () => {
       mounted = false
       clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [])
 

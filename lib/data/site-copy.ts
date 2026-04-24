@@ -63,6 +63,30 @@ export const DEFAULT_COPY = {
     "Tools, experiments, generators and weird little projects. Everything we've been tinkering with lately.",
   lab_hero_cta: 'What you waiting for — pull the lever to see what comes out.',
 
+  // Play with Ralph (agency page)
+  play_hero_heading: 'PLAY WITH RALPH',
+  play_hero_intro:
+    "Come and play in Ralph's World. Brimming with passion and 20 years of experience, we partner with brands to build strategies and bring ideas to life. Our ethos has always remained the same: earn attention and engagement, not just blink-and-you'll-miss-it impressions.",
+  play_hero_cta_line: 'See some of our work below.',
+  play_whats_next_body:
+    "And so what's next? Perhaps you need some help with Brand Reframing, Story Ideation, Entertainment Planning, Audience Strategy, Measurement Framework, or something else.\n\nOr maybe you just want a chat.\n\nWhy don't you give us a shout and we'll take the next steps together.",
+  play_whats_next_cta_label: 'give us a shout',
+  play_whats_next_cta_href: 'mailto:hello@ralph.world',
+  play_expertise_intro:
+    "Whether it's a social-first campaign or a full-scale brand world, we create work that resonates—fearless, playful, fun, or just too good to pass by. Our expertise spans every corner of modern storytelling:",
+  play_expertise_1_heading: 'Creative and Strategy',
+  play_expertise_1_body:
+    'Brand strategy, big ideas, campaign development, audience insights, and cultural strategy.',
+  play_expertise_2_heading: 'Content and Production',
+  play_expertise_2_body:
+    'Video, podcasts, photography, print, design, and IP development.',
+  play_expertise_3_heading: 'Social and Digital',
+  play_expertise_3_body:
+    'Always-on content and community management, platform expertise, editorial planning, and creator collaborations.',
+  play_expertise_4_heading: 'Experimental and Events',
+  play_expertise_4_body:
+    'Live activations, immersive experiences, partnerships, and in-person moments that drive cultural conversation.',
+
   // Subscribe modal
   subscribe_heading: 'JOIN RALPH',
   subscribe_free_heading: 'Experience pop culture for the fun of it.',

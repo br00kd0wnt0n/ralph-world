@@ -167,6 +167,18 @@ export const labItems = pgTable('lab_items', {
   publishedAt: timestamp('published_at', { mode: 'date' }),
 })
 
+export const caseStudies = pgTable('case_studies', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  slug: text('slug').unique().notNull(),
+  status: text('status').default('draft'),
+  title: text('title'),
+  subtitle: text('subtitle'),
+  thumbnailUrl: text('thumbnail_url'),
+  externalUrlOverride: text('external_url_override'),
+  sortOrder: integer('sort_order').default(0),
+  publishedAt: timestamp('published_at', { mode: 'date' }),
+})
+
 export const homepageConfig = pgTable('homepage_config', {
   key: text('key').primaryKey(),
   value: jsonb('value'),

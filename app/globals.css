@@ -143,6 +143,36 @@ body {
   text-align: center;
 }
 
+/* ── Button press ── */
+.btn-press:hover {
+  transform: translate(2px, 2px);
+}
+.btn-press:active {
+  transform: translate(4px, 4px);
+}
+
+/* ── Footer icon buttons ── */
+.footer-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+.footer-icon-btn:hover {
+  background-color: #EA128B;
+}
+.footer-icon {
+  width: 24px;
+  height: 24px;
+  transition: filter 0.2s ease;
+}
+.footer-icon-btn:hover .footer-icon {
+  filter: brightness(0);
+}
+
 /* ── Utility ── */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

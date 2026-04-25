@@ -25,11 +25,26 @@ export default async function Home() {
     moduleCard: ModuleCardData
   }[] = [
     {
+      id: 'tv',
+      label: 'Ralph TV',
+      tagline: 'Watch Ralph TV',
+      accentColor: '#7B3FE4',
+      planetPosition: 'upper-right',
+      moduleCard: {
+        heading: 'Ralph TV',
+        tagline: 'Live and on demand',
+        description: copy.tv_description ?? 'Ralph TV is your channel for live shows, interviews and behind-the-scenes fun.',
+        items: [],
+        href: '/tv',
+        ctaLabel: 'Watch now',
+      },
+    },
+    {
       id: 'magazine',
       label: 'Magazine',
       tagline: 'Our fun, glossy mag',
       accentColor: '#EE6626',
-      planetPosition: 'upper-right',
+      planetPosition: 'lower-left',
       moduleCard: {
         heading: 'Magazine',
         tagline: 'Words and pictures',
@@ -44,7 +59,7 @@ export default async function Home() {
       label: 'Events',
       tagline: "Let's meet up",
       accentColor: '#5FBCBF',
-      planetPosition: 'lower-left',
+      planetPosition: 'lower-right',
       moduleCard: {
         heading: 'Events',
         tagline: 'For real. IRL.',
@@ -59,7 +74,7 @@ export default async function Home() {
       label: 'Shop',
       tagline: 'Buy Ralph stuff',
       accentColor: '#44B758',
-      planetPosition: 'lower-right',
+      planetPosition: 'lower-left',
       moduleCard: {
         heading: 'Shop',
         tagline: 'Merch, mags and more',
@@ -77,7 +92,7 @@ export default async function Home() {
       label: 'Lab',
       tagline: 'Experiments in fun',
       accentColor: '#FBC000',
-      planetPosition: 'lower-left',
+      planetPosition: 'lower-right',
       moduleCard: {
         heading: 'Lab',
         tagline: 'Try something new',
@@ -111,6 +126,29 @@ export default async function Home() {
         labItems={labItems}
         copy={copy}
       />
+
+      {/* Footer planet — homepage only */}
+      <div className="relative flex justify-center overflow-x-hidden" style={{ paddingTop: 180, marginBottom: -1 }}>
+        <img
+          src="/imgs/footer_planet.png"
+          alt=""
+          style={{ width: 2898 / 2, height: 484 / 2 }}
+          className="max-w-none"
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ paddingBottom: 28 }}>
+          <img
+            src="/ralph-wordmark.png"
+            alt="ralph"
+            style={{ height: 76, width: 'auto', filter: 'brightness(0)' }}
+            className="mb-3"
+          />
+          <img
+            src="/imgs/text_the_entertainment_people.png"
+            alt={copy.footer_tagline ?? 'The Entertainment People'}
+            style={{ width: 958 / 2, height: 79 / 2 }}
+          />
+        </div>
+      </div>
 
       <Footer variant="dark" copy={copy} />
     </>

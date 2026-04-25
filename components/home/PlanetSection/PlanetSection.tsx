@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Button from '@/components/ui/Button'
 import { motion } from 'framer-motion'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { planetSectionVariants } from '@/lib/animation/homepage'
@@ -15,7 +15,7 @@ const POSITION_LAYOUTS = {
 
 const SECTION_PADDING = 64
 const PLANET_SIZE = 411
-const PANEL_HEIGHT = 320
+const PANEL_HEIGHT = 276
 const PEEK_VISIBLE = 20
 const COLUMN_WIDTH = 340
 const PANEL_PADDING = 20
@@ -23,10 +23,20 @@ const COLUMN_GAP = 20
 
 // Title images — displayed at half intrinsic size
 const TITLE_IMAGES: Record<string, { src: string; w: number; h: number }> = {
+  tv: { src: '/imgs/title_tv.png', w: 362 / 2, h: 134 / 2 },
   magazine: { src: '/imgs/title_magazine.png', w: 369 / 2, h: 118 / 2 },
   events: { src: '/imgs/title_events.png', w: 324 / 2, h: 100 / 2 },
   shop: { src: '/imgs/title_shop.png', w: 195 / 2, h: 117 / 2 },
   lab: { src: '/imgs/title_lab.png', w: 202 / 2, h: 116 / 2 },
+}
+
+// Secondary titles — used inside the expanded panel
+const TITLE_SECONDARY_IMAGES: Record<string, { src: string; w: number; h: number }> = {
+  tv: { src: '/imgs/title_tv_secondary.png', w: 362 / 2, h: 134 / 2 },
+  magazine: { src: '/imgs/title_magazine_secondary.png', w: 369 / 2, h: 118 / 2 },
+  events: { src: '/imgs/title_events_secondary.png', w: 324 / 2, h: 100 / 2 },
+  shop: { src: '/imgs/title_shop_secondary.png', w: 196 / 2, h: 117 / 2 },
+  lab: { src: '/imgs/title_lab_secondary.png', w: 202 / 2, h: 116 / 2 },
 }
 
 const PLANET_IMAGES: Record<string, string> = {
@@ -44,18 +54,19 @@ export default function PlanetSection({
   planetPosition,
   moduleCard,
 }: PlanetSectionProps) {
-  const lightBgs = ['#FBC000', '#FFE566', '#FFE066', '#FFEB3B', '#FFF176']
-  const useDarkText = lightBgs.some(
+  // Purple = white text, all others (blue, green, yellow, orange) = black text
+  const whitTextBgs = ['#7B3FE4']
+  const useWhiteText = whitTextBgs.some(
     (c) => c.toLowerCase() === accentColor.toLowerCase()
   )
-  const textColor = useDarkText ? 'text-black' : 'text-white'
-  const textMuted = useDarkText ? 'text-black/70' : 'text-white/70'
-  const ctaBg = useDarkText
-    ? 'bg-black text-white hover:bg-black/80'
-    : 'bg-white text-black hover:bg-white/90'
-  const badgeColors = useDarkText
-    ? 'bg-black text-white'
-    : 'bg-white'
+  const textColor = useWhiteText ? 'text-white' : 'text-black'
+  const textMuted = useWhiteText ? 'text-white' : 'text-black'
+  const ctaBg = useWhiteText
+    ? 'bg-white text-black hover:bg-white/90'
+    : 'bg-black text-white hover:bg-black/80'
+  const badgeColors = useWhiteText
+    ? 'bg-white text-black'
+    : 'bg-black text-white'
 
   const sectionRef = useRef<HTMLDivElement>(null)
   const planetBtnRef = useRef<HTMLButtonElement>(null)
@@ -65,7 +76,12 @@ export default function PlanetSection({
   const [isInView, setIsInView] = useState(false)
   const [sectionWidth, setSectionWidth] = useState(0)
   const [planetCenterY, setPlanetCenterY] = useState(0)
+  const [planetHeight, setPlanetHeight] = useState(0)
   const [isTouch, setIsTouch] = useState(false)
+  const mouseYRef = useRef(0)
+  const isActiveRef = useRef(false)
+
+  useEffect(() => { isActiveRef.current = isActive }, [isActive])
 
   useEffect(() => {
     if (
@@ -85,11 +101,19 @@ export default function PlanetSection({
       const sRect = section.getBoundingClientRect()
       const pRect = planet.getBoundingClientRect()
       setPlanetCenterY(pRect.top - sRect.top + pRect.height / 2)
+      setPlanetHeight(pRect.height)
     }
     update()
+    // Re-measure when planet image loads (height changes)
+    const img = planet.querySelector('img')
+    if (img) img.addEventListener('load', update)
     const ro = new ResizeObserver(() => update())
     ro.observe(section)
-    return () => ro.disconnect()
+    ro.observe(planet)
+    return () => {
+      ro.disconnect()
+      if (img) img.removeEventListener('load', update)
+    }
   }, [])
 
   // Scroll-based peek
@@ -106,6 +130,49 @@ export default function PlanetSection({
     check()
     return () => window.removeEventListener('scroll', check)
   }, [])
+
+  // Track mouse Y (always, lightweight)
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => { mouseYRef.current = e.clientY }
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => window.removeEventListener('mousemove', onMove)
+  }, [])
+
+  // When active: observe mouse position vs section bounds on scroll + mousemove
+  useEffect(() => {
+    if (!isActive || isTouch) return
+
+    const checkBounds = () => {
+      const section = sectionRef.current
+      if (!section || !isActiveRef.current) return
+      const rect = section.getBoundingClientRect()
+      const vh = window.innerHeight
+      const sectionCenter = rect.top + rect.height / 2
+      const halfZone = vh * 0.45 // 90% of screen height
+      const mouseY = mouseYRef.current
+
+      // Mouse must be within 90% screen height centered on section
+      if (
+        mouseY < sectionCenter - halfZone ||
+        mouseY > sectionCenter + halfZone ||
+        sectionCenter < -halfZone ||
+        sectionCenter > vh + halfZone
+      ) {
+        setIsActive(false)
+      }
+    }
+
+    window.addEventListener('scroll', checkBounds, { passive: true })
+    window.addEventListener('mousemove', checkBounds, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', checkBounds)
+      window.removeEventListener('mousemove', checkBounds)
+    }
+  }, [isActive, isTouch])
+
+  const activate = useCallback(() => {
+    if (!isTouch) setIsActive(true)
+  }, [isTouch])
 
   const planetOnRight = POSITION_LAYOUTS[planetPosition] === 'right'
   const [carouselIndex, setCarouselIndex] = useState(0)
@@ -164,26 +231,28 @@ export default function PlanetSection({
       initial="hidden"
       animate={isVisible ? 'visible' : 'hidden'}
       className="relative px-6 md:px-16 py-4 md:py-6 max-w-7xl mx-auto"
-      onMouseLeave={() => isActive && setIsActive(false)}
     >
-      {/* Panel — content-width, clip-path masks it */}
-      <div
+      {/* Panel — content-width, clip-path masks it, spring overshoot on open */}
+      <motion.div
         className="absolute z-[6]"
         style={{
           left: panelLeft,
           width: panelWidth,
           height: PANEL_HEIGHT,
-          top: planetCenterY - PANEL_HEIGHT / 2,
+          top: planetCenterY + planetHeight / 2 - 50 - PANEL_HEIGHT,
           backgroundColor: accentColor,
           borderRadius: 12,
           clipPath: getClipPath(),
-          transition: 'clip-path 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+          transition: 'clip-path 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
           pointerEvents: panelState === 'open' ? 'auto' : 'none',
           padding: PANEL_PADDING,
         }}
+        initial={false}
+        animate={{ x: planetShift }}
+        transition={{ type: 'spring', stiffness: 200, damping: 20, mass: 0.8 }}
       >
         <div
-          className="h-full flex"
+          className={`h-full flex ${!planetOnRight ? 'flex-row-reverse' : ''}`}
           style={{
             gap: COLUMN_GAP,
             ...(planetOnRight
@@ -191,37 +260,55 @@ export default function PlanetSection({
               : { paddingLeft: PLANET_SIZE / 2 }),
           }}
         >
-          {/* Column 1: text */}
-          <div
-            className="flex flex-col justify-center shrink-0"
+          {/* Column 1: text — staggered reveal */}
+          <motion.div
+            className={`flex flex-col justify-between h-full shrink-0 ${!planetOnRight ? 'items-end text-right' : 'items-start text-left'}`}
             style={{ width: COLUMN_WIDTH }}
+            initial={false}
+            animate={{
+              opacity: panelState === 'open' ? 1 : 0,
+              y: panelState === 'open' ? 0 : 20,
+            }}
+            transition={{ duration: 0.4, delay: panelState === 'open' ? 0.15 : 0, ease: 'easeOut' }}
           >
-            <h3
-              className={`text-2xl md:text-3xl font-bold ${textColor} mb-1 font-[family-name:var(--font-display)]`}
-            >
-              {moduleCard.heading}
-            </h3>
-            <p
-              className={`${textColor} font-medium text-sm md:text-base mb-2`}
-            >
-              {moduleCard.tagline}
-            </p>
-            <p className={`${textMuted} text-sm mb-5 leading-relaxed`}>
-              {moduleCard.description}
-            </p>
-            <Link
-              href={moduleCard.href}
-              className={`inline-block rounded-full px-5 py-2 font-medium text-sm ${ctaBg} transition-colors w-fit`}
-            >
-              {moduleCard.ctaLabel}
-            </Link>
-          </div>
+            <div className={!planetOnRight ? 'flex flex-col items-end' : ''}>
+              {TITLE_SECONDARY_IMAGES[id] ? (
+                <img
+                  src={TITLE_SECONDARY_IMAGES[id].src}
+                  alt={moduleCard.heading}
+                  style={{ width: TITLE_SECONDARY_IMAGES[id].w, height: TITLE_SECONDARY_IMAGES[id].h }}
+                  className="mb-1"
+                />
+              ) : (
+                <h3
+                  className={`text-2xl md:text-3xl font-bold ${textColor} mb-1 font-[family-name:var(--font-display)]`}
+                >
+                  {moduleCard.heading}
+                </h3>
+              )}
+              <p
+                className={`text-intro ${textColor} mb-2`}
+              >
+                {moduleCard.tagline}
+              </p>
+              <p className={`${textMuted} text-body-sm`} style={{ lineHeight: '18px' }}>
+                {moduleCard.description}
+              </p>
+            </div>
+            <Button href={moduleCard.href} label={moduleCard.ctaLabel} />
+          </motion.div>
 
-          {/* Column 2: items */}
+          {/* Column 2: items — staggered reveal, slightly later */}
           {hasItems && (
-            <div
+            <motion.div
               className="flex items-center gap-2 shrink-0"
               style={{ width: COLUMN_WIDTH }}
+              initial={false}
+              animate={{
+                opacity: panelState === 'open' ? 1 : 0,
+                y: panelState === 'open' ? 0 : 20,
+              }}
+              transition={{ duration: 0.4, delay: panelState === 'open' ? 0.3 : 0, ease: 'easeOut' }}
             >
               {hasMoreBack && (
                 <button
@@ -278,17 +365,16 @@ export default function PlanetSection({
                   →
                 </button>
               )}
-            </div>
+            </motion.div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Title/subtitle — sits between panel (z-0) and planet (z-10), panel obscures it on open */}
       <motion.div
         className={`absolute z-[5] flex flex-col ${planetOnRight ? 'items-end' : 'items-start'}`}
         style={{
-          top: planetCenterY,
-          transform: 'translateY(-50%)',
+          bottom: `calc(100% - ${planetCenterY}px)`,
           ...(planetOnRight
             ? { right: SECTION_PADDING + PLANET_SIZE + 24 }
             : { left: SECTION_PADDING + PLANET_SIZE + 24 }),
@@ -315,14 +401,15 @@ export default function PlanetSection({
         </p>
       </motion.div>
 
-      {/* Planet — foreground */}
+      {/* Planet — foreground, pointer-events off when panel is open so it doesn't cover panel buttons */}
       <div
         className={`relative z-10 flex ${planetOnRight ? 'justify-end' : 'justify-start'}`}
+        style={{ pointerEvents: panelState === 'open' ? 'none' : 'auto' }}
       >
         <motion.div
-          onMouseEnter={() => !isTouch && setIsActive(true)}
+          onMouseEnter={activate}
           animate={{ x: planetShift }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ type: 'spring', stiffness: 200, damping: 20, mass: 0.8 }}
         >
           <button
             ref={planetBtnRef}

@@ -3,29 +3,24 @@
 import { useEffect, useRef } from 'react'
 import { useTheme } from '@/context/ThemeContext'
 
-// Behind the planets/panels, slower than content, duller.
-// speed < 1 = slower than content (feels further away)
+// Behind the planets/panels, slower than content
 // image items displayed at half intrinsic size
-type MidgroundItem =
-  | { x: number; baseY: number; size: number; color: string; speed: number; image?: undefined }
-  | { x: number; baseY: number; speed: number; image: string; w: number; h: number; size?: undefined; color?: undefined }
 
-const MIDGROUND_ITEMS: MidgroundItem[] = [
-  { x: 12, baseY: 200, size: 120, color: '#EA128B', speed: 0.7 },
-  { x: 82, baseY: 600, image: '/imgs/item_moon.png', w: 288 / 2, h: 290 / 2, speed: 0.75 },
-  { x: 35, baseY: 1100, size: 110, color: '#7B3FE4', speed: 0.65 },
+const FLYING_ITEMS = [
+  { baseY: 1600, speed: 0.7, image: '/imgs/item_mid_spaceship.png', w: 232 / 2, h: 127 / 2, duration: 18 },
+]
+
+const MIDGROUND_ITEMS = [
+  { x: 12, baseY: 600, image: '/imgs/item_moon.png', w: 288 / 2, h: 290 / 2, speed: 0.75 },
   { x: 70, baseY: 1200, image: '/imgs/item_planet.png', w: 416 / 2, h: 280 / 2, speed: 0.7 },
-  { x: 20, baseY: 2300, size: 80, color: '#FBC000', speed: 0.8 },
-  { x: 88, baseY: 2800, size: 130, color: '#44B758', speed: 0.65 },
   { x: 45, baseY: 2000, image: '/imgs/item_satellite.png', w: 377 / 2, h: 282 / 2, speed: 0.75 },
-  { x: 8, baseY: 4100, size: 110, color: '#5FBCBF', speed: 0.7 },
-  { x: 60, baseY: 4700, size: 85, color: '#7B3FE4', speed: 0.8 },
-  { x: 30, baseY: 5200, size: 100, color: '#EE6626', speed: 0.65 },
 ]
 
 export default function MidgroundLayer() {
   const { theme } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
+  const flyingRef = useRef<HTMLDivElement>(null)
+  const rafRef = useRef<number>(0)
 
   useEffect(() => {
     if (theme !== 'cosy-dynamics') return
@@ -33,63 +28,112 @@ export default function MidgroundLayer() {
     const mql = window.matchMedia('(max-width: 767px)')
     if (mql.matches) return
 
-    const onScroll = () => {
-      const container = containerRef.current
-      if (!container) return
+    let ticking = false
+
+    const update = () => {
       const sy = window.scrollY
-      const children = container.children
-      for (let i = 0; i < children.length; i++) {
-        const el = children[i] as HTMLElement
-        const speed = MIDGROUND_ITEMS[i].speed
-        el.style.transform = `translateY(${-sy * speed}px)`
+
+      // Static midground items
+      const container = containerRef.current
+      if (container) {
+        const children = container.children
+        for (let i = 0; i < children.length; i++) {
+          const el = children[i] as HTMLElement
+          const speed = MIDGROUND_ITEMS[i].speed
+          el.style.transform = `translateY(${-sy * speed}px)`
+        }
+      }
+
+      // Flying items — use translateY for vertical parallax (no reflow)
+      const flyingContainer = flyingRef.current
+      if (flyingContainer) {
+        const flyingChildren = flyingContainer.children
+        for (let i = 0; i < flyingChildren.length; i++) {
+          const el = flyingChildren[i] as HTMLElement
+          const baseY = FLYING_ITEMS[i].baseY
+          const speed = FLYING_ITEMS[i].speed
+          el.style.transform = `translateY(${baseY - sy * speed}px)`
+        }
+      }
+
+      ticking = false
+    }
+
+    const onScroll = () => {
+      if (!ticking) {
+        rafRef.current = requestAnimationFrame(update)
+        ticking = true
       }
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
+    update()
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(rafRef.current)
+    }
   }, [theme])
 
   if (theme !== 'cosy-dynamics') return null
 
   return (
+    <>
     <div
       ref={containerRef}
       className="fixed inset-0 pointer-events-none z-[1] overflow-hidden hidden md:block"
       aria-hidden="true"
     >
-      {MIDGROUND_ITEMS.map((item, i) =>
-        item.image ? (
+      {MIDGROUND_ITEMS.map((item, i) => (
+        <img
+          key={i}
+          src={item.image}
+          alt=""
+          className="absolute"
+          style={{
+            left: `${item.x}%`,
+            top: item.baseY,
+            width: item.w,
+            height: item.h,
+            willChange: 'transform',
+          }}
+        />
+      ))}
+    </div>
+
+    <style>{`
+      @keyframes fly-across {
+        0% { transform: translateX(100vw); }
+        100% { transform: translateX(calc(-100% - 100px)); }
+      }
+    `}</style>
+
+    {/* Flying items — vertical position via translateY, horizontal via CSS animation */}
+    <div
+      ref={flyingRef}
+      className="fixed inset-0 pointer-events-none z-[1] hidden md:block"
+      aria-hidden="true"
+    >
+      {FLYING_ITEMS.map((item, i) => (
+        <div
+          key={`fly-${i}`}
+          className="absolute left-0 right-0"
+          style={{
+            top: 0,
+            willChange: 'transform',
+          }}
+        >
           <img
-            key={i}
             src={item.image}
             alt=""
-            className="absolute"
             style={{
-              left: `${item.x}%`,
-              top: item.baseY,
               width: item.w,
               height: item.h,
-              opacity: 1,
-              willChange: 'transform',
+              animation: `fly-across ${item.duration}s linear infinite`,
             }}
           />
-        ) : (
-          <div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              left: `${item.x}%`,
-              top: item.baseY,
-              width: item.size,
-              height: item.size,
-              backgroundColor: item.color,
-              opacity: 1,
-              willChange: 'transform',
-            }}
-          />
-        )
-      )}
+        </div>
+      ))}
     </div>
+    </>
   )
 }

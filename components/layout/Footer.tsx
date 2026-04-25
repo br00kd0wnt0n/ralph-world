@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Globe from './Globe'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface FooterProps {
@@ -76,76 +77,54 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   }
 
   return (
-    <footer className="relative overflow-hidden" style={{ paddingTop: 180 }}>
-      {/* Planet section with logo + tagline overlaid */}
-      <div className="relative flex justify-center" style={{ marginBottom: -1 }}>
-        <img
-          src="/imgs/footer_planet.png"
-          alt=""
-          style={{ width: 2898 / 2, height: 484 / 2 }}
-          className="max-w-none"
-        />
-        {/* Logo + text centred on the planet */}
-        <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ paddingBottom: 28 }}>
-          <img
-            src="/ralph-wordmark.png"
-            alt="ralph"
-            style={{ height: 76, width: 'auto', filter: 'brightness(0)' }}
-            className="mb-3"
-          />
-          <img
-            src="/imgs/text_the_entertainment_people.png"
-            alt={tagline}
-            style={{ width: 958 / 2, height: 79 / 2 }}
-          />
-        </div>
+    <footer className="relative">
+      {/* Globe — bottom left, overflows top */}
+      <div className="absolute z-10" style={{ bottom: 24, left: 24 }}>
+        <Globe />
       </div>
 
       {/* Black bar with pink top border */}
       <div
-        className="relative bg-black flex items-center justify-center px-6"
+        className="relative bg-black flex items-center justify-between px-6"
         style={{ height: 103, borderTop: '4px solid #EA128B' }}
       >
-        <div className="flex items-center gap-5">
+        <div />
+
+        {/* Right: Contact + social icons */}
+        <div className="flex items-center" style={{ gap: 32 }}>
           <a
             href={contactHref}
-            className="text-sm text-white/40 hover:text-white transition-colors"
+            className="text-chrome text-white hover:text-ralph-pink transition-colors"
           >
             Contact us
           </a>
-          {tiktokUrl && (
-            <a
-              href={tiktokUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/40 hover:text-white transition-colors"
-              aria-label="TikTok"
-            >
-              TikTok
-            </a>
-          )}
-          {instagramUrl && (
-            <a
-              href={instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/40 hover:text-white transition-colors"
-              aria-label="Instagram"
-            >
-              Instagram
-            </a>
-          )}
-          {youtubeUrl && (
-            <a
-              href={youtubeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/40 hover:text-white transition-colors"
-              aria-label="YouTube"
-            >
-              YouTube
-            </a>
-          )}
+          <a
+            href={tiktokUrl || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-icon-btn"
+            aria-label="TikTok"
+          >
+            <img src="/imgs/icon_tiktok.svg" alt="" className="footer-icon" />
+          </a>
+          <a
+            href={instagramUrl || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-icon-btn"
+            aria-label="Instagram"
+          >
+            <img src="/imgs/icon_instagram.svg" alt="" className="footer-icon" />
+          </a>
+          <a
+            href={youtubeUrl || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-icon-btn"
+            aria-label="YouTube"
+          >
+            <img src="/imgs/icon_youtube.svg" alt="" className="footer-icon" />
+          </a>
         </div>
       </div>
     </footer>

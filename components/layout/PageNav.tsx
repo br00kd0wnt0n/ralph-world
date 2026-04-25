@@ -30,14 +30,14 @@ export default function PageNav() {
       </Link>
 
       {/* Nav items */}
-      <nav className="flex items-center justify-center gap-10">
+      <nav className="flex items-center justify-center" style={{ gap: 70 }}>
         {NAV_ITEMS.map((item) => {
           const isActive = pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`relative pb-1.5 text-sm font-medium transition-colors ${
+              className={`relative pb-1.5 text-btn text-[22px] transition-colors ${
                 isActive
                   ? 'text-primary'
                   : 'text-ralph-pink hover:text-primary'

@@ -2,9 +2,9 @@ import { getHomepageData, getPlanetImages } from '@/lib/data/homepage'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import Hero from '@/components/home/Hero'
 import PlanetSection from '@/components/home/PlanetSection'
-import FloatingCharacter from '@/components/home/FloatingCharacter'
 import MobileHome from '@/components/home/MobileHome'
 import Footer from '@/components/layout/Footer'
+import PageNav from '@/components/layout/PageNav'
 import type { ModuleCardData } from '@/components/home/PlanetSection'
 
 export const revalidate = 60
@@ -32,8 +32,8 @@ export default async function Home() {
       id: 'tv',
       label: copy.tv_hero_heading,
       tagline: 'Switch on, tune in',
-      accentColor: '#FF2098',
-      planetPosition: 'upper-left',
+      accentColor: '#7B3FE4',
+      planetPosition: 'upper-right',
       moduleCard: {
         heading: copy.tv_hero_heading,
         tagline: 'Switch on, tune in',
@@ -47,8 +47,8 @@ export default async function Home() {
       id: 'magazine',
       label: 'Magazine',
       tagline: 'Our fun, glossy mag',
-      accentColor: '#FF6B35',
-      planetPosition: 'upper-right',
+      accentColor: '#EE6626',
+      planetPosition: 'lower-left',
       moduleCard: {
         heading: 'Magazine',
         tagline: 'Words and pictures',
@@ -62,8 +62,8 @@ export default async function Home() {
       id: 'events',
       label: 'Events',
       tagline: "Let's meet up",
-      accentColor: '#00C4B4',
-      planetPosition: 'lower-left',
+      accentColor: '#5FBCBF',
+      planetPosition: 'lower-right',
       moduleCard: {
         heading: 'Events',
         tagline: 'For real. IRL.',
@@ -77,8 +77,8 @@ export default async function Home() {
       id: 'shop',
       label: 'Shop',
       tagline: 'Buy Ralph stuff',
-      accentColor: '#4CAF50',
-      planetPosition: 'lower-right',
+      accentColor: '#44B758',
+      planetPosition: 'lower-left',
       moduleCard: {
         heading: 'Shop',
         tagline: 'Merch, mags and more',
@@ -98,8 +98,8 @@ export default async function Home() {
       id: 'lab',
       label: 'Lab',
       tagline: 'Experiments in fun',
-      accentColor: '#FFE566',
-      planetPosition: 'lower-left',
+      accentColor: '#FBC000',
+      planetPosition: 'lower-right',
       moduleCard: {
         heading: 'Lab',
         tagline: 'Try something new',
@@ -113,6 +113,7 @@ export default async function Home() {
 
   return (
     <>
+      <PageNav />
       <Hero
         heading={copy.home_hero_heading}
         line1={copy.home_hero_line_1}
@@ -122,20 +123,14 @@ export default async function Home() {
       />
 
       <div className="hidden md:block">
-        {sections.map((section, i) => (
-          <div key={section.id}>
-            {i > 0 && (
-              <div className="relative h-16 flex justify-center">
-                <FloatingCharacter index={i} className="absolute" />
-              </div>
-            )}
-            <PlanetSection
-              {...section}
-              planetImageUrl={
-                planetImages[section.id as keyof typeof planetImages] ?? null
-              }
-            />
-          </div>
+        {sections.map((section) => (
+          <PlanetSection
+            key={section.id}
+            {...section}
+            planetImageUrl={
+              planetImages[section.id as keyof typeof planetImages] ?? null
+            }
+          />
         ))}
       </div>
 
@@ -146,6 +141,29 @@ export default async function Home() {
         labItems={labItems}
         copy={copy}
       />
+
+      {/* Footer planet — homepage only */}
+      <div className="relative flex justify-center overflow-x-hidden" style={{ paddingTop: 180, marginBottom: -1 }}>
+        <img
+          src="/imgs/footer_planet.png"
+          alt=""
+          style={{ width: 2898 / 2, height: 484 / 2 }}
+          className="max-w-none"
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-end" style={{ paddingBottom: 28 }}>
+          <img
+            src="/ralph-wordmark.png"
+            alt="ralph"
+            style={{ height: 76, width: 'auto', filter: 'brightness(0)' }}
+            className="mb-3"
+          />
+          <img
+            src="/imgs/text_the_entertainment_people.png"
+            alt={copy.footer_tagline ?? 'The Entertainment People'}
+            style={{ width: 958 / 2, height: 79 / 2 }}
+          />
+        </div>
+      </div>
 
       <Footer variant="dark" copy={copy} />
     </>

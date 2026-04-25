@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* ── Fonts ── */
+@font-face {
+  font-family: 'Gooper Trial';
+  src: url('/fonts/Gooper7-SemiBold.woff2') format('woff2'),
+       url('/fonts/Gooper7-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ── Theme: Cosy Dynamics (default dark) ── */
 :root,
 :root[data-theme="cosy-dynamics"] {
@@ -10,12 +20,12 @@
   --color-border: #3D2560;
   --color-muted: #6B5B8A;
 
-  --color-ralph-pink: #FF2098;
-  --color-ralph-teal: #00C4B4;
-  --color-ralph-yellow: #FFE566;
-  --color-ralph-green: #4CAF50;
-  --color-ralph-orange: #FF6B35;
-  --color-ralph-purple: #7B2FBE;
+  --color-ralph-pink: #EA128B;
+  --color-ralph-blue: #5FBCBF;
+  --color-ralph-yellow: #FBC000;
+  --color-ralph-green: #44B758;
+  --color-ralph-orange: #EE6626;
+  --color-ralph-purple: #7B3FE4;
 }
 
 /* ── Theme: Light ── */
@@ -27,12 +37,12 @@
   --color-border: #E0D8F0;
   --color-muted: #8A7AA8;
 
-  --color-ralph-pink: #FF2098;
-  --color-ralph-teal: #00C4B4;
-  --color-ralph-yellow: #FFE566;
-  --color-ralph-green: #4CAF50;
-  --color-ralph-orange: #FF6B35;
-  --color-ralph-purple: #7B2FBE;
+  --color-ralph-pink: #EA128B;
+  --color-ralph-blue: #5FBCBF;
+  --color-ralph-yellow: #FBC000;
+  --color-ralph-green: #44B758;
+  --color-ralph-orange: #EE6626;
+  --color-ralph-purple: #7B3FE4;
 }
 
 /* ── Theme: 8-bit Nostalgia (future) ── */
@@ -55,7 +65,7 @@
   --color-muted: var(--color-muted);
 
   --color-ralph-pink: var(--color-ralph-pink);
-  --color-ralph-teal: var(--color-ralph-teal);
+  --color-ralph-blue: var(--color-ralph-blue);
   --color-ralph-yellow: var(--color-ralph-yellow);
   --color-ralph-green: var(--color-ralph-green);
   --color-ralph-orange: var(--color-ralph-orange);
@@ -65,7 +75,102 @@
 body {
   background: var(--color-background);
   color: var(--color-primary);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
+}
+
+/* ── Text styles ── */
+
+/* Regular paragraph — Roboto 600, 16px/24px */
+@utility text-body {
+  font-family: var(--font-body), Arial, sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0;
+}
+
+/* Small paragraph — Roboto 600, 14px/14px */
+@utility text-body-sm {
+  font-family: var(--font-body), Arial, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+/* Article intro — Gooper Trial 600, 18px/18px */
+@utility text-intro {
+  font-family: var(--font-intro, 'Gooper Trial'), serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+/* Bold body — Roboto 700, 18px/28px */
+@utility text-body-bold {
+  font-family: var(--font-body), Arial, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 28px;
+  letter-spacing: 0;
+}
+
+/* Header/footer text — Roboto 700, 13px/13px */
+@utility text-chrome {
+  font-family: var(--font-body), Arial, sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+/* Tags / tabs — Roboto 800, 12px/12px */
+@utility text-tag {
+  font-family: var(--font-body), Arial, sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+/* Button / nav text — Gooper Trial 600, inherits size, centered */
+@utility text-btn {
+  font-family: var(--font-intro, 'Gooper Trial'), serif;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+/* ── Button press ── */
+.btn-press:hover {
+  transform: translate(2px, 2px);
+}
+.btn-press:active {
+  transform: translate(4px, 4px);
+}
+
+/* ── Footer icon buttons ── */
+.footer-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+.footer-icon-btn:hover {
+  background-color: #EA128B;
+}
+.footer-icon {
+  width: 24px;
+  height: 24px;
+  transition: filter 0.2s ease;
+}
+.footer-icon-btn:hover .footer-icon {
+  filter: brightness(0);
 }
 
 /* ── Utility ── */

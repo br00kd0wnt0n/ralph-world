@@ -15,13 +15,10 @@ interface HeroProps {
 
 export default function Hero({ heading, line1, line2, line3, themeKey }: HeroProps) {
   const theme = resolveSectionTheme('home_hero', themeKey)
-  // Homepage hero default is midnight — only set backgroundColor when the
-  // editor has explicitly picked a different theme, so the global dark
-  // globals.css background (and starfield) keeps showing through.
   const isDefault = theme.key === 'midnight'
   return (
     <section
-      className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 text-center overflow-hidden"
+      className="relative flex flex-col items-center justify-start px-6 text-center overflow-hidden"
       style={
         isDefault
           ? { color: theme.text }
@@ -36,20 +33,25 @@ export default function Hero({ heading, line1, line2, line3, themeKey }: HeroPro
       >
         <motion.h1
           variants={heroChildVariants}
-          className="text-5xl md:text-7xl font-bold mb-8 font-[family-name:var(--font-display)]"
+          className="mb-8"
         >
-          {heading}
+          <img
+            src="/imgs/text_welcome_to_our_world.png"
+            alt={heading}
+            className="mx-auto"
+            style={{ width: 1126 / 2, height: 252 / 2 }}
+          />
         </motion.h1>
 
-        <motion.p variants={heroChildVariants} className="text-lg mb-4 opacity-85">
+        <motion.p variants={heroChildVariants} className="text-body text-white text-center mb-4">
           {line1}
         </motion.p>
 
-        <motion.p variants={heroChildVariants} className="mb-4 opacity-85">
+        <motion.p variants={heroChildVariants} className="text-body text-white text-center mb-4">
           {line2}
         </motion.p>
 
-        <motion.p variants={heroChildVariants} className="mb-10 opacity-85">
+        <motion.p variants={heroChildVariants} className="text-body text-white text-center mb-10">
           {line3}
         </motion.p>
 

@@ -14,7 +14,7 @@ import SubscribeModal from './SubscribeModal'
 const NAV_ITEMS = [
   { label: 'Ralph TV', href: '/tv', color: 'bg-ralph-yellow' },
   { label: 'Magazine', href: '/magazine', color: 'bg-ralph-orange' },
-  { label: 'Events', href: '/events', color: 'bg-ralph-teal' },
+  { label: 'Events', href: '/events', color: 'bg-ralph-blue' },
   { label: 'Lab', href: '/lab', color: 'bg-ralph-purple' },
   { label: 'Shop', href: '/shop', color: 'bg-ralph-green' },
 ]
@@ -57,7 +57,14 @@ export default function Nav() {
   return (
     <>
       {/* ── Utility Bar (desktop) ── */}
-      <div className="hidden md:flex items-center justify-between px-6 py-2.5 bg-surface/80 backdrop-blur-sm border-b border-border/30 text-xs relative z-50">
+      <div
+        className="hidden md:flex items-center justify-between px-6 text-xs relative z-50 backdrop-blur-sm"
+        style={{
+          height: 77,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          borderBottom: '2px solid rgba(234, 18, 139, 0.3)',
+        }}
+      >
         {/* Left: ralph world circle logo + Get started + Play with Ralph */}
         <div className="flex items-center gap-4">
           <Link href="/" className="shrink-0">
@@ -114,9 +121,9 @@ export default function Nav() {
       </div>
 
       {/* ── Main Nav Bar ── */}
-      <nav className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/30">
-        {/* Desktop */}
-        <div className="hidden md:block">
+      <nav className="sticky top-0 z-40">
+        {/* Desktop — handled by PageNav, only keep mobile here */}
+        <div className="hidden">
           <div className="flex items-center justify-between px-6 py-4">
             {/* Left: hamburger */}
             <button

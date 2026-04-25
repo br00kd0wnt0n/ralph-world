@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Globe from './Globe'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface FooterProps {
@@ -76,50 +77,55 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   }
 
   return (
-    <footer className="relative bg-black pt-32 pb-8 px-6 overflow-hidden">
-      {/* Pink arch */}
-      <div className="absolute top-0 left-0 right-0">
-        <svg
-          viewBox="0 0 1440 200"
-          className="w-full"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0,200 Q720,0 1440,200"
-            fill="none"
-            stroke="#FF2098"
-            strokeWidth="2"
-          />
-        </svg>
+    <footer className="relative">
+      {/* Globe — bottom left, overflows top */}
+      <div className="absolute z-10" style={{ bottom: 24, left: 24 }}>
+        <Globe />
       </div>
 
-      {/* Character placeholders on arch */}
-      <div className="absolute top-8 left-1/4 w-16 h-16 bg-ralph-pink/10 rounded-full flex items-center justify-center text-[8px] text-muted">
-        char
-      </div>
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-16 bg-ralph-teal/10 rounded-full flex items-center justify-center text-[8px] text-muted">
-        char
-      </div>
-      <div className="absolute top-8 right-1/4 w-16 h-16 bg-ralph-yellow/10 rounded-full flex items-center justify-center text-[8px] text-muted">
-        char
-      </div>
+      {/* Black bar with pink top border */}
+      <div
+        className="relative bg-black flex items-center justify-between px-6"
+        style={{ height: 103, borderTop: '4px solid #EA128B' }}
+      >
+        <div />
 
-      <div className="relative z-10 flex flex-col items-center text-center">
-        <img
-          src="/ralph-logo.png"
-          alt="ralph world"
-          width={80}
-          height={80}
-          className="rounded-full mb-4"
-        />
-        <p className="text-sm text-white/60 tracking-widest uppercase">
-          {tagline}
-        </p>
-      </div>
-
-      {/* London globe placeholder — bottom left */}
-      <div className="absolute bottom-4 left-6 w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-[7px] text-muted">
-        globe
+        {/* Right: Contact + social icons */}
+        <div className="flex items-center" style={{ gap: 32 }}>
+          <a
+            href={contactHref}
+            className="text-chrome text-white hover:text-ralph-pink transition-colors"
+          >
+            Contact us
+          </a>
+          <a
+            href={tiktokUrl || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-icon-btn"
+            aria-label="TikTok"
+          >
+            <img src="/imgs/icon_tiktok.svg" alt="" className="footer-icon" />
+          </a>
+          <a
+            href={instagramUrl || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-icon-btn"
+            aria-label="Instagram"
+          >
+            <img src="/imgs/icon_instagram.svg" alt="" className="footer-icon" />
+          </a>
+          <a
+            href={youtubeUrl || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-icon-btn"
+            aria-label="YouTube"
+          >
+            <img src="/imgs/icon_youtube.svg" alt="" className="footer-icon" />
+          </a>
+        </div>
       </div>
     </footer>
   )

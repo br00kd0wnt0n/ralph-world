@@ -190,3 +190,9 @@ body {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* ── Page transitions ── */
+/* Prevent layout shift during page transitions */
+main > [data-transitioning] {
+  min-height: 100vh;
+}

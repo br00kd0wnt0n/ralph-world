@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import MagazineHero from './MagazineHero'
+import { motion } from 'framer-motion'
+import SectionIntro from '@/components/layout/SectionIntro'
 import CoverStory from './CoverStory'
 import CategoryTabs from './CategoryTabs'
 import ArticleGrid from './ArticleGrid'
 import ArticleOverlay from './ArticleOverlay'
 import SubscribeModal from '@/components/layout/SubscribeModal'
-import Footer from '@/components/layout/Footer'
+import { sectionPageVariants } from '@/lib/animation/page-transitions'
 import type { ArticleSummary, ArticleFull } from '@/lib/data/magazine'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
@@ -81,27 +82,86 @@ export default function MagazineClient({
     : filteredArticles
 
   return (
-    <>
-      {/* Hero always visible */}
-      <MagazineHero
-        heading={copy?.magazine_hero_heading}
-        intro1={copy?.magazine_hero_intro_1}
-        intro2={copy?.magazine_hero_intro_2}
-        shopCta={copy?.magazine_shop_cta}
-        themeKey={copy?.magazine_hero_theme}
+    <motion.div
+      variants={sectionPageVariants}
+      initial="initial"
+      animate="animate"
+    >
+      {/* Intro section with transparent bg */}
+      <SectionIntro
+        section="magazine"
+        heading={copy?.magazine_hero_heading ?? 'Magazine'}
+        lines={[
+          copy?.magazine_hero_intro_1 ?? 'Get your actual hands on a physically printed, wonderful smelling, quarterly magazine.',
+          copy?.magazine_hero_intro_2 ?? 'Editor Josh Jones curates joyously interesting content, brought by a host of fantastic writers, photographers, artists, foodies, comedians and many more marvellous people & stories from around the world.',
+        ]}
       />
 
-      {/* Cover story — always visible */}
-      {coverStory && (
+      {/* Planet decoration wrapper */}
+      <div className="relative w-full" style={{ height: 260 }}>
+        {/* Background layer - below content */}
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 h-full z-0"
+          style={{
+            backgroundImage: 'url(/imgs/planet_background_magazine.svg)',
+            backgroundPosition: 'top center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+            minWidth: 1380,
+            width: '100%',
+          }}
+          aria-hidden="true"
+        />
+        {/* Cover Story title - positioned at bottom */}
+        <h2 className="absolute bottom-4 left-0 right-0 z-20 max-w-5xl mx-auto px-6">
+          <img
+            src="/imgs/text_cover_story.svg"
+            alt="Cover Story"
+            style={{ width: 265, height: 76 }}
+          />
+        </h2>
+        {/* Foreground layer - above content */}
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 h-full z-30 pointer-events-none"
+          style={{
+            backgroundImage: 'url(/imgs/planet_foreground_magazine.svg)',
+            backgroundPosition: 'top center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+            minWidth: 1380,
+            width: '100%',
+          }}
+          aria-hidden="true"
+        />
+      </div>
+
+      {/* White content area */}
+      <section className="bg-white pb-8 min-h-[50vh] relative z-10">
+        {/* Cover story */}
         <CoverStory
-          article={coverStory}
+          article={coverStory || {
+            id: 'placeholder',
+            slug: 'placeholder',
+            title: 'In conversation with Taskmaster maestros Greg Davies and Alex Horne as they celebrate 20 seasons of their hit show.',
+            subtitle: null,
+            intro: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+            leadMediaUrl: null,
+            leadMediaType: null,
+            articleType: null,
+            contentTags: ['Comedy', 'Ralph Recommends', 'Juicee', 'Toilet Friendly'],
+            isCoverStory: true,
+            issueNumber: null,
+            accessTier: 'free',
+            publishedAt: null,
+            bylineAuthor: null,
+            bylinePhotographer: null,
+            backgroundCanvasColour: null,
+          }}
           onRead={openArticle}
           onSubscribe={() => setSubscribeOpen(true)}
         />
-      )}
 
-      {/* Tabs + Grid on light bg */}
-      <section className="bg-[#FAFAFA] pt-4 pb-8 min-h-[50vh]">
+        {/* Tabs + Grid */}
         <Suspense>
           <CategoryTabs
             active={activeCategory}
@@ -110,8 +170,6 @@ export default function MagazineClient({
         </Suspense>
         <ArticleGrid articles={gridArticles} onArticleClick={openArticle} />
       </section>
-
-      <Footer variant="light" />
 
       <ArticleOverlay
         article={overlayArticle}
@@ -129,6 +187,6 @@ export default function MagazineClient({
             : '/magazine'
         }
       />
-    </>
+    </motion.div>
   )
 }

@@ -24,10 +24,12 @@ interface ShopifyResponse<T> {
 }
 
 const TIMEOUT_MS = 5000
+const DEFAULT_REVALIDATE = 300 // 5 minutes
 
 async function storefront<T>(
   query: string,
-  variables: Record<string, unknown> = {}
+  variables: Record<string, unknown> = {},
+  revalidate: number | false = DEFAULT_REVALIDATE
 ): Promise<T | null> {
   const url = process.env.SHOPIFY_STOREFRONT_URL
   const token = process.env.SHOPIFY_STOREFRONT_TOKEN
@@ -46,7 +48,8 @@ async function storefront<T>(
       },
       body: JSON.stringify({ query, variables }),
       signal: controller.signal,
-      cache: 'no-store',
+      next: revalidate === false ? undefined : { revalidate },
+      ...(revalidate === false && { cache: 'no-store' as const }),
     })
 
     if (!res.ok) return null
@@ -125,7 +128,7 @@ export async function createCart(variantId?: string): Promise<ShopifyCart | null
   const lines = variantId ? [{ merchandiseId: variantId, quantity: 1 }] : []
   const data = await storefront<{
     cartCreate: { cart: ShopifyCart | null; userErrors: unknown[] }
-  }>(CREATE_CART, { lines })
+  }>(CREATE_CART, { lines }, false)
   return data?.cartCreate?.cart ?? null
 }
 
@@ -139,7 +142,7 @@ export async function addCartLines(
   }>(ADD_CART_LINES, {
     cartId,
     lines: [{ merchandiseId: variantId, quantity }],
-  })
+  }, false)
   return data?.cartLinesAdd?.cart ?? null
 }
 
@@ -153,7 +156,7 @@ export async function updateCartLines(
   }>(UPDATE_CART_LINES, {
     cartId,
     lines: [{ id: lineId, quantity }],
-  })
+  }, false)
   return data?.cartLinesUpdate?.cart ?? null
 }
 
@@ -163,7 +166,7 @@ export async function removeCartLines(
 ): Promise<ShopifyCart | null> {
   const data = await storefront<{
     cartLinesRemove: { cart: ShopifyCart | null; userErrors: unknown[] }
-  }>(REMOVE_CART_LINES, { cartId, lineIds })
+  }>(REMOVE_CART_LINES, { cartId, lineIds }, false)
   return data?.cartLinesRemove?.cart ?? null
 }
 

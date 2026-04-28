@@ -32,7 +32,6 @@ export default async function ShopPage() {
       intro={copy.shop_hero_intro}
       soldoutHeading={copy.shop_soldout_heading}
       soldoutBody={copy.shop_soldout_body}
-      themeKey={copy.shop_hero_theme}
       copy={copy}
     />
   )

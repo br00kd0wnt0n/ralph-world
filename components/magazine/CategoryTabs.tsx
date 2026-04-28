@@ -26,21 +26,28 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6">
-      <div className="border-t border-dashed border-gray-400 mb-4" />
+    <div className="w-full mx-auto px-6" style={{ maxWidth: 502 }}>
+      {/* Top separator */}
+      <img
+        src="/imgs/dashed_separator_top.svg"
+        alt=""
+        aria-hidden="true"
+        className="w-full"
+      />
 
-      <div className="flex justify-center gap-8 pb-4">
+      <div className="flex justify-center">
         {CATEGORIES.map((cat) => {
           const isActive = active === cat.value
           return (
             <button
               key={cat.value}
               onClick={() => handleClick(cat.value)}
-              className={`relative pb-1 text-sm font-medium transition-colors ${
+              className={`relative text-intro transition-colors flex items-center justify-center ${
                 isActive
                   ? 'text-ralph-orange'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-black hover:text-ralph-orange'
               }`}
+              style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: '25%', textAlign: 'center' }}
             >
               {cat.label}
               <span
@@ -52,6 +59,14 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
           )
         })}
       </div>
+
+      {/* Bottom separator */}
+      <img
+        src="/imgs/dashed_separator_bottom.svg"
+        alt=""
+        aria-hidden="true"
+        className="w-full"
+      />
     </div>
   )
 }

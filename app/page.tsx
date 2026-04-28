@@ -3,8 +3,6 @@ import { getSiteCopy } from '@/lib/data/site-copy'
 import Hero from '@/components/home/Hero'
 import PlanetSection from '@/components/home/PlanetSection'
 import MobileHome from '@/components/home/MobileHome'
-import Footer from '@/components/layout/Footer'
-import PageNav from '@/components/layout/PageNav'
 import type { ModuleCardData } from '@/components/home/PlanetSection'
 
 export const revalidate = 60
@@ -113,7 +111,6 @@ export default async function Home() {
 
   return (
     <>
-      <PageNav />
       <Hero
         heading={copy.home_hero_heading}
         line1={copy.home_hero_line_1}
@@ -164,8 +161,6 @@ export default async function Home() {
           />
         </div>
       </div>
-
-      <Footer variant="dark" copy={copy} />
     </>
   )
 }

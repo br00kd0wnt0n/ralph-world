@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import SectionIntro from '@/components/layout/SectionIntro'
 import ProductCard from './ProductCard'
 import ProductOverlay from './ProductOverlay'
 import SubscribeModal from '@/components/layout/SubscribeModal'
-import Footer from '@/components/layout/Footer'
-import { resolveSectionTheme } from '@/lib/section-themes'
+import { sectionPageVariants } from '@/lib/animation/page-transitions'
 import type {
   ProductSummary,
   ShopifyProduct,
@@ -38,7 +38,6 @@ interface ShopClientProps {
   intro?: string
   soldoutHeading?: string
   soldoutBody?: string
-  themeKey?: string
   copy?: Partial<SiteCopy>
 }
 
@@ -48,10 +47,8 @@ export default function ShopClient({
   intro = 'Magazines, merch, and random things we think are brilliant.',
   soldoutHeading,
   soldoutBody,
-  themeKey,
   copy,
 }: ShopClientProps) {
-  const theme = resolveSectionTheme('shop_hero', themeKey)
   const [activeCollection, setActiveCollection] = useState<ShopCategory>(
     CATEGORIES[0].handle
   )
@@ -72,16 +69,17 @@ export default function ShopClient({
   }
 
   return (
-    <>
-      <section
-        className="px-6 py-16 text-center"
-        style={{ backgroundColor: theme.bg, color: theme.text }}
-      >
-        <h1 className="text-5xl md:text-7xl font-bold mb-4 font-[family-name:var(--font-display)]">
-          {heading}
-        </h1>
-        <p className="max-w-xl mx-auto opacity-85">{intro}</p>
-      </section>
+    <motion.div
+      variants={sectionPageVariants}
+      initial="initial"
+      animate="animate"
+    >
+      {/* Intro section with transparent bg */}
+      <SectionIntro
+        section="shop"
+        heading={heading}
+        lines={[intro]}
+      />
 
       {/* Category tabs */}
       <div className="bg-[#E5E5E5] border-b border-gray-300">
@@ -140,8 +138,6 @@ export default function ShopClient({
         )}
       </section>
 
-      <Footer variant="light" copy={copy} />
-
       <ProductOverlay
         product={overlayProduct}
         isOpen={overlayOpen}
@@ -158,6 +154,6 @@ export default function ShopClient({
         isOpen={subscribeOpen}
         onClose={() => setSubscribeOpen(false)}
       />
-    </>
+    </motion.div>
   )
 }

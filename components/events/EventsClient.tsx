@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { AnimatePresence } from 'framer-motion'
-import EventsHero from './EventsHero'
+import { motion, AnimatePresence } from 'framer-motion'
+import SectionIntro from '@/components/layout/SectionIntro'
 import CrowdBackground from './CrowdBackground'
 import EventCreature from './EventCreature'
 import EventFlyout, { type FlyoutStage } from './EventFlyout'
 import PastEvents from './PastEvents'
 import SubscribeModal from '@/components/layout/SubscribeModal'
-import Footer from '@/components/layout/Footer'
+import { sectionPageVariants } from '@/lib/animation/page-transitions'
 import type { EventRow } from '@/lib/data/events'
 import type { EventCreatureData } from './EventCreature.types'
 import type { SiteCopy } from '@/lib/data/site-copy'
@@ -66,12 +66,19 @@ export default function EventsClient({
   }
 
   return (
-    <>
-      <EventsHero
-        heading={copy?.events_hero_heading}
-        subtitle={copy?.events_hero_subtitle}
-        helper={copy?.events_hero_helper}
-        themeKey={copy?.events_hero_theme}
+    <motion.div
+      variants={sectionPageVariants}
+      initial="initial"
+      animate="animate"
+    >
+      {/* Intro section with transparent bg */}
+      <SectionIntro
+        section="events"
+        heading={copy?.events_hero_heading ?? "Let's Meet Up"}
+        lines={[
+          copy?.events_hero_subtitle ?? 'For real. IRL.',
+          copy?.events_hero_helper ?? 'Check below for the latest events.',
+        ]}
       />
 
       <section className="relative" onClick={handleClose}>
@@ -116,12 +123,10 @@ export default function EventsClient({
 
       <PastEvents events={pastEvents} heading={copy?.events_past_heading} />
 
-      <Footer variant="light" />
-
       <SubscribeModal
         isOpen={subscribeOpen}
         onClose={() => setSubscribeOpen(false)}
       />
-    </>
+    </motion.div>
   )
 }

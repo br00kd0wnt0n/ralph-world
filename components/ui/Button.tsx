@@ -43,7 +43,7 @@ const shadowStyles: React.CSSProperties = {
 
 export default function Button({ label, href, onClick, className = '' }: ButtonProps) {
   return (
-    <div className={className} style={{ position: 'relative', display: 'inline-block' }}>
+    <div className={className} style={{ position: 'relative', display: 'inline-block', width: 'fit-content' }}>
       {/* Shadow — stays in place */}
       <div style={shadowStyles} />
       {/* Button — moves on hover/active */}

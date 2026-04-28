@@ -1,4 +1,5 @@
 import { inArray } from 'drizzle-orm'
+import { unstable_cache } from 'next/cache'
 import { getDb } from '@/lib/db'
 import { homepageConfig } from '@/lib/db/schema'
 
@@ -123,10 +124,9 @@ export type SiteCopyKey = keyof typeof DEFAULT_COPY
 export type SiteCopy = Record<SiteCopyKey, string>
 
 /**
- * Fetch all site copy, merged with defaults. Safe to call from server components.
- * Returns defaults if DB is unreachable.
+ * Internal fetch function - wrapped with caching below.
  */
-export async function getSiteCopy(): Promise<SiteCopy> {
+async function fetchSiteCopy(): Promise<SiteCopy> {
   try {
     const db = getDb()
     const keys = Object.keys(DEFAULT_COPY) as SiteCopyKey[]
@@ -146,3 +146,13 @@ export async function getSiteCopy(): Promise<SiteCopy> {
     return { ...DEFAULT_COPY }
   }
 }
+
+/**
+ * Fetch all site copy, merged with defaults. Safe to call from server components.
+ * Returns defaults if DB is unreachable. Cached for 5 minutes.
+ */
+export const getSiteCopy = unstable_cache(
+  fetchSiteCopy,
+  ['site-copy'],
+  { revalidate: 300 }
+)

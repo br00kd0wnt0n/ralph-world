@@ -26,7 +26,6 @@ export default async function RalphTVPage() {
       offlineMessage={copy.tv_offline_message}
       subscribeHeading={copy.tv_subscribe_heading}
       subscribeBody={copy.tv_subscribe_body}
-      themeKey={copy.tv_hero_theme}
       copy={copy}
     />
   )

@@ -36,10 +36,33 @@ const GRID_2x3 = [
 ]
 const EXPLODE_PX = 16
 
+// Placeholder articles for when no data exists
+const PLACEHOLDER_ARTICLES: ArticleSummary[] = Array.from({ length: 6 }, (_, i) => ({
+  id: `placeholder-${i}`,
+  slug: `placeholder-${i}`,
+  title: 'Article Title Goes Here',
+  subtitle: null,
+  intro: 'Brief description of the article content.',
+  leadMediaUrl: '/imgs/article_lead.png',
+  leadMediaType: null,
+  articleType: null,
+  contentTags: ['Tag'],
+  isCoverStory: false,
+  issueNumber: null,
+  accessTier: 'free',
+  publishedAt: null,
+  bylineAuthor: null,
+  bylinePhotographer: null,
+  backgroundCanvasColour: null,
+}))
+
 export default function ArticleGrid({ articles, onArticleClick }: ArticleGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [isLargeViewport, setIsLargeViewport] = useState(true)
   const { ref, isVisible } = useScrollReveal(0.05)
+
+  // Use placeholder if no articles
+  const displayArticles = articles.length > 0 ? articles : PLACEHOLDER_ARTICLES
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -53,15 +76,21 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
   const vectors = isLargeViewport ? GRID_3x2 : GRID_2x3
 
   return (
-    <section className="bg-[#FAFAFA] px-6 py-0">
+    <section className="bg-white px-6 py-0" style={{ marginTop: 20 }}>
       <motion.div
         ref={ref}
         variants={gridContainerVariants}
         initial="hidden"
         animate={isVisible ? 'visible' : 'hidden'}
-        className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-3 border border-gray-900"
+        className="mx-auto grid grid-cols-2 lg:grid-cols-3"
+        style={{
+          maxWidth: 1168,
+          gap: 1,
+          border: '1px solid black',
+          backgroundColor: 'black',
+        }}
       >
-        {articles.slice(0, 6).map((article, i) => {
+        {displayArticles.slice(0, 6).map((article, i) => {
           const isHovered = hoveredId === article.id
           const vec = vectors[i] ?? { dx: 0, dy: 0 }
           // motion.article below owns `transform` for its entry animation
@@ -85,19 +114,16 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
             >
             <motion.article
               variants={gridCardVariants}
-              className="relative cursor-pointer border border-gray-900 aspect-square overflow-hidden block"
+              className="relative cursor-pointer overflow-hidden block bg-white"
+              style={{ aspectRatio: 1.09604519774 }}
             >
               {/* Image fills entire cell */}
               <div className="absolute inset-0">
-                {article.leadMediaUrl ? (
-                  <img
-                    src={article.leadMediaUrl}
-                    alt={article.title ?? ''}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200" />
-                )}
+                <img
+                  src={article.leadMediaUrl || '/imgs/article_lead.png'}
+                  alt={article.title ?? ''}
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               {/* Hover reveal: decorative border + article info overlay */}

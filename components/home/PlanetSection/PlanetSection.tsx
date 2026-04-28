@@ -5,6 +5,11 @@ import Button from '@/components/ui/Button'
 import { motion } from 'framer-motion'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { planetSectionVariants } from '@/lib/animation/homepage'
+import { usePageTransition } from '@/context/PageTransitionContext'
+import {
+  planetExitVariants,
+  PLANET_EXIT_DIRECTIONS,
+} from '@/lib/animation/page-transitions'
 import type { PlanetSectionProps } from './PlanetSection.types'
 
 const POSITION_LAYOUTS = {
@@ -73,6 +78,7 @@ export default function PlanetSection({
   const sectionRef = useRef<HTMLDivElement>(null)
   const planetBtnRef = useRef<HTMLButtonElement>(null)
   const { ref: revealRef, isVisible } = useScrollReveal(0.1)
+  const { isExiting } = usePageTransition()
 
   const [isActive, setIsActive] = useState(false)
   const [isInView, setIsInView] = useState(false)
@@ -179,6 +185,10 @@ export default function PlanetSection({
   const planetOnRight = POSITION_LAYOUTS[planetPosition] === 'right'
   const [carouselIndex, setCarouselIndex] = useState(0)
 
+  // Get exit direction based on planet position (left planets slide left, right slide right)
+  const exitDirection = PLANET_EXIT_DIRECTIONS[id] || (planetOnRight ? 'right' : 'left')
+  const exitVariants = planetExitVariants(exitDirection)
+
   const visibleItems = moduleCard.items.slice(carouselIndex, carouselIndex + 2)
   const hasMoreForward = carouselIndex + 2 < moduleCard.items.length
   const hasMoreBack = carouselIndex > 0
@@ -221,6 +231,11 @@ export default function PlanetSection({
   const planetShift =
     panelState === 'open' ? (planetOnRight ? 100 : -100) : 0
 
+  // Combine scroll reveal with exit animation
+  const exitAnimateState = isExiting
+    ? { opacity: 0, x: exitDirection === 'left' ? -80 : 80 }
+    : undefined
+
   return (
     <motion.section
       ref={(node) => {
@@ -231,7 +246,14 @@ export default function PlanetSection({
       }}
       variants={planetSectionVariants}
       initial="hidden"
-      animate={isVisible ? 'visible' : 'hidden'}
+      animate={
+        isExiting
+          ? exitAnimateState
+          : isVisible
+            ? 'visible'
+            : 'hidden'
+      }
+      transition={isExiting ? { duration: 0.1, ease: 'easeIn' } : undefined}
       className="relative px-6 md:px-16 py-4 md:py-6 max-w-7xl mx-auto"
     >
       {/* Panel — content-width, clip-path masks it, spring overshoot on open */}

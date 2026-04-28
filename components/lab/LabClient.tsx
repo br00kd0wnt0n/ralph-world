@@ -1,12 +1,13 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import LabHero from './LabHero'
+import { motion } from 'framer-motion'
+import SectionIntro from '@/components/layout/SectionIntro'
 import RalphOMatic from './RalphOMatic'
 import LabGrid from './LabGrid'
 import SubscribeModal from '@/components/layout/SubscribeModal'
-import Footer from '@/components/layout/Footer'
 import { SPIN_DURATION_MS } from '@/lib/animation/lab'
+import { sectionPageVariants } from '@/lib/animation/page-transitions'
 import { isSafeUrl } from '@/lib/safe-url'
 import type { LabItem } from '@/lib/data/lab'
 import type { MachineState } from './RalphOMatic.types'
@@ -54,12 +55,19 @@ export default function LabClient({ items, copy }: LabClientProps) {
   )
 
   return (
-    <>
-      <LabHero
-        heading={copy?.lab_hero_heading}
-        intro={copy?.lab_hero_intro}
-        cta={copy?.lab_hero_cta}
-        themeKey={copy?.lab_hero_theme}
+    <motion.div
+      variants={sectionPageVariants}
+      initial="initial"
+      animate="animate"
+    >
+      {/* Intro section with transparent bg */}
+      <SectionIntro
+        section="lab"
+        heading={copy?.lab_hero_heading ?? 'Lab'}
+        lines={[
+          copy?.lab_hero_intro ?? "Tools, experiments, generators and weird little projects. Everything we've been tinkering with lately.",
+          copy?.lab_hero_cta ?? 'What you waiting for — pull the lever to see what comes out.',
+        ]}
       />
 
       <section className="px-6 pb-8">
@@ -79,12 +87,10 @@ export default function LabClient({ items, copy }: LabClientProps) {
         onSubscribe={() => setSubscribeOpen(true)}
       />
 
-      <Footer variant="dark" copy={copy} />
-
       <SubscribeModal
         isOpen={subscribeOpen}
         onClose={() => setSubscribeOpen(false)}
       />
-    </>
+    </motion.div>
   )
 }

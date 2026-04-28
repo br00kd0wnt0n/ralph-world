@@ -121,48 +121,30 @@ export default function Nav() {
       </div>
 
       {/* ── Main Nav Bar ── */}
-      <nav className="sticky top-0 z-40">
-        {/* Desktop — handled by PageNav, only keep mobile here */}
-        <div className="hidden">
-          <div className="flex items-center justify-between px-6 py-4">
-            {/* Left: hamburger */}
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="text-primary w-8"
-              aria-label="Open menu"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-
-            {/* Center: ralph wordmark */}
-            <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-              <Image
-                src="/ralph-wordmark.png"
-                alt="ralph"
-                width={160}
-                height={60}
-                className="h-12 w-auto"
-                priority
-              />
-            </Link>
-
-            {/* Right: basket */}
-            <CartIcon count={itemCount} onClick={openCart} />
-          </div>
+      <nav className="relative z-40">
+        {/* Desktop */}
+        <div className="hidden md:flex flex-col items-center" style={{ paddingTop: 16, paddingBottom: 50 }}>
+          {/* Logo */}
+          <Link href="/" className="mb-4">
+            <Image
+              src="/ralph-wordmark.png"
+              alt="ralph"
+              width={200}
+              height={98}
+              style={{ height: 98, width: 'auto' }}
+              priority
+            />
+          </Link>
 
           {/* Nav items */}
-          <div className="flex items-center justify-center gap-10 pb-3">
+          <div className="flex items-center justify-center" style={{ gap: 70 }}>
             {NAV_ITEMS.map((item) => {
               const isActive = pathname.startsWith(item.href)
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative pb-1.5 text-sm font-medium transition-colors ${
+                  className={`relative pb-1.5 text-btn text-[22px] transition-colors ${
                     isActive
                       ? 'text-primary'
                       : 'text-ralph-pink hover:text-primary'

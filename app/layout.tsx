@@ -3,11 +3,13 @@ import { Playfair_Display, Roboto } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import Nav from '@/components/layout/Nav'
+import Footer from '@/components/layout/Footer'
 import CartDrawer from '@/components/layout/CartDrawer'
 import { BackgroundLayer } from '@/context/ThemeContext'
 import Starfield from '@/components/layout/Starfield'
 import ForegroundLayer from '@/components/layout/ForegroundLayer'
 import MidgroundLayer from '@/components/layout/MidgroundLayer'
+import { PageTransitionProvider } from '@/context/PageTransitionContext'
 
 const playfair = Playfair_Display({
   variable: '--font-display',
@@ -69,7 +71,12 @@ export default function RootLayout({
           <MidgroundLayer />
           <Nav />
           <BackgroundLayer />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 flex flex-col relative z-10">
+            <PageTransitionProvider>
+              {children}
+            </PageTransitionProvider>
+          </main>
+          <Footer variant="dark" />
           <ForegroundLayer />
           <CartDrawer />
         </Providers>

@@ -1,16 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import SectionIntro from '@/components/layout/SectionIntro'
-import CrowdBackground from './CrowdBackground'
-import EventCreature from './EventCreature'
-import EventFlyout, { type FlyoutStage } from './EventFlyout'
 import PastEvents from './PastEvents'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import { sectionPageVariants } from '@/lib/animation/page-transitions'
 import type { EventRow } from '@/lib/data/events'
-import type { EventCreatureData } from './EventCreature.types'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface EventsClientProps {
@@ -19,51 +15,11 @@ interface EventsClientProps {
   copy?: Partial<SiteCopy>
 }
 
-function toCreatureData(row: EventRow): EventCreatureData {
-  return {
-    id: row.id,
-    title: row.title ?? '',
-    description_short: row.descriptionShort ?? '',
-    event_date: row.eventDate ? row.eventDate.toISOString() : null,
-    accent_colour: row.accentColour || '#00C4B4',
-    badge: row.badge,
-    creature_x: row.creatureX ? Number(row.creatureX) : 50,
-    creature_y: row.creatureY ? Number(row.creatureY) : 50,
-    external_ticket_url: row.externalTicketUrl,
-    location_name: row.locationName,
-    location_address: row.locationAddress,
-    thumbnail_url: row.thumbnailUrl,
-    country_code: row.countryCode,
-  }
-}
-
 export default function EventsClient({
-  activeEvents,
   pastEvents,
   copy,
 }: EventsClientProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [stage, setStage] = useState<FlyoutStage>('card')
   const [subscribeOpen, setSubscribeOpen] = useState(false)
-
-  const creatureEvents = activeEvents.map(toCreatureData)
-  const selectedEvent = creatureEvents.find((e) => e.id === selectedId) ?? null
-  const isFullOpen = Boolean(selectedEvent) && stage === 'full'
-
-  function handleSelect(eventId: string) {
-    if (selectedId === eventId) {
-      setSelectedId(null)
-      setStage('card')
-    } else {
-      setSelectedId(eventId)
-      setStage('card')
-    }
-  }
-
-  function handleClose() {
-    setSelectedId(null)
-    setStage('card')
-  }
 
   return (
     <motion.div
@@ -81,45 +37,48 @@ export default function EventsClient({
         ]}
       />
 
-      <section className="relative" onClick={handleClose}>
-        <CrowdBackground>
-          {creatureEvents.map((event) => {
-            const isSelected = selectedId === event.id
-            // When the full modal is open, fade the other creatures away
-            // so attention stays on the centred card.
-            const dimmed = isFullOpen && !isSelected
-            return (
-              <EventCreature
-                key={event.id}
-                event={event}
-                isSelected={isSelected}
-                isDimmed={dimmed}
-                onSelect={handleSelect}
-              />
-            )
-          })}
-        </CrowdBackground>
-      </section>
-
-      {/* Single flyout that morphs card → full via layout animation */}
-      <AnimatePresence>
-        {isFullOpen && (
+      {/* Planet + white bg layered with content */}
+      <section className="relative">
+        {/* Background container - planet at top, white bg fills rest */}
+        <div className="absolute inset-0 z-0">
+          <div className="relative w-full" style={{ height: 270 }}>
+            <div
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
+              style={{
+                backgroundImage: 'url(/imgs/planet_background_events.svg)',
+                backgroundPosition: 'top center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
+                minWidth: 1380,
+                width: '100%',
+              }}
+              aria-hidden="true"
+            />
+            <div
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none"
+              style={{
+                backgroundImage: 'url(/imgs/planet_foreground_events.svg)',
+                backgroundPosition: 'top center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
+                minWidth: 1380,
+                width: '100%',
+              }}
+              aria-hidden="true"
+            />
+          </div>
           <div
-            className="fixed inset-0 z-40 bg-black/60"
-            onClick={handleClose}
+            className="absolute bg-white"
+            style={{ top: 270, left: 0, right: 0, bottom: 0 }}
           />
-        )}
-        {selectedEvent && (
-          <EventFlyout
-            key={selectedEvent.id}
-            event={selectedEvent}
-            stage={stage}
-            onStageChange={setStage}
-            onClose={handleClose}
-            onSubscribe={() => setSubscribeOpen(true)}
-          />
-        )}
-      </AnimatePresence>
+        </div>
+
+        {/* Content layer */}
+        <div
+          className="relative z-10 min-h-[50vh]"
+          style={{ paddingTop: 200 }}
+        />
+      </section>
 
       <PastEvents events={pastEvents} heading={copy?.events_past_heading} />
 

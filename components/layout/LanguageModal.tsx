@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { Fragment, useState, useRef, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { safeGet, safeSet } from '@/lib/safe-storage'
+import PinkDropdown, { panelItemVariants, stackVariants } from './PinkDropdown'
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -50,27 +52,61 @@ export default function LanguageModal() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-8 h-8 rounded-full border border-border/60 text-xs text-secondary hover:text-primary transition-colors font-medium"
+        className={`flex items-center justify-center transition-colors hover:bg-ralph-pink ${
+          isOpen ? 'bg-ralph-pink' : ''
+        }`}
+        style={{ borderRadius: 8 }}
         aria-label="Choose language"
       >
-        Aβ
+        <img
+          src="/imgs/icon_language.svg"
+          alt=""
+          aria-hidden="true"
+          width={36}
+          height={28}
+        />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 min-w-[160px] rounded-lg border border-border bg-surface p-1 shadow-xl">
-          {LANGUAGES.map((lang) => (
-            <button
-              key={lang.code}
-              onClick={() => setLanguage(lang.code)}
-              className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-primary hover:bg-background transition-colors"
-            >
-              <span>{lang.label}</span>
-              {language === lang.code && (
-                <span className="text-ralph-pink">&#10003;</span>
-              )}
-            </button>
-          ))}
-        </div>
+        <PinkDropdown width={237} right={-57}>
+          <motion.div
+            variants={stackVariants}
+            className="flex flex-col items-end w-full"
+          >
+            {LANGUAGES.map((lang, i) => (
+              <Fragment key={lang.code}>
+                <motion.button
+                  variants={panelItemVariants}
+                  onClick={() => setLanguage(lang.code)}
+                  className="text-intro relative flex w-full items-center justify-end text-black"
+                  style={{ fontSize: 16, paddingTop: '1rem', paddingBottom: '1rem', paddingRight: 40 }}
+                >
+                  <span>{lang.label}</span>
+                  {language === lang.code && (
+                    <img
+                      src="/imgs/icon_tick.svg"
+                      alt=""
+                      aria-hidden="true"
+                      width={21}
+                      height={19}
+                      className="absolute"
+                      style={{ right: 0, top: '50%', transform: 'translateY(-50%)' }}
+                    />
+                  )}
+                </motion.button>
+                {i < LANGUAGES.length - 1 && (
+                  <motion.img
+                    variants={panelItemVariants}
+                    src={i === 0 ? '/imgs/divide_line_01.svg' : '/imgs/divide_line_02.svg'}
+                    alt=""
+                    aria-hidden="true"
+                    style={{ width: 177, height: 'auto' }}
+                  />
+                )}
+              </Fragment>
+            ))}
+          </motion.div>
+        </PinkDropdown>
       )}
     </div>
   )

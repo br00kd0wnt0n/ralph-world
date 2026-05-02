@@ -7,7 +7,7 @@ import { heroContainerVariants, heroChildVariants } from '@/lib/animation/homepa
 const TITLE_IMAGES: Record<string, { src: string; w: number; h: number }> = {
   tv: { src: '/imgs/title_tv.png', w: 362, h: 134 },
   magazine: { src: '/imgs/text_fun_glossy_mag.svg', w: 1150, h: 264 },
-  events: { src: '/imgs/title_events.png', w: 324, h: 100 },
+  events: { src: '/imgs/text_lets_meet_up.svg', w: 1070, h: 226 },
   shop: { src: '/imgs/title_shop.png', w: 195, h: 117 },
   lab: { src: '/imgs/title_lab.png', w: 202, h: 116 },
 }

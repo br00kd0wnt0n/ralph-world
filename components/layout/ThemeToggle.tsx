@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { useTheme, THEMES } from '@/context/ThemeContext'
+import PinkDropdown, { panelItemVariants, stackVariants } from './PinkDropdown'
 
 const SWATCH_COLORS: Record<string, string[]> = {
   'cosy-dynamics': ['#000000', '#7B2FBE', '#FF2098'],
@@ -34,47 +36,79 @@ export default function ThemeToggle() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-xs text-secondary hover:text-primary transition-colors"
+        className={`flex items-center gap-2 text-chrome transition-colors ${
+          isOpen ? 'text-ralph-pink' : 'text-primary hover:text-ralph-pink'
+        }`}
       >
         <span
-          className="h-5 w-5 rounded-full shrink-0"
+          className="shrink-0"
           style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
             background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`,
           }}
         />
         <span>Theme</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M2.5 4L5 6.5L7.5 4" />
+        <svg
+          width="13"
+          height="7"
+          viewBox="0 0 13 7"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M1 1L6.76191 6L12 1"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-lg border border-border bg-surface p-1 shadow-xl">
-          {THEMES.filter((t) => !t.disabled).map((t) => {
-            const swatchColors = SWATCH_COLORS[t.id] ?? ['#888', '#888', '#888']
-            return (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setTheme(t.id)
-                  setIsOpen(false)
-                }}
-                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-primary hover:bg-background transition-colors"
-              >
-                <span
-                  className="h-4 w-8 rounded-full shrink-0"
-                  style={{
-                    background: `linear-gradient(90deg, ${swatchColors[0]}, ${swatchColors[1]}, ${swatchColors[2]})`,
+        <PinkDropdown width={360} right={-33}>
+          <motion.div variants={stackVariants} className="flex flex-col gap-2">
+            {THEMES.filter((t) => !t.disabled).map((t) => {
+              const swatchColors = SWATCH_COLORS[t.id] ?? ['#888', '#888', '#888']
+              const isActive = theme === t.id
+              return (
+                <motion.button
+                  key={t.id}
+                  variants={panelItemVariants}
+                  onClick={() => {
+                    setTheme(t.id)
+                    setIsOpen(false)
                   }}
-                />
-                <span className="flex-1 text-left">{t.label}</span>
-                {theme === t.id && (
-                  <span className="text-ralph-pink">&#10003;</span>
-                )}
-              </button>
-            )
-          })}
-        </div>
+                  className="text-intro flex w-full items-center gap-4 text-black"
+                  style={{ fontSize: 16 }}
+                >
+                  <span
+                    className="shrink-0"
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: 12,
+                      border: `2px solid ${isActive ? 'var(--color-ralph-pink)' : '#FFFFFF'}`,
+                      background: `linear-gradient(135deg, ${swatchColors[0]}, ${swatchColors[1]}, ${swatchColors[2]})`,
+                    }}
+                  />
+                  <span className="flex-1 text-left">{t.label}</span>
+                  {isActive && (
+                    <img
+                      src="/imgs/icon_tick.svg"
+                      alt=""
+                      aria-hidden="true"
+                      width={21}
+                      height={19}
+                    />
+                  )}
+                </motion.button>
+              )
+            })}
+          </motion.div>
+        </PinkDropdown>
       )}
     </div>
   )

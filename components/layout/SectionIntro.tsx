@@ -3,17 +3,18 @@
 import { motion } from 'framer-motion'
 import { heroContainerVariants, heroChildVariants } from '@/lib/animation/homepage'
 
-// Title images with their intrinsic dimensions (displayed at half size)
-const TITLE_IMAGES: Record<string, { src: string; w: number; h: number }> = {
+// Title images with their intrinsic dimensions (displayed at half size, except play)
+const TITLE_IMAGES: Record<string, { src: string; w: number; h: number; maxWidth?: number }> = {
   tv: { src: '/imgs/title_tv.png', w: 362, h: 134 },
   magazine: { src: '/imgs/text_fun_glossy_mag.svg', w: 1150, h: 264 },
   events: { src: '/imgs/text_lets_meet_up.svg', w: 1070, h: 226 },
   shop: { src: '/imgs/title_shop.png', w: 195, h: 117 },
   lab: { src: '/imgs/title_lab.png', w: 202, h: 116 },
+  play: { src: '/imgs/text_play_with_ralph.svg', w: 418, h: 100, maxWidth: 418 },
 }
 
 interface SectionIntroProps {
-  section: 'tv' | 'magazine' | 'events' | 'shop' | 'lab'
+  section: 'tv' | 'magazine' | 'events' | 'shop' | 'lab' | 'play'
   heading: string
   lines: string[]
 }
@@ -38,7 +39,11 @@ export default function SectionIntro({ section, heading, lines }: SectionIntroPr
               src={titleImage.src}
               alt={heading}
               className="mx-auto"
-              style={{ width: titleImage.w / 2, height: titleImage.h / 2 }}
+              style={{
+                maxWidth: titleImage.maxWidth ?? titleImage.w / 2,
+                width: '100%',
+                height: 'auto',
+              }}
             />
           ) : (
             <span className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-display)]">

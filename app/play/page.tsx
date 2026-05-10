@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
-import Footer from '@/components/layout/Footer'
+import SectionIntro from '@/components/layout/SectionIntro'
 import PlayPlanets from '@/components/play/PlayPlanets'
-import WhatsNextPlanet from '@/components/play/WhatsNextPlanet'
-import ExpertisePlanet from '@/components/play/ExpertisePlanet'
+import ParallaxPlanets from '@/components/play/ParallaxPlanets'
 import {
   getPublishedCaseStudies,
   resolveCaseStudyUrl,
@@ -44,36 +43,28 @@ export default async function PlayWithRalph() {
 
   return (
     <>
-      <section className="px-6 pt-10 md:pt-16 pb-6 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold text-primary mb-4 font-[family-name:var(--font-display)]">
-          {copy.play_hero_heading}
-        </h1>
-        <p className="text-secondary text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
-          {copy.play_hero_intro}
-        </p>
-        <p className="text-secondary text-sm md:text-base mt-6">
-          {copy.play_hero_cta_line}
-        </p>
-      </section>
+      <SectionIntro
+        section="play"
+        heading={copy.play_hero_heading ?? 'Play with Ralph'}
+        lines={[
+          copy.play_hero_intro ?? '',
+          copy.play_hero_cta_line ?? '',
+        ].filter(Boolean)}
+      />
 
       <PlayPlanets items={planetItems} />
 
-      <section className="relative px-6 py-16 md:py-24">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 md:gap-[-60px] items-center justify-center">
-          <div className="md:-mr-20 md:mt-20 z-10">
-            <WhatsNextPlanet
-              body={copy.play_whats_next_body}
-              ctaLabel={copy.play_whats_next_cta_label}
-              ctaHref={copy.play_whats_next_cta_href}
-            />
-          </div>
-          <div className="md:-ml-20 z-20">
-            <ExpertisePlanet intro={copy.play_expertise_intro} bullets={bullets} />
-          </div>
-        </div>
-      </section>
-
-      <Footer variant="dark" copy={copy} />
+      <ParallaxPlanets
+        whatsNext={{
+          body: copy.play_whats_next_body,
+          ctaLabel: copy.play_whats_next_cta_label,
+          ctaHref: copy.play_whats_next_cta_href,
+        }}
+        expertise={{
+          intro: copy.play_expertise_intro,
+          bullets,
+        }}
+      />
     </>
   )
 }

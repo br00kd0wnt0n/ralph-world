@@ -42,19 +42,26 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
             <button
               key={cat.value}
               onClick={() => handleClick(cat.value)}
-              className={`relative text-intro transition-colors flex items-center justify-center ${
-                isActive
-                  ? 'text-ralph-orange'
-                  : 'text-black hover:text-ralph-orange'
+              className={`relative text-intro transition-colors flex items-center justify-center text-black ${
+                !isActive ? 'hover:text-ralph-orange' : ''
               }`}
               style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: '25%', textAlign: 'center' }}
             >
-              {cat.label}
-              <span
-                className={`absolute bottom-0 left-0 right-0 h-0.5 rounded transition-colors ${
-                  isActive ? 'bg-ralph-orange' : 'bg-transparent'
-                }`}
-              />
+              <span className="relative z-10">{cat.label}</span>
+              {isActive && (
+                <img
+                  src="/imgs/underline_magazine.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute pointer-events-none left-1/2 -translate-x-1/2"
+                  style={{
+                    top: '50%',
+                    width: 114,
+                    height: 8,
+                    maxWidth: 'none',
+                  }}
+                />
+              )}
             </button>
           )
         })}

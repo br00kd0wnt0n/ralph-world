@@ -96,19 +96,37 @@ export default function Nav() {
             </svg>
           </Link>
           {!user && (
-            <button
-              onClick={() => setSubscribeOpen(true)}
-              className="text-chrome bg-transparent border-2 border-white text-white px-4 py-1.5 ml-[4.6875rem] hover:bg-ralph-pink transition-colors"
+            <Link
+              href="/join-ralph"
+              className={`text-chrome border-2 border-white text-white px-4 py-1.5 ml-[4.6875rem] transition-colors ${
+                pathname === '/join-ralph' ? 'bg-ralph-pink' : 'bg-transparent hover:bg-ralph-pink'
+              }`}
               style={{ borderRadius: 8 }}
             >
               Get started
-            </button>
+            </Link>
           )}
           <Link
             href="/play"
-            className="text-chrome text-primary hover:text-ralph-pink transition-colors ml-8"
+            className={`relative text-chrome transition-colors ml-8 ${
+              pathname === '/play' ? 'text-primary' : 'text-primary hover:text-ralph-pink'
+            }`}
           >
-            Play with Ralph
+            <span className="relative z-10">Play with Ralph</span>
+            {pathname === '/play' && (
+              <img
+                src="/imgs/underline_creative.svg"
+                alt=""
+                aria-hidden="true"
+                className="absolute pointer-events-none left-1/2 -translate-x-1/2 z-0"
+                style={{
+                  top: '50%',
+                  width: 200,
+                  height: 12,
+                  maxWidth: 'none',
+                }}
+              />
+            )}
           </Link>
         </div>
 

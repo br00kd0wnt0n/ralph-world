@@ -83,14 +83,17 @@ export function toProductSummary(p: ShopifyProduct): ProductSummary {
   }
 }
 
-export async function getAllProducts(first = 50): Promise<ProductSummary[]> {
+export async function getAllProducts(
+  first = 50,
+  options: { sortKey?: 'CREATED_AT' | 'UPDATED_AT' | 'TITLE' | 'BEST_SELLING' | 'PRICE' | 'ID'; reverse?: boolean } = {}
+): Promise<ProductSummary[]> {
   if (!isShopifyConfigured()) {
     return getAllMockProducts()
   }
 
   const data = await storefront<{
     products: { edges: { node: ShopifyProduct }[] }
-  }>(GET_ALL_PRODUCTS, { first })
+  }>(GET_ALL_PRODUCTS, { first, sortKey: options.sortKey, reverse: options.reverse })
 
   if (!data?.products) return []
   return data.products.edges.map((e) => toProductSummary(e.node))

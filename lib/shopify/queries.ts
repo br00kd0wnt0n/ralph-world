@@ -79,8 +79,8 @@ export const GET_PRODUCTS_BY_COLLECTION = `
 
 export const GET_ALL_PRODUCTS = `
   ${PRODUCT_FRAGMENT}
-  query GetAllProducts($first: Int!) {
-    products(first: $first) {
+  query GetAllProducts($first: Int!, $sortKey: ProductSortKeys, $reverse: Boolean) {
+    products(first: $first, sortKey: $sortKey, reverse: $reverse) {
       edges { node { ...ProductFields } }
     }
   }

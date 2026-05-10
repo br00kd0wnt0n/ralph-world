@@ -19,36 +19,48 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
   return (
     <div className="w-full mx-auto px-6 pb-10" style={{ maxWidth: 1040 + 48 }}>
       <div className="flex flex-col md:flex-row gap-8 items-start">
-        {/* Image with diagonal ribbon */}
+        {/* Image with corner ribbon */}
         <div className="md:w-[45%] relative">
           <div
-            className="bg-gray-200 overflow-hidden"
+            className="bg-gray-200 relative"
             style={{ aspectRatio: 1.6290322581, borderRadius: 12 }}
           >
             <img
               src={article.leadMediaUrl || '/imgs/article_lead.png'}
               alt={article.title ?? ''}
               className="w-full h-full object-cover"
+              style={{ borderRadius: 12 }}
             />
-          </div>
 
-          {/* Diagonal ribbon tag */}
-          {ribbonTag && (
-            <div
-              className="absolute top-0 left-0 overflow-hidden"
-              style={{ width: 120, height: 120 }}
-            >
+            {/* Corner ribbon: SVG band at top-left, label rotated along its diagonal */}
+            {ribbonTag && (
               <div
-                className="absolute bg-ralph-orange text-white text-xs font-bold uppercase tracking-wider py-2 text-center"
-                style={{
-                  width: 170,
-                  transform: 'rotate(-45deg) translateX(-50px) translateY(20px)',
-                }}
+                className="absolute pointer-events-none"
+                style={{ top: -4, left: -4, width: 140, height: 140 }}
               >
-                {ribbonTag}
+                <img
+                  src="/imgs/ribbon.svg"
+                  alt=""
+                  className="absolute inset-0 w-full h-full"
+                />
+                <span
+                  className="absolute text-white uppercase whitespace-nowrap"
+                  style={{
+                    top: '37.6%',
+                    left: '37.6%',
+                    transform: 'translate(-50%, -50%) rotate(-45deg)',
+                    fontFamily: "'Gooper Trial', serif",
+                    fontWeight: 600,
+                    fontSize: 16,
+                    lineHeight: 1,
+                    letterSpacing: 0,
+                  }}
+                >
+                  {ribbonTag}
+                </span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Content */}

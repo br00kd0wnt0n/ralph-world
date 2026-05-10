@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Button from '@/components/ui/Button'
 import { motion } from 'framer-motion'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import type { Swiper as SwiperClass } from 'swiper/types'
+import 'swiper/css'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { planetSectionVariants } from '@/lib/animation/homepage'
 import { usePageTransition } from '@/context/PageTransitionContext'
@@ -86,6 +89,8 @@ export default function PlanetSection({
   const [planetCenterY, setPlanetCenterY] = useState(0)
   const [planetHeight, setPlanetHeight] = useState(0)
   const [isTouch, setIsTouch] = useState(false)
+  const [swiperIndex, setSwiperIndex] = useState(0)
+  const swiperRef = useRef<SwiperClass | null>(null)
   const mouseYRef = useRef(0)
   const isActiveRef = useRef(false)
 
@@ -201,7 +206,11 @@ export default function PlanetSection({
 
   // Panel = content width + half planet (the half that tucks behind the planet)
   const hasItems = moduleCard.items.length > 0
-  const contentWidth = hasItems
+  // TV always shows preview; magazine + shop show carousel when items exist.
+  // Events + lab are single-column (left only).
+  const hasRightColumn =
+    id === 'tv' || ((id === 'magazine' || id === 'shop') && hasItems)
+  const contentWidth = hasRightColumn
     ? PANEL_PADDING * 2 + COLUMN_WIDTH * 2 + COLUMN_GAP
     : PANEL_PADDING * 2 + COLUMN_WIDTH
   const halfPlanet = PLANET_SIZE / 2
@@ -322,8 +331,143 @@ export default function PlanetSection({
             <Button href={moduleCard.href} label={moduleCard.ctaLabel} />
           </motion.div>
 
-          {/* Column 2: items — staggered reveal, slightly later */}
-          {hasItems && (
+          {/* Column 2: TV preview — broadcast still + subtitle + body */}
+          {id === 'tv' && (
+            <motion.div
+              className="flex flex-col shrink-0"
+              style={{ width: COLUMN_WIDTH }}
+              initial={false}
+              animate={{
+                opacity: panelState === 'open' ? 1 : 0,
+                y: panelState === 'open' ? 0 : 20,
+              }}
+              transition={{ duration: 0.4, delay: panelState === 'open' ? 0.3 : 0, ease: 'easeOut' }}
+            >
+              <div
+                style={{
+                  width: 323,
+                  height: 204,
+                  border: '2px solid black',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                }}
+              >
+                <img
+                  src="/imgs/tv_preview.png"
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <p className={`text-intro ${textColor} mt-3`}>
+                {moduleCard.items[0]?.title ?? 'On now'}
+              </p>
+              <p
+                className={`${textMuted} text-body-sm mt-1`}
+                style={{ lineHeight: '18px' }}
+              >
+                {moduleCard.items[0]?.subtitle ?? 'Switch on, tune in, and see what we are playing right now.'}
+              </p>
+            </motion.div>
+          )}
+
+          {/* Column 2: Magazine + Shop carousel — Swiper with chevron nav + touch */}
+          {(id === 'magazine' || id === 'shop') && hasItems && (() => {
+            const currentItem = moduleCard.items[swiperIndex] ?? moduleCard.items[0]
+            const showNav = moduleCard.items.length > 1
+            return (
+              <motion.div
+                className="flex flex-col shrink-0"
+                style={{ width: COLUMN_WIDTH }}
+                initial={false}
+                animate={{
+                  opacity: panelState === 'open' ? 1 : 0,
+                  y: panelState === 'open' ? 0 : 20,
+                }}
+                transition={{ duration: 0.4, delay: panelState === 'open' ? 0.3 : 0, ease: 'easeOut' }}
+              >
+                <div className="relative" style={{ width: 323, height: 204 }}>
+                  <div
+                    style={{
+                      width: 323,
+                      height: 204,
+                      border: '2px solid black',
+                      borderRadius: 12,
+                      overflow: 'hidden',
+                      backgroundColor: '#e5e5e5',
+                    }}
+                  >
+                    <Swiper
+                      onSwiper={(s) => { swiperRef.current = s }}
+                      onSlideChange={(s) => setSwiperIndex(s.realIndex)}
+                      loop={moduleCard.items.length > 1}
+                      speed={400}
+                      className="w-full h-full"
+                    >
+                      {moduleCard.items.map((item) => (
+                        <SwiperSlide key={item.id}>
+                          {item.thumbnailUrl ? (
+                            <img
+                              src={item.thumbnailUrl}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full" />
+                          )}
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  </div>
+                  {showNav && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          swiperRef.current?.slidePrev()
+                        }}
+                        className={`${ctaBg} absolute top-1/2 -translate-y-1/2 flex items-center justify-center z-10`}
+                        style={{ width: 30, height: 30, left: -15 }}
+                        aria-label="Previous"
+                      >
+                        <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
+                          <path d="M8 1L2 7L8 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          swiperRef.current?.slideNext()
+                        }}
+                        className={`${ctaBg} absolute top-1/2 -translate-y-1/2 flex items-center justify-center z-10`}
+                        style={{ width: 30, height: 30, right: -15 }}
+                        aria-label="Next"
+                      >
+                        <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
+                          <path d="M2 1L8 7L2 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+                <p className={`text-intro ${textColor} mt-3`}>
+                  {currentItem?.title}
+                </p>
+                {currentItem?.subtitle && (
+                  <p
+                    className={`${textMuted} text-body-sm mt-1 line-clamp-3`}
+                    style={{ lineHeight: '18px' }}
+                  >
+                    {currentItem.subtitle}
+                  </p>
+                )}
+              </motion.div>
+            )
+          })()}
+
+          {/* Column 2: legacy generic carousel — currently no section uses
+              this branch since events + lab are single-column and the others
+              have bespoke renderers. Kept for any future section that wants it. */}
+          {id !== 'tv' && id !== 'magazine' && id !== 'shop' && id !== 'events' && id !== 'lab' && hasItems && (
             <motion.div
               className="flex items-center gap-2 shrink-0"
               style={{ width: COLUMN_WIDTH }}

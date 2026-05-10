@@ -6,7 +6,7 @@ export const defaultPageVariants: Variants = {
   initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    transition: { duration: 0.15, ease: 'easeOut' },
+    transition: { duration: 0.6, ease: 'easeOut' },
   },
   exit: {
     opacity: 0,
@@ -21,7 +21,7 @@ export const sectionPageVariants: Variants = {
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.15, ease: 'easeOut' },
+    transition: { duration: 0.6, ease: 'easeOut' },
   },
   exit: {
     opacity: 0,
@@ -36,7 +36,7 @@ export const homepageExitVariants: Variants = {
   animate: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.15, ease: 'easeOut' },
+    transition: { duration: 0.6, ease: 'easeOut' },
   },
   exit: {
     opacity: 0,

@@ -116,6 +116,8 @@ export async function getHomepageData() {
             .select({
               id: articles.id,
               title: articles.title,
+              subtitle: articles.subtitle,
+              intro: articles.intro,
               leadMediaUrl: articles.leadMediaUrl,
             })
             .from(articles)
@@ -125,6 +127,8 @@ export async function getHomepageData() {
             .select({
               id: articles.id,
               title: articles.title,
+              subtitle: articles.subtitle,
+              intro: articles.intro,
               leadMediaUrl: articles.leadMediaUrl,
             })
             .from(articles)
@@ -186,6 +190,7 @@ export async function getHomepageData() {
     const magazineItems: ModuleItem[] = magazineRows.map((a, i) => ({
       id: a.id,
       title: a.title ?? 'Untitled',
+      subtitle: a.subtitle ?? a.intro ?? undefined,
       thumbnailUrl: a.leadMediaUrl ?? undefined,
       badge: i === 0 ? 'NEW' : undefined,
     }))
@@ -211,8 +216,6 @@ export async function getHomepageData() {
       badge: l.badge ?? 'FRESH',
     }))
 
-    // Shop: only explicit picks. No "recent products" fallback — shop items
-    // aren't time-ordered meaningfully, so we don't want random picks.
     const shopItems: ModuleItem[] = await getShopItems(shopPickHandles)
 
     return {
@@ -241,20 +244,25 @@ export async function getHomepageData() {
 }
 
 async function getShopItems(handles: string[]): Promise<ModuleItem[]> {
-  if (handles.length === 0) return []
   try {
-    const products = await getAllProducts(100)
+    const products =
+      handles.length > 0
+        ? await getAllProducts(100)
+        : await getAllProducts(3, { sortKey: 'CREATED_AT', reverse: true })
     const byHandle = new Map(products.map((p) => [p.handle, p]))
-    return handles
-      .map((h) => byHandle.get(h))
-      .filter((p): p is NonNullable<typeof p> => Boolean(p))
-      .map((p) => ({
-        id: p.id,
-        title: p.title,
-        thumbnailUrl: p.imageUrl ?? undefined,
-        badge: p.available ? undefined : 'SOLD OUT',
-        subtitle: `${p.price} ${p.currency}`,
-      }))
+    const picked =
+      handles.length > 0
+        ? handles
+            .map((h) => byHandle.get(h))
+            .filter((p): p is NonNullable<typeof p> => Boolean(p))
+        : products.slice(0, 3)
+    return picked.map((p) => ({
+      id: p.id,
+      title: p.title,
+      thumbnailUrl: p.imageUrl ?? undefined,
+      badge: p.available ? undefined : 'SOLD OUT',
+      subtitle: `${p.price} ${p.currency}`,
+    }))
   } catch {
     return []
   }

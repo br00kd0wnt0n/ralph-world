@@ -36,6 +36,20 @@ const GRID_2x3 = [
 ]
 const EXPLODE_PX = 16
 
+// 3D shadow clip-path: only cut corners for diagonal movement
+function shadowClipPath(dx: number, dy: number): string {
+  // Single-axis movement: no clip needed, just a rectangle
+  if (dx === 0 || dy === 0) {
+    return 'none'
+  }
+  // Diagonal movement: cut corners based on direction
+  const cutSize = EXPLODE_PX - 1
+  const cutTopRightAndBottomLeft = dx * dy > 0
+  return cutTopRightAndBottomLeft
+    ? `polygon(0 0, calc(100% - ${cutSize}px) 0, 100% ${cutSize}px, 100% 100%, ${cutSize}px 100%, 0 calc(100% - ${cutSize}px))`
+    : `polygon(${cutSize}px 0, 100% 0, 100% calc(100% - ${cutSize}px), calc(100% - ${cutSize}px) 100%, 0 100%, 0 ${cutSize}px)`
+}
+
 // Placeholder articles for when no data exists
 const PLACEHOLDER_ARTICLES: ArticleSummary[] = Array.from({ length: 6 }, (_, i) => ({
   id: `placeholder-${i}`,
@@ -75,98 +89,190 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
 
   const vectors = isLargeViewport ? GRID_3x2 : GRID_2x3
 
+  // Grid styles shared between shadow and card layers
+  const gridStyles = {
+    maxWidth: 1168,
+    gap: 0,
+  }
+
   return (
     <section className="bg-white px-6 py-0" style={{ marginTop: 20 }}>
-      <motion.div
-        ref={ref}
-        variants={gridContainerVariants}
-        initial="hidden"
-        animate={isVisible ? 'visible' : 'hidden'}
-        className="mx-auto grid grid-cols-2 lg:grid-cols-3"
-        style={{
-          maxWidth: 1168,
-          gap: 1,
-          border: '1px solid black',
-          backgroundColor: 'black',
-        }}
-      >
-        {displayArticles.slice(0, 6).map((article, i) => {
-          const isHovered = hoveredId === article.id
-          const vec = vectors[i] ?? { dx: 0, dy: 0 }
-          // motion.article below owns `transform` for its entry animation
-          // (y:20→0), so the hover offset lives on an outer wrapper div.
-          // Same element would mean framer-motion overwrites the hover.
-          const hoverTransform = isHovered
-            ? `translate(${vec.dx * EXPLODE_PX}px, ${vec.dy * EXPLODE_PX}px) scale(1.04)`
-            : 'translate(0, 0) scale(1)'
-          return (
+      <div className="relative mx-auto" style={{ maxWidth: 1168 }}>
+        {/* Black grid lines layer — lowest */}
+        <div
+          className="absolute grid grid-cols-2 lg:grid-cols-3"
+          style={{
+            ...gridStyles,
+            inset: 0,
+            border: '1px solid black',
+            backgroundColor: 'black',
+            zIndex: 0,
+          }}
+        >
+          {displayArticles.slice(0, 6).map((article) => (
             <div
-              key={article.id}
-              className="relative"
-              style={{
-                transform: hoverTransform,
-                transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
-                zIndex: isHovered ? 10 : 1,
-              }}
-              onMouseEnter={() => setHoveredId(article.id)}
-              onMouseLeave={() => setHoveredId(null)}
-              onClick={() => onArticleClick(article.slug)}
-            >
-            <motion.article
-              variants={gridCardVariants}
-              className="relative cursor-pointer overflow-hidden block bg-white"
+              key={`grid-${article.id}`}
               style={{ aspectRatio: 1.09604519774 }}
-            >
-              {/* Image fills entire cell */}
-              <div className="absolute inset-0">
-                <img
-                  src={article.leadMediaUrl || '/imgs/article_lead.png'}
-                  alt={article.title ?? ''}
-                  className="w-full h-full object-cover"
+            />
+          ))}
+        </div>
+
+        {/* Shadow layer — above grid lines, below cards */}
+        <div
+          className="absolute inset-0 grid grid-cols-2 lg:grid-cols-3 pointer-events-none"
+          style={{ ...gridStyles, zIndex: 1 }}
+        >
+          {displayArticles.slice(0, 6).map((article, i) => {
+            const isHovered = hoveredId === article.id
+            const vec = vectors[i] ?? { dx: 0, dy: 0 }
+            const hoverTransform = isHovered
+              ? `translate(${vec.dx * EXPLODE_PX}px, ${vec.dy * EXPLODE_PX}px)`
+              : 'translate(0, 0)'
+            return (
+              <div
+                key={`shadow-${article.id}`}
+                className="relative"
+                style={{ aspectRatio: 1.09604519774 }}
+              >
+                {/* Shadow is always full size, hidden until hovered */}
+                <div
+                  className="absolute"
+                  style={{
+                    // Always extended in opposite direction of movement
+                    // For central items (dx=0 or dy=0), use full width/height on that axis
+                    top: vec.dy > 0 ? -(EXPLODE_PX - 1) : (vec.dy === 0 ? 0 : 1),
+                    bottom: vec.dy < 0 ? -(EXPLODE_PX - 1) : (vec.dy === 0 ? 0 : 1),
+                    left: vec.dx > 0 ? -(EXPLODE_PX - 1) : (vec.dx === 0 ? 0 : 1),
+                    right: vec.dx < 0 ? -(EXPLODE_PX - 1) : (vec.dx === 0 ? 0 : 1),
+                    backgroundColor: 'var(--color-ralph-orange)',
+                    clipPath: shadowClipPath(vec.dx, vec.dy),
+                    visibility: isHovered ? 'visible' : 'hidden',
+                    // Shadow transforms WITH the card
+                    transform: hoverTransform,
+                    // Show immediately, hide after transform completes
+                    transition: isHovered
+                      ? 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s'
+                      : 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s 0.45s',
+                  }}
                 />
               </div>
+            )
+          })}
+        </div>
 
-              {/* Hover reveal: decorative border + article info overlay */}
+        {/* Grid lines — absolute positioned lines on top */}
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
+          {/* Horizontal line at 50% */}
+          <div className="absolute left-0 right-0 h-px bg-black" style={{ top: '50%' }} />
+          {/* Vertical line at 33.333% */}
+          <div className="absolute top-0 bottom-0 w-px bg-black" style={{ left: '33.333%' }} />
+          {/* Vertical line at 66.666% */}
+          <div className="absolute top-0 bottom-0 w-px bg-black" style={{ left: '66.666%' }} />
+        </div>
+
+        {/* Card layer — above shadows */}
+        <motion.div
+          ref={ref}
+          variants={gridContainerVariants}
+          initial="hidden"
+          animate={isVisible ? 'visible' : 'hidden'}
+          className="relative grid grid-cols-2 lg:grid-cols-3"
+          style={{
+            ...gridStyles,
+            zIndex: 2,
+          }}
+        >
+          {displayArticles.slice(0, 6).map((article, i) => {
+            const isHovered = hoveredId === article.id
+            const vec = vectors[i] ?? { dx: 0, dy: 0 }
+            const hoverTransform = isHovered
+              ? `translate(${vec.dx * EXPLODE_PX}px, ${vec.dy * EXPLODE_PX}px)`
+              : 'translate(0, 0)'
+            return (
               <div
-                className={`absolute inset-0 transition-opacity duration-300 ${
-                  isHovered ? 'opacity-100' : 'opacity-0'
-                }`}
+                key={article.id}
+                className="relative"
+                style={{ zIndex: isHovered ? 10 : 1 }}
+                onMouseEnter={() => setHoveredId(article.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                onClick={() => onArticleClick(article.slug)}
               >
-                {/* Yellow dotted border frame */}
-                <div className="absolute inset-2 border-2 border-dashed border-ralph-yellow rounded-sm pointer-events-none" />
-
-                {/* Info overlay at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 pt-16">
-                  {/* Category tags */}
-                  {article.contentTags && article.contentTags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {article.contentTags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-[9px] font-bold uppercase tracking-wide text-ralph-pink"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                <div
+                  className="relative"
+                  style={{
+                    transform: hoverTransform,
+                    transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
+                  }}
+                >
+                  <motion.article
+                    variants={gridCardVariants}
+                    className="relative cursor-pointer overflow-hidden block bg-white"
+                    style={{ aspectRatio: 1.09604519774 }}
+                  >
+                    {/* Image fills entire cell */}
+                    <div className="absolute inset-0">
+                      <img
+                        src={article.leadMediaUrl || '/imgs/article_lead.png'}
+                        alt={article.title ?? ''}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  )}
 
-                  <h3 className="text-sm md:text-base font-bold text-white leading-tight mb-1">
-                    {article.title}
-                  </h3>
+                    {/* Yellow border - appears instantly */}
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        boxShadow: 'inset 0 0 0 16px var(--color-ralph-yellow)',
+                        opacity: isHovered ? 1 : 0,
+                      }}
+                    />
 
-                  {article.intro && (
-                    <p className="text-[11px] text-white/70 line-clamp-2 leading-relaxed">
-                      {article.intro}
-                    </p>
-                  )}
+                    {/* Info overlay - inside the border, fades in */}
+                    <div
+                      className={`absolute pointer-events-none transition-opacity duration-300 ${
+                        isHovered ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      style={{
+                        top: 16,
+                        left: 16,
+                        right: 16,
+                        bottom: 16,
+                      }}
+                    >
+                      {/* Gradient at bottom, inside the border */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 pt-16">
+                        {/* Category tags */}
+                        {article.contentTags && article.contentTags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {article.contentTags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[9px] font-bold uppercase tracking-wide text-ralph-pink"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <h3 className="text-sm md:text-base font-bold text-white leading-tight mb-1">
+                          {article.title}
+                        </h3>
+
+                        {article.intro && (
+                          <p className="text-[11px] text-white/70 line-clamp-2 leading-relaxed">
+                            {article.intro}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </motion.article>
                 </div>
               </div>
-            </motion.article>
-            </div>
-          )
-        })}
-      </motion.div>
+            )
+          })}
+        </motion.div>
+      </div>
     </section>
   )
 }

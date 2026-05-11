@@ -5,7 +5,11 @@ import { motion } from 'framer-motion'
 import SectionIntro from '@/components/layout/SectionIntro'
 import PastEvents from './PastEvents'
 import SubscribeModal from '@/components/layout/SubscribeModal'
-import { sectionPageVariants } from '@/lib/animation/page-transitions'
+import {
+  sectionContainerVariants,
+  sectionBgVariants,
+  sectionContentVariants,
+} from '@/lib/animation/page-transitions'
 import type { EventRow } from '@/lib/data/events'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
@@ -23,11 +27,11 @@ export default function EventsClient({
 
   return (
     <motion.div
-      variants={sectionPageVariants}
+      variants={sectionContainerVariants}
       initial="initial"
       animate="animate"
     >
-      {/* Intro section with transparent bg */}
+      {/* Intro section - animates itself via heroContainerVariants */}
       <SectionIntro
         section="events"
         heading={copy?.events_hero_heading ?? "Let's Meet Up"}
@@ -39,8 +43,8 @@ export default function EventsClient({
 
       {/* Planet + white bg layered with content */}
       <section className="relative">
-        {/* Background container - planet at top, white bg fills rest */}
-        <div className="absolute inset-0 z-0">
+        {/* Background - animates SECOND */}
+        <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
@@ -71,16 +75,19 @@ export default function EventsClient({
             className="absolute bg-white"
             style={{ top: 270, left: 0, right: 0, bottom: 0 }}
           />
-        </div>
+        </motion.div>
 
-        {/* Content layer */}
-        <div
+        {/* Content layer - animates LAST */}
+        <motion.div
+          variants={sectionContentVariants}
           className="relative z-10 min-h-[50vh]"
           style={{ paddingTop: 200 }}
         />
       </section>
 
-      <PastEvents events={pastEvents} heading={copy?.events_past_heading} />
+      <motion.div variants={sectionContentVariants}>
+        <PastEvents events={pastEvents} heading={copy?.events_past_heading} />
+      </motion.div>
 
       <SubscribeModal
         isOpen={subscribeOpen}

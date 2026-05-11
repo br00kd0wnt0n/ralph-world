@@ -8,7 +8,11 @@ import CategoryTabs from './CategoryTabs'
 import ArticleGrid from './ArticleGrid'
 import ArticleOverlay from './ArticleOverlay'
 import SubscribeModal from '@/components/layout/SubscribeModal'
-import { sectionPageVariants } from '@/lib/animation/page-transitions'
+import {
+  sectionContainerVariants,
+  sectionBgVariants,
+  sectionContentVariants,
+} from '@/lib/animation/page-transitions'
 import type { ArticleSummary, ArticleFull } from '@/lib/data/magazine'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
@@ -83,11 +87,11 @@ export default function MagazineClient({
 
   return (
     <motion.div
-      variants={sectionPageVariants}
+      variants={sectionContainerVariants}
       initial="initial"
       animate="animate"
     >
-      {/* Intro section with transparent bg */}
+      {/* Intro section - animates itself via heroContainerVariants */}
       <SectionIntro
         section="magazine"
         heading={copy?.magazine_hero_heading ?? 'Magazine'}
@@ -100,7 +104,8 @@ export default function MagazineClient({
       {/* Planet + white bg layered with content */}
       <section className="relative">
         {/* Background container - planet at top, white bg fills rest */}
-        <div className="absolute inset-0 z-0">
+        {/* Animates SECOND after intro establishes height */}
+        <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           {/* Planet - fixed height at the top of the bg container */}
           <div className="relative w-full" style={{ height: 270 }}>
             <div
@@ -133,11 +138,11 @@ export default function MagazineClient({
             className="absolute bg-white"
             style={{ top: 270, left: 0, right: 0, bottom: 0 }}
           />
-        </div>
+        </motion.div>
 
-        {/* Content layer - tweak paddingTop / child marginTop to position
-            elements anywhere, including overflowing up over the planet */}
-        <div
+        {/* Content layer - animates LAST */}
+        <motion.div
+          variants={sectionContentVariants}
           className="relative z-10 pb-8 min-h-[50vh]"
           style={{ paddingTop: 200 }}
         >
@@ -180,7 +185,7 @@ export default function MagazineClient({
             />
           </Suspense>
           <ArticleGrid articles={gridArticles} onArticleClick={openArticle} />
-        </div>
+        </motion.div>
       </section>
 
       <ArticleOverlay

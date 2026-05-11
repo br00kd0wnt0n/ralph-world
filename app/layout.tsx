@@ -9,6 +9,7 @@ import { BackgroundLayer } from '@/context/ThemeContext'
 import Starfield from '@/components/layout/Starfield'
 import ForegroundLayer from '@/components/layout/ForegroundLayer'
 import MidgroundLayer from '@/components/layout/MidgroundLayer'
+import PlanetPreloader from '@/components/layout/PlanetPreloader'
 import { PageTransitionProvider } from '@/context/PageTransitionContext'
 
 const playfair = Playfair_Display({
@@ -67,6 +68,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Providers>
+          <PlanetPreloader />
           <Starfield />
           <MidgroundLayer />
           <Nav />

@@ -10,7 +10,7 @@ export const defaultPageVariants: Variants = {
   },
   exit: {
     opacity: 0,
-    transition: { duration: 0.05, ease: 'easeIn' },
+    transition: { duration: 0.3, ease: 'easeIn' },
   },
 }
 
@@ -25,7 +25,71 @@ export const sectionPageVariants: Variants = {
   },
   exit: {
     opacity: 0,
-    transition: { duration: 0.05, ease: 'easeIn' },
+    transition: { duration: 0.3, ease: 'easeIn' },
+  },
+}
+
+// ── Layered Section Page Variants ──
+// SectionIntro animates itself via heroContainerVariants (takes ~0.6s).
+// We use explicit delays on bg/content to sequence after the intro.
+
+// Container - no stagger, children use their own delays
+export const sectionContainerVariants: Variants = {
+  initial: {},
+  animate: {},
+  exit: {},
+}
+
+// Background/planets layer - fades in AFTER intro (0.5s delay)
+export const sectionBgVariants: Variants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.5, ease: 'easeOut', delay: 0.5 },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.2, ease: 'easeIn' },
+  },
+}
+
+// Main content layer - fades + slides in LAST (0.7s delay)
+export const sectionContentVariants: Variants = {
+  initial: { opacity: 0, y: 40 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: 'easeOut', delay: 0.7 },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.2, ease: 'easeIn' },
+  },
+}
+
+// For pages without SectionIntro (like TV), use shorter delays
+export const sectionBgNoIntroVariants: Variants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.2, ease: 'easeIn' },
+  },
+}
+
+export const sectionContentNoIntroVariants: Variants = {
+  initial: { opacity: 0, y: 40 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: 'easeOut', delay: 0.3 },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.2, ease: 'easeIn' },
   },
 }
 

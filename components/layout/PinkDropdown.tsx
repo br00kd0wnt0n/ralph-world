@@ -19,7 +19,7 @@ export const panelVariants = {
     opacity: 1,
     scale: 1,
     rotate: 0,
-    transition: { type: 'spring', stiffness: 420, damping: 22 },
+    transition: { type: 'spring' as const, stiffness: 420, damping: 22 },
   },
 }
 

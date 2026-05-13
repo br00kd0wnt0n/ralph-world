@@ -36,16 +36,24 @@ export default function ThemeToggle() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 text-chrome transition-colors ${
+        className={`flex items-center gap-2 transition-colors ${
           isOpen ? 'text-ralph-pink' : 'text-primary hover:text-ralph-pink'
         }`}
+        style={{
+          fontFamily: "'Gooper Trial', serif",
+          fontSize: 14,
+          fontWeight: 700,
+          lineHeight: 1,
+          letterSpacing: 0,
+        }}
       >
         <span
           className="shrink-0"
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 8,
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            border: '2px solid white',
             background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`,
           }}
         />

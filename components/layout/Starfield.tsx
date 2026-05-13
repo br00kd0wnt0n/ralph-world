@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 
 // ── Particle config ──
@@ -39,6 +40,7 @@ type Particle = {
   colour: { r: number; g: number; b: number }
   shape: 'dot' | 'cross'
   depth: number
+  horizontalSpeed: number // For events page horizontal scroll
 }
 
 type ShootingStar = {
@@ -88,6 +90,7 @@ function createParticle(): Particle {
     colour: PARTICLE_COLOURS[Math.floor(Math.random() * PARTICLE_COLOURS.length)],
     shape: isNear && Math.random() > 0.6 ? 'cross' : 'dot',
     depth,
+    horizontalSpeed: randRange(0.0008, 0.002), // Fast horizontal movement, same direction
   }
 }
 
@@ -109,7 +112,9 @@ function createShootingStar(w: number, h: number): ShootingStar {
 
 export default function Starfield() {
   const { theme } = useTheme()
+  const pathname = usePathname()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const isEventsPage = pathname === '/events'
 
   useEffect(() => {
     if (theme !== 'cosy-dynamics') return
@@ -163,10 +168,17 @@ export default function Starfield() {
         const twinkle = Math.sin(time * p.twinkleSpeed + p.phase) * 0.3
         const alpha = Math.max(0.02, Math.min(1, p.baseOpacity + twinkle))
 
-        // Scroll parallax
-        const parallaxY = scrollY * p.scrollFactor
+        // Scroll parallax (disabled on events page)
+        const parallaxY = isEventsPage ? 0 : scrollY * p.scrollFactor
         let yPos = (p.y * h - parallaxY) % h
         if (yPos < 0) yPos += h
+
+        // Horizontal movement on events page
+        if (isEventsPage) {
+          p.x += p.horizontalSpeed
+          if (p.x > 1) p.x -= 1
+          if (p.x < 0) p.x += 1
+        }
 
         // Subtle drift
         const driftX = Math.sin(time * p.driftSpeed + p.driftDirection) * 15 * p.depth
@@ -243,7 +255,7 @@ export default function Starfield() {
       window.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(animationId)
     }
-  }, [theme])
+  }, [theme, isEventsPage])
 
   if (theme !== 'cosy-dynamics') return null
 

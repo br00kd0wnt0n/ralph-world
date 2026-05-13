@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getActiveEvents, getPastEvents } from '@/lib/data/events'
+import { getActiveEvents } from '@/lib/data/events'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import EventsClient from '@/components/events/EventsClient'
 
@@ -17,17 +17,10 @@ export const metadata: Metadata = {
 }
 
 export default async function EventsPage() {
-  const [activeEvents, pastEvents, copy] = await Promise.all([
+  const [activeEvents, copy] = await Promise.all([
     getActiveEvents(),
-    getPastEvents(),
     getSiteCopy(),
   ])
 
-  return (
-    <EventsClient
-      activeEvents={activeEvents}
-      pastEvents={pastEvents}
-      copy={copy}
-    />
-  )
+  return <EventsClient activeEvents={activeEvents} copy={copy} />
 }

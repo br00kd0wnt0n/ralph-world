@@ -1,10 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import SectionIntro from '@/components/layout/SectionIntro'
-import PastEvents from './PastEvents'
-import SubscribeModal from '@/components/layout/SubscribeModal'
+import MinglingCharacters from './MinglingCharacters'
 import {
   sectionContainerVariants,
   sectionBgVariants,
@@ -14,17 +12,11 @@ import type { EventRow } from '@/lib/data/events'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface EventsClientProps {
-  activeEvents: EventRow[]
-  pastEvents: EventRow[]
+  activeEvents?: EventRow[]
   copy?: Partial<SiteCopy>
 }
 
-export default function EventsClient({
-  pastEvents,
-  copy,
-}: EventsClientProps) {
-  const [subscribeOpen, setSubscribeOpen] = useState(false)
-
+export default function EventsClient({ activeEvents = [], copy }: EventsClientProps) {
   return (
     <motion.div
       variants={sectionContainerVariants}
@@ -42,7 +34,7 @@ export default function EventsClient({
       />
 
       {/* Planet + white bg layered with content */}
-      <section className="relative">
+      <section className="relative overflow-x-hidden">
         {/* Background - animates SECOND */}
         <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
@@ -80,19 +72,12 @@ export default function EventsClient({
         {/* Content layer - animates LAST */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 min-h-[50vh]"
+          className="relative z-10 w-full"
           style={{ paddingTop: 200 }}
-        />
+        >
+          <MinglingCharacters eventCount={activeEvents.length} />
+        </motion.div>
       </section>
-
-      <motion.div variants={sectionContentVariants}>
-        <PastEvents events={pastEvents} heading={copy?.events_past_heading} />
-      </motion.div>
-
-      <SubscribeModal
-        isOpen={subscribeOpen}
-        onClose={() => setSubscribeOpen(false)}
-      />
     </motion.div>
   )
 }

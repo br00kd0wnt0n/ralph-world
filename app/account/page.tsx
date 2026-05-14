@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { auth, signOut, type SessionWithProfile } from '@/lib/auth'
+import { auth, type SessionWithProfile } from '@/lib/auth'
 import Footer from '@/components/layout/Footer'
 import AccountPreferences from '@/components/account/AccountPreferences'
+import SignOutButton from '@/components/account/SignOutButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -136,19 +137,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             associated data.
           </p>
           <div className="flex flex-wrap gap-3">
-            <form
-              action={async () => {
-                'use server'
-                await signOut({ redirectTo: '/' })
-              }}
-            >
-              <button
-                type="submit"
-                className="rounded-full border border-border px-5 py-2 text-sm text-secondary hover:text-primary hover:border-secondary transition-colors"
-              >
-                Sign out
-              </button>
-            </form>
+            <SignOutButton />
             <a
               href={`mailto:hello@ralph.world?subject=Delete%20my%20Ralph%20account&body=Please%20delete%20the%20account%20and%20associated%20data%20for%20${encodeURIComponent(
                 session.user.email ?? ''

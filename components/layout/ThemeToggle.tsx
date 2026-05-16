@@ -36,19 +36,12 @@ export default function ThemeToggle() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 transition-colors ${
+        className={`text-header-btn flex items-center gap-2 mid:gap-0 transition-colors ${
           isOpen ? 'text-ralph-pink' : 'text-primary hover:text-ralph-pink'
         }`}
-        style={{
-          fontFamily: "'Gooper Trial', serif",
-          fontSize: 14,
-          fontWeight: 700,
-          lineHeight: 1,
-          letterSpacing: 0,
-        }}
       >
         <span
-          className="shrink-0"
+          className="theme-circle relative shrink-0"
           style={{
             width: 44,
             height: 44,
@@ -56,14 +49,33 @@ export default function ThemeToggle() {
             border: '2px solid white',
             background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`,
           }}
-        />
-        <span>Theme</span>
+        >
+          {/* Arrow centered on circle for mid screens */}
+          <svg
+            width="13"
+            height="7"
+            viewBox="0 0 13 7"
+            fill="none"
+            aria-hidden="true"
+            className="hidden mid:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
+            <path
+              d="M1 1L6.76191 6L12 1"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <span className="mid:hidden">Theme</span>
         <svg
           width="13"
           height="7"
           viewBox="0 0 13 7"
           fill="none"
           aria-hidden="true"
+          className="mid:hidden"
         >
           <path
             d="M1 1L6.76191 6L12 1"

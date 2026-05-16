@@ -52,18 +52,22 @@ export default function LanguageModal() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-center transition-colors hover:bg-ralph-pink ${
+        className={`language-btn relative flex items-center justify-center transition-colors hover:bg-ralph-pink ${
           isOpen ? 'bg-ralph-pink' : ''
         }`}
-        style={{ borderRadius: 8 }}
+        style={{ borderRadius: 12 }}
         aria-label="Choose language"
       >
         <img
           src="/imgs/icon_language.svg"
           alt=""
           aria-hidden="true"
-          width={36}
-          height={28}
+          style={{ height: 44, width: 'auto' }}
+        />
+        <span
+          className="absolute bg-white left-1/2 top-0 -translate-x-1/2 h-full"
+          style={{ width: 2 }}
+          aria-hidden="true"
         />
       </button>
 

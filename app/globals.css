@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* ── Mid-screen breakpoint (1200px - 1440px) ── */
+@variant mid (@media (min-width: 1200px) and (max-width: 1440px));
+
 /* ── Fonts ── */
 @font-face {
   font-family: 'Gooper Trial';
@@ -70,6 +73,10 @@
   --color-ralph-green: var(--color-ralph-green);
   --color-ralph-orange: var(--color-ralph-orange);
   --color-ralph-purple: var(--color-ralph-purple);
+}
+
+html, body {
+  overflow-x: hidden;
 }
 
 body {
@@ -143,6 +150,64 @@ body {
   text-align: center;
 }
 
+/* Header button text — 14px, drops to 13px on mid screens */
+.text-header-btn {
+  font-family: var(--font-intro, 'Gooper Trial'), serif;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0;
+  height: 44px;
+}
+
+.basket-count {
+  font-size: 14px;
+  top: 21px;
+}
+@media (min-width: 1200px) and (max-width: 1440px) {
+  .text-header-btn {
+    font-size: 13px;
+  }
+}
+
+/* Nav link text — 22px on all screens >1200px */
+.text-nav-link {
+  font-family: var(--font-intro, 'Gooper Trial'), serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+@media (min-width: 1200px) and (max-width: 1440px) {
+  .subscribe-btn {
+    margin-left: min(var(--subscribe-margin, 0px), 50px) !important;
+  }
+  /* Buttons and circular elements go to 32px */
+  .text-header-btn {
+    height: 32px !important;
+  }
+  .theme-circle {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .ralph-circle-logo {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .ralph-circle-logo svg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .language-btn img,
+  .basket-btn img {
+    height: 32px !important;
+  }
+  .basket-count {
+    font-size: 10px !important;
+    top: 15px !important;
+  }
+}
+
 /* ── Button press ── */
 .btn-press:hover {
   transform: translate(2px, 2px);
@@ -195,4 +260,33 @@ body {
 /* Prevent layout shift during page transitions */
 main > [data-transitioning] {
   min-height: 100vh;
+}
+
+/* ── Arm waving animation ── */
+@keyframes wave {
+  0%, 100% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  15% {
+    transform: translateX(-50%) rotate(8deg);
+  }
+  30% {
+    transform: translateX(-50%) rotate(-6deg);
+  }
+  45% {
+    transform: translateX(-50%) rotate(10deg);
+  }
+  60% {
+    transform: translateX(-50%) rotate(-4deg);
+  }
+  75% {
+    transform: translateX(-50%) rotate(6deg);
+  }
+  90% {
+    transform: translateX(-50%) rotate(-3deg);
+  }
+}
+
+.animate-wave {
+  animation: wave 2s ease-in-out infinite;
 }

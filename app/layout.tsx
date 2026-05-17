@@ -10,7 +10,7 @@ import Starfield from '@/components/layout/Starfield'
 import ForegroundLayer from '@/components/layout/ForegroundLayer'
 import MidgroundLayer from '@/components/layout/MidgroundLayer'
 import PlanetPreloader from '@/components/layout/PlanetPreloader'
-import { PageTransitionProvider } from '@/context/PageTransitionContext'
+import PageTransitionWrapper from '@/components/layout/PageTransitionWrapper'
 
 const playfair = Playfair_Display({
   variable: '--font-display',
@@ -74,9 +74,9 @@ export default function RootLayout({
           <Nav />
           <BackgroundLayer />
           <main className="flex-1 flex flex-col relative z-10">
-            <PageTransitionProvider>
+            <PageTransitionWrapper>
               {children}
-            </PageTransitionProvider>
+            </PageTransitionWrapper>
           </main>
           <Footer variant="dark" />
           <ForegroundLayer />

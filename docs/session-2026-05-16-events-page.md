@@ -91,6 +91,35 @@ Major work on the Events page interactive arms feature, plus nav stability impro
 
 ---
 
+## Page Transitions (Continued Session)
+
+### Homepage Planet Exit Animation
+- **Problem**: Planets weren't sliding to sides on page exit; panel (colored square) was briefly visible
+- **Solution**: Replaced custom `PageTransitionContext.isExiting` with Framer Motion's `usePresence` hook
+- **Implementation**:
+  - `usePresence()` returns `[isPresent, safeToRemove]` - detects when AnimatePresence is removing component
+  - When `!isPresent` (exiting), planets slide 100px toward their nearest side and fade out
+  - Exit direction determined by `PLANET_EXIT_DIRECTIONS` map (TV/events/lab → right, magazine/shop → left)
+  - Panel fades out quickly (0.15s) to prevent "large square" becoming visible
+
+### Template.tsx Updates
+- Exit duration increased to 0.35s (from 0.3s) to allow planet animations to complete
+- Uses proper `Variants` type import
+- Easing now uses cubic-bezier arrays for TypeScript compatibility: `[0.22, 1, 0.36, 1]` for easeOut, `[0.4, 0, 1, 1]` for easeIn
+
+### Animation Timing
+- Section fade out: 0.25s
+- Planet slide + fade: 0.3s (starts simultaneously with section fade)
+- Panel fade: 0.15s (quick hide)
+- Template wrapper exit: 0.35s (allows all child animations to complete)
+
+### Files Modified
+- `components/home/PlanetSection/PlanetSection.tsx` - usePresence for exit detection, planet slide animation
+- `app/template.tsx` - Fixed Variants typing, adjusted exit timing
+- `lib/animation/page-transitions.ts` - PLANET_EXIT_DIRECTIONS map (used by PlanetSection)
+
+---
+
 ## Technical Notes
 
 ### Z-Index Hierarchy (Events Page)

@@ -8,11 +8,8 @@ import type { Swiper as SwiperClass } from 'swiper/types'
 import 'swiper/css'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { planetSectionVariants } from '@/lib/animation/homepage'
-import { usePageTransition } from '@/context/PageTransitionContext'
-import {
-  planetExitVariants,
-  PLANET_EXIT_DIRECTIONS,
-} from '@/lib/animation/page-transitions'
+import { PLANET_EXIT_DIRECTIONS } from '@/lib/animation/page-transitions'
+import { useTransitionState } from '@/components/layout/PageTransitionWrapper'
 import type { PlanetSectionProps } from './PlanetSection.types'
 
 const POSITION_LAYOUTS = {
@@ -81,7 +78,7 @@ export default function PlanetSection({
   const sectionRef = useRef<HTMLDivElement>(null)
   const planetBtnRef = useRef<HTMLButtonElement>(null)
   const { ref: revealRef, isVisible } = useScrollReveal(0.1)
-  const { isExiting } = usePageTransition()
+  const { isExiting } = useTransitionState()
 
   const [isActive, setIsActive] = useState(false)
   const [isInView, setIsInView] = useState(false)
@@ -192,7 +189,6 @@ export default function PlanetSection({
 
   // Get exit direction based on planet position (left planets slide left, right slide right)
   const exitDirection = PLANET_EXIT_DIRECTIONS[id] || (planetOnRight ? 'right' : 'left')
-  const exitVariants = planetExitVariants(exitDirection)
 
   const visibleItems = moduleCard.items.slice(carouselIndex, carouselIndex + 2)
   const hasMoreForward = carouselIndex + 2 < moduleCard.items.length
@@ -240,10 +236,8 @@ export default function PlanetSection({
   const planetShift =
     panelState === 'open' ? (planetOnRight ? 100 : -100) : 0
 
-  // Combine scroll reveal with exit animation
-  const exitAnimateState = isExiting
-    ? { opacity: 0, x: exitDirection === 'left' ? -80 : 80 }
-    : undefined
+  // Planet exit offset - slide to nearest side
+  const planetExitOffset = exitDirection === 'left' ? -100 : 100
 
   return (
     <motion.section
@@ -255,14 +249,8 @@ export default function PlanetSection({
       }}
       variants={planetSectionVariants}
       initial="hidden"
-      animate={
-        isExiting
-          ? exitAnimateState
-          : isVisible
-            ? 'visible'
-            : 'hidden'
-      }
-      transition={isExiting ? { duration: 0.1, ease: 'easeIn' } : undefined}
+      animate={isExiting ? { opacity: 0 } : isVisible ? 'visible' : 'hidden'}
+      transition={isExiting ? { duration: 0.25, ease: 'easeIn' } : undefined}
       className="relative px-6 md:px-16 py-4 md:py-6 max-w-7xl mx-auto"
     >
       {/* Panel — content-width, clip-path masks it, spring overshoot on open */}
@@ -281,8 +269,15 @@ export default function PlanetSection({
           padding: PANEL_PADDING,
         }}
         initial={false}
-        animate={{ x: planetShift }}
-        transition={{ type: 'spring', stiffness: 200, damping: 20, mass: 0.8 }}
+        animate={{
+          x: planetShift,
+          opacity: isExiting ? 0 : 1,
+        }}
+        transition={
+          isExiting
+            ? { duration: 0.15, ease: 'easeIn' }
+            : { type: 'spring', stiffness: 200, damping: 20, mass: 0.8 }
+        }
       >
         <div
           className={`h-full flex ${!planetOnRight ? 'flex-row-reverse' : ''}`}
@@ -576,8 +571,15 @@ export default function PlanetSection({
       >
         <motion.div
           onMouseEnter={activate}
-          animate={{ x: planetShift }}
-          transition={{ type: 'spring', stiffness: 200, damping: 20, mass: 0.8 }}
+          animate={{
+            x: isExiting ? planetShift + planetExitOffset : planetShift,
+            opacity: isExiting ? 0 : 1,
+          }}
+          transition={
+            isExiting
+              ? { duration: 0.3, ease: 'easeIn' }
+              : { type: 'spring', stiffness: 200, damping: 20, mass: 0.8 }
+          }
         >
           <button
             ref={planetBtnRef}

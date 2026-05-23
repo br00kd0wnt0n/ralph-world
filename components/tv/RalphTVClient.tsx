@@ -36,10 +36,10 @@ export default function RalphTVClient({
       animate="animate"
     >
       {/* Planet + white bg layered with content */}
-      <section className="relative">
+      <section className="relative" style={{ marginTop: 32 }}>
         {/* Background - animates FIRST */}
         <motion.div variants={sectionBgNoIntroVariants} className="absolute inset-0 z-0">
-          <div className="relative w-full" style={{ height: 270 }}>
+          <div className="relative w-full" style={{ height: 270, marginTop: 12 }}>
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
               style={{
@@ -67,7 +67,7 @@ export default function RalphTVClient({
           </div>
           <div
             className="absolute bg-white"
-            style={{ top: 270, left: 0, right: 0, bottom: 0 }}
+            style={{ top: 282, left: 0, right: 0, bottom: 0 }}
           />
         </motion.div>
 
@@ -75,7 +75,6 @@ export default function RalphTVClient({
         <motion.div
           variants={sectionContentNoIntroVariants}
           className="relative z-10 px-2 md:px-6 pb-6 md:pb-16"
-          style={{ paddingTop: 200 }}
         >
           <div className="max-w-6xl mx-auto">
             <TVSet

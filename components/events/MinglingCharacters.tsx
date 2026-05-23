@@ -36,7 +36,11 @@ interface Event {
   descriptionShort?: string | null
   eventDate?: Date | null
   locationName?: string | null
+  locationAddress?: string | null
+  locationPostcode?: string | null
   accentColour?: string | null
+  thumbnailUrl?: string | null
+  externalTicketUrl?: string | null
 }
 
 interface MinglingCharactersProps {
@@ -54,6 +58,9 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
   const statesRef = useRef<CharacterState[]>([])
   const rafRef = useRef<number>(0)
   const [activeArm, setActiveArm] = useState<number | null>(null)
+  // Expanded state — when set, hides other arms, centers the active one,
+  // and grows the panel into a 2-col layout. URL becomes /events/[slug].
+  const [expandedArm, setExpandedArm] = useState<number | null>(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -149,9 +156,41 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
       description: event?.descriptionShort || '',
       date: formatDate(event?.eventDate),
       location: event?.locationName || '',
+      locationAddress: event?.locationAddress || '',
+      locationPostcode: event?.locationPostcode || '',
       accentColour: event?.accentColour || null,
+      thumbnailUrl: event?.thumbnailUrl || null,
+      externalTicketUrl: event?.externalTicketUrl || null,
     }
   })
+
+  // On mount, check the URL for `?show=slug` (set by the /events/[slug]
+  // redirect page). If it matches an arm, open it in expanded mode.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const slug = params.get('show')
+    if (!slug) return
+    const idx = arms.findIndex((a) => a.slug === slug)
+    if (idx < 0) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveArm(idx)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setExpandedArm(idx)
+    // Use the unpatched History.prototype method (see handleShowMore).
+    History.prototype.replaceState.call(window.history, null, '', `/events/${slug}`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Close expanded panel on back/forward navigation. pushState doesn't
+  // notify Next.js, so popstate is the only signal we'll get from the
+  // back button while the user stays inside the events page.
+  useEffect(() => {
+    function onPopState() {
+      setExpandedArm(null)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
 
   // Calculate arm positions based on active state
   // When clicked: clicked arm + arms on same side bunch together, arms on opposite side stay in place
@@ -223,14 +262,35 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
   }
 
   const isAnyActive = activeArm !== null
+  const isExpanded = expandedArm !== null
 
   const handleArmClick = (index: number) => {
+    // Ignore arm clicks while expanded — other arms are off-screen and
+    // shouldn't re-open the mini panel until the user closes the expanded.
+    if (isExpanded) return
     setActiveArm(index)
+  }
+
+  const handleShowMore = (index: number) => {
+    const slug = arms[index].slug
+    if (!slug) return
+    // Use the unpatched History.prototype.pushState directly. Next.js 16's
+    // App Router otherwise monitors `window.history.pushState` and treats
+    // a path change to `/events/[slug]` as a soft navigation (FrozenRouter
+    // fade-out, RSC refetch, re-mount), which destroys our local expanded
+    // state. Going through the prototype bypasses Next.js's patched method.
+    History.prototype.pushState.call(window.history, null, '', `/events/${slug}`)
+    setExpandedArm(index)
   }
 
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent triggering arm click
-    setActiveArm(null)
+    if (isExpanded) {
+      History.prototype.pushState.call(window.history, null, '', '/events')
+      setExpandedArm(null)
+    } else {
+      setActiveArm(null)
+    }
   }
 
   return (
@@ -243,17 +303,25 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
       {arms.map((arm, i) => {
         const { left, bunchDirection } = getArmPosition(i)
         const isActive = activeArm === i
+        const isThisExpanded = expandedArm === i
         const panelOnRight = bunchDirection === 'right' || (bunchDirection === null && i < eventCount / 2)
+
+        // When expanded, the panel grows to a 2-col layout and centres on
+        // the active arm (which is also centred horizontally).
+        const panelWidth = isThisExpanded ? 760 : 388
+        const panelHeight = isThisExpanded ? 420 : 276
+        const wrapperTransform = isThisExpanded
+          ? 'translateX(-50%)'
+          : panelOnRight ? 'translateX(-80%)' : 'translateX(-20%)'
 
         return (
           <div
             key={`panel-${i}`}
             className="absolute z-[15] transition-all duration-500 ease-out pointer-events-none"
             style={{
-              bottom: -100 + arm.height - 150, // Align with arm top + panel offset
-              left: `${left}%`,
-              // Offset to position over the hand - hands are at edges of arm images
-              transform: panelOnRight ? 'translateX(-80%)' : 'translateX(-20%)',
+              bottom: isThisExpanded ? 205 : -100 + arm.height - 150,
+              left: isThisExpanded ? '50%' : `${left}%`,
+              transform: wrapperTransform,
             }}
           >
             {/* Panel */}
@@ -262,20 +330,22 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
                 isActive ? 'opacity-100 pointer-events-auto' : 'opacity-0'
               }`}
               style={{
-                width: 388,
-                height: 276,
+                width: panelWidth,
+                height: panelHeight,
                 borderRadius: 12,
                 position: 'relative',
                 backgroundColor: arm.accentColour || 'var(--color-ralph-green)',
                 transform: isActive
-                  ? `scale(1) rotate(${arm.panelRotation}deg)`
+                  ? `scale(1) rotate(${isThisExpanded ? 0 : arm.panelRotation}deg)`
                   : `scale(0) rotate(${panelOnRight ? 100 : -100}deg)`,
-                transformOrigin: panelOnRight ? 'bottom right' : 'bottom left',
+                transformOrigin: isThisExpanded
+                  ? 'bottom center'
+                  : panelOnRight ? 'bottom right' : 'bottom left',
               }}
             >
-              {/* Close button */}
+              {/* Close button — top-right when expanded, otherwise mirrors panel side */}
               <div
-                className={`absolute top-4 z-10 ${panelOnRight ? 'right-4' : 'left-4'}`}
+                className={`absolute top-4 z-10 ${isThisExpanded || panelOnRight ? 'right-4' : 'left-4'}`}
                 style={{ position: 'absolute' }}
               >
                 {/* Shadow */}
@@ -318,55 +388,151 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
                 </button>
               </div>
 
-              {/* Event content */}
-              <div className={`p-6 flex flex-col h-full text-black ${panelOnRight ? '' : 'text-right items-end'}`}>
-                {/* Title */}
-                <h3
-                  style={{
-                    fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
-                    fontWeight: 600,
-                    fontSize: 24,
-                    lineHeight: '100%',
-                    letterSpacing: 0,
-                    marginBottom: 12,
-                    paddingRight: panelOnRight ? 32 : 0,
-                    paddingLeft: panelOnRight ? 0 : 32,
-                  }}
-                >
-                  {arm.title}
-                </h3>
+              {/* Event content — mini (single col) vs expanded (2 col with poster) */}
+              {isThisExpanded ? (
+                <div className="flex flex-row h-full text-black gap-8 p-8 pr-12">
+                  {/* Left col — copy + CTA */}
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <h3
+                      style={{
+                        fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+                        fontWeight: 600,
+                        fontSize: 28,
+                        lineHeight: '110%',
+                        letterSpacing: 0,
+                        marginBottom: 16,
+                      }}
+                    >
+                      {arm.title}
+                    </h3>
 
-                {/* Description */}
-                {arm.description && (
-                  <p
-                    className="text-body-sm"
-                    style={{ marginBottom: 12, opacity: 0.8 }}
-                  >
-                    {arm.description}
-                  </p>
-                )}
+                    {arm.description && (
+                      <p
+                        className="text-body-sm"
+                        style={{ marginBottom: 16, opacity: 0.85 }}
+                      >
+                        {arm.description}
+                      </p>
+                    )}
 
-                {/* Date & Location */}
-                {(arm.date || arm.location) && (
-                  <p
+                    {arm.date && (
+                      <p
+                        style={{
+                          fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+                          fontWeight: 600,
+                          fontSize: 16,
+                          lineHeight: '20px',
+                          letterSpacing: 0,
+                          marginBottom: 12,
+                        }}
+                      >
+                        {arm.date}
+                      </p>
+                    )}
+
+                    {(arm.location || arm.locationAddress || arm.locationPostcode) && (
+                      <address
+                        className="not-italic"
+                        style={{
+                          fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+                          fontWeight: 600,
+                          fontSize: 16,
+                          lineHeight: '22px',
+                          letterSpacing: 0,
+                          marginBottom: 20,
+                          whiteSpace: 'pre-line',
+                        }}
+                      >
+                        {[arm.location, arm.locationAddress, arm.locationPostcode]
+                          .filter(Boolean)
+                          .join('\n')}
+                      </address>
+                    )}
+
+                    <div className="mt-auto">
+                      {arm.externalTicketUrl ? (
+                        <Button href={arm.externalTicketUrl} label="Get tickets" />
+                      ) : (
+                        <Button label="Subscribe for ticket access" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right col — poster */}
+                  <div className="flex-1 flex items-center justify-center">
+                    {arm.thumbnailUrl ? (
+                      <img
+                        src={arm.thumbnailUrl}
+                        alt={arm.title}
+                        className="max-w-full max-h-full object-contain"
+                        style={{ borderRadius: 8 }}
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{
+                          backgroundColor: 'rgba(0,0,0,0.08)',
+                          borderRadius: 8,
+                          fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+                          fontSize: 14,
+                          opacity: 0.5,
+                        }}
+                      >
+                        Poster
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className={`p-6 flex flex-col h-full text-black ${panelOnRight ? '' : 'text-right items-end'}`}>
+                  {/* Title */}
+                  <h3
                     style={{
                       fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
                       fontWeight: 600,
-                      fontSize: 16,
-                      lineHeight: '18px',
+                      fontSize: 24,
+                      lineHeight: '100%',
                       letterSpacing: 0,
-                      marginBottom: 16,
+                      marginBottom: 12,
+                      paddingRight: panelOnRight ? 32 : 0,
+                      paddingLeft: panelOnRight ? 0 : 32,
                     }}
                   >
-                    {arm.date}{arm.date && arm.location ? ' - ' : ''}{arm.location}
-                  </p>
-                )}
+                    {arm.title}
+                  </h3>
 
-                {/* Show me more button */}
-                <div className="mt-auto">
-                  <Button href={`/events/${arm.slug}`} label="Show me more" />
+                  {/* Description */}
+                  {arm.description && (
+                    <p
+                      className="text-body-sm"
+                      style={{ marginBottom: 12, opacity: 0.8 }}
+                    >
+                      {arm.description}
+                    </p>
+                  )}
+
+                  {/* Date & Location */}
+                  {(arm.date || arm.location) && (
+                    <p
+                      style={{
+                        fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+                        fontWeight: 600,
+                        fontSize: 16,
+                        lineHeight: '18px',
+                        letterSpacing: 0,
+                        marginBottom: 16,
+                      }}
+                    >
+                      {arm.date}{arm.date && arm.location ? ' - ' : ''}{arm.location}
+                    </p>
+                  )}
+
+                  {/* Show me more — opens expanded view (URL + layout) */}
+                  <div className="mt-auto">
+                    <Button onClick={() => handleShowMore(i)} label="Show me more" />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )
@@ -382,21 +548,31 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
       >
         {arms.map((arm, i) => {
           const { left } = getArmPosition(i)
+          const isThisExpanded = expandedArm === i
+          // When ANY arm is expanded, non-expanded arms slide down out of
+          // view. The expanded arm centers horizontally (left: 50%).
+          const effectiveLeft = isThisExpanded ? 50 : left
+          const verticalOffset = isExpanded
+            ? isThisExpanded
+              ? 50              // active arm drops 50px to nest under the expanded panel
+              : arm.height + 100 // others slide all the way off-screen
+            : 0
 
           return (
             <div
               key={`arm-${i}`}
-              className={`group absolute z-20 cursor-pointer pointer-events-auto transition-all duration-500 ease-out ${
+              className={`group absolute z-20 transition-all duration-500 ease-out ${
                 isAnyActive ? '' : 'animate-wave'
-              }`}
+              } ${isExpanded && !isThisExpanded ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
               style={{
                 bottom: -100,
-                left: `${left}%`,
-                transform: 'translateX(-50%)',
+                left: `${effectiveLeft}%`,
+                transform: `translateX(-50%) translateY(${verticalOffset}px)`,
                 transformOrigin: 'bottom center',
                 animationDelay: `${(i * 0.7) % 2}s`,
                 animationDuration: `${1.8 + (i % 4) * 0.3}s`,
                 animationPlayState: isAnyActive ? 'paused' : 'running',
+                opacity: isExpanded && !isThisExpanded ? 0 : 1,
               }}
               onClick={() => handleArmClick(i)}
             >

@@ -44,7 +44,7 @@ export default function PinkDropdown({ width, right, children }: PinkDropdownPro
       initial="hidden"
       animate="visible"
       variants={panelVariants}
-      className="absolute top-full z-50"
+      className="absolute top-full z-[70]"
       style={{ marginTop: 12, width, right, transformOrigin: 'top right' }}
     >
       {/* Pink notch — sits behind the panel by DOM order, tip pokes above.

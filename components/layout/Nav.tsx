@@ -132,12 +132,13 @@ export default function Nav() {
     <>
       {/* ── Utility Bar (desktop) ── */}
       <div
-        className="hidden min-[1200px]:flex items-center justify-between px-6 text-xs fixed top-0 left-0 right-0 z-50"
+        className="hidden min-[1200px]:flex items-center justify-between px-6 text-xs fixed top-0 left-0 right-0 z-50 pointer-events-none"
         style={{ height: 77 }}
       >
-        {/* Stepped blur background - 11 strips of 7px each with decreasing blur */}
+        {/* Stepped blur background - 11 strips of 7px each with decreasing blur.
+            pointer-events: none so clicks pass through to the main nav below it. */}
         <div
-          className="absolute inset-0 -z-10"
+          className="absolute inset-0 -z-10 pointer-events-none"
           style={{
             opacity: navFixed ? 1 : 0,
             transition: 'opacity 0.3s ease-out',
@@ -164,7 +165,7 @@ export default function Nav() {
           })}
         </div>
         {/* Left: ralph world circle logo + Subscribe + Login */}
-        <div className="flex items-center">
+        <div className="flex items-center pointer-events-auto">
           {pathname === '/' ? (
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -268,7 +269,7 @@ export default function Nav() {
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-6 mid:gap-4">
+        <div className="flex items-center gap-6 mid:gap-4 pointer-events-auto">
           <Link
             href="/work-with-us"
             className={`text-header-btn border-2 border-white text-white px-4 transition-colors flex items-center justify-center ${
@@ -312,7 +313,7 @@ export default function Nav() {
       </div>
 
       {/* ── Main Nav Bar ── */}
-      <nav className="relative z-[60] pointer-events-none">
+      <nav className="relative z-[40] pointer-events-none">
         {/* Desktop */}
         <div
           className="hidden min-[1200px]:flex flex-col items-center"

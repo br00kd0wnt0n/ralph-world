@@ -4,6 +4,239 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-05-16 — Events arms interaction + nav stability + planet exits
+
+**Session goal:** Wire the Events page arms feature (click to reveal
+event info panels with bunching behaviour), stabilise the nav fix/unfix
+toggling on short pages, and finish the homepage planet exit animation
+on page transitions. See [docs/session-2026-05-16-events-page.md](docs/session-2026-05-16-events-page.md).
+
+### Events page — MinglingCharacters
+- **Click-to-reveal arm interaction.** Each active event is represented by a coloured arm (`blue_arm.svg`, `green_arm.svg`, `orange_arm.svg`, `pink_arm.svg`). Clicking an arm:
+  - Bunches neighbouring arms toward the clicked one (left-side arms bunch right, right-side arms bunch left)
+  - Reveals a 388×276 event info panel coloured by the event's `accentColour` (falls back to ralph-green)
+  - Panel spin-in: starts `scale(0) rotate(±100deg)`, lands at `scale(1) rotate(±slant)` where slant is a small random angle. Transform origin = bottom corner adjacent to the hand
+  - Wave animation on idle arms pauses while any arm is active
+- **Data integration.** `MinglingCharacters` now receives the full `events` array (slug, title, descriptionShort, eventDate, locationName, accentColour) instead of just `eventCount`.
+- **Outline on hover.** 4px black hard-edge outline implemented via stacked `drop-shadow` filters.
+- **Overflow.** `EventsClient` section dropped `overflow-x-hidden` to let panels overflow the container; arms container uses `overflow-x: visible` + `overflow-y: clip` to hide arm bases.
+
+### Nav stability
+- **Hysteresis fix** in `components/layout/Nav.tsx` — nav now fixes at scrollY 98px (down) and only unfixes at 70px (up). The 28px dead zone stops the rapid fix/unfix toggle that happened on short pages near the boundary.
+- **Stepped blur header.** Replaced the single backdrop blur with 11 horizontal 7px strips (12px blur at top → ~0 at bottom, opacity 0.5 → ~0). Sits at `-z-10` so it doesn't block header buttons.
+- Nav padding-top trimmed 24px → 16px to match header button distance.
+
+### Page transitions — homepage planets
+- Replaced the custom `PageTransitionContext.isExiting` flag with Framer Motion's `usePresence()` hook in `PlanetSection`. When `!isPresent`, the planet slides 100px toward its nearest screen edge and fades; the colour panel fades quickly (0.15s) so it doesn't briefly enlarge during exit.
+- Exit direction map (`PLANET_EXIT_DIRECTIONS` in `lib/animation/page-transitions.ts`): TV / events / lab → right; magazine / shop → left.
+- `app/template.tsx` exit timing raised to 0.35s so child planet animations get to complete; easing now uses cubic-bezier arrays for TS-compatible `Variants` typing.
+
+---
+
+## 2026-05-13 — Header & nav redesign + Events arms scaffold
+
+**Session goal:** Reskin the utility-bar header (rounded buttons,
+scroll-aware logo + Subscribe pill, transparent background → 50%
+black when nav fixes), introduce the MinglingCharacters arm scaffold
+on Events, and rename `/play` → `/work-with-us`. See
+[docs/session-2026-05-13-header-nav-redesign.md](docs/session-2026-05-13-header-nav-redesign.md).
+
+### Header utility bar
+- Removed the pink bottom border + solid black background. Bar is transparent by default and animates to `rgba(0,0,0,0.5)` when the main nav fixes itself.
+- All header buttons now: 44px tall, 22px radius, 2px white border, Gooper Trial 700/14px, transparent background → `bg-ralph-pink` on hover/active.
+- Layout change: "Subscribe to Ralph" + "Log in" now left-side; "Work with us" + Theme + Language/avatar right-side. 24px gap throughout.
+- **Scroll-aware logo + Subscribe.** Past 24px scroll the circular logo scales 0→1 with an ease-out-back bounce, and the Subscribe button margin animates 0→68px to make room.
+
+### Main nav
+- Logo: 98px height, 24px from top. Items: 44px height row, centred, 32px bottom padding.
+- **Fixed-nav behaviour.** Past ~122px scroll (refined to 98px the following session), the nav row fixes at `top: 16px` (aligned with header buttons). Item gap collapses 70px → 24px, a 44px spacer prevents content jump, z-index bumps to 60 (above the header bar).
+
+### Events page — arms scaffold
+- First pass of `MinglingCharacters`: arms cycle through 4 colours, positioned 10–90% across the container, 500–550px tall (deterministic per index), sticking up 50px below the container bottom. Component accepts an `eventCount` prop (replaced by full `events` array in the 2026-05-16 session).
+- Starfield enhancement: horizontal star movement on `/events` (faster, single direction) — detected via `usePathname()`.
+
+### Routes
+- `app/play/` renamed → `app/work-with-us/`. Nav and the "Work with us" link updated.
+
+### Theme toggle
+- Swatch enlarged 28×28 → 44×44 circular (border-radius 50%), 2px white border, Gooper Trial 700/14px label.
+
+---
+
+## 2026-05-10 — Article overlay redesign + Join Ralph + Work With Us parallax
+
+**Session goal:** Rebuild the article overlay against Tim's design,
+add the `/join-ralph` carousel page, and build the
+parallax-planet "Expertise" + "What's Next" section on the Work With
+Us (then `/play`) page. See [docs/session-2026-05-10.md](docs/session-2026-05-10.md).
+
+### Article overlay rebuild (`components/magazine/ArticleOverlay.tsx`)
+- Full-screen container with the article's lead image repeating as a 70px-padded outer frame; theme-coloured (CMS) inner panel with 110px padding; 1024px max content width.
+- Close button: 48×48 square, 1px black border, transparent, positioned 86px from top/right.
+- Typography (Gooper Trial for titles, intro, subtitle; Roboto 500 15px for body), 420×2px black dividers between title/categories and bylines/share buttons.
+- Share buttons: 38px tall, `#EBEBEB` fill, 2px black border + 4px offset shadow, Gooper 600 16px (Facebook / X / Link).
+- Categories: 34px tall black pills, white uppercase text.
+- **Direct-URL fix.** Created `app/magazine/[slug]/page.tsx` that redirects to `/magazine?read=[slug]` so visiting an article URL directly or refreshing no longer 404s.
+
+### Magazine category tabs
+- Selected tab now uses `underline_magazine.svg` (same as the nav active underline), text stays black (not orange), underline scaled to 80% (114×8px).
+
+### Join Ralph (`/join-ralph`)
+- "Get started" / "Subscribe to Ralph" button now links to `/join-ralph` instead of opening the SubscribeModal. Header button gets pink background when on the route.
+- 4-slide carousel — slide 1 is 2-column, slides 2–4 single-column centred — with animated left/right slide transitions, Back/Next shadow buttons, and progress dots.
+- Planet decoration uses the new `planet_background_creative.svg` / `planet_foreground_creative.svg` assets.
+
+### Work With Us parallax (`components/play/`)
+- `ExpertisePlanet` (planet 1) + `WhatsNextPlanet` (planet 2) parallax against scroll: planet 2 starts -200px and moves +500px; planet 1 starts +200px and moves -300px so they cross. Shadow follows planet 1.
+- `ParallaxPlanets.tsx` wraps both with `useSpring` (stiffness 100, damping 30) for smooth interpolation; planet SVGs converted to PNGs to keep transforms GPU-cheap. `willChange: transform` on all animated elements.
+- ExpertisePlanet bullets alternate left/right alignment with randomly-selected & rotated star markers (`bullet_star_01/02/03.svg`).
+- "Play with Ralph" nav link gets `underline_creative.svg` on `/play` (now `/work-with-us`); text stays white, not pink.
+- Hero on the page uses `SectionIntro` with `text_play_with_ralph.svg`.
+
+---
+
+## 2026-05 (mid-cycle) — Nav + dropdown redesign + layered planet pattern
+
+**Session goal:** Re-skin the utility-bar header, extract the
+"layered planet decoration" pattern from Magazine and apply it across
+Events / Lab / TV / Shop, and introduce a single `PinkDropdown` shell
+behind both the Theme and Language pickers. Shipped in commit
+`c1c0814`. See [docs/nav-and-dropdown-redesign.md](docs/nav-and-dropdown-redesign.md).
+
+### Header / utility bar reskin
+- PNG logo replaced with inlined `ralph_logo_circle.svg` so the face paths can pick up `currentColor` (hover turns ralph-pink).
+- Consistent `text-chrome` utility (Roboto 700/13px) across the Play with Ralph link, Log in link, Theme trigger, and Get Started CTA.
+- Get Started: transparent fill, 2px white border, 8px radius, hover → `bg-ralph-pink`.
+- Active nav items get a hand-drawn underline SVG behind the label (per-section colour: TV purple, Magazine orange, Events teal, Lab yellow, Shop teal). Mobile nav keeps the old solid bar.
+
+### `PinkDropdown` shell (`components/layout/PinkDropdown.tsx`)
+- New shared shell that gives both the Theme and Language dropdowns the same chrome — pink wrapper with 19px paddingRight/Bottom for the offset, white card with `3px solid #EA128B` border that hides into the pink offset, 45° angled corners via `clip-path`, pointing notch that lands over a configurable trigger spot via the `right` prop.
+- Three exported framer-motion variant objects to wire item cascades: `panelVariants` (spring pop-in 420/22, rotate -2°, origin top-right), `stackVariants` (staggerChildren 0.06, delayChildren 0.1), `panelItemVariants` (fade + y -8).
+- Both Theme (`ThemeToggle`) and Language (`LanguageModal`) refactored to plug into it — change one shell, both panels update.
+
+### Layered planet pattern across section pages
+- The Magazine page's 260px planet decoration block was previously bespoke; extracted into a repeatable two-layer `<section>`:
+  - Absolute background layer: planet bg + fg SVG layers (270px tall) + white div filling everything below
+  - Relative content layer with `paddingTop: 200` and optional negative-margin overflow on its first child
+- Applied to Magazine, Events, Lab, TV, and Shop. Planet SVGs use `preserveAspectRatio="none"` so cover-sized backgrounds stretch to any wrapper width.
+- New planet assets in `public/imgs/`: `planet_background_*.svg` + `planet_foreground_*.svg` for `events`, `lab`, `tv`, plus `creative` (used by `/join-ralph` and `/work-with-us`). Shop reuses `_tv` planets as a placeholder.
+- Events content (CrowdBackground / EventCreature / EventFlyout) intentionally cleared below the planet for rebuild — files preserved on disk for reuse. The arm-based MinglingCharacters concept replaces it in the 2026-05-13/16 sessions.
+
+### Decisions made
+- **One shell, two pickers.** A single `PinkDropdown` makes the offset shadow, notch, and pop-in identical across Theme + Language and means future polish lands in one file.
+- **Unified planet sections.** The previous "fixed-height decoration on top of a separate white panel" approach made it impossible to overflow content up over the planet without margin hacks. The new pattern uses `paddingTop` on the content layer as the single vertical knob.
+- **Shop planet placeholder retained.** Reusing `_tv` planet assets is intentionally visible until proper Shop planet assets ship.
+
+---
+
+## 2026-05 (mid-cycle) — Page transitions (Frozen Router)
+
+**Session goal:** Wire smooth enter/exit animations between routes in
+the Next.js App Router. See [docs/page-transitions.md](docs/page-transitions.md).
+
+### Added
+- `components/layout/PageTransitionWrapper.tsx` — orchestrates page transitions with `AnimatePresence mode="wait"` keyed on pathname. Uses a **FrozenRouter** internal component that captures `LayoutRouterContext` at mount, so when AnimatePresence detects the pathname change, the exiting subtree renders with its frozen context (i.e. the old page) while the new content mounts behind it. Scrolls to top on `onExitComplete` (`behavior: 'instant'` so it doesn't fight the animation).
+- `useTransitionState()` hook (exported from the same file) — any child can read `isExiting` to drive its own exit animations.
+- `lib/animation/page-transitions.ts` — exit timing variants and a `PLANET_EXIT_DIRECTIONS` map used by `PlanetSection` to slide each homepage planet toward its nearest screen edge on exit.
+- Section pages got sequenced entry variants (`sectionContainerVariants`, `sectionIntroVariants`, `sectionBgVariants`, `sectionContentVariants`) so intro → background/planet → content fades in 0.0s / 0.3s / 0.5s.
+
+### Decisions made
+- **PageTransitionWrapper lives in `app/layout.tsx`, not `template.tsx`.** Template is recreated on every navigation, which would destroy AnimatePresence before it could run the exit. Layout persists.
+- **`mode="wait"`** so old content fully exits before new content mounts. Avoids the cross-fade flash that "popLayout" would introduce.
+- **Quick panel fade.** Homepage `PlanetSection`'s coloured panel fades over 0.15s separately from the planet's 0.3s slide, so the big coloured square doesn't briefly become visible mid-exit.
+
+---
+
+## 2026-05 (mid-cycle) — Homepage parallax overhaul + brand colour update
+
+**Session goal:** Reimagine the homepage as a multi-layer parallax
+space scene, ship the typography system, refresh the brand palette,
+introduce the reusable `Button` component, and redesign the footer.
+Branch: `feat/home-parallax`. See [docs/homepage-parallax-changes.md](docs/homepage-parallax-changes.md).
+
+### Parallax layer system
+- **`components/layout/Starfield.tsx`** rewritten: 350 mixed particles across 3 depth bands (far/mid/near, with the near band rendered as sparkle crosses), subtle pink/blue/purple/warm tints, sine-wave drift so the field feels alive even without scroll, max 2 shooting stars on a ~16s cadence. Hidden on mobile, only renders on `cosy-dynamics`. Initialises `scrollY` from `window.scrollY` to prevent the first-interaction jump.
+- **`components/layout/MidgroundLayer.tsx`** — 3 illustrated items (moon, planet, satellite) + a flying spaceship that loops right-to-left on 18s. All scroll updates rAF-batched, transforms only (no `top` manipulation).
+- **`components/layout/ForegroundLayer.tsx`** — 3 illustrated items (alien rocket, saucer, spaceship) scrolling at 1.3–1.4× content speed.
+- Z-stack: Starfield z-0 → Midground z-[1] → page content z-10 → Foreground z-20.
+
+### Planet sections (`components/home/PlanetSection/`)
+- Complete interaction rewrite. Sections now have three reveal states:
+  1. **Scroll peek** — when the section center enters the middle 90% of the viewport, the panel peeks 20px from behind the planet via animated `clip-path: inset()`
+  2. **Hover/tap to open** — sets `isActive`, panel slides out fully (spring 200/20/0.8). Planet `pointer-events` disabled while open so the panel buttons are clickable.
+  3. **Auto-close** — mouse/scroll observer closes the panel when the cursor leaves the 90% viewport bounds or the user scrolls away.
+- Panel: fixed 276px height, two columns of 340px each, 20px gap; column order reverses for planet-on-left sections. Staggered content reveal (col 1 +150ms, col 2 +300ms).
+- Title/subtitle block sits to the side of each planet (toward page center), parallaxes at 30% of the planet's shift when the panel opens. Per-section title images: `title_<section>.png` (and `title_<section>_secondary.png` inside the panel).
+- Added a Ralph TV section (brand purple `#7B3FE4`) as the first planet. Order: TV (right) → Magazine (left) → Events (right) → Shop (left) → Lab (right). Vertical gap between sections reduced (`py-4 md:py-6`).
+
+### Brand colours updated
+| Token | Old | New |
+|---|---|---|
+| `--color-ralph-pink` | `#FF2098` | `#EA128B` |
+| `--color-ralph-blue` (was Teal) | `#00C4B4` | `#5FBCBF` |
+| `--color-ralph-yellow` | `#FFE566` | `#FBC000` |
+| `--color-ralph-green` | `#4CAF50` | `#44B758` |
+| `--color-ralph-orange` | `#FF6B35` | `#EE6626` |
+| `--color-ralph-purple` | `#7B2FBE` | `#7B3FE4` |
+
+Panel text colour rule: purple panel = white text + white buttons; all other panels = black text + black buttons.
+
+### Typography system
+- **Roboto** (Google Fonts, 400/600/700/800) loaded via `next/font/google`.
+- **Gooper Trial SemiBold** loaded via `@font-face` from `public/fonts/Gooper7-SemiBold.woff{,2}`.
+- Body default switched from Arial → Roboto.
+- New text utilities defined as `@utility` in `globals.css`: `text-body`, `text-body-sm`, `text-body-bold`, `text-chrome`, `text-tag`, `text-intro`, `text-btn`. See [docs/homepage-parallax-changes.md](docs/homepage-parallax-changes.md) for the size/line-height/weight table.
+
+### `Button` component (`components/ui/Button.tsx`)
+- Reusable 43px-tall button with separate shadow element offset 4px down+right. Hover shifts the button 2px toward the shadow; click flushes it. Accepts either `href` (Next.js Link) or `onClick` (button).
+
+### Page nav (`components/layout/PageNav.tsx`)
+- New reusable in-page nav strip: wordmark logo 98px tall, items in Gooper Trial 22px with 70px gaps. Transparent background so the starfield shows through. Sits 16px below the header, 50px above page content.
+
+### Hero + Footer
+- Hero heading replaced with custom image (`text_welcome_to_our_world.png`), `min-h-[85vh]` constraint dropped.
+- Footer planet section: `footer_planet.png` centred, wordmark + "Entertainment People" overlay justified to the bottom of the page with 180px top padding.
+- Footer bar: 103px tall, 4px pink top border, Globe animation bottom-left, "Contact us" + 3 social icon buttons (TikTok / Instagram / YouTube) right-aligned with 32px gap. Icon hover → pink circle with black icon.
+- `components/layout/Globe.tsx` ported from previous codebase: 120px Globe cycling through London/America/Tokyo/Mumbai with an 8-frame spin between holds, all frames pre-rendered as hidden images for smooth swaps.
+
+---
+
+## 2026-05 (mid-cycle) — Magazine page redesign
+
+**Session goal:** Apply Tim's Magazine designs — decorative planet
+section, redesigned Cover Story, dashed-separator category tabs, 6-up
+article grid with explode-on-hover. Branch: `feat/page-transitions`.
+See [docs/magazine-page-redesign.md](docs/magazine-page-redesign.md).
+
+### Page structure (top → bottom)
+| Section | Component | Notes |
+|---|---|---|
+| Intro | `SectionIntro` | `text_fun_glossy_mag.svg`, 575px width |
+| Planet decoration | inline in `MagazineClient` | Two-layer SVG bg/fg + "Cover Story" title baked in (later extracted into the cross-page planet pattern) |
+| Cover story | `CoverStory.tsx` | 1040px max, 45/55 col split, diagonal orange ribbon |
+| Category tabs | `CategoryTabs.tsx` | 502px max, dashed separators, 25% width per tab, no gap |
+| Article grid | `ArticleGrid.tsx` | 3×2 grid, 1px black gaps, explode-on-hover |
+
+### Cover story
+- 45/55 column split, 32px gap, 1088px container (1040 + 48 padding).
+- Image aspect 1.629, 12px radius, with a CSS-rotated `bg-ralph-orange` diagonal ribbon at the top-left corner.
+- Typography: Roboto 800/12 for category tags, Gooper Trial 600/18 for tagline + title, Roboto 600/14 for body.
+- Button: reusable `Button` (logged-in → "Read now", guest → "Sign up to read").
+
+### Category tabs
+- Dashed separators top + bottom (`dashed_separator_top.svg`, `dashed_separator_bottom.svg`), Gooper Trial 18px, black default → `ralph-orange` active with a 2px underline. Selection updates the URL via `window.history.pushState` (no server fetch).
+
+### Article grid
+- 3×2 grid, 1168px max, 1px black border with 1px black gap (the gap-as-divider trick).
+- **Explode hover effect** — on hover each card pushes outward from the grid center by 16px and scales 1.04x. Hover overlay: yellow dashed inset frame, gradient bottom overlay, category tags in pink, title white, intro 70% white.
+- 6 placeholder articles render when the DB has no published rows.
+
+### Decisions made
+- Mounted the Cover Story title *inside* the planet decoration section (not floating above the next white section) to eliminate gaps between decoration and content. This became the seed for the cross-page layered planet pattern.
+- `Button` updated with `width: fit-content` so its shadow tracks the actual button width.
+
+---
+
 ## 2026-04-17 — Shop + Ralph TV redesign and broadcaster wiring
 
 Two streams of work this session: finished `/shop` with live Shopify

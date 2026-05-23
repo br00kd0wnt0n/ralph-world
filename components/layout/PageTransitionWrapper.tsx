@@ -7,9 +7,8 @@ import {
   useContext,
   useRef,
   useState,
-  useEffect,
+  useCallback,
   type ReactNode,
-  type ReactElement,
 } from 'react'
 import { LayoutRouterContext } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 
@@ -63,32 +62,49 @@ interface PageTransitionWrapperProps {
 export default function PageTransitionWrapper({ children }: PageTransitionWrapperProps) {
   const pathname = usePathname()
   const [isExiting, setIsExiting] = useState(false)
+  const [minHeight, setMinHeight] = useState<number | undefined>(undefined)
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  const captureHeight = useCallback(() => {
+    if (contentRef.current) {
+      setMinHeight(contentRef.current.offsetHeight)
+    }
+  }, [])
+
+  const clearHeight = useCallback(() => {
+    setMinHeight(undefined)
+  }, [])
 
   return (
     <TransitionContext.Provider value={{ isExiting }}>
-      <AnimatePresence
-        mode="wait"
-        initial={false}
-        onExitComplete={() => {
-          setIsExiting(false)
-          window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
-        }}
-      >
-        <motion.div
-          key={pathname}
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          onAnimationStart={(definition) => {
-            if (definition === 'exit') {
-              setIsExiting(true)
-            }
+      <div style={{ minHeight: minHeight ? `${minHeight}px` : undefined }}>
+        <AnimatePresence
+          mode="wait"
+          initial={false}
+          onExitComplete={() => {
+            setIsExiting(false)
+            clearHeight()
+            window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
           }}
         >
-          <FrozenRouter>{children}</FrozenRouter>
-        </motion.div>
-      </AnimatePresence>
+          <motion.div
+            ref={contentRef}
+            key={pathname}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            onAnimationStart={(definition) => {
+              if (definition === 'exit') {
+                captureHeight()
+                setIsExiting(true)
+              }
+            }}
+          >
+            <FrozenRouter>{children}</FrozenRouter>
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </TransitionContext.Provider>
   )
 }

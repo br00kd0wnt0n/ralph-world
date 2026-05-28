@@ -18,12 +18,17 @@ export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  // The PinkDropdown is portalled to document.body so it sits outside the
+  // trigger's DOM subtree. Track its panel here so the click-outside check
+  // doesn't immediately close the menu when the user clicks inside it.
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
+      const target = e.target as Node
+      if (ref.current?.contains(target)) return
+      if (panelRef.current?.contains(target)) return
+      setIsOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -36,19 +41,12 @@ export default function ThemeToggle() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 transition-colors ${
+        className={`text-header-btn flex items-center gap-2 mid:gap-0 transition-colors ${
           isOpen ? 'text-ralph-pink' : 'text-primary hover:text-ralph-pink'
         }`}
-        style={{
-          fontFamily: "'Gooper Trial', serif",
-          fontSize: 14,
-          fontWeight: 700,
-          lineHeight: 1,
-          letterSpacing: 0,
-        }}
       >
         <span
-          className="shrink-0"
+          className="theme-circle relative shrink-0"
           style={{
             width: 44,
             height: 44,
@@ -56,14 +54,33 @@ export default function ThemeToggle() {
             border: '2px solid white',
             background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`,
           }}
-        />
-        <span>Theme</span>
+        >
+          {/* Arrow centered on circle for mid screens */}
+          <svg
+            width="13"
+            height="7"
+            viewBox="0 0 13 7"
+            fill="none"
+            aria-hidden="true"
+            className="hidden mid:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
+            <path
+              d="M1 1L6.76191 6L12 1"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <span className="mid:hidden">Theme</span>
         <svg
           width="13"
           height="7"
           viewBox="0 0 13 7"
           fill="none"
           aria-hidden="true"
+          className="mid:hidden"
         >
           <path
             d="M1 1L6.76191 6L12 1"
@@ -76,7 +93,7 @@ export default function ThemeToggle() {
       </button>
 
       {isOpen && (
-        <PinkDropdown width={360} right={-33}>
+        <PinkDropdown width={360} right={-33} triggerRef={ref} panelRef={panelRef}>
           <motion.div variants={stackVariants} className="flex flex-col gap-2">
             {THEMES.filter((t) => !t.disabled).map((t) => {
               const swatchColors = SWATCH_COLORS[t.id] ?? ['#888', '#888', '#888']

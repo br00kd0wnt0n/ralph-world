@@ -28,11 +28,14 @@ export default function MobileMenu({
 
   useEffect(() => {
     if (isOpen) {
+      document.documentElement.style.overflow = 'hidden'
       document.body.style.overflow = 'hidden'
     } else {
+      document.documentElement.style.overflow = ''
       document.body.style.overflow = ''
     }
     return () => {
+      document.documentElement.style.overflow = ''
       document.body.style.overflow = ''
     }
   }, [isOpen])
@@ -40,14 +43,17 @@ export default function MobileMenu({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      <div className="flex items-center justify-end p-4">
+    <div className="fixed inset-0 z-[70] bg-black flex flex-col">
+      <div className="flex items-center justify-start px-4 py-3">
         <button
           onClick={onClose}
-          className="text-white text-2xl"
+          className="text-white"
           aria-label="Close menu"
         >
-          &#10005;
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <line x1="6" y1="6" x2="18" y2="18" />
+            <line x1="6" y1="18" x2="18" y2="6" />
+          </svg>
         </button>
       </div>
 

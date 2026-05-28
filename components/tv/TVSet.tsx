@@ -9,7 +9,6 @@ import LivePlayer from './LivePlayer'
 import TeletextShowInfo from './TeletextShowInfo'
 import TeletextSchedule from './TeletextSchedule'
 import SubscribeGate from './SubscribeGate'
-import TVControls from './TVControls'
 import type { ScheduleItem } from '@/lib/broadcaster/types'
 import { safeGet, safeSet } from '@/lib/safe-storage'
 
@@ -34,8 +33,38 @@ export default function TVSet({
   const { isLive } = useLiveStatus()
   const [overlay, setOverlay] = useState<TVOverlayState>('none')
   const [volume, setVolume] = useState(0.7)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [schedule, setSchedule] = useState<ScheduleItem[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
+  const volumeMeterRef = useRef<HTMLDivElement>(null)
+  const isDraggingVolume = useRef(false)
+  const sfxOn = useRef<HTMLAudioElement | null>(null)
+  const sfxOff = useRef<HTMLAudioElement | null>(null)
+
+  // Preload the button SFX so the first click isn't delayed by a network fetch.
+  useEffect(() => {
+    sfxOn.current = new Audio('/sfx/tv_button_on.m4a')
+    sfxOff.current = new Audio('/sfx/tv_button_off.m4a')
+  }, [])
+
+  // Track fullscreen state so the Fullscreen button can stay 'on' while active.
+  // The native fullscreen API can change state outside our click handler (Esc
+  // key, browser UI, OS), so we listen to fullscreenchange rather than only
+  // toggling on click.
+  useEffect(() => {
+    function onChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  function playSfx(state: 'on' | 'off') {
+    const audio = state === 'on' ? sfxOn.current : sfxOff.current
+    if (!audio) return
+    audio.currentTime = 0
+    audio.play().catch(() => {})
+  }
 
   useEffect(() => {
     const stored = safeGet('ralph-tv-volume')
@@ -98,6 +127,14 @@ export default function TVSet({
     }
   }
 
+  function updateVolumeFromPointer(clientY: number) {
+    const rect = volumeMeterRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const y = clientY - rect.top
+    const next = 1 - y / rect.height
+    setVolume(Math.max(0, Math.min(1, next)))
+  }
+
   const currentShow = schedule[0]
   const nextShow = schedule[1]
   const isGuest = !user
@@ -111,33 +148,36 @@ export default function TVSet({
   }
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 max-w-6xl mx-auto">
-      {/* Left: small character placeholder */}
-      <div className="hidden md:block w-16 h-24 bg-ralph-teal/10 rounded-lg items-center justify-center text-[10px] text-muted shrink-0 flex">
-        alien
-      </div>
+    <div className="flex flex-col items-center gap-4 max-w-5xl mx-auto">
+      {/* TV SET — graphic from public/imgs with the live screen positioned over its cutout */}
+      <div ref={containerRef} className="relative w-full">
+        <div
+          className="relative w-full mx-auto"
+          style={{ aspectRatio: '976.297 / 676.934' }}
+        >
+          {/* Ground — sits behind the TV, centered, slightly wider than the chrome
+              so it extends past the TV's left/right edges (ground SVG viewBox is
+              1198.409 wide vs 976.297 for the TV, hence ~122.7%). */}
+          <img
+            src="/imgs/tv_set_ground.svg"
+            alt=""
+            aria-hidden
+            className="absolute left-1/2 -translate-x-1/2 pointer-events-none select-none"
+            style={{ bottom: '-5.5%', width: '124%', maxWidth: 'none' }}
+          />
 
-      {/* TV SET */}
-      <div
-        ref={containerRef}
-        className="relative flex-1 w-full bg-surface rounded-xl md:rounded-3xl p-2 md:p-6 border-2 md:border-4 border-white/10 shadow-2xl"
-      >
-        {/* Bezel top: knobs */}
-        <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-3">
-          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-ralph-pink" />
-          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-ralph-yellow" />
-          <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-ralph-teal" />
-          <div className="flex-1" />
-          <div className="text-[9px] md:text-[10px] text-white/40 tracking-widest font-mono">
-            CH.01
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          {/* Screen */}
+          {/* Screen — sits behind the SVG; the SVG's screen cutout reveals it */}
           <div
-            className="relative aspect-[4/3] flex-1 bg-black rounded md:rounded-lg overflow-hidden border-2 border-black"
-            style={{ maxHeight: '60vh' }}
+            className="absolute bg-black overflow-hidden"
+            style={{
+              // Bounds derived from the screen cutout in tv_set_cropped.svg
+              // (viewBox 976.297 × 676.934). Pin to the cutout so the video
+              // lines up exactly with the painted bezel.
+              left: '9.3%',
+              top: '14.0%',
+              width: '63.9%',
+              height: '69.6%',
+            }}
           >
             {/* LivePlayer stays mounted whenever we have a live stream, so */}
             {/* HLS isn't torn down when overlays open or status blips */}
@@ -224,21 +264,253 @@ export default function TVSet({
             </AnimatePresence>
           </div>
 
-          {/* Right control panel (desktop) */}
-          <div className="hidden md:flex shrink-0 w-24">
-            <TVControls
-              overlay={overlay}
-              onToggleOverlay={setOverlay}
-              onFullscreen={handleFullscreen}
-              volume={volume}
-              onVolumeChange={setVolume}
-            />
+          {/* TV chrome — the SVG sits on top so its painted bezel frames the screen.
+              pointer-events disabled so overlay/screen interactions still pass through. */}
+          <img
+            src="/imgs/tv_set_cropped.svg"
+            alt=""
+            aria-hidden
+            className="absolute inset-0 w-full h-full pointer-events-none select-none"
+          />
+
+          {/* TV side panel — sits inside the TV's right-hand decorative area
+              (the speaker/control zone between ~73% and ~99% of the TV width).
+              Panel SVG viewBox is 169 × 380; rendered at ~17.3% of TV width
+              to match the TV's natural scale. Buttons overlay on top of it. */}
+          <div
+            className="absolute [container-type:inline-size]"
+            style={{
+              right: '2%',
+              top: '5.4%',
+              width: '17.3%',
+            }}
+          >
+            <div className="relative">
+              <img
+                src="/imgs/tv_panel_cropped.svg"
+                alt=""
+                aria-hidden
+                className="w-full h-auto select-none pointer-events-none"
+              />
+
+              {/* Buttons overlay — Show Info / Schedule / Full Screen,
+                  stacked in a column, each row = [toggle image] [label].
+                  Position is %-based so it scales with the panel. */}
+              <div
+                className="absolute flex flex-col gap-3"
+                style={{ left: '7%', top: '20%' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = overlay === 'show-info' ? 'none' : 'show-info'
+                    playSfx(next === 'show-info' ? 'on' : 'off')
+                    setOverlay(next)
+                  }}
+                  className="flex items-center gap-2 group"
+                >
+                  <img
+                    src={
+                      overlay === 'show-info'
+                        ? '/imgs/tv_button_on.svg'
+                        : '/imgs/tv_button_off.svg'
+                    }
+                    alt=""
+                    aria-hidden
+                    className="object-contain object-left select-none"
+                    style={{ width: '27.2cqi', height: '24.85cqi' }}
+                  />
+                  <span
+                    className="text-black"
+                    style={{
+                      fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                      fontWeight: 700,
+                      fontSize: '9cqi',
+                      lineHeight: 1.1875,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    Show info
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = overlay === 'schedule' ? 'none' : 'schedule'
+                    playSfx(next === 'schedule' ? 'on' : 'off')
+                    setOverlay(next)
+                  }}
+                  className="flex items-center gap-2 group"
+                >
+                  <img
+                    src={
+                      overlay === 'schedule'
+                        ? '/imgs/tv_button_on.svg'
+                        : '/imgs/tv_button_off.svg'
+                    }
+                    alt=""
+                    aria-hidden
+                    className="object-contain object-left select-none"
+                    style={{ width: '27.2cqi', height: '24.85cqi' }}
+                  />
+                  <span
+                    className="text-black"
+                    style={{
+                      fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                      fontWeight: 700,
+                      fontSize: '9cqi',
+                      lineHeight: 1.1875,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    Schedule
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    playSfx(isFullscreen ? 'off' : 'on')
+                    handleFullscreen()
+                  }}
+                  className="flex items-center gap-2 group"
+                >
+                  <img
+                    src={
+                      isFullscreen
+                        ? '/imgs/tv_button_on.svg'
+                        : '/imgs/tv_button_off.svg'
+                    }
+                    alt=""
+                    aria-hidden
+                    className="object-contain object-left select-none"
+                    style={{ width: '27.2cqi', height: '24.85cqi' }}
+                  />
+                  <span
+                    className="text-black"
+                    style={{
+                      fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                      fontWeight: 700,
+                      fontSize: '9cqi',
+                      lineHeight: 1.1875,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    Fullscreen
+                  </span>
+                </button>
+              </div>
+
+              {/* Volume slider — meter is the housing; the bar acts as a CSS
+                  mask over a black fill that grows up with volume; the switch
+                  is the knob that travels vertically. Sizes are %-of-panel. */}
+              <div
+                ref={volumeMeterRef}
+                className="absolute cursor-pointer select-none"
+                style={{
+                  left: '50%',
+                  top: '60%',
+                  transform: 'translateX(-50%)',
+                  width: '20.05cqi',
+                  height: '65.69cqi',
+                  touchAction: 'none',
+                }}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId)
+                  isDraggingVolume.current = true
+                  updateVolumeFromPointer(e.clientY)
+                }}
+                onPointerMove={(e) => {
+                  if (!isDraggingVolume.current) return
+                  updateVolumeFromPointer(e.clientY)
+                }}
+                onPointerUp={(e) => {
+                  isDraggingVolume.current = false
+                  e.currentTarget.releasePointerCapture(e.pointerId)
+                }}
+                onPointerCancel={() => {
+                  isDraggingVolume.current = false
+                }}
+              >
+                {/* Bar: positioned inside the meter, narrower than it.
+                    Used as a CSS mask — the bar's shape carves out the visible
+                    area of the black volume fill underneath. */}
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: '51%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: `calc(${(8.443 / 33.882) * 100}% + 2px)`,
+                    height: `${(104.545 / 111.022) * 100}%`,
+                    maskImage: 'url(/imgs/tv_volume_bar.svg)',
+                    maskSize: '100% 100%',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskImage: 'url(/imgs/tv_volume_bar.svg)',
+                    WebkitMaskSize: '100% 100%',
+                    WebkitMaskRepeat: 'no-repeat',
+                  }}
+                >
+                  <div
+                    className="absolute bottom-0 left-0 right-0 bg-black"
+                    style={{ height: `${volume * 100}%` }}
+                  />
+                </div>
+
+                {/* Meter — the housing chrome, sits above the bar/fill */}
+                <img
+                  src="/imgs/tv_volume_meter.svg"
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                />
+
+                {/* Switch — the knob, slides up/down with volume.
+                    Switch is wider than the meter (overhangs sides). Height is
+                    24% of meter height; travel range is (100% − 24%) = 76%. */}
+                <img
+                  src="/imgs/tv_volume_switch.svg"
+                  alt=""
+                  aria-hidden
+                  className="absolute pointer-events-none"
+                  style={{
+                    width: `${(38.308 / 33.882) * 100}%`,
+                    left: '50%',
+                    top: `${(1 - volume) * (100 - (26.619 / 111.022) * 100)}%`,
+                    transform: 'translateX(-50%)',
+                  }}
+                  draggable={false}
+                />
+              </div>
+
+              {/* Volume label — sits below the meter, centered horizontally
+                  with it. Font size in cqi so it scales with the panel. */}
+              <div
+                className="absolute text-black text-center"
+                style={{
+                  left: '50%',
+                  top: '90%',
+                  transform: 'translateX(-50%)',
+                  fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                  fontWeight: 700,
+                  fontSize: '9cqi',
+                  lineHeight: 1.1875,
+                  letterSpacing: 0,
+                }}
+              >
+                Volume
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Status bar (below screen) — live state only */}
+      {/* Controls + status — sit below the TV on every breakpoint */}
+      <div className="w-full flex flex-col gap-3">
+        {/* Status bar — live state only */}
         {screenState === 'live' && (
-          <div className="mt-3 flex items-center justify-between text-xs text-white/60 px-2">
+          <div className="flex items-center justify-between text-xs text-white/60 px-2">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-ralph-pink animate-pulse" />
               <span>
@@ -253,49 +525,6 @@ export default function TVSet({
           </div>
         )}
 
-        {/* Bezel bottom: RALPH text — hidden on mobile to give the screen more room */}
-        <div className="hidden md:flex items-center justify-center gap-1 mt-3 pt-2 border-t border-white/5">
-          <span className="text-white/30 text-xs tracking-[0.5em] font-mono">
-            R A L P H
-          </span>
-        </div>
-      </div>
-
-      {/* Right: character placeholder */}
-      <div className="hidden md:block w-16 h-24 bg-ralph-pink/10 rounded-lg items-center justify-center text-[10px] text-muted shrink-0 flex">
-        robot
-      </div>
-
-      {/* Mobile controls (below TV) */}
-      <div className="md:hidden w-full mt-2">
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            onClick={() => setOverlay(overlay === 'show-info' ? 'none' : 'show-info')}
-            className={`rounded-md px-2 py-2.5 text-[11px] font-bold uppercase tracking-wide border min-h-[44px] ${
-              overlay === 'show-info'
-                ? 'bg-ralph-pink text-white border-ralph-pink'
-                : 'bg-black/50 text-white border-white/20'
-            }`}
-          >
-            Show Info
-          </button>
-          <button
-            onClick={() => setOverlay(overlay === 'schedule' ? 'none' : 'schedule')}
-            className={`rounded-md px-2 py-2.5 text-[11px] font-bold uppercase tracking-wide border min-h-[44px] ${
-              overlay === 'schedule'
-                ? 'bg-ralph-teal text-white border-ralph-teal'
-                : 'bg-black/50 text-white border-white/20'
-            }`}
-          >
-            Schedule
-          </button>
-          <button
-            onClick={handleFullscreen}
-            className="rounded-md px-2 py-2.5 text-[11px] font-bold uppercase tracking-wide border bg-black/50 text-white border-white/20 min-h-[44px]"
-          >
-            Fullscreen
-          </button>
-        </div>
       </div>
     </div>
   )

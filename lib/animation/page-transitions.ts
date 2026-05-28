@@ -1,47 +1,51 @@
 import type { Variants } from 'framer-motion'
 
-// ── Default Page Variants ──
-// Simple fade for most page transitions
-export const defaultPageVariants: Variants = {
+// ── Section Page Entry Sequence ──
+// 1. Intro text fades in (0-0.5s)
+// 2. Planet fades in + moves up from y:20 (0.3-0.8s)
+// 3. Content fades in (0.5-1.0s)
+
+// Container - orchestrates children
+export const sectionContainerVariants: Variants = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0,
+    },
+  },
+  exit: {},
+}
+
+// Intro/hero text - fades in first
+export const sectionIntroVariants: Variants = {
   initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    transition: { duration: 0.6, ease: 'easeOut' },
+    transition: { duration: 0.5, ease: 'easeOut' },
   },
   exit: {
     opacity: 0,
-    transition: { duration: 0.3, ease: 'easeIn' },
+    transition: { duration: 0.2, ease: 'easeIn' },
   },
 }
 
-// ── Section Page Variants ──
-// Slide up + fade for section pages (magazine, events, shop, etc.)
-export const sectionPageVariants: Variants = {
+// Background/planets layer - fades in + rises from y:20
+export const sectionBgVariants: Variants = {
   initial: { opacity: 0, y: 20 },
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: 'easeOut' },
+    transition: { duration: 0.5, ease: 'easeOut', delay: 0.3 },
   },
   exit: {
     opacity: 0,
-    transition: { duration: 0.3, ease: 'easeIn' },
+    transition: { duration: 0.2, ease: 'easeIn' },
   },
 }
 
-// ── Layered Section Page Variants ──
-// SectionIntro animates itself via heroContainerVariants (takes ~0.6s).
-// We use explicit delays on bg/content to sequence after the intro.
-
-// Container - no stagger, children use their own delays
-export const sectionContainerVariants: Variants = {
-  initial: {},
-  animate: {},
-  exit: {},
-}
-
-// Background/planets layer - fades in AFTER intro (0.5s delay)
-export const sectionBgVariants: Variants = {
+// Main content layer - fades in last
+export const sectionContentVariants: Variants = {
   initial: { opacity: 0 },
   animate: {
     opacity: 1,
@@ -53,21 +57,7 @@ export const sectionBgVariants: Variants = {
   },
 }
 
-// Main content layer - fades + slides in LAST (0.7s delay)
-export const sectionContentVariants: Variants = {
-  initial: { opacity: 0, y: 40 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: 'easeOut', delay: 0.7 },
-  },
-  exit: {
-    opacity: 0,
-    transition: { duration: 0.2, ease: 'easeIn' },
-  },
-}
-
-// For pages without SectionIntro (like TV), use shorter delays
+// For pages without planets, simpler timing
 export const sectionBgNoIntroVariants: Variants = {
   initial: { opacity: 0 },
   animate: {
@@ -81,11 +71,10 @@ export const sectionBgNoIntroVariants: Variants = {
 }
 
 export const sectionContentNoIntroVariants: Variants = {
-  initial: { opacity: 0, y: 40 },
+  initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: 'easeOut', delay: 0.3 },
+    transition: { duration: 0.5, ease: 'easeOut', delay: 0.2 },
   },
   exit: {
     opacity: 0,
@@ -93,39 +82,22 @@ export const sectionContentNoIntroVariants: Variants = {
   },
 }
 
-// ── Homepage Exit Variants ──
-// Scale down + fade for homepage
-export const homepageExitVariants: Variants = {
-  initial: { opacity: 0, scale: 0.98 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, ease: 'easeOut' },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.98,
-    transition: { duration: 0.05, ease: 'easeIn' },
-  },
-}
-
-// ── Planet Exit Variants ──
-// Directional slide for homepage planet sections
-// Left planets (magazine, lab) slide left; right planets (tv, events, shop) slide right
+// ── Homepage Planet Exit Variants ──
+// Planets slide to their nearest side and fade out
 export function planetExitVariants(direction: 'left' | 'right'): Variants {
-  const xOffset = direction === 'left' ? -80 : 80
+  const xOffset = direction === 'left' ? -100 : 100
 
   return {
     initial: { opacity: 1, x: 0 },
+    animate: { opacity: 1, x: 0 },
     exit: {
       opacity: 0,
       x: xOffset,
-      transition: { duration: 0.1, ease: 'easeIn' },
+      transition: { duration: 0.4, ease: 'easeIn' },
     },
   }
 }
 
-// ── Planet section direction mapping ──
 // Maps section IDs to their exit directions based on planet position
 export const PLANET_EXIT_DIRECTIONS: Record<string, 'left' | 'right'> = {
   tv: 'right',
@@ -135,8 +107,44 @@ export const PLANET_EXIT_DIRECTIONS: Record<string, 'left' | 'right'> = {
   lab: 'right',
 }
 
+// ── Homepage Exit Variants ──
+// For homepage wrapper - slight scale down on exit
+export const homepageExitVariants: Variants = {
+  initial: { opacity: 1 },
+  animate: { opacity: 1 },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.3, ease: 'easeIn' },
+  },
+}
+
+// ── Default Page Variants ──
+export const defaultPageVariants: Variants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.3, ease: 'easeIn' },
+  },
+}
+
+// ── Section Page Variants ──
+export const sectionPageVariants: Variants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.3, ease: 'easeIn' },
+  },
+}
+
 // ── Reduced Motion Variants ──
-// Instant transitions for users who prefer reduced motion
 export const reducedMotionVariants: Variants = {
   initial: { opacity: 0 },
   animate: {

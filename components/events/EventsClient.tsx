@@ -34,7 +34,7 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
       />
 
       {/* Planet + white bg layered with content */}
-      <section className="relative overflow-x-hidden">
+      <section className="relative">
         {/* Background - animates SECOND */}
         <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
@@ -73,9 +73,9 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
         <motion.div
           variants={sectionContentVariants}
           className="relative z-10 w-full"
-          style={{ paddingTop: 200 }}
+          style={{ paddingTop: 0 }}
         >
-          <MinglingCharacters eventCount={activeEvents.length} />
+          <MinglingCharacters events={activeEvents} />
         </motion.div>
       </section>
     </motion.div>

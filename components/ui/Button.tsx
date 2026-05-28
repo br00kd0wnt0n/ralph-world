@@ -52,7 +52,7 @@ export default function Button({ label, href, onClick, className = '' }: ButtonP
           {label}
         </Link>
       ) : (
-        <button onClick={onClick} className="btn-press" style={btnStyles}>
+        <button type="button" onClick={onClick} className="btn-press" style={btnStyles}>
           {label}
         </button>
       )}

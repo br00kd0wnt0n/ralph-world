@@ -93,7 +93,7 @@ export default function ShopClient({
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
               style={{
-                backgroundImage: 'url(/imgs/planet_background_tv.svg)',
+                backgroundImage: 'url(/imgs/planet_background_shop.svg)',
                 backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
@@ -105,7 +105,7 @@ export default function ShopClient({
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none"
               style={{
-                backgroundImage: 'url(/imgs/planet_foreground_tv.svg)',
+                backgroundImage: 'url(/imgs/planet_foreground_shop.svg)',
                 backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
@@ -125,7 +125,7 @@ export default function ShopClient({
         <motion.div
           variants={sectionContentVariants}
           className="relative z-10 pb-8 min-h-[50vh]"
-          style={{ paddingTop: 200 }}
+          style={{ paddingTop: 120 }}
         >
           {/* Category tabs */}
           <div className="w-full mx-auto px-6" style={{ maxWidth: 502 }}>
@@ -143,19 +143,24 @@ export default function ShopClient({
                   <button
                     key={cat.handle}
                     onClick={() => setActiveCollection(cat.handle)}
-                    className={`relative text-intro transition-colors flex items-center justify-center ${
-                      isActive
-                        ? 'text-ralph-orange'
-                        : 'text-black hover:text-ralph-orange'
-                    }`}
+                    className="relative text-intro transition-colors flex items-center justify-center text-black"
                     style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: '33.333%', textAlign: 'center' }}
                   >
-                    {cat.label}
-                    <span
-                      className={`absolute bottom-0 left-0 right-0 h-0.5 rounded transition-colors ${
-                        isActive ? 'bg-ralph-orange' : 'bg-transparent'
-                      }`}
-                    />
+                    <span className="relative z-10">{cat.label}</span>
+                    {isActive && (
+                      <img
+                        src="/imgs/underline_shop.svg"
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute pointer-events-none left-1/2 -translate-x-1/2 z-0"
+                        style={{
+                          top: '50%',
+                          width: 118,
+                          height: 11,
+                          maxWidth: 'none',
+                        }}
+                      />
+                    )}
                   </button>
                 )
               })}

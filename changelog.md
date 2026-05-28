@@ -4,6 +4,144 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-04-24 — Design pass, CMS expansion, pre-handoff hardening
+
+Large session ahead of the frontend-polish handoff. Added two new
+homepage structures, rebuilt Play with Ralph, rolled Tier A themes
+across the whole site, fixed a set of caches that were freezing TV
+data, and closed a batch of stability + security gaps surfaced by a
+pre-handoff audit.
+
+### Homepage
+- **Ralph TV planet** added in the top-spot with Broadcaster
+  schedule feeding the rollout (`ON NOW` / `UP NEXT` items). New
+  `upper-left` planet position. Pink accent (`#FF2098`).
+- **Black copy on all planet slideouts** — unified per design. CTA
+  pill switched to white-bg/black-text everywhere.
+- **Magazine grid hover explode** — the 6 article tiles push outward
+  from grid centre on hover, smooth cubic-bezier. 3×2 desktop, 2×3
+  mobile vectors. Locked to 6 tiles.
+
+### Events
+- **2-stage flyout** replacing the old 3-stage: anchored detail card
+  with folded-corner flag banner, then centred full modal on
+  "Show me more". Non-selected creatures fade + shrink when the
+  full modal is open.
+- **Country code field** (`events.country_code`, ISO 3166-1 alpha-2)
+  drives the corner-banner flag via emoji regional-indicator
+  conversion.
+- **Accent swatch picker** — replaces free-form hex with 8 AA-vetted
+  brand accents.
+
+### Magazine
+- **Canvas theme preset** — 8 pre-paired background + copy colours
+  (all ≥ 4.5:1 contrast) replace the raw hex input. New
+  `lib/article-themes.ts` owns the palette. ArticleOverlay reads the
+  theme key and applies bg + text via CSS inheritance.
+- **Issue # removed** from the editor and all four public render
+  sites (overlay badge pill, grid tile tag, cover-story line,
+  homepage subtitle).
+
+### Play with Ralph
+- **Full rebuild** from the design: hero + 4–8 floating case-study
+  planets (layout reflows with count, each floats independently) +
+  two large copy planets ("What's next?" pink, Expertise white with
+  4 headed bullets). All copy CMS-editable. Case studies link to the
+  external Case Study Viewer (default
+  `ralphcasestudyviewer-production.up.railway.app`, overridable per
+  case study and globally via `NEXT_PUBLIC_CASE_STUDY_VIEWER_URL`).
+- New `case_studies` table.
+
+### TV
+- **Schedule + Show Info panels** now use `bg-black/70` so the video
+  is visible through the overlay.
+- **Live broadcaster data fix** — three caches were conspiring to
+  freeze Schedule / Show Info content. Routes are now
+  `force-dynamic` with explicit no-store response headers, the
+  broadcaster client passes `cache: 'no-store'`, and TVSet polls
+  every 30s with cache-busting query param. Refetches on tab
+  visibility change.
+
+### Nav
+- **"Get started"** and **"Play with Ralph"** moved to the top-left
+  utility bar alongside the logo.
+
+### Site Copy — Tier A theme pickers
+- Every section in the Site Copy editor (Homepage Hero, Magazine,
+  Events, TV, Lab, Shop, Subscribe Modal) now has a Theme field at
+  the top — a swatch picker restricted to a curated per-section
+  sub-palette. Defaults match the brand colours so nothing visibly
+  changes until an editor picks otherwise.
+- New `lib/section-themes.ts` with 14 presets + per-section allowed
+  lists.
+- Heroes wired: Home, Magazine, Events, TV, Lab, Shop,
+  SubscribeModal (outer canvas; embedded illustrations keep the
+  hard-coded `#0F0420` palette they're matched to).
+
+### Homepage CMS module
+- New **Homepage Picks** editor under /homepage. Per-module
+  (Magazine, Events, Lab, Shop) picker with search, reorder, up to
+  6 items each. Empty picks fall back to auto (most-recent
+  published). Shop picks pull from Shopify via a new read-only CMS
+  Shopify client.
+- **Planet Images** section on the same page — SVG/PNG upload per
+  module. Values stored as `planet_{module}_url` in
+  `homepage_config`.
+
+### Security hardening (pre-handoff)
+- **Cart ownership via HMAC tokens** — `/api/cart/create` returns a
+  signed token; every subsequent cart route demands both id + token
+  and verifies with `timingSafeEqual`. CartContext stores both in
+  localStorage (via safe-storage wrapper), sends on every call,
+  clears on rejection. No DB change, reuses `AUTH_SECRET` unless
+  `CART_TOKEN_SECRET` is set.
+- **Outbound URL sanitisation** — `lib/safe-url.ts` restricts
+  editor-controlled URLs to `http://`, `https://`, `mailto:`.
+  Applied save-time in CMS (case studies, events, lab) and read-time
+  on public (EventFlyout, LabClient, LabGrid, case-study resolver).
+- **Cart API malformed-body handling** — all four routes guard
+  `request.json()` with `.catch()`, narrow payload types, return 400
+  instead of 500.
+
+### Stability + accessibility
+- **Route-level error boundary** (`app/error.tsx`) — branded "Try
+  again / Go home" fallback, Sentry capture. Component throws no
+  longer nuke the whole page.
+- **Focus traps** on modal surfaces (SubscribeModal, CartDrawer,
+  ArticleOverlay, EventFlyout full) — new `hooks/useFocusTrap.ts`.
+  Tab/Shift-Tab wrap at the boundary, first focusable receives focus
+  on mount, previously-focused restored on close. Each gets
+  `role=dialog` + `aria-modal` + `aria-labelledby`.
+- **Visible focus ring** — global `:focus-visible` outline in
+  ralph-pink. Keyboard only (never fires on mouse).
+- **localStorage resilience** — `lib/safe-storage.ts` wraps
+  get/set/remove in try/catch. Migrated CartContext, ThemeContext,
+  TVSet, LanguageModal, AccountPreferences.
+- **CartDrawer** — ESC-to-close added (was missing), and the silent
+  missing-checkout state now shows an explicit error card.
+- **Magazine `?read=SLUG` re-entry** — gated article → subscribe →
+  OAuth now returns the user to the exact article they were
+  reading, instead of `/`.
+- **SubscribeModal** — default callbackUrl `/` → `/account`.
+  Accepts a validated `returnTo` prop for gated surfaces.
+
+### Schema additions
+- `events.country_code TEXT`
+- `case_studies` table (9 columns)
+- Applied via `scripts/apply-schema-delta.mjs` against Railway
+  Postgres.
+
+### Known items deferred (see PRE_DEPLOY.md)
+- Set `SHOPIFY_STOREFRONT_URL` + `SHOPIFY_STOREFRONT_TOKEN` on the
+  ralph-cms Railway service to enable Shop picks.
+- Revalidate-status feedback pattern applied to Articles editor
+  only; ports to other actions (events, lab, case-studies, tv,
+  homepage-picks) as needed.
+- `SubscribeModal` themeKey prop accepted but not threaded from
+  every call site yet (defaults to the brand-matched palette).
+
+---
+
 ## 2026-04-17 — Shop + Ralph TV redesign and broadcaster wiring
 
 Two streams of work this session: finished `/shop` with live Shopify

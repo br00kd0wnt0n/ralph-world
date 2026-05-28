@@ -63,6 +63,18 @@ npm run dev
 - Cart drawer: `components/layout/CartDrawer.tsx`
 - Health check: `app/api/health/route.ts`
 - Profile language: `app/api/profile/language/route.ts`
+- Route error boundary: `app/error.tsx`
+- Section theme palette: `lib/section-themes.ts` (hero bg/text pairs)
+- Article theme palette: `lib/article-themes.ts` (article canvas)
+- Event accent palette: `lib/event-themes.ts`
+- URL sanitiser: `lib/safe-url.ts` (outbound link validation)
+- Safe localStorage: `lib/safe-storage.ts`
+- Cart HMAC tokens: `lib/cart-token.ts`
+- Focus trap hook: `hooks/useFocusTrap.ts`
+- Case study resolver: `lib/data/case-studies.ts`
+- Homepage data (picks + fallback): `lib/data/homepage.ts`
+- Play page: `app/play/page.tsx`
+- Play components: `components/play/`
 
 ## Environment variables
 ```

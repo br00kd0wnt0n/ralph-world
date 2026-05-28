@@ -109,6 +109,22 @@ Content comes from the CMS (`cms.ralph.world`) — same Postgres database. Artic
 - **HLS / `LivePlayer`** should not unmount when overlays open — overlays render on top at `z-10`. Breaking this forces the stream to re-tune.
 - **`revalidatePath`** is Brook's domain — don't add calls to `revalidatePublicSite` from client code. If you think you need to invalidate cache, ping me.
 
+## Patterns that already exist — use these, don't reinvent
+
+- **Section themes** (`lib/section-themes.ts`) — every public hero resolves a theme key from site copy and applies `{bg, text}`. If you're adding a new themeable surface, extend `SECTION_PALETTES` with a curated sub-palette (all ≥ 4.5:1 contrast) and resolve via `resolveSectionTheme(section, copy.*_theme)`.
+- **Article themes** (`lib/article-themes.ts`) — same pattern, narrower scope: canvas background + copy pairing for individual articles.
+- **Focus traps** (`hooks/useFocusTrap.ts`) — any new modal or overlay: pass `isOpen` and spread the returned `ref` on the container. Call the hook unconditionally (before any early return).
+- **Safe storage** (`lib/safe-storage.ts`) — never touch `localStorage` directly. Safari private mode and quota exhaustion crash the raw API; these wrappers return `null` / no-op instead.
+- **Safe URL** (`lib/safe-url.ts`) — anywhere you render an editor-controlled URL (`<a href>`, `window.open`), call `isSafeUrl()` first. Save-time sanitisation is on the CMS; this is belt-and-braces for legacy rows.
+- **Visible focus** — `app/globals.css` defines a global `:focus-visible` pink outline. Don't override it unless you explicitly design a per-component focus style.
+
+## Lint noise you can ignore
+
+The repo passes typecheck + build. A few ESLint rules fire on pre-existing patterns that aren't blockers:
+
+- **`@next/next/no-img-element`** — `<img>` instead of `<Image>` across ~15 files. Worth migrating during polish for LCP, not before.
+- **`react-hooks/set-state-in-effect`** — React 19 lint flagging patterns in `TVSet`, `ThemeContext`, `SubscribeModal`, `LanguageModal`, `ProductOverlay`, `useHls`. These are legitimate SSR-sync patterns; don't blindly refactor.
+
 ## Questions
 
 - **Animation / visual / illustration / type / responsive / microcopy** — your call, push to main.

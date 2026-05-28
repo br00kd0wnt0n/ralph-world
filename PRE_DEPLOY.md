@@ -143,6 +143,22 @@ Admin config partly done 2026-04-16.
       drop the `/assets` fetch from `getSchedule()`. Minor perf win,
       not blocking.
 
+## CMS service environment (2026-04-24)
+
+Items that unlocked new CMS features and still need env values in
+Railway for ralph-cms:
+
+- [ ] **Shopify on ralph-cms** — set `SHOPIFY_STOREFRONT_URL` and
+      `SHOPIFY_STOREFRONT_TOKEN` on the ralph-cms Railway service
+      (same values as ralph-world). Until set, the Shop section in
+      `/homepage` (Homepage Picks) shows a yellow banner and an empty
+      product list. Other modules work unaffected.
+
+- [ ] **Optional `CART_TOKEN_SECRET`** on ralph-world — HMAC key for
+      cart tokens. Defaults to reusing `AUTH_SECRET` which is already
+      set. Only set if you want to rotate cart tokens independently
+      of auth.
+
 ## DNS cutover
 
 - [ ] Update ralph.world DNS A/CNAME to Railway

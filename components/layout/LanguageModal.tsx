@@ -17,6 +17,9 @@ export default function LanguageModal() {
   const [isOpen, setIsOpen] = useState(false)
   const [language, setLanguageState] = useState('en')
   const ref = useRef<HTMLDivElement>(null)
+  // PinkDropdown is portalled to document.body — include its panel in the
+  // click-outside check so clicks inside the menu don't close it.
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const stored = safeGet('ralph-language')
@@ -25,9 +28,10 @@ export default function LanguageModal() {
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
+      const target = e.target as Node
+      if (ref.current?.contains(target)) return
+      if (panelRef.current?.contains(target)) return
+      setIsOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -72,7 +76,7 @@ export default function LanguageModal() {
       </button>
 
       {isOpen && (
-        <PinkDropdown width={237} right={-57}>
+        <PinkDropdown width={237} right={-57} triggerRef={ref} panelRef={panelRef}>
           <motion.div
             variants={stackVariants}
             className="flex flex-col items-end w-full"

@@ -313,7 +313,7 @@ export default function Nav() {
       </div>
 
       {/* ── Main Nav Bar ── */}
-      <nav className="relative z-[40] pointer-events-none">
+      <nav className="relative z-[70] pointer-events-none">
         {/* Desktop */}
         <div
           className="hidden min-[1200px]:flex flex-col items-center"

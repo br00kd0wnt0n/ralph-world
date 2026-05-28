@@ -1,14 +1,23 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, RefObject, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 
 interface PinkDropdownProps {
   width: number
-  // How far the dropdown extends past its relative parent's right edge.
-  // Set so the notch (always 50px from the dropdown's right edge) points
-  // at the desired spot on the trigger button.
+  // How far the dropdown extends past the trigger's right edge.
+  // Negative pushes the dropdown's right edge past the trigger's right edge
+  // (e.g. right={-33} means the dropdown's right edge sits 33px past the
+  // trigger.right). The notch is always 50px in from the dropdown's right
+  // edge — set `right` so the notch points at the desired spot on the trigger.
   right: number
+  // The element whose rect determines where the dropdown is positioned
+  // (usually the trigger button's outer wrapper).
+  triggerRef: RefObject<HTMLElement | null>
+  // Optional ref forwarded onto the panel so callers can include the
+  // portalled dropdown in their click-outside checks.
+  panelRef?: RefObject<HTMLDivElement | null>
   children: ReactNode
 }
 
@@ -38,14 +47,57 @@ export const panelItemVariants = {
   visible: { opacity: 1, y: 0 },
 }
 
-export default function PinkDropdown({ width, right, children }: PinkDropdownProps) {
-  return (
+export default function PinkDropdown({
+  width,
+  right,
+  triggerRef,
+  panelRef,
+  children,
+}: PinkDropdownProps) {
+  const [mounted, setMounted] = useState(false)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    function update() {
+      const rect = triggerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      // Right edge of the dropdown sits at trigger.right - right.
+      // (right={-33} → dropdown.right edge = trigger.right + 33)
+      const rightEdge = rect.right - right
+      setPos({
+        top: rect.bottom + 12, // 12 = previous marginTop
+        left: rightEdge - width,
+      })
+    }
+    update()
+    // capture-phase scroll listener catches scrolling inside any ancestor.
+    window.addEventListener('scroll', update, true)
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+    }
+  }, [triggerRef, right, width])
+
+  if (!mounted || !pos) return null
+
+  return createPortal(
     <motion.div
+      ref={panelRef}
       initial="hidden"
       animate="visible"
       variants={panelVariants}
-      className="absolute top-full z-[70]"
-      style={{ marginTop: 12, width, right, transformOrigin: 'top right' }}
+      className="fixed z-[100]"
+      style={{
+        top: pos.top,
+        left: pos.left,
+        width,
+        transformOrigin: 'top right',
+      }}
     >
       {/* Pink notch — sits behind the panel by DOM order, tip pokes above.
           69 = 50px visible from card right edge + 19px wrapper offset */}
@@ -81,6 +133,7 @@ export default function PinkDropdown({ width, right, children }: PinkDropdownPro
           {children}
         </div>
       </div>
-    </motion.div>
+    </motion.div>,
+    document.body,
   )
 }

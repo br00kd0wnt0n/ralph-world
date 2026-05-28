@@ -18,12 +18,17 @@ export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  // The PinkDropdown is portalled to document.body so it sits outside the
+  // trigger's DOM subtree. Track its panel here so the click-outside check
+  // doesn't immediately close the menu when the user clicks inside it.
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
+      const target = e.target as Node
+      if (ref.current?.contains(target)) return
+      if (panelRef.current?.contains(target)) return
+      setIsOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -88,7 +93,7 @@ export default function ThemeToggle() {
       </button>
 
       {isOpen && (
-        <PinkDropdown width={360} right={-33}>
+        <PinkDropdown width={360} right={-33} triggerRef={ref} panelRef={panelRef}>
           <motion.div variants={stackVariants} className="flex flex-col gap-2">
             {THEMES.filter((t) => !t.disabled).map((t) => {
               const swatchColors = SWATCH_COLORS[t.id] ?? ['#888', '#888', '#888']

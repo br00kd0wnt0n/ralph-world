@@ -151,10 +151,17 @@ ralph-world/
 1. User clicks "Get started" or "Continue with Google"
 2. Auth.js redirects to Google OAuth
 3. Google callback → Auth.js creates user + account records in Postgres
-4. createUser event → auto-creates profile row (subscription_status: 'free')
+4. createUser event:
+   - auto-creates profile row (tier: 'free', subscription_status: 'free')
+   - writes 2 consent_log rows (terms + privacy, granted=true, source=signup_form)
 5. JWT session with userId → AuthContext provides user + profile to components
-6. Profile data (subscription_status, role) attached to session via callback
+6. Profile data (tier, role) attached to session via callback
 ```
+
+### Audit + consent logs (Phase 1)
+- `lib/audit.ts` exports `logAction({ actorId, action, targetType, targetId, before, after, source })` — append-only writes to `audit_log` for sensitive mutations (role changes, subscription state, account deletion, webhook receipt, magazine fulfillment events). Failures are swallowed + logged to stderr so they never break the caller.
+- `lib/consent.ts` exports `logConsent({ userId, consentType, granted, source, policyVersion? })` and `logSignupConsents(userId)` (the helper called from createUser). `POLICY_VERSION` constant bumped when terms / privacy copy changes substantively.
+- Both tables are append-only — `ralph_world` DB role has INSERT but no UPDATE / DELETE (enforced via DB grants in Task 1.2). On account erasure, rows survive with `user_id` set to null — legal record outlives the user.
 
 ## API endpoints
 

@@ -10,6 +10,7 @@ import {
   verificationTokens,
 } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
+import { logSignupConsents } from '@/lib/consent'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: getDrizzleAdapter(),
@@ -58,18 +59,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async createUser({ user }) {
-      // Auto-create profile row when a new user signs up
+      // Auto-create profile row when a new user signs up.
       if (!user.id) return
       try {
         const db = getDb()
         await db.insert(profiles).values({
           id: user.id,
           displayName: user.name,
+          // RW2.0 entitlement column (Task 1.1). Signed-in user → 'free'.
+          tier: 'free',
+          // Deprecated legacy column — kept until Phase 4 cutover (SOW §1.1).
           subscriptionStatus: 'free',
         })
       } catch {
-        // Profile may already exist
+        // Profile may already exist (idempotent re-signup, race).
       }
+      // Capture terms + privacy consent at signup. Per SOW §1.8 the
+      // signup creates 2 consent_log rows; helper handles failure
+      // silently so audit lag never breaks signup.
+      await logSignupConsents(user.id)
     },
   },
 })

@@ -18,7 +18,15 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     redirect('/login?callbackUrl=/account')
   }
 
-  const tier = session.profile?.subscriptionStatus ?? null
+  // Prefer the RW2.0 tier column; fall back to legacy subscription_status
+  // until Phase 4 cutover (SOW §1.1). Guest is the implicit default for
+  // signed-in-but-unprovisioned users.
+  const tier =
+    session.profile?.tier ??
+    session.profile?.subscriptionStatus ??
+    'free'
+  const marketingOptIn = session.profile?.marketingOptIn ?? false
+  const shippingAddress = session.profile?.shippingAddressCached ?? null
   const { upgrade } = await searchParams
 
   // Free/guest users coming back from SubscribeModal's OAuth flow get sent
@@ -99,6 +107,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               ? 'You have full access: magazine, TV, events, shop, and lab. Thanks for backing us.'
               : tier === 'free'
               ? 'You have access to magazine, TV, and events. Upgrade for the quarterly print mag and premium content.'
+              : tier === 'guest'
+              ? 'Verify your email to unlock free-tier perks: TV, members-only articles, and event RSVPs.'
               : 'Get started to unlock the full Ralph experience.'}
           </p>
 
@@ -120,6 +130,53 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               Upgrade to paid &mdash; £3/month
             </a>
           )}
+        </Section>
+
+        {/* Events — RSVPs land here once Phase 2 ships them. */}
+        <Section title="Your events">
+          <p className="text-secondary text-sm">
+            RSVPs to Ralph events will show up here. None yet — keep an eye on{' '}
+            <Link href="/events" className="underline hover:text-ralph-pink transition-colors">
+              the events page
+            </Link>
+            .
+          </p>
+        </Section>
+
+        {/* Shipping address — mirror of Shopify once a purchase is made (Phase 2). */}
+        <Section title="Shipping address">
+          {shippingAddress ? (
+            <pre className="text-primary text-sm whitespace-pre-wrap font-sans">
+              {formatShippingAddress(shippingAddress)}
+            </pre>
+          ) : (
+            <p className="text-secondary text-sm">
+              We&apos;ll show your shipping address here once you&apos;ve made a
+              purchase — it mirrors the address on file with Shopify.
+            </p>
+          )}
+        </Section>
+
+        {/* Mailing preferences — Phase 1 view-only. Toggle lands with Mailchimp sync (Phase 4). */}
+        <Section title="Mailing preferences">
+          <div className="flex items-center justify-between">
+            <p className="text-primary text-sm">
+              Ralph newsletter
+            </p>
+            <span
+              className={`text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+                marketingOptIn
+                  ? 'bg-ralph-teal/20 text-ralph-teal'
+                  : 'bg-gray-500/20 text-gray-400'
+              }`}
+            >
+              {marketingOptIn ? 'subscribed' : 'not subscribed'}
+            </span>
+          </div>
+          <p className="text-secondary text-xs mt-3">
+            You can subscribe or unsubscribe via any newsletter we send you. A
+            toggle here is coming.
+          </p>
         </Section>
 
         {/* Preferences */}
@@ -152,6 +209,27 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       <Footer variant="dark" />
     </>
   )
+}
+
+/**
+ * Render a cached Shopify shipping address as plain text. The shape we get
+ * back is whatever Shopify's REST API returns under `default_address` —
+ * keep this tolerant: pick the standard fields if present, otherwise fall
+ * back to JSON so we surface SOMETHING rather than nothing.
+ */
+function formatShippingAddress(addr: unknown): string {
+  if (!addr || typeof addr !== 'object') return ''
+  const a = addr as Record<string, unknown>
+  const get = (k: string) => (typeof a[k] === 'string' ? (a[k] as string) : '')
+  const lines = [
+    [get('first_name'), get('last_name')].filter(Boolean).join(' '),
+    get('company'),
+    get('address1'),
+    get('address2'),
+    [get('city'), get('province'), get('zip')].filter(Boolean).join(', '),
+    get('country'),
+  ].filter(Boolean)
+  return lines.length ? lines.join('\n') : JSON.stringify(addr, null, 2)
 }
 
 function Section({

@@ -97,9 +97,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 | null
                 | 'free'
                 | 'paid',
+              // RW2.0 tier (Task 1.1). Source of truth post-migration.
+              tier: (profile.tier ?? null) as null | 'guest' | 'free' | 'paid',
               role: profile.role,
               themePreference: profile.themePreference,
               languagePreference: profile.languagePreference,
+              marketingOptIn: profile.marketingOptIn ?? false,
+              shippingAddressCached: profile.shippingAddressCached ?? null,
             }
           }
         } catch {
@@ -152,9 +156,13 @@ function getDrizzleAdapter() {
 
 export interface SessionProfile {
   subscriptionStatus: null | 'free' | 'paid'
+  /** RW2.0 tier — source of truth post-Phase 1. */
+  tier: null | 'guest' | 'free' | 'paid'
   role: string | null
   themePreference: string | null
   languagePreference: string | null
+  marketingOptIn: boolean
+  shippingAddressCached: unknown | null
 }
 
 export interface SessionWithProfile {

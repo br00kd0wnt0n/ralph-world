@@ -4,6 +4,27 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-06-01 — Ralph World 2.0 build — Phase 1 underway
+
+Builds against the locked architecture doc at
+`~/ralph-cms/docs/ralph-world-2-accounts-architecture.md` (v7,
+2026-05-12). SOW at `~/ralph-cms/docs/sow-ralph-world-2.md`.
+
+### Phase 1 tasks shipped
+- **1.0 Test harness** — Vitest (unit/integration, jsdom, Testing Library, jest-dom) + Playwright (E2E). `.mts` vitest config to dodge ESM/CJS clash. Separate `tsconfig.test.json` keeps test types out of the Next build. npm scripts: `test`, `test:watch`, `test:e2e`. Smoke test passing.
+- **1.5 Entitlement function** — `lib/entitlements.ts` (pure: `canAccess`, `tvPreviewSeconds`, `tierFromSession`, types per arch doc §8). `lib/entitlements-server.ts` (server bridge: `currentTier`, `canCurrentUserAccess`, `currentTvPreviewSeconds`, guarded by `import 'server-only'`). 27 unit tests covering the full 9-way access matrix + all guest representations + tunable preview window + tier-from-session integration.
+- **1.1 Schema migration** — `profiles` extended with 8 new columns (tier, stripe_customer_id, stripe_subscription_id, subscription_current_period_end, shipping_address_cached jsonb, marketing_opt_in + at + source). 8 new tables: email_subscriptions, consent_log, audit_log, shopify_links, stripe_events, email_events, magazine_issues, magazine_shipments. Article + lab access_tier defaults flipped `'free'` → `'everyone'` (launch tactic). Deprecated profile columns kept until Phase 4. Data-migration SQL at `scripts/migrate-phase-1-access-tier.sql` (idempotent; access_tier rename + tier backfill from subscription_status). npm scripts: `db:push`, `db:generate`, `db:studio`. Acceptance (`drizzle-kit push` against test DB) blocks on test DB provisioning.
+
+### Decisions logged
+- Lint gate: React-hooks rules downgraded `error` → `warn` in `eslint.config.mjs` (Josh). Existing flags are intentional SSR/hydration-sync patterns; fixable candidates listed in `docs/lint-followups.md`.
+- Phase 4 §4.2 Substack migration: no user notification needed (Nicola). Soft opt-in transfer covered.
+
+### Pending
+- Phase 1 remaining: 1.2 (DB role separation), 1.3 (email/password auth), 1.4 (Resend), 1.6 (Shopify customer auto-create), 1.7 (member portal scaffold), 1.8 (audit/consent helpers).
+- External provisioning: test DB, Resend key + verified ralph.world domain, Shopify Admin API token, Railway env vars per SOW pre-flight.
+
+---
+
 ## 2026-05-16 — Events arms interaction + nav stability + planet exits
 
 **Session goal:** Wire the Events page arms feature (click to reveal

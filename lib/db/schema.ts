@@ -68,10 +68,21 @@ export const profiles = pgTable('profiles', {
     .primaryKey()
     .references(() => users.id, { onDelete: 'cascade' }),
   displayName: text('display_name'),
-  subscriptionStatus: text('subscription_status'), // null | 'free' | 'paid'
-  subscriptionStart: timestamp('subscription_start', { mode: 'date' }),
-  subscriptionEnd: timestamp('subscription_end', { mode: 'date' }),
-  shopifyCustomerId: text('shopify_customer_id'),
+  // ── Phase 1 additions per arch doc §6 ──
+  tier: text('tier').default('guest'), // 'guest' | 'free' | 'paid' — cached, backfilled from subscriptionStatus
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  subscriptionCurrentPeriodEnd: timestamp('subscription_current_period_end', { mode: 'date' }),
+  shippingAddressCached: jsonb('shipping_address_cached'),
+  marketingOptIn: boolean('marketing_opt_in').default(false),
+  marketingOptInAt: timestamp('marketing_opt_in_at', { mode: 'date' }),
+  marketingOptInSource: text('marketing_opt_in_source'),
+  // ── Deprecated, kept until Phase 4 cutover (per SOW §1.1) ──
+  subscriptionStatus: text('subscription_status'), // null | 'free' | 'paid' — deprecated; superseded by tier
+  subscriptionStart: timestamp('subscription_start', { mode: 'date' }), // deprecated
+  subscriptionEnd: timestamp('subscription_end', { mode: 'date' }), // deprecated
+  shopifyCustomerId: text('shopify_customer_id'), // deprecated; superseded by shopify_links table
+  // ── Unchanged ──
   role: text('role').default('user'), // 'user' | 'admin' | 'editor'
   themePreference: text('theme_preference').default('cosy-dynamics'),
   languagePreference: text('language_preference').default('en'),
@@ -98,7 +109,9 @@ export const articles = pgTable('articles', {
   contentTags: text('content_tags').array(),
   isCoverStory: boolean('is_cover_story').default(false),
   issueNumber: integer('issue_number'),
-  accessTier: text('access_tier').default('free'),
+  // Per arch doc §4: 'everyone' | 'members' | 'paid_subscribers'.
+  // Existing rows migrated free→everyone, paid→paid_subscribers (see scripts/migrate-phase-1-access-tier.sql).
+  accessTier: text('access_tier').default('everyone'),
   contentBlocks: jsonb('content_blocks'), // ContentBlock[]
   publishedAt: timestamp('published_at', { mode: 'date' }),
 })
@@ -162,7 +175,8 @@ export const labItems = pgTable('lab_items', {
   externalUrl: text('external_url'),
   thumbnailUrl: text('thumbnail_url'),
   badge: text('badge'),
-  accessTier: text('access_tier').default('free'),
+  // Per arch doc §4: 'everyone' | 'members' | 'paid_subscribers'.
+  accessTier: text('access_tier').default('everyone'),
   sortOrder: integer('sort_order'),
   publishedAt: timestamp('published_at', { mode: 'date' }),
 })
@@ -192,3 +206,146 @@ export const webhookLog = pgTable('webhook_log', {
   payload: jsonb('payload'),
   processedAt: timestamp('processed_at', { mode: 'date' }).defaultNow(),
 })
+
+// ──────────────────────────────────────────────────────────────────────────
+// Phase 1 additions — Ralph World 2.0 unified user accounts (arch doc §6)
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * Mailchimp list memberships. One row per (user, list) subscription state.
+ * Status mirrors Mailchimp's lifecycle so we can reconcile via webhook.
+ */
+export const emailSubscriptions = pgTable('email_subscriptions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  listId: text('list_id').notNull(), // Mailchimp list id
+  status: text('status').notNull(), // 'subscribed' | 'unsubscribed' | 'cleaned'
+  source: text('source'), // 'signup' | 'portal' | 'import' | 'substack_migration'
+  subscribedAt: timestamp('subscribed_at', { mode: 'date' }).defaultNow(),
+  unsubscribedAt: timestamp('unsubscribed_at', { mode: 'date' }),
+})
+
+/**
+ * GDPR consent audit. Append-only — DB grants for ralph_world deny UPDATE
+ * once Task 1.2 lands. user_id is nullable so it can be set to null on
+ * account erasure while the legal record survives (arch doc §14).
+ */
+export const consentLog = pgTable('consent_log', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+  consentType: text('consent_type').notNull(), // 'marketing' | 'terms' | 'privacy'
+  granted: boolean('granted').notNull(),
+  source: text('source'), // 'signup_form' | 'portal' | 'api' | 'substack_migration'
+  policyVersion: text('policy_version'),
+  at: timestamp('at', { mode: 'date' }).defaultNow().notNull(),
+})
+
+/**
+ * Generic audit log for sensitive mutations (arch doc §13). Append-only,
+ * enforced via DB grants in Task 1.2. actor_id nullable for system actions
+ * and post-erasure retention.
+ */
+export const auditLog = pgTable('audit_log', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  actorId: uuid('actor_id').references(() => users.id, { onDelete: 'set null' }),
+  action: text('action').notNull(), // e.g. 'role_changed', 'sub_status_changed', 'email_changed', 'account_deleted'
+  targetType: text('target_type'),
+  targetId: text('target_id'),
+  before: jsonb('before'),
+  after: jsonb('after'),
+  source: text('source'), // 'system' | 'cms' | 'portal' | 'webhook'
+  at: timestamp('at', { mode: 'date' }).defaultNow().notNull(),
+})
+
+/**
+ * Links a Ralph.world user to their Shopify customer record. Created
+ * proactively for every signup (Task 1.6). Unique on shopify_customer_id
+ * so the same Shopify customer can't be claimed twice.
+ */
+export const shopifyLinks = pgTable('shopify_links', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  shopifyCustomerId: text('shopify_customer_id').notNull().unique(),
+  linkMethod: text('link_method').notNull(), // 'auto_signup_create' | 'auto_email_match_at_signup' | 'auto_checkout' | 'manual_verification' | 'admin'
+  linkedAt: timestamp('linked_at', { mode: 'date' }).defaultNow().notNull(),
+})
+
+/**
+ * Idempotent webhook intake for Stripe (Task 2.3). Unique on
+ * stripe_event_id so replays don't re-process. processing_status
+ * tracks 'received' → 'processed' / 'failed'.
+ */
+export const stripeEvents = pgTable('stripe_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  stripeEventId: text('stripe_event_id').notNull().unique(),
+  eventType: text('event_type').notNull(),
+  payload: jsonb('payload').notNull(),
+  processingStatus: text('processing_status').default('received'), // 'received' | 'processed' | 'failed'
+  receivedAt: timestamp('received_at', { mode: 'date' }).defaultNow().notNull(),
+  processedAt: timestamp('processed_at', { mode: 'date' }),
+})
+
+/**
+ * Delivery / engagement events from Resend (Task 1.4). Records what was
+ * sent, delivered, bounced, complained, opened, clicked.
+ */
+export const emailEvents = pgTable('email_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  resendEventId: text('resend_event_id'),
+  email: text('email').notNull(),
+  eventType: text('event_type').notNull(), // 'delivered' | 'bounced' | 'complained' | 'opened' | 'clicked' | 'sent'
+  payload: jsonb('payload'),
+  at: timestamp('at', { mode: 'date' }).defaultNow().notNull(),
+})
+
+/**
+ * Magazine issues — editorial owns the lifecycle in ralph-cms (Phase 3
+ * task 3.9). status flips draft → published; "current issue" =
+ * MAX(issue_number) WHERE status='published'. shopify_variant_id maps an
+ * issue to its Shopify product variant SKU (EAN). postage_pence_cached
+ * holds the negotiated postage rate (per Open dependencies — Newsstand
+ * postage default = static rate per issue).
+ */
+export const magazineIssues = pgTable('magazine_issues', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  issueNumber: integer('issue_number').notNull().unique(),
+  title: text('title'),
+  status: text('status').default('draft').notNull(), // 'draft' | 'published'
+  publishedAt: timestamp('published_at', { mode: 'date' }),
+  shopifyVariantId: text('shopify_variant_id'),
+  postagePenceCached: integer('postage_pence_cached'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+})
+
+/**
+ * Per-subscriber-per-issue shipment ledger (Phase 3 task 3.9). UNIQUE
+ * (user_id, issue_id) prevents duplicate orders on retry — the idempotency
+ * lever for the synthetic-Shopify-order flow. newsstand_ref is reserved
+ * for the future direct Newsstand API path (v2).
+ */
+export const magazineShipments = pgTable(
+  'magazine_shipments',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    issueId: uuid('issue_id')
+      .notNull()
+      .references(() => magazineIssues.id, { onDelete: 'cascade' }),
+    shopifyOrderId: text('shopify_order_id'),
+    newsstandRef: text('newsstand_ref'), // reserved for v2 direct Newsstand API
+    shippedAt: timestamp('shipped_at', { mode: 'date' }),
+    status: text('status').default('queued').notNull(), // 'queued' | 'shopify_order_created' | 'fulfilled' | 'failed'
+    error: text('error'),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('magazine_shipments_user_issue_unique').on(table.userId, table.issueId),
+  ]
+)

@@ -122,14 +122,29 @@ ralph-world/
 - `verification_tokens` — email verification
 
 ### App tables
-- `profiles` — subscription_status, role, theme/language prefs (FK → users)
-- `articles` — magazine content with content_blocks JSONB
-- `events` — events with creature positioning (x/y)
-- `event_rsvps` — RSVP tracking (schema only, not wired in MVP)
-- `tv_vod` — TV VOD metadata (schema only, not in public UI MVP)
-- `lab_items` — lab content
-- `homepage_config` — key/value config for homepage modules
-- `webhook_log` — Shopify webhook event log
+- `profiles` — user metadata + entitlement + payment cache (FK → users)
+  - Identity: display_name, role, theme/language prefs
+  - Entitlement (RW2.0): `tier` ('guest'|'free'|'paid'), `marketing_opt_in` + timestamp + source
+  - Stripe cache (RW2.0): `stripe_customer_id`, `stripe_subscription_id`, `subscription_current_period_end`
+  - Shipping cache (RW2.0): `shipping_address_cached` (jsonb, source of truth = Stripe)
+  - Deprecated, kept until Phase 4 cutover: `subscription_status`, `subscription_start`, `subscription_end`, `shopify_customer_id`
+- `articles` / `lab_items` — content; `access_tier` ∈ {`everyone`, `members`, `paid_subscribers`} (RW2.0; default `everyone` for launch tactic)
+- `events` — events with creature positioning (x/y) + country_code
+- `event_rsvps` — RSVP tracking (wired up in Phase 3)
+- `tv_vod` — deprecated; no per-VOD gating in RW2.0 (live stream only via Broadcaster)
+- `case_studies` — Work With Us case study cards
+- `homepage_config` — key/value config for homepage modules + RW2.0 runtime config (tv_relay_hls_url, tv_preview_seconds, magazine_*)
+- `webhook_log` — generic webhook event log
+
+### RW2.0 additions (Phase 1)
+- `email_subscriptions` — Mailchimp list memberships per user
+- `consent_log` — append-only GDPR consent audit (terms / privacy / marketing)
+- `audit_log` — append-only audit trail for sensitive mutations
+- `shopify_links` — Ralph.world ↔ Shopify customer mapping (every user, async-created)
+- `stripe_events` — idempotent Stripe webhook intake (unique on stripe_event_id)
+- `email_events` — Resend delivery/engagement event log
+- `magazine_issues` — quarterly issue lifecycle (draft → published) with Shopify variant SKU + cached postage rate
+- `magazine_shipments` — per-(subscriber, issue) ledger with UNIQUE (user_id, issue_id) for retry idempotency
 
 ## Auth flow
 ```

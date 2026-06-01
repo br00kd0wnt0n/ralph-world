@@ -142,7 +142,7 @@ ralph-world/
 - `audit_log` — append-only audit trail for sensitive mutations
 - `shopify_links` — Ralph.world ↔ Shopify customer mapping (every user, async-created)
 - `stripe_events` — idempotent Stripe webhook intake (unique on stripe_event_id)
-- `email_events` — Resend delivery/engagement event log
+- `email_events` — Resend delivery/engagement event log + send-attempt ledger (`idempotency_key` partial-unique index drives send-side dedupe)
 - `magazine_issues` — quarterly issue lifecycle (draft → published) with Shopify variant SKU + cached postage rate
 - `magazine_shipments` — per-(subscriber, issue) ledger with UNIQUE (user_id, issue_id) for retry idempotency
 
@@ -162,6 +162,12 @@ ralph-world/
 - `lib/audit.ts` exports `logAction({ actorId, action, targetType, targetId, before, after, source })` — append-only writes to `audit_log` for sensitive mutations (role changes, subscription state, account deletion, webhook receipt, magazine fulfillment events). Failures are swallowed + logged to stderr so they never break the caller.
 - `lib/consent.ts` exports `logConsent({ userId, consentType, granted, source, policyVersion? })` and `logSignupConsents(userId)` (the helper called from createUser). `POLICY_VERSION` constant bumped when terms / privacy copy changes substantively.
 - Both tables are append-only — `ralph_world` DB role has INSERT but no UPDATE / DELETE (enforced via DB grants in Task 1.2). On account erasure, rows survive with `user_id` set to null — legal record outlives the user.
+
+### Transactional email (Phase 1)
+- `lib/email/send.ts` exports `sendTemplate({ userId, to, templateId, props })` — the single entrypoint for transactional email. Idempotent on `(userId, templateId, sha256(props))`: builds a key, INSERTs a `send_attempted` row carrying that key, lets Postgres' partial unique index on `email_events.idempotency_key` reject duplicates, then calls Resend. A second call with the same inputs returns `{ sent: false, skipped: true }` without hitting Resend. Re-sends with different props (e.g. a fresh verification link) hash differently and go through.
+- Templates live in `components/emails/*.tsx` as React Email components and are registered in `lib/email/send.ts`. First template: `EmailVerification`. See [docs/email-templates.md](docs/email-templates.md) for the registry contract.
+- `POST /api/webhooks/resend` verifies the Svix HMAC signature (`lib/email/verifyResendSignature.ts`) on every request — 5-minute replay window, multi-signature header support — then records each event in `email_events`. Returns 401 on signature failure, 400 on malformed body, 500 on DB failure (so Resend retries), 200 once written.
+- Env: `RESEND_API_KEY`, `RESEND_FROM` (defaults to `Ralph.world <hello@ralph.world>`), `RESEND_WEBHOOK_SECRET` (Svix `whsec_...` secret — prefix optional).
 
 ## API endpoints
 
@@ -195,6 +201,7 @@ ralph-world/
 | Method | Path | Purpose |
 |---|---|---|
 | POST | /api/webhooks/shopify | Subscription events → update profiles |
+| POST | /api/webhooks/resend | Resend delivery/engagement events → email_events (Svix HMAC verified) |
 
 ### Utility
 | Method | Path | Purpose |

@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   primaryKey,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 // ── Auth.js required tables ──
 
@@ -290,17 +291,34 @@ export const stripeEvents = pgTable('stripe_events', {
 })
 
 /**
- * Delivery / engagement events from Resend (Task 1.4). Records what was
- * sent, delivered, bounced, complained, opened, clicked.
+ * Delivery / engagement events from Resend (Task 1.4). Records both our
+ * own send attempts AND the delivery events Resend pushes back at us.
+ *
+ * `idempotency_key` is set on rows we INSERT before calling Resend — the
+ * shape is `${userId}:${templateId}:${contextHash}`. UNIQUE so a duplicate
+ * send attempt with the same key is a no-op (insert fails, send skipped).
+ * Rows pushed by the Resend webhook have null idempotency_key (Resend
+ * doesn't know our key).
  */
-export const emailEvents = pgTable('email_events', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  resendEventId: text('resend_event_id'),
-  email: text('email').notNull(),
-  eventType: text('event_type').notNull(), // 'delivered' | 'bounced' | 'complained' | 'opened' | 'clicked' | 'sent'
-  payload: jsonb('payload'),
-  at: timestamp('at', { mode: 'date' }).defaultNow().notNull(),
-})
+export const emailEvents = pgTable(
+  'email_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    resendEventId: text('resend_event_id'),
+    email: text('email').notNull(),
+    // 'send_attempted' (we initiated) | 'sent' (Resend accepted) |
+    // 'delivered' | 'bounced' | 'complained' | 'opened' | 'clicked'
+    eventType: text('event_type').notNull(),
+    idempotencyKey: text('idempotency_key'),
+    payload: jsonb('payload'),
+    at: timestamp('at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('email_events_idempotency_key_unique')
+      .on(table.idempotencyKey)
+      .where(sql`${table.idempotencyKey} IS NOT NULL`),
+  ]
+)
 
 /**
  * Magazine issues — editorial owns the lifecycle in ralph-cms (Phase 3

@@ -117,6 +117,19 @@ export async function signupWithPassword(args: {
   await logSignupConsents(userId)
 
   await sendVerificationEmail({ userId, email, name: args.name ?? null, appUrl: args.appUrl, now: args.now })
+
+  // Shopify customer auto-create (Task 1.6). Fire-and-forget — must not
+  // block the signup response. Dynamic import keeps the Shopify module
+  // out of the cold-start path for non-signup requests.
+  void (async () => {
+    try {
+      const { findOrCreateCustomer } = await import('@/lib/shopify/customer')
+      await findOrCreateCustomer({ userId, email, name: args.name ?? null })
+    } catch (err) {
+      console.error('[signup] shopify customer auto-link failed:', err)
+    }
+  })()
+
   return { ok: true, userId, email }
 }
 

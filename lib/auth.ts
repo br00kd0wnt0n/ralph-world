@@ -134,9 +134,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // signup creates 2 consent_log rows; helper handles failure
       // silently so audit lag never breaks signup.
       await logSignupConsents(user.id)
+      // Shopify customer auto-create (Task 1.6, arch doc §11). Fire and
+      // forget — NEVER block signup. If Shopify is down the user can
+      // still log in and use Ralph.world; admin alerting picks up the
+      // failed link on the next reconciliation pass.
+      if (user.email) {
+        void scheduleShopifyLink({ userId: user.id, email: user.email, name: user.name ?? null })
+      }
     },
   },
 })
+
+/**
+ * Fire-and-forget Shopify link creator. Wrapped here so importing
+ * `lib/auth.ts` doesn't drag in the Shopify module at module-eval time
+ * (the dynamic import keeps it off the hot path for non-signup requests).
+ * Errors are logged, never thrown — signup must not fail because Shopify
+ * is unreachable.
+ */
+async function scheduleShopifyLink(args: {
+  userId: string
+  email: string
+  name?: string | null
+}): Promise<void> {
+  try {
+    const { findOrCreateCustomer } = await import('@/lib/shopify/customer')
+    await findOrCreateCustomer(args)
+  } catch (err) {
+    console.error('[auth] shopify customer auto-link failed:', err)
+  }
+}
 
 function getDrizzleAdapter() {
   try {

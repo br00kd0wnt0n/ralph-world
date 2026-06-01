@@ -20,6 +20,9 @@ export const users = pgTable('users', {
   email: text('email').unique(),
   emailVerified: timestamp('email_verified', { mode: 'date' }),
   image: text('image'),
+  // Credentials provider (Task 1.3). Null for OAuth-only users.
+  // bcrypt hash — never returned by selects that flow to the client.
+  passwordHash: text('password_hash'),
 })
 
 export const accounts = pgTable(

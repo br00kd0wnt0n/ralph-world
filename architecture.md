@@ -147,8 +147,10 @@ ralph-world/
 - `magazine_shipments` — per-(subscriber, issue) ledger with UNIQUE (user_id, issue_id) for retry idempotency
 
 ## Auth flow
+
+### Google OAuth
 ```
-1. User clicks "Get started" or "Continue with Google"
+1. User clicks "Continue with Google"
 2. Auth.js redirects to Google OAuth
 3. Google callback → Auth.js creates user + account records in Postgres
 4. createUser event:
@@ -157,6 +159,29 @@ ralph-world/
 5. JWT session with userId → AuthContext provides user + profile to components
 6. Profile data (tier, role) attached to session via callback
 ```
+
+### Email/password (Credentials provider, Task 1.3)
+```
+1. User POSTs { email, password, name? } to /api/auth/signup
+2. signupWithPassword (lib/auth/signup.ts):
+   - Validates email + password (min 10 chars).
+   - Looks up users by email:
+     · Existing + verified  → enumeration-safe "check your inbox" response, no email sent.
+     · Existing + unverified → refresh password hash, re-issue verification token.
+     · Fresh                → INSERT users (password_hash = bcrypt cost 12),
+                              INSERT profiles (tier='free', subscription_status='free'),
+                              logSignupConsents (terms + privacy).
+   - Issues a 32-byte hex verification token (24h TTL) into verification_tokens.
+   - sendTemplate('email-verification') with the verify URL.
+3. User clicks the link → GET /api/auth/verify-email?email=&token=
+4. consumeVerificationToken: matches the row, sets users.email_verified = now(),
+   deletes the token. Redirects to /login?verify=ok.
+5. User signs in via Credentials provider — authorize() rejects unverified users
+   with throw new Error('EmailNotVerified') so the login page can offer
+   "resend verification email".
+```
+
+Password storage: `users.password_hash` (text, nullable). bcryptjs cost factor 12 wrapped in `lib/auth/passwords.ts` so callers don't depend on the library directly. OAuth-only users have `password_hash = null` and never hit the Credentials path.
 
 ### Audit + consent logs (Phase 1)
 - `lib/audit.ts` exports `logAction({ actorId, action, targetType, targetId, before, after, source })` — append-only writes to `audit_log` for sensitive mutations (role changes, subscription state, account deletion, webhook receipt, magazine fulfillment events). Failures are swallowed + logged to stderr so they never break the caller.
@@ -175,6 +200,8 @@ ralph-world/
 | Method | Path | Purpose |
 |---|---|---|
 | GET/POST | /api/auth/* | Auth.js handlers (signin, callback, signout, session) |
+| POST | /api/auth/signup | Email/password signup → sends verification email |
+| GET | /api/auth/verify-email | Consume verification token, mark email_verified |
 
 ### Profile
 | Method | Path | Auth | Purpose |

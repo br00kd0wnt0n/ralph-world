@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
+import Credentials from 'next-auth/providers/credentials'
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
 import { getDb } from '@/lib/db'
 import {
@@ -11,10 +12,61 @@ import {
 } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { logSignupConsents } from '@/lib/consent'
+import { verifyPassword } from '@/lib/auth/passwords'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: getDrizzleAdapter(),
-  providers: [Google],
+  providers: [
+    Google,
+    Credentials({
+      id: 'credentials',
+      name: 'Email',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      // Task 1.3: signin blocked until email is verified. Signup itself
+      // is handled by /api/auth/signup → see lib/auth/signup.ts.
+      async authorize(credentials) {
+        const email =
+          typeof credentials?.email === 'string'
+            ? credentials.email.trim().toLowerCase()
+            : null
+        const password =
+          typeof credentials?.password === 'string' ? credentials.password : null
+        if (!email || !password) return null
+
+        const db = getDb()
+        const [row] = await db
+          .select({
+            id: users.id,
+            email: users.email,
+            name: users.name,
+            image: users.image,
+            emailVerified: users.emailVerified,
+            passwordHash: users.passwordHash,
+          })
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1)
+        if (!row || !row.passwordHash) return null
+        const ok = await verifyPassword(password, row.passwordHash)
+        if (!ok) return null
+        if (!row.emailVerified) {
+          // Surface a distinguishable error code so the login page can
+          // offer "resend verification email" instead of a generic
+          // "bad credentials" message.
+          throw new Error('EmailNotVerified')
+        }
+        return {
+          id: row.id,
+          email: row.email,
+          name: row.name,
+          image: row.image,
+        }
+      },
+    }),
+  ],
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',

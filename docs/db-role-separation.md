@@ -3,6 +3,12 @@
 **Status:** SQL drafted (`scripts/db-roles-phase-1.sql`). Apply step blocks
 on Railway provisioning of two DB users with distinct credentials.
 
+> **Prerequisite — the Phase 1 schema delta must land first.** The grants
+> reference tables (`audit_log`, `consent_log`, `email_events`, etc.) that
+> only exist in `lib/db/schema.ts` until `scripts/apply-phase-1-schema.sql`
+> has been applied. Run that script first; the grants will error out
+> otherwise (and the sanity DO-blocks will roll back).
+
 **Context:** Architecture doc §13 calls for two Postgres roles sharing one
 DB. `ralph_cms` owns schema migrations and has full r/w on everything.
 `ralph_world` is the runtime role used by the consumer site — column-level
@@ -30,6 +36,18 @@ uses `DO` + `IF NOT EXISTS`; the `GRANT` statements are naturally
 idempotent in Postgres.
 
 ## Apply procedure
+
+### Step 0 — apply the Phase 1 schema delta + data migration
+
+```bash
+psql "$DATABASE_URL_SUPERUSER" -f scripts/apply-phase-1-schema.sql
+psql "$DATABASE_URL_SUPERUSER" -f scripts/migrate-phase-1-access-tier.sql
+```
+
+Both scripts are idempotent and additive — re-running is safe and won't
+drop / rename anything. Sanity DO-blocks at the bottom of each will
+`RAISE EXCEPTION` (rolling the transaction back) if any new table or
+column is missing afterward.
 
 ### One-time provisioning (Railway)
 

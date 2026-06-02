@@ -25,17 +25,27 @@
 \set ON_ERROR_STOP on
 
 -- ── 1. Create roles if missing ────────────────────────────────────────
+-- psql does not substitute :'var' inside dollar-quoted blocks, so
+-- password assignment lives outside the DO blocks. Re-running this
+-- script will also rotate the passwords, which is the intended
+-- behaviour for a secret-rotation workflow.
 
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ralph_cms') THEN
-    EXECUTE format('CREATE ROLE ralph_cms WITH LOGIN PASSWORD %L', :'ralph_cms_password');
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ralph_world') THEN
-    EXECUTE format('CREATE ROLE ralph_world WITH LOGIN PASSWORD %L', :'ralph_world_password');
-  END IF;
+  CREATE ROLE ralph_cms WITH LOGIN;
+EXCEPTION WHEN duplicate_object THEN NULL;
 END
 $$;
+
+DO $$
+BEGIN
+  CREATE ROLE ralph_world WITH LOGIN;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
+
+ALTER ROLE ralph_cms   WITH PASSWORD :'ralph_cms_password';
+ALTER ROLE ralph_world WITH PASSWORD :'ralph_world_password';
 
 -- ── 2. Schema usage ───────────────────────────────────────────────────
 
@@ -61,6 +71,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   accounts,
   sessions,
   verification_tokens,
+  event_rsvps,
   email_subscriptions,
   shopify_links,
   email_events,
@@ -73,12 +84,13 @@ GRANT SELECT ON
   articles,
   events,
   lab_items,
-  tv_videos,
+  tv_vod,
+  case_studies,
   homepage_config,
   magazine_issues
 TO ralph_world;
 
--- ── 6. ralph_world — append-only on audit + consent + stripe_events ──
+-- ── 6. ralph_world — append-only on audit + consent + webhook + stripe ─
 -- The arch doc says these must survive even app-side compromise:
 -- INSERT only, no UPDATE, no DELETE. SELECT stays on so the consumer
 -- app can read its own history (e.g. "did we already log this consent?").
@@ -86,6 +98,7 @@ TO ralph_world;
 GRANT SELECT, INSERT ON
   audit_log,
   consent_log,
+  webhook_log,
   stripe_events
 TO ralph_world;
 
@@ -166,11 +179,11 @@ BEGIN
     FROM information_schema.table_privileges
    WHERE grantee = 'ralph_world'
      AND table_schema = 'public'
-     AND table_name IN ('audit_log', 'consent_log', 'stripe_events')
+     AND table_name IN ('audit_log', 'consent_log', 'webhook_log', 'stripe_events')
      AND privilege_type IN ('UPDATE', 'DELETE');
   IF bad_priv IS NOT NULL THEN
     RAISE EXCEPTION 'ralph_world has UPDATE/DELETE on append-only tables: %', bad_priv;
   END IF;
-  RAISE NOTICE 'OK — audit_log / consent_log / stripe_events are append-only for ralph_world';
+  RAISE NOTICE 'OK — audit_log / consent_log / webhook_log / stripe_events are append-only for ralph_world';
 END
 $$;

@@ -4,6 +4,70 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-06-02 — Phase 1 live apply: schema delta + role separation in prod
+
+Phase 1 architecture committed across the 2026-06-01 work is now live on
+the Railway Postgres backing ralph.world. Three scripts applied in order
+against the prod DB (low-stakes — only 3 users: Brook, Chris, Josh):
+
+1. **`scripts/apply-phase-1-schema.sql`** — hand-crafted IF-NOT-EXISTS
+   mirror of `drizzle-kit push`. Added 8 new tables (`email_subscriptions`,
+   `consent_log`, `audit_log`, `shopify_links`, `stripe_events`,
+   `email_events`, `magazine_issues`, `magazine_shipments`), 8 new columns
+   on `profiles`, `users.password_hash`, flipped `articles.access_tier` +
+   `lab_items.access_tier` defaults to `'everyone'`, and the partial unique
+   index on `email_events.idempotency_key`. Wrapped in `BEGIN/COMMIT` with
+   three sanity DO-blocks; all three NOTICEs green.
+2. **`scripts/migrate-phase-1-access-tier.sql`** — 6 articles renamed
+   `free→everyone`, 7 lab_items renamed `free→everyone`, 3 profiles
+   backfilled with `tier` from `subscription_status`. No legacy values
+   left.
+3. **`scripts/db-roles-phase-1.sql`** — created `ralph_cms` + `ralph_world`
+   roles, applied all grants. Both sanity DO-blocks confirmed:
+   `ralph_world` cannot UPDATE `profiles.role`, and cannot UPDATE/DELETE
+   any of the 4 append-only tables (`audit_log`, `consent_log`,
+   `webhook_log`, `stripe_events`).
+
+Then DSN cutover on both Railway services:
+- **ralph-world** `DATABASE_URL` swapped to `ralph_world` role. Verified:
+  `/api/health` returns `{status: 'ok', db: 'connected'}`; Google OAuth
+  signin completes; `/account` renders the new Subscription / Your events
+  / Shipping address / Mailing preferences sections; tier reads correctly
+  as `free` (per backfill).
+- **ralph-cms** `DATABASE_URL` swapped to `ralph_cms` role. Verified:
+  article list loads (6 articles); edit-save round-trip works end-to-end
+  through the new role.
+
+### Gotcha caught + fixed during apply
+
+The grants script uses psql's `:'name'` auto-quoting form, but my original
+runbook instructed `-v X="'$VAR'"` with extra outer single quotes — that
+set the passwords to `'<base64>'` (literal quotes included). Re-ran with
+`-v X="$VAR"` and the passwords came through clean. Runbook
+(`docs/db-role-separation.md`) updated with an **IMPORTANT** callout +
+the proper URL-encoding pattern for the Railway DSN (`openssl rand
+-base64` produces `/` and `+` which need encoding).
+
+### Decisions logged
+- Decided to apply against prod now (vs waiting for staging DB) because
+  pre-Phase-4 the DB has only 3 users — rollback is "drop new tables, 3
+  users re-signup." After Substack import we'd be touching thousands of
+  rows with GDPR-relevant consent records.
+
+### Out-of-scope bug surfaced (tracked separately)
+- Google OAuth consent screen on ralph-world says **"Sign in to
+  CareBears"** — `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` in Railway are
+  pointed at a stale "CareBears" Google Cloud project. Signin still
+  completes because the redirect URIs are configured. Spawned as a
+  separate task to either rebrand the project or migrate credentials.
+  Likely same issue on ralph-cms.
+
+### Phase 1 status: complete
+All 9 tasks shipped and live-verified. Phase 2 (Stripe subscriptions)
+unblocked.
+
+---
+
 ## 2026-06-01 — Ralph World 2.0 build — Phase 1 underway
 
 Builds against the locked architecture doc at
@@ -26,7 +90,7 @@ Builds against the locked architecture doc at
 - Phase 4 §4.2 Substack migration: no user notification needed (Nicola). Soft opt-in transfer covered.
 
 ### Pending
-- Phase 1 remaining: Task 1.2 SQL + runbook are drafted; apply step blocks on Railway provisioning + cutover coordination with Josh.
+- Phase 1 remaining: nothing — see 2026-06-02 entry for live apply outcome.
 - External provisioning: test DB, Resend key + verified ralph.world domain, Shopify Admin API token, Railway env vars per SOW pre-flight.
 
 ---

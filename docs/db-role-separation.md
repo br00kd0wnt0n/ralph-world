@@ -62,11 +62,15 @@ column is missing afterward.
    openssl rand -base64 32   # → ralph_cms password
    openssl rand -base64 32   # → ralph_world password
    ```
-3. Apply the SQL with both passwords passed in as psql variables:
+3. Apply the SQL with both passwords passed in as psql variables.
+   **IMPORTANT:** do NOT wrap the values in extra single quotes — the
+   SQL script uses psql's `:'name'` auto-quoting form, so adding outer
+   `'…'` would set the password to the literal string `'<value>'`
+   (with the quotes as part of the password). Pass the raw env var:
    ```bash
    psql "$DATABASE_URL_SUPERUSER" \
-     -v ralph_cms_password="'$RALPH_CMS_PASSWORD'" \
-     -v ralph_world_password="'$RALPH_WORLD_PASSWORD'" \
+     -v ralph_cms_password="$RALPH_CMS_PASSWORD" \
+     -v ralph_world_password="$RALPH_WORLD_PASSWORD" \
      -f scripts/db-roles-phase-1.sql
    ```
    You should see two `NOTICE` lines confirming the sanity assertions
@@ -85,6 +89,17 @@ column is missing afterward.
    ```
 5. Trigger a redeploy on each so the new DSN takes effect. Smoke-test
    `/api/health` on both.
+
+   **Note on URL-encoding:** `openssl rand -base64` can produce `/`,
+   `+`, `=` characters that need URL-encoding inside a DSN. Use:
+   ```bash
+   node -e "
+   const host = '<host>:<port>/<db>';
+   console.log('postgresql://ralph_world:' +
+     encodeURIComponent(process.env.RALPH_WORLD_PASSWORD) + '@' + host);
+   "
+   ```
+   to print a properly-encoded DSN ready to paste into Railway.
 
 ### Verifying the grants are enforced
 

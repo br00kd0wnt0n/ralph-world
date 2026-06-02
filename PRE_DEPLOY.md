@@ -4,6 +4,36 @@ Things to sort **after Josh finishes his visual/animation pass** and **before DN
 cuts over to the Railway deploy**. Deferred until then because each item
 interacts with real URLs, final visual design, or live analytics.
 
+## Phase 1 (Ralph World 2.0 unified accounts) — parked items
+
+Phase 1 is complete in code + DB. These are the lingering external/UI items.
+
+- [ ] **Resend domain verification (`send.ralph.world`)** — DNS records
+      requested from Dany 2026-06-02 evening. Once Resend dashboard shows
+      the domain Verified, run `docs/resend-smoke-test.md` Smoke Test 1 +
+      the Playwright E2E (`e2e/credentials-signup.spec.ts`). That closes
+      the Task 1.3 + 1.4 acceptance gates.
+- [ ] **Google OAuth consent screen — "Ralph World" branding propagation.**
+      New project + Client IDs configured 2026-06-02. App name is set
+      correctly in the Branding tab, but the runtime consent screen still
+      shows the hostname (`ralph-world-production.up.railway.app`).
+      Google's documented propagation time is "minutes to a few hours."
+      If after 24h it still shows the hostname, try **Publish App** under
+      Audience (basic scopes don't need Google verification).
+- [ ] **ralph-cms second OAuth Client ID + env var swap** — Step 6 of the
+      Google OAuth fix. Same Google Cloud project, second Web Client with
+      ralph-cms's Railway + custom domain URIs, swap `AUTH_GOOGLE_ID` /
+      `AUTH_GOOGLE_SECRET` on the ralph-cms Railway service. ~5 min.
+- [ ] **DNS cutover checklist** — when ralph.world finally points at
+      Railway, update `NEXT_PUBLIC_APP_URL` on both Railway services,
+      Resend webhook endpoint URL, Stripe webhook URL (post-Phase 2),
+      Shopify webhook URL. See the spawned task chip ("ralph.world DNS
+      cutover checklist") for the full list with rationale.
+- [ ] **Add login email/password form to ralph-cms** if email/password
+      auth should be available there too. Currently the CMS login page
+      is Google-only — the same gap the consumer site had until
+      Task #10 closed it 2026-06-02.
+
 ## Tracking
 
 - [ ] **Google Analytics (GA4)** — get Measurement ID from existing

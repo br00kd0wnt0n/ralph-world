@@ -10,16 +10,38 @@
 ~/context-base/projects/ralph-world.md
 
 ## Current persona
-FRONTEND — ~/context-base/personas/frontend.md
+SCAFFOLDER — ~/context-base/personas/scaffolder.md
+(SOW work on Ralph World 2.0 unified accounts. Builds against
+`~/ralph-cms/docs/ralph-world-2-accounts-architecture.md` v7 and
+`~/ralph-cms/docs/sow-ralph-world-2.md`.)
 
-## Session goal
-Frontend visual pass — parallax homepage, page transitions, layered
-planet decoration applied across section pages, header/nav redesign,
-events page interactive arms, Join Ralph + Work With Us pages
-(2026-05-16). See `changelog.md` for what shipped and `PRE_DEPLOY.md`
-for the remaining-items checklist (Shopify store sweep, multi-week
-broadcaster scheduling, webhook registration, real-payment test,
-token rotations, visual-canvas rebuild).
+## Session goal (last updated 2026-06-02)
+**Phase 1 of Ralph World 2.0 — unified accounts — is complete in
+code, applied to prod DB, and verified through the user-facing flow.**
+
+Next session: close the two remaining external-blocker acceptance gates
+(Resend domain verification + Google OAuth consent screen propagation),
+run the Phase 1.3/1.4 acceptance tests, then kick off Phase 2 (Stripe
+subscriptions).
+
+### Resume tomorrow with
+1. Check Resend dashboard — has `send.ralph.world` flipped from
+   `not_started` to `verified`? (Dany was actioning DNS overnight.)
+2. If verified: run `docs/resend-smoke-test.md` Smoke Test 1 with a
+   real inbox. Then the Playwright E2E:
+   `PLAYWRIGHT_BASE_URL=https://ralph-world-production.up.railway.app
+    DATABASE_URL='postgresql://ralph_world:…' npm run test:e2e`
+3. Confirm Google OAuth consent screen now shows "Ralph World"
+   instead of the Railway hostname (Google's propagation delay).
+4. Decide on Phase 2 (Stripe) scope. SOW §2 is the starting point.
+
+### Parked overnight (no action needed from us)
+- Resend domain `send.ralph.world` — awaiting Dany's DNS update + Resend's verification crawl
+- Google OAuth consent screen branding propagation — saved correctly per Branding tab, just hasn't pushed through Google's CDN yet
+- ralph-cms second Google OAuth Client ID + env var swap — 5 min task, can be done any time
+
+See `changelog.md` 2026-06-02 entry for the live-apply outcome and
+`PRE_DEPLOY.md` for the lingering pre-cutover checklist.
 
 ---
 
@@ -56,6 +78,37 @@ npm run dev
 - Shopify client: `lib/shopify/client.ts`
 - Shopify queries: `lib/shopify/queries.ts`
 - Shop categorisation: `lib/shopify/categorize.ts`
+
+### Phase 1 — Ralph World 2.0 (unified accounts)
+- Entitlements (pure): `lib/entitlements.ts`
+- Entitlements (server bridge): `lib/entitlements-server.ts`
+- Audit log helper: `lib/audit.ts`
+- Consent log helper: `lib/consent.ts`
+- Credentials provider passwords: `lib/auth/passwords.ts`
+- Credentials provider tokens: `lib/auth/verification-tokens.ts`
+- Credentials provider signup flow: `lib/auth/signup.ts`
+- Transactional email service: `lib/email/send.ts`
+- Resend webhook signature verifier: `lib/email/verifyResendSignature.ts`
+- Email template registry: `components/emails/EmailVerification.tsx` + see `docs/email-templates.md`
+- Shopify customer auto-create: `lib/shopify/customer.ts` + `lib/shopify/admin-client.ts`
+- Login page + form: `app/login/page.tsx` + `app/login/LoginForm.tsx` + `app/login/actions.ts`
+- Signup API route: `app/api/auth/signup/route.ts`
+- Verify email API route: `app/api/auth/verify-email/route.ts`
+- Resend webhook intake: `app/api/webhooks/resend/route.ts`
+- Member portal (extended): `app/account/page.tsx`
+
+### Phase 1 — DB ops scripts
+- Schema delta (Phase 1 additive): `scripts/apply-phase-1-schema.sql`
+- Data migration (access_tier rename + tier backfill): `scripts/migrate-phase-1-access-tier.sql`
+- DB role separation grants: `scripts/db-roles-phase-1.sql`
+- Runbook: `docs/db-role-separation.md`
+- Resend smoke-test runbook: `docs/resend-smoke-test.md`
+
+### Phase 1 — E2E tests
+- Credentials signup acceptance: `e2e/credentials-signup.spec.ts`
+- Vitest config: `vitest.config.mts`
+- Vitest setup + server-only stub: `vitest.setup.ts` + `vitest.server-only-stub.ts`
+- Tests TS config: `tsconfig.test.json`
 
 ### Layout / chrome
 - Nav component: `components/layout/Nav.tsx`
@@ -117,18 +170,34 @@ npm run dev
 
 ## Environment variables
 ```
-DATABASE_URL=                       # Railway Postgres connection string
+# Core
+DATABASE_URL=                       # Railway Postgres — uses ralph_world role since 2026-06-02 cutover
 AUTH_SECRET=                        # openssl rand -base64 32
 AUTH_URL=                           # http://localhost:3000 or https://ralph.world
-AUTH_GOOGLE_ID=                     # Google OAuth client ID
+AUTH_GOOGLE_ID=                     # Google OAuth client ID (new "Ralph World" project as of 2026-06-02)
 AUTH_GOOGLE_SECRET=                 # Google OAuth client secret
+NEXT_PUBLIC_APP_URL=                # https://ralph-world-production.up.railway.app (until DNS cutover, then https://ralph.world)
+
+# Broadcaster (Ralph TV)
 BROADCASTER_BACKEND_URL=            # Ralph TV backend Railway URL
 BROADCASTER_RELAY_URL=              # Ralph TV relay Railway URL
 BROADCASTER_SERVICE_TOKEN=          # X-Service-Token for Broadcaster API auth
+
+# Shopify Storefront (consumer cart proxy)
 SHOPIFY_STOREFRONT_URL=             # Shopify Storefront GraphQL endpoint
 SHOPIFY_STOREFRONT_TOKEN=           # Shopify Storefront API token
 SHOPIFY_WEBHOOK_SECRET=             # For HMAC verification of Shopify webhooks
-NEXT_PUBLIC_APP_URL=                # https://ralph.world (or Railway URL in staging)
+SHOPIFY_SUBSCRIPTION_VARIANT_ID=    # gid://shopify/ProductVariant/... for the £3/month subscription
+
+# Shopify Admin API (Task 1.6 customer auto-create + Phase 3 synthetic orders)
+SHOPIFY_STORE_DOMAIN=               # store.myshopify.com (no protocol)
+SHOPIFY_ADMIN_ACCESS_TOKEN=         # shpat_... Admin API access token
+SHOPIFY_ADMIN_API_VERSION=          # optional, defaults to 2024-01
+
+# Resend (transactional email — Task 1.4)
+RESEND_API_KEY=                     # re_... Resend API key
+RESEND_FROM=                        # Ralph.world <hello@send.ralph.world>
+RESEND_WEBHOOK_SECRET=              # whsec_... Svix webhook secret
 ```
 
 ## Project-specific conventions

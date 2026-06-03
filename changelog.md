@@ -4,6 +4,97 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-06-03 — Phase 2 build (mock-driven): Stripe subscriptions
+
+Five of six Phase 2 SOW tasks shipped to `main` in a single afternoon,
+mock-driven. Live acceptance waits on the one task that's external —
+Brook creating the Stripe account + product (Task 2.1).
+
+### Shipped
+- **2.2 Stripe Checkout session creation** — `lib/stripe/checkout.ts`
+  exports a pure `buildSubscriptionCheckoutParams` (testable) and
+  `createSubscriptionCheckout` (SDK-wrapping). Mode=subscription,
+  GB-only shipping, allow_promotion_codes=false, user_id metadata on
+  both session + subscription_data for webhook mapping. POST
+  `/api/checkout/subscribe` route returns `{ ok, url }`. 13 tests.
+- **2.3 Stripe webhook handler + 5 event processors** — `lib/stripe/
+  verifySignature.ts` is a hand-rolled HMAC-SHA256 verifier matching
+  Stripe's `t=…,v1=…` format (parallels `verifyResendSignature.ts`).
+  `lib/stripe/webhook-handlers.ts` has one handler per event:
+  checkout.session.completed (tier=paid, write customer/sub ids +
+  shipping_address_cached), customer.subscription.updated (mirror
+  status + period_end, handling Stripe API 2025-04-30+ field move),
+  customer.subscription.deleted (tier=free), invoice.payment_failed
+  (status=past_due), invoice.paid (refresh period_end, recover from
+  past_due). User lookup: metadata.user_id first, fallback to
+  profiles.stripe_customer_id. `/api/webhooks/stripe` route: verify
+  → INSERT stripe_events (23505 → 200 deduped) → dispatch → UPDATE
+  processing_status to 'processed'/'failed'. 23 tests.
+- **2.4 Stripe shipping address → Shopify customer sync** — extends
+  `lib/shopify/customer.ts` with `mapStripeAddressToShopify` (pure,
+  returns null on missing required fields) + `updateCustomerAddress`
+  (POSTs to /customers/{id}/addresses.json with default: true,
+  atomic create + mark-default). Wired into the 2.3 checkout.session.completed
+  handler via the onShippingAddress hook. Best-effort — Shopify
+  outage doesn't break webhook acknowledgment. 7 new tests.
+- **2.5 Member portal subscription UI** — `/account` now uses real
+  Stripe flows. Server actions in `app/account/actions.ts`
+  (startSubscriptionCheckout + openBillingPortal) replace the legacy
+  Shopify/mailto buttons. Subscription panel shows formatted next-billing-date
+  + a "payment failed" badge for past_due state. `/api/account/portal`
+  creates Stripe Customer Portal sessions. `/api/account/upgrade`
+  refactored to use Stripe (URL preserved so SubscribeModal still
+  works). `lib/stripe/portal.ts` + 5 tests. Session shape extended
+  with stripeCustomerId, stripeSubscriptionId,
+  subscriptionCurrentPeriodEnd.
+- **2.6 Shopify webhook handler** — `lib/shopify/verifyHmac.ts`
+  (pure HMAC verifier, extracted from inline). `lib/shopify/webhook-handlers.ts`
+  with two new topics: customers/update (mirror default_address →
+  profiles.shipping_address_cached via shopify_links lookup) and
+  fulfillments/create (flip magazine_shipments.status='fulfilled',
+  idempotent on shopify_order_id; dormant until Phase 3 populates
+  the table). Legacy orders/paid + subscriptions/* topics still
+  fire on the same route. 14 new tests.
+
+### Refactor caught along the way
+- Five consumer sites were gating paid access via legacy
+  `subscriptionStatus === 'paid'` (Shopify Subscriptions vocabulary).
+  Phase 2 Stripe subscribers have `subscriptionStatus='active'` — so
+  those gates would have failed for new paying users. Migrated all five
+  (Nav badge, LabGrid lock overlay, ArticleOverlay paid-access gate,
+  /api/broadcaster/vod-url, /api/broadcaster/assets) to use `tier ===
+  'paid'` which works for both legacy + Stripe subscribers. AuthContext
+  now also exposes a derived `tier` for client-side consumers.
+  Widened SessionProfile.subscriptionStatus from `null|'free'|'paid'`
+  to `string|null` so Stripe values typecheck.
+- tierFromSession (lib/entitlements.ts) updated to read profile.tier
+  first, fall back to subscriptionStatus. The forward-compat note from
+  Phase 1 becomes reality.
+
+### Pending
+- **Task 2.1** — Brook's Stripe dashboard work: create account, set up
+  £3/mo product + price (test + live), enable Customer Portal, register
+  webhook endpoint. ~15-30 min. After this, set STRIPE_PUBLISHABLE_KEY /
+  STRIPE_SECRET_KEY / STRIPE_PRICE_ID / STRIPE_WEBHOOK_SECRET in Railway
+  → ralph-world. Then run the Stripe CLI for local webhook testing:
+  `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
+- Phase 2 exit criteria (per SOW): end-to-end paid subscription in
+  test mode (subscribe → see paid tier → cancel → see free tier) +
+  address roundtrip verification (subscribe → Shopify customer has
+  address → edit in Shopify → see updated in /account).
+
+### Other parked items unchanged
+- Resend domain verification waiting on Dany's DNS records (DNS
+  records were still empty at 13:00 BST)
+- Google OAuth consent screen branding propagation (Brook initiated
+  verification; cosmetic, doesn't block)
+
+165 tests at start of session → 191 at end. Lint 0 errors, next build
+clean. Five commits: `c68b8f8` (Phase 2 prep), `17e197d` (2.2 + 2.3),
+`a71d615` (2.4), `bd0ac6e` (2.6), `c61dec0` (2.5).
+
+---
+
 ## 2026-06-02 — Phase 1 live apply: schema delta + role separation in prod
 
 Phase 1 architecture committed across the 2026-06-01 work is now live on

@@ -15,30 +15,48 @@ SCAFFOLDER — ~/context-base/personas/scaffolder.md
 `~/ralph-cms/docs/ralph-world-2-accounts-architecture.md` v7 and
 `~/ralph-cms/docs/sow-ralph-world-2.md`.)
 
-## Session goal (last updated 2026-06-02)
-**Phase 1 of Ralph World 2.0 — unified accounts — is complete in
-code, applied to prod DB, and verified through the user-facing flow.**
+## Session goal (last updated 2026-06-03)
+**Phase 1 live + applied to prod DB. Phase 2 (Stripe subscriptions)
+is 5/6 tasks shipped to `main` mock-driven, waiting only on Brook's
+Stripe dashboard setup (Task 2.1) for live acceptance.**
 
-Next session: close the two remaining external-blocker acceptance gates
-(Resend domain verification + Google OAuth consent screen propagation),
-run the Phase 1.3/1.4 acceptance tests, then kick off Phase 2 (Stripe
-subscriptions).
+Next session priorities:
+1. Resend smoke test (if Dany's DNS records landed overnight)
+2. Stripe account + product creation (Task 2.1, ~15-30 min)
+3. Live Stripe + Resend integration tests
+4. Then Phase 3 (content gating + email templates + magazine
+   fulfillment) — SOW §Phase 3 has the breakdown
 
 ### Resume tomorrow with
-1. Check Resend dashboard — has `send.ralph.world` flipped from
-   `not_started` to `verified`? (Dany was actioning DNS overnight.)
-2. If verified: run `docs/resend-smoke-test.md` Smoke Test 1 with a
-   real inbox. Then the Playwright E2E:
-   `PLAYWRIGHT_BASE_URL=https://ralph-world-production.up.railway.app
-    DATABASE_URL='postgresql://ralph_world:…' npm run test:e2e`
-3. Confirm Google OAuth consent screen now shows "Ralph World"
-   instead of the Railway hostname (Google's propagation delay).
-4. Decide on Phase 2 (Stripe) scope. SOW §2 is the starting point.
+1. **Resend status check** — `dig TXT resend._domainkey.send.ralph.world +short`.
+   If non-empty, Dany's done their bit. Then either click "Verify"
+   in Resend dashboard or curl the domains API. Once verified, run
+   `docs/resend-smoke-test.md` Smoke Test 1 with a real inbox + the
+   Playwright E2E.
+2. **Task 2.1 — Stripe setup** in dashboard:
+   - Create product "Ralph Magazine Subscription"
+   - One price: £3 GBP/month recurring (Test + Live modes)
+   - Enable Customer Portal (Settings → Billing → Customer Portal):
+     cancel + update payment + view invoices
+   - Webhook endpoint pointing at
+     `https://ralph-world-production.up.railway.app/api/webhooks/stripe`,
+     subscribed to: checkout.session.completed,
+     customer.subscription.updated, customer.subscription.deleted,
+     invoice.payment_failed, invoice.paid
+   - Copy 4 env vars into Railway → ralph-world:
+     STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_PRICE_ID,
+     STRIPE_WEBHOOK_SECRET
+3. **Stripe live test** — `stripe listen --forward-to
+   ralph-world-production.up.railway.app/api/webhooks/stripe`,
+   then subscribe via /account → confirm tier=paid, period end shown,
+   Customer Portal accessible. Cancel via portal → confirm tier=free.
 
-### Parked overnight (no action needed from us)
-- Resend domain `send.ralph.world` — awaiting Dany's DNS update + Resend's verification crawl
-- Google OAuth consent screen branding propagation — saved correctly per Branding tab, just hasn't pushed through Google's CDN yet
-- ralph-cms second Google OAuth Client ID + env var swap — 5 min task, can be done any time
+### Parked
+- Resend domain verification — awaiting Dany's DNS update
+- Google OAuth consent screen branding — Brook initiated Google
+  verification; cosmetic propagation delay
+- ralph-cms second OAuth Client ID + env var swap — 5 min task
+- Live Stripe acceptance — blocks on Task 2.1
 
 See `changelog.md` 2026-06-02 entry for the live-apply outcome and
 `PRE_DEPLOY.md` for the lingering pre-cutover checklist.
@@ -109,6 +127,23 @@ npm run dev
 - Vitest config: `vitest.config.mts`
 - Vitest setup + server-only stub: `vitest.setup.ts` + `vitest.server-only-stub.ts`
 - Tests TS config: `tsconfig.test.json`
+
+### Phase 2 — Stripe subscriptions
+- Plan: `docs/phase-2-plan.md`
+- Stripe SDK client (lazy + test seam): `lib/stripe/client.ts`
+- Checkout session builder + creator: `lib/stripe/checkout.ts`
+- Customer Portal session: `lib/stripe/portal.ts`
+- Webhook signature verifier: `lib/stripe/verifySignature.ts`
+- 5 event handlers: `lib/stripe/webhook-handlers.ts`
+- Checkout API route: `app/api/checkout/subscribe/route.ts`
+- Webhook intake: `app/api/webhooks/stripe/route.ts`
+- Customer Portal API route: `app/api/account/portal/route.ts`
+- /account server actions (subscribe + portal): `app/account/actions.ts`
+- Repurposed legacy entry (Shopify→Stripe): `app/api/account/upgrade/route.ts`
+- Shopify webhook verifier + new handlers (Task 2.6):
+  `lib/shopify/verifyHmac.ts` + `lib/shopify/webhook-handlers.ts`
+- Stripe address sync to Shopify (Task 2.4): `lib/shopify/customer.ts`
+  (`updateCustomerAddress` + `mapStripeAddressToShopify`)
 
 ### Layout / chrome
 - Nav component: `components/layout/Nav.tsx`

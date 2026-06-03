@@ -7,6 +7,8 @@ interface ButtonProps {
   href?: string
   onClick?: () => void
   className?: string
+  // Optional override for the button's min-width (default 170px).
+  minWidth?: number
 }
 
 const btnStyles: React.CSSProperties = {
@@ -41,18 +43,20 @@ const shadowStyles: React.CSSProperties = {
   pointerEvents: 'none',
 }
 
-export default function Button({ label, href, onClick, className = '' }: ButtonProps) {
+export default function Button({ label, href, onClick, className = '', minWidth }: ButtonProps) {
+  const mergedStyles =
+    minWidth !== undefined ? { ...btnStyles, minWidth } : btnStyles
   return (
     <div className={className} style={{ position: 'relative', display: 'inline-block', width: 'fit-content' }}>
       {/* Shadow — stays in place */}
       <div style={shadowStyles} />
       {/* Button — moves on hover/active */}
       {href ? (
-        <Link href={href} className="btn-press" style={btnStyles}>
+        <Link href={href} className="btn-press" style={mergedStyles}>
           {label}
         </Link>
       ) : (
-        <button type="button" onClick={onClick} className="btn-press" style={btnStyles}>
+        <button type="button" onClick={onClick} className="btn-press" style={mergedStyles}>
           {label}
         </button>
       )}

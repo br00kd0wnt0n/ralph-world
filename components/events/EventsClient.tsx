@@ -33,8 +33,15 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
         ]}
       />
 
-      {/* Planet + white bg layered with content */}
-      <section className="relative">
+      {/* Planet + white bg layered with content.
+          flex flex-col + min-height keeps the section as tall as the
+          remaining viewport on big screens. The content layer below uses
+          mt-auto so the characters/hands block anchors to the bottom of
+          the section (just above the footer) instead of leaving a gap. */}
+      <section
+        className="relative flex flex-col"
+        style={{ minHeight: 'calc(100svh - 200px)' }}
+      >
         {/* Background - animates SECOND */}
         <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
@@ -69,10 +76,12 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
           />
         </motion.div>
 
-        {/* Content layer - animates LAST */}
+        {/* Content layer - animates LAST. mt-auto pushes the characters
+            block to the bottom of the section so on tall viewports it
+            sits flush with the footer (white bg fills the gap above). */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 w-full"
+          className="relative z-10 w-full mt-auto"
           style={{ paddingTop: 0 }}
         >
           <MinglingCharacters events={activeEvents} />

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import SectionIntro from '@/components/layout/SectionIntro'
 import ProductCard from './ProductCard'
-import ProductOverlay from './ProductOverlay'
+import ProductDetail from './ProductDetail'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import {
   sectionContainerVariants,
@@ -57,20 +57,67 @@ export default function ShopClient({
     CATEGORIES[0].handle
   )
   const activeCategory = CATEGORIES.find((c) => c.handle === activeCollection)
-  const [overlayProduct, setOverlayProduct] = useState<ShopifyProduct | null>(null)
-  const [overlayOpen, setOverlayOpen] = useState(false)
+  // selectedProduct drives the inline view swap — when non-null, the
+  // category tabs + product grid fade out and the product detail fades
+  // into the same space (no overlay).
+  const [selectedProduct, setSelectedProduct] = useState<ShopifyProduct | null>(null)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
 
   const products = collections[activeCollection] ?? []
 
-  async function openProduct(handle: string) {
+  async function fetchProduct(handle: string): Promise<ShopifyProduct | null> {
     const res = await fetch(`/api/shop/${handle}`)
-    if (res.ok) {
-      const data = (await res.json()) as ShopifyProduct
-      setOverlayProduct(data)
-      setOverlayOpen(true)
-    }
+    if (!res.ok) return null
+    return (await res.json()) as ShopifyProduct
   }
+
+  // openProduct: called from a card click. Push the nice URL, then load.
+  async function openProduct(handle: string) {
+    // Use the un-patched History.prototype.pushState so Next.js 16's App
+    // Router doesn't treat the path change as a soft navigation (which
+    // would fire the /shop/[handle] redirect → re-mount and lose state).
+    History.prototype.pushState.call(window.history, null, '', `/shop/${handle}`)
+    const data = await fetchProduct(handle)
+    if (data) setSelectedProduct(data)
+  }
+
+  function closeProduct() {
+    History.prototype.pushState.call(window.history, null, '', '/shop')
+    setSelectedProduct(null)
+  }
+
+  // On mount, check the URL for ?product=handle (set by /shop/[handle]
+  // redirect). If present, fetch the product, show the detail, then
+  // replace the URL with the slug form.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const handle = params.get('product')
+    if (!handle) return
+    let cancelled = false
+    fetchProduct(handle).then((data) => {
+      if (cancelled || !data) return
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedProduct(data)
+      History.prototype.replaceState.call(
+        window.history,
+        null,
+        '',
+        `/shop/${handle}`,
+      )
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Close the detail view on back/forward navigation.
+  useEffect(() => {
+    function onPopState() {
+      setSelectedProduct(null)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
 
   return (
     <motion.div
@@ -85,8 +132,15 @@ export default function ShopClient({
         lines={[intro]}
       />
 
-      {/* Planet + white bg layered with content */}
-      <section className="relative">
+      {/* Planet + white bg layered with content.
+          min-height ensures the white background extends to the footer on
+          tall viewports so the page never shows the body bg between the
+          shop content and the footer. 200px is approximate
+          SectionIntro + Footer total — tweak as needed. */}
+      <section
+        className="relative"
+        style={{ minHeight: 'calc(100svh - 200px)' }}
+      >
         {/* Background - animates SECOND */}
         <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
@@ -127,96 +181,119 @@ export default function ShopClient({
           className="relative z-10 pb-8 min-h-[50vh]"
           style={{ paddingTop: 120 }}
         >
-          {/* Category tabs */}
-          <div className="w-full mx-auto px-6" style={{ maxWidth: 502 }}>
-            <img
-              src="/imgs/dashed_separator_top.svg"
-              alt=""
-              aria-hidden="true"
-              className="w-full"
-            />
-
-            <div className="flex justify-center">
-              {CATEGORIES.map((cat) => {
-                const isActive = activeCollection === cat.handle
-                return (
-                  <button
-                    key={cat.handle}
-                    onClick={() => setActiveCollection(cat.handle)}
-                    className="relative text-intro transition-colors flex items-center justify-center text-black"
-                    style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: '33.333%', textAlign: 'center' }}
-                  >
-                    <span className="relative z-10">{cat.label}</span>
-                    {isActive && (
-                      <img
-                        src="/imgs/underline_shop.svg"
-                        alt=""
-                        aria-hidden="true"
-                        className="absolute pointer-events-none left-1/2 -translate-x-1/2 z-0"
-                        style={{
-                          top: '50%',
-                          width: 118,
-                          height: 11,
-                          maxWidth: 'none',
-                        }}
-                      />
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            <img
-              src="/imgs/dashed_separator_bottom.svg"
-              alt=""
-              aria-hidden="true"
-              className="w-full"
-            />
-          </div>
-
-          {/* Product grid */}
-          <div className="px-6 py-8">
-            {products.length === 0 ? (
-              <div className="max-w-2xl mx-auto text-center py-16 space-y-3">
-                <p className="text-gray-500 text-sm">Products coming soon.</p>
-                <p className="text-gray-400 text-xs italic">
-                  Content team: products appear here once their <strong>Category</strong>{' '}
-                  in Shopify Admin matches this tab
-                  {activeCategory ? ` (${activeCategory.hint})` : ''}.
-                </p>
-              </div>
-            ) : (
+          {/* Cross-fade between the listings view (tabs + grid) and the
+              inline product detail view. mode="wait" so the outgoing view
+              completes its fade-out before the incoming one fades in,
+              avoiding overlap in the same space. */}
+          <AnimatePresence mode="wait">
+            {selectedProduct ? (
               <motion.div
-                key={activeCollection}
+                key={`product-${selectedProduct.id}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
               >
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onClick={() => openProduct(product.handle)}
+                <ProductDetail
+                  product={selectedProduct}
+                  onBack={closeProduct}
+                  onSubscribe={() => {
+                    closeProduct()
+                    setSubscribeOpen(true)
+                  }}
+                  soldoutHeading={soldoutHeading}
+                  soldoutBody={soldoutBody}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="listings"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                {/* Category tabs */}
+                <div className="w-full mx-auto px-6" style={{ maxWidth: 502 }}>
+                  <img
+                    src="/imgs/dashed_separator_top.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full"
                   />
-                ))}
+
+                  <div className="flex justify-center">
+                    {CATEGORIES.map((cat) => {
+                      const isActive = activeCollection === cat.handle
+                      return (
+                        <button
+                          key={cat.handle}
+                          onClick={() => setActiveCollection(cat.handle)}
+                          className="relative text-intro transition-colors flex items-center justify-center text-black"
+                          style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: '33.333%', textAlign: 'center' }}
+                        >
+                          <span className="relative z-10">{cat.label}</span>
+                          {isActive && (
+                            <img
+                              src="/imgs/underline_shop.svg"
+                              alt=""
+                              aria-hidden="true"
+                              className="absolute pointer-events-none left-1/2 -translate-x-1/2 z-0"
+                              style={{
+                                top: '50%',
+                                width: 118,
+                                height: 11,
+                                maxWidth: 'none',
+                              }}
+                            />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <img
+                    src="/imgs/dashed_separator_bottom.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Product grid */}
+                <div className="px-6 pb-24 md:pb-8" style={{ paddingTop: 64 }}>
+                  {products.length === 0 ? (
+                    <div className="max-w-2xl mx-auto text-center py-16 space-y-3">
+                      <p className="text-gray-500 text-sm">Products coming soon.</p>
+                      <p className="text-gray-400 text-xs italic">
+                        Content team: products appear here once their <strong>Category</strong>{' '}
+                        in Shopify Admin matches this tab
+                        {activeCategory ? ` (${activeCategory.hint})` : ''}.
+                      </p>
+                    </div>
+                  ) : (
+                    <motion.div
+                      key={activeCollection}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="max-w-6xl mx-auto grid justify-center grid-cols-2 gap-4 md:gap-16 md:grid-cols-[repeat(auto-fill,224px)]"
+                    >
+                      {products.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          onClick={() => openProduct(product.handle)}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+                </div>
               </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         </motion.div>
       </section>
-
-      <ProductOverlay
-        product={overlayProduct}
-        isOpen={overlayOpen}
-        onClose={() => setOverlayOpen(false)}
-        onSubscribe={() => {
-          setOverlayOpen(false)
-          setSubscribeOpen(true)
-        }}
-        soldoutHeading={soldoutHeading}
-        soldoutBody={soldoutBody}
-      />
 
       <SubscribeModal
         isOpen={subscribeOpen}

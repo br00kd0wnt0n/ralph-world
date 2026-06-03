@@ -35,6 +35,11 @@ export interface ShopifyProduct {
     minVariantPrice: ShopifyMoney
     maxVariantPrice: ShopifyMoney
   }
+  // Custom "Date" metafield from Shopify Admin (namespace: custom, key: date).
+  // Free-text — values look like "Summer 2026" or "June 15th". null when the
+  // metafield is unset, or when Storefront API access isn't granted on the
+  // metafield definition.
+  dateMetafield: { value: string; type: string } | null
 }
 
 export interface ShopifyCartLine {
@@ -77,6 +82,9 @@ export interface ProductSummary {
   productType: string
   tags: string[]
   variantId: string
+  // Raw value of the `custom.date` metafield (free text, e.g. "Summer 2026").
+  // null when unset / Storefront access not granted.
+  date: string | null
 }
 
 export type ShopCategory = 'magazine' | 'merch' | 'random'

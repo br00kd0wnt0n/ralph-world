@@ -11,12 +11,18 @@ export const runtime = 'nodejs'
  * `users.email_verified = now()` and redirects to /login with a flag so
  * the page can show "email verified — please sign in" copy. On failure,
  * redirects to /login with `?verify=error&reason=...`.
+ *
+ * Redirect base URL is read from NEXT_PUBLIC_APP_URL / AUTH_URL — never
+ * from `request.nextUrl.origin`. Behind Railway's reverse proxy, the
+ * incoming request's URL reflects the internal container address
+ * (`http://localhost:3000`) rather than the public hostname, so a
+ * redirect built from it would send the user to localhost.
  */
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email')
   const token = request.nextUrl.searchParams.get('token')
 
-  const loginUrl = new URL('/login', request.nextUrl.origin)
+  const loginUrl = new URL('/login', publicBaseUrl())
 
   if (!email || !token) {
     loginUrl.searchParams.set('verify', 'error')
@@ -33,4 +39,12 @@ export async function GET(request: NextRequest) {
 
   loginUrl.searchParams.set('verify', 'ok')
   return NextResponse.redirect(loginUrl)
+}
+
+function publicBaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.AUTH_URL ??
+    'http://localhost:3000'
+  )
 }

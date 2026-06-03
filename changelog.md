@@ -4,6 +4,42 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-06-03 (afternoon-2) — Phase 1.3/1.4 acceptance closed + redirect bug fix
+
+Resend DNS records landed overnight (Dany). Domain `send.ralph.world`
+verified, email delivery clean (Apple Mail / me.com test inbox).
+End-to-end email/password signup → verification email → sign-in
+loop confirmed working in prod.
+
+### Bug caught + fixed: localhost-redirect on verify-email
+- `app/api/auth/verify-email/route.ts` built its `/login` redirect from
+  `request.nextUrl.origin`. Behind Railway's reverse proxy that resolves
+  to the INTERNAL container URL (`http://localhost:3000`), not the
+  public Railway hostname. So clicking a verification email link
+  consumed the token correctly (`users.email_verified` got set, token
+  row deleted) — but then 302'd to `http://localhost:3000/login?verify=ok`,
+  which the user's browser refused to connect to. From the user's PoV
+  the flow appeared broken; from the DB's PoV it had succeeded.
+- Fix: read the redirect base from `NEXT_PUBLIC_APP_URL` / `AUTH_URL`,
+  fall back to `http://localhost:3000` for local dev. Matches the
+  pattern `/api/account/upgrade` already used. Other routes that read
+  `request.url` only for search params (cart, broadcaster) are fine —
+  only origin-based redirect construction was affected.
+- Commit `9a343f1`.
+
+### Phase 1.3 + 1.4 acceptance gates: closed
+- Resend domain verified, transactional email delivered
+- Signup → verification token issued → email delivered with verify link
+- Verify route consumed token + set email_verified
+- Credentials provider allows sign-in for verified users
+- /account renders for credentials-authenticated users
+
+The Playwright E2E (`e2e/credentials-signup.spec.ts`) is still
+runnable; can fire against the live Railway URL when a DB DSN is in
+the environment. Manual smoke covers the same surface end-to-end.
+
+---
+
 ## 2026-06-03 — Phase 2 build (mock-driven): Stripe subscriptions
 
 Five of six Phase 2 SOW tasks shipped to `main` in a single afternoon,

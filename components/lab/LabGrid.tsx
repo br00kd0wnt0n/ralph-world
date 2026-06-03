@@ -24,7 +24,7 @@ function badgeClasses(badge: string) {
 }
 
 export default function LabGrid({ items, onSubscribe }: LabGridProps) {
-  const { subscriptionStatus } = useAuth()
+  const { tier } = useAuth()
   const { ref, isVisible } = useScrollReveal(0.05)
 
   if (items.length === 0) return null
@@ -39,7 +39,7 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item, i) => {
             const isLocked =
-              item.accessTier === 'paid' && subscriptionStatus !== 'paid'
+              item.accessTier === 'paid' && tier !== 'paid'
 
             return (
               <motion.article

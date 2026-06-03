@@ -93,10 +93,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (profile) {
             ;(session as SessionWithProfile).profile = {
-              subscriptionStatus: profile.subscriptionStatus as
-                | null
-                | 'free'
-                | 'paid',
+              subscriptionStatus: profile.subscriptionStatus ?? null,
               // RW2.0 tier (Task 1.1). Source of truth post-migration.
               tier: (profile.tier ?? null) as null | 'guest' | 'free' | 'paid',
               role: profile.role,
@@ -104,6 +101,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               languagePreference: profile.languagePreference,
               marketingOptIn: profile.marketingOptIn ?? false,
               shippingAddressCached: profile.shippingAddressCached ?? null,
+              // Stripe subscription state (Task 2.3 webhook sets these).
+              stripeCustomerId: profile.stripeCustomerId ?? null,
+              stripeSubscriptionId: profile.stripeSubscriptionId ?? null,
+              subscriptionCurrentPeriodEnd: profile.subscriptionCurrentPeriodEnd ?? null,
             }
           }
         } catch {
@@ -182,7 +183,13 @@ function getDrizzleAdapter() {
 }
 
 export interface SessionProfile {
-  subscriptionStatus: null | 'free' | 'paid'
+  /**
+   * Subscription lifecycle state. Pre-Phase-2 values: null|'free'|'paid'
+   * (legacy Shopify Subscriptions). Phase 2+ values: Stripe statuses —
+   * 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' |
+   * 'trialing' | 'incomplete_expired'. Read with care.
+   */
+  subscriptionStatus: string | null
   /** RW2.0 tier — source of truth post-Phase 1. */
   tier: null | 'guest' | 'free' | 'paid'
   role: string | null
@@ -190,6 +197,12 @@ export interface SessionProfile {
   languagePreference: string | null
   marketingOptIn: boolean
   shippingAddressCached: unknown | null
+  /** Stripe customer id (set after first successful checkout). */
+  stripeCustomerId: string | null
+  /** Stripe subscription id (set while subscription is active). */
+  stripeSubscriptionId: string | null
+  /** When the current paid period ends (next billing date). */
+  subscriptionCurrentPeriodEnd: Date | null
 }
 
 export interface SessionWithProfile {

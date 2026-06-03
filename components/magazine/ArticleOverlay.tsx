@@ -23,7 +23,7 @@ export default function ArticleOverlay({
   onClose,
   onSubscribe,
 }: ArticleOverlayProps) {
-  const { user, subscriptionStatus } = useAuth()
+  const { user, tier } = useAuth()
   const [mounted, setMounted] = useState(false)
 
   // All hooks must run unconditionally before any early return (Rules of
@@ -84,7 +84,7 @@ export default function ArticleOverlay({
   // - Paid user: full access, optional PDF
   const isGuest = !user
   const isPaidArticle = article.accessTier === 'paid'
-  const hasPaidAccess = subscriptionStatus === 'paid'
+  const hasPaidAccess = tier === 'paid'
   const needsUpgrade = isPaidArticle && !hasPaidAccess && !isGuest
 
   let wordCount = 0
@@ -326,7 +326,7 @@ export default function ArticleOverlay({
         )}
 
         {/* Paid PDF download */}
-        {subscriptionStatus === 'paid' && article.isCoverStory && (
+        {tier === 'paid' && article.isCoverStory && (
           <div className="text-center mt-12">
             <a
               href="#"

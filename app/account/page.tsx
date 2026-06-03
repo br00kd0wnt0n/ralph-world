@@ -4,6 +4,7 @@ import { auth, type SessionWithProfile } from '@/lib/auth'
 import Footer from '@/components/layout/Footer'
 import AccountPreferences from '@/components/account/AccountPreferences'
 import SignOutButton from '@/components/account/SignOutButton'
+import { startSubscriptionCheckout, openBillingPortal } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     'free'
   const marketingOptIn = session.profile?.marketingOptIn ?? false
   const shippingAddress = session.profile?.shippingAddressCached ?? null
+  const subscriptionStatus = session.profile?.subscriptionStatus ?? null
+  const subscriptionPeriodEnd = session.profile?.subscriptionCurrentPeriodEnd ?? null
   const { upgrade } = await searchParams
 
   // Free/guest users coming back from SubscribeModal's OAuth flow get sent
@@ -89,7 +92,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
         {/* Subscription */}
         <Section title="Subscription">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 mb-3">
             <span
               className={`text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
                 tier === 'paid'
@@ -101,8 +104,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             >
               {tier ?? 'guest'}
             </span>
+            {subscriptionStatus === 'past_due' && (
+              <span className="text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-red-500/20 text-red-300">
+                payment failed
+              </span>
+            )}
           </div>
-          <p className="text-primary text-sm mb-4">
+          <p className="text-primary text-sm mb-2">
             {tier === 'paid'
               ? 'You have full access: magazine, TV, events, shop, and lab. Thanks for backing us.'
               : tier === 'free'
@@ -111,24 +119,32 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               ? 'Verify your email to unlock free-tier perks: TV, members-only articles, and event RSVPs.'
               : 'Get started to unlock the full Ralph experience.'}
           </p>
+          {tier === 'paid' && subscriptionPeriodEnd && (
+            <p className="text-secondary text-xs mb-4">
+              {subscriptionStatus === 'past_due'
+                ? `Last payment attempt failed. Stripe will retry; update your card if needed. Current period ends ${formatPeriodEnd(subscriptionPeriodEnd)}.`
+                : `Next billing date: ${formatPeriodEnd(subscriptionPeriodEnd)}`}
+            </p>
+          )}
 
           {tier === 'paid' ? (
-            // No Shopify customer portal wired yet — mailto is the escape
-            // hatch until we build /account/billing against Shopify's
-            // Customer Account API.
-            <a
-              href="mailto:hello@ralph.world?subject=Manage%20my%20Ralph%20subscription"
-              className="inline-block rounded-full border border-border px-5 py-2 text-primary font-medium text-sm hover:border-secondary transition-colors"
-            >
-              Manage subscription
-            </a>
+            <form action={openBillingPortal}>
+              <button
+                type="submit"
+                className="inline-block rounded-full border border-border px-5 py-2 text-primary font-medium text-sm hover:border-secondary transition-colors"
+              >
+                Manage subscription
+              </button>
+            </form>
           ) : (
-            <a
-              href="/api/account/upgrade"
-              className="inline-block rounded-full bg-ralph-pink text-white px-5 py-2 font-medium text-sm hover:bg-ralph-pink/90 transition-colors"
-            >
-              Upgrade to paid &mdash; £3/month
-            </a>
+            <form action={startSubscriptionCheckout}>
+              <button
+                type="submit"
+                className="inline-block rounded-full bg-ralph-pink text-white px-5 py-2 font-medium text-sm hover:bg-ralph-pink/90 transition-colors"
+              >
+                Upgrade to paid &mdash; £3/month
+              </button>
+            </form>
           )}
         </Section>
 
@@ -209,6 +225,21 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       <Footer variant="dark" />
     </>
   )
+}
+
+/**
+ * Format a subscription period-end Date as a friendly "next billing
+ * date" — UK English, plain. Returns the ISO date if we somehow get
+ * a non-Date value (defensive — session callback should pass a Date).
+ */
+function formatPeriodEnd(d: Date | string): string {
+  const date = d instanceof Date ? d : new Date(d)
+  if (Number.isNaN(date.getTime())) return String(d)
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
 /**

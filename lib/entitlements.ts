@@ -63,18 +63,28 @@ export function tvPreviewSeconds(
  * Derive a UserTier from a session-like object. Structurally typed so this
  * module stays decoupled from the concrete SessionWithProfile type.
  *
- * Forward-compatible: once `profiles.tier` lands (Task 1.1), this can read
- * the column directly instead of deriving from subscriptionStatus.
+ * Now that profiles.tier is the source of truth (post-Phase 1), prefer
+ * that. Fall back to legacy subscriptionStatus for any pre-migration
+ * profile rows that slipped through. Phase 2 Stripe values (`'active'`,
+ * `'past_due'`, etc.) appear on subscriptionStatus too; we don't try
+ * to interpret them here — tier is set authoritatively by the webhook.
  */
 export function tierFromSession(
   session:
     | {
         user?: unknown
-        profile?: { subscriptionStatus?: 'free' | 'paid' | null } | null
+        profile?: {
+          tier?: UserTier | null
+          subscriptionStatus?: string | null
+        } | null
       }
     | null
     | undefined
 ): UserTier {
   if (!session?.user) return 'guest'
+  const tier = session.profile?.tier ?? null
+  if (tier === 'paid' || tier === 'free' || tier === 'guest') return tier
+  // Legacy fallback — only 'paid' is paid; everything else is free
+  // (signed-in users without a tier default to free).
   return session.profile?.subscriptionStatus === 'paid' ? 'paid' : 'free'
 }

@@ -52,7 +52,7 @@ const navState = { fixed: false, progress: 0, locked: false }
 
 export default function Nav() {
   const pathname = usePathname()
-  const { user, subscriptionStatus } = useAuth()
+  const { user, tier } = useAuth()
   const { itemCount, openCart } = useCart()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
@@ -286,7 +286,7 @@ export default function Nav() {
               className="relative flex h-8 w-8 items-center justify-center rounded-full bg-ralph-pink text-white text-sm font-bold"
             >
               {user.email?.[0]?.toUpperCase() ?? 'R'}
-              {subscriptionStatus === 'paid' && (
+              {tier === 'paid' && (
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
               )}
             </Link>

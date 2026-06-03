@@ -25,7 +25,11 @@ const { dbMock, logActionMock } = vi.hoisted(() => ({
 vi.mock('@/lib/db', () => ({ getDb: () => dbMock }))
 vi.mock('@/lib/audit', () => ({ logAction: logActionMock }))
 
-import { findOrCreateCustomer } from './customer'
+import {
+  findOrCreateCustomer,
+  mapStripeAddressToShopify,
+  updateCustomerAddress,
+} from './customer'
 
 interface FetchCall {
   url: string
@@ -308,5 +312,138 @@ describe('findOrCreateCustomer — retry path', () => {
       findOrCreateCustomer({ userId: 'u', email: 'a@b.co', fetchImpl: fn })
     ).rejects.toThrow(/401/)
     expect(searchAttempts).toBe(1)
+  })
+})
+
+// ─── Task 2.4: mapStripeAddressToShopify + updateCustomerAddress ────
+
+describe('mapStripeAddressToShopify', () => {
+  it('maps the standard Stripe address shape to Shopify field names', () => {
+    const out = mapStripeAddressToShopify(
+      {
+        line1: '10 Downing Street',
+        line2: 'Flat 1',
+        city: 'London',
+        state: 'Greater London',
+        postal_code: 'SW1A 2AA',
+        country: 'GB',
+      },
+      'Brook Downton'
+    )
+    expect(out).toEqual({
+      firstName: 'Brook',
+      lastName: 'Downton',
+      line1: '10 Downing Street',
+      line2: 'Flat 1',
+      city: 'London',
+      province: 'Greater London',
+      postalCode: 'SW1A 2AA',
+      country: 'GB',
+    })
+  })
+
+  it('returns null when required fields are missing', () => {
+    expect(
+      mapStripeAddressToShopify({
+        line1: '10 Downing Street',
+        city: 'London',
+        // postal_code missing
+        country: 'GB',
+      } as never)
+    ).toBeNull()
+  })
+
+  it('handles a name with no space (first only)', () => {
+    const out = mapStripeAddressToShopify(
+      { line1: 'x', city: 'y', postal_code: 'z', country: 'GB' },
+      'Cher'
+    )
+    expect(out?.firstName).toBe('Cher')
+    expect(out?.lastName).toBeNull()
+  })
+
+  it('handles no name (both null)', () => {
+    const out = mapStripeAddressToShopify(
+      { line1: 'x', city: 'y', postal_code: 'z', country: 'GB' },
+      null
+    )
+    expect(out?.firstName).toBeNull()
+    expect(out?.lastName).toBeNull()
+  })
+})
+
+describe('updateCustomerAddress', () => {
+  it('POSTs the address to Shopify with default: true and returns the new id', async () => {
+    const { fn, calls } = fakeFetch(() => ({
+      status: 201,
+      body: { customer_address: { id: 7890 } },
+    }))
+
+    const result = await updateCustomerAddress({
+      shopifyCustomerId: '12345',
+      address: {
+        firstName: 'Brook',
+        lastName: 'Downton',
+        line1: '10 Downing Street',
+        line2: 'Flat 1',
+        city: 'London',
+        province: 'Greater London',
+        postalCode: 'SW1A 2AA',
+        country: 'GB',
+      },
+      fetchImpl: fn,
+    })
+
+    expect(result.addressId).toBe('7890')
+    expect(calls.length).toBe(1)
+    expect(calls[0].method).toBe('POST')
+    expect(calls[0].url).toContain('/customers/12345/addresses.json')
+    expect(calls[0].body).toEqual({
+      address: {
+        first_name: 'Brook',
+        last_name: 'Downton',
+        address1: '10 Downing Street',
+        address2: 'Flat 1',
+        city: 'London',
+        province: 'Greater London',
+        zip: 'SW1A 2AA',
+        country_code: 'GB',
+        phone: '',
+        company: '',
+        default: true,
+      },
+    })
+  })
+
+  it('throws when Shopify returns no customer_address.id', async () => {
+    const { fn } = fakeFetch(() => ({
+      status: 201,
+      body: { customer_address: {} },
+    }))
+    await expect(
+      updateCustomerAddress({
+        shopifyCustomerId: '12345',
+        address: {
+          line1: 'x',
+          city: 'y',
+          postalCode: 'z',
+          country: 'GB',
+        },
+        fetchImpl: fn,
+      })
+    ).rejects.toThrow(/no id/)
+  })
+
+  it('URL-encodes the customer id (defensive — Shopify ids are numeric but tolerate)', async () => {
+    const { fn, calls } = fakeFetch(() => ({
+      status: 201,
+      body: { customer_address: { id: 1 } },
+    }))
+    await updateCustomerAddress({
+      shopifyCustomerId: 'weird/id',
+      address: { line1: 'x', city: 'y', postalCode: 'z', country: 'GB' },
+      fetchImpl: fn,
+    })
+    expect(calls[0].url).toContain('/customers/weird%2Fid/addresses.json')
   })
 })

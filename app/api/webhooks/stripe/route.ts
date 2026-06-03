@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type Stripe from 'stripe'
 import { eq } from 'drizzle-orm'
 import { getDb } from '@/lib/db'
-import { stripeEvents } from '@/lib/db/schema'
+import { profiles, shopifyLinks, stripeEvents } from '@/lib/db/schema'
+import { logAction } from '@/lib/audit'
+import {
+  mapStripeAddressToShopify,
+  updateCustomerAddress,
+} from '@/lib/shopify/customer'
 import { verifyStripeSignature } from '@/lib/stripe/verifySignature'
 import {
   handleCheckoutSessionCompleted,
@@ -36,14 +41,73 @@ export const runtime = 'nodejs'
 const HANDLERS: Record<string, (e: Stripe.Event) => Promise<unknown>> = {
   'checkout.session.completed': (e) =>
     handleCheckoutSessionCompleted(e, {
-      // Task 2.4 will inject the Shopify address-sync hook here.
-      // For 2.3 we ship without it; the profile still gets
-      // shippingAddressCached.
+      onShippingAddress: syncShippingAddressToShopify,
     }),
   'customer.subscription.updated': handleSubscriptionUpdated,
   'customer.subscription.deleted': handleSubscriptionDeleted,
   'invoice.payment_failed': handleInvoicePaymentFailed,
   'invoice.paid': handleInvoicePaid,
+}
+
+/**
+ * Mirror the Stripe-collected shipping address to the linked Shopify
+ * customer — Task 2.4. Best-effort: handler call site catches errors
+ * so a Shopify outage doesn't break the webhook → subscription is
+ * still recorded, just without the Shopify address update.
+ */
+async function syncShippingAddressToShopify(args: {
+  userId: string
+  shippingAddressCached: unknown
+}): Promise<void> {
+  // Look up the Shopify customer link for this user.
+  const db = getDb()
+  const [link] = await db
+    .select({ shopifyCustomerId: shopifyLinks.shopifyCustomerId })
+    .from(shopifyLinks)
+    .where(eq(shopifyLinks.userId, args.userId))
+    .limit(1)
+  if (!link?.shopifyCustomerId) {
+    console.warn('[stripe-webhook] no shopify_links row for user', args.userId)
+    return
+  }
+
+  const stripeAddress = args.shippingAddressCached as Parameters<
+    typeof mapStripeAddressToShopify
+  >[0]
+  const recipientName = await fetchRecipientName(args.userId)
+  const mapped = mapStripeAddressToShopify(stripeAddress, recipientName)
+  if (!mapped) {
+    console.warn('[stripe-webhook] stripe address missing required fields, skipping shopify sync')
+    return
+  }
+
+  await updateCustomerAddress({
+    shopifyCustomerId: link.shopifyCustomerId,
+    address: mapped,
+  })
+
+  await logAction({
+    actorId: null,
+    action: 'shopify_address_synced',
+    targetType: 'shopify_customer',
+    targetId: link.shopifyCustomerId,
+    after: { source: 'stripe_checkout', userId: args.userId },
+    source: 'webhook',
+  })
+}
+
+async function fetchRecipientName(userId: string): Promise<string | null> {
+  try {
+    const db = getDb()
+    const [row] = await db
+      .select({ displayName: profiles.displayName })
+      .from(profiles)
+      .where(eq(profiles.id, userId))
+      .limit(1)
+    return row?.displayName ?? null
+  } catch {
+    return null
+  }
 }
 
 export async function POST(request: NextRequest) {

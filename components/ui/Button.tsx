@@ -9,7 +9,15 @@ interface ButtonProps {
   className?: string
   // Optional override for the button's min-width (default 170px).
   minWidth?: number
+  // If true, border + shadow flip from black to ralph-pink.
+  pink?: boolean
+  // type for the rendered <button>. Defaults to "button" so it never
+  // accidentally submits a parent form. Pass "submit" to use as a form
+  // submit control.
+  type?: 'button' | 'submit'
 }
+
+const RALPH_PINK = '#EA128B'
 
 const btnStyles: React.CSSProperties = {
   height: 43,
@@ -43,20 +51,35 @@ const shadowStyles: React.CSSProperties = {
   pointerEvents: 'none',
 }
 
-export default function Button({ label, href, onClick, className = '', minWidth }: ButtonProps) {
-  const mergedStyles =
-    minWidth !== undefined ? { ...btnStyles, minWidth } : btnStyles
+export default function Button({
+  label,
+  href,
+  onClick,
+  className = '',
+  minWidth,
+  pink = false,
+  type = 'button',
+}: ButtonProps) {
+  const mergedStyles: React.CSSProperties = {
+    ...btnStyles,
+    ...(minWidth !== undefined ? { minWidth } : null),
+    ...(pink ? { border: `2px solid ${RALPH_PINK}` } : null),
+  }
+  const mergedShadowStyles: React.CSSProperties = {
+    ...shadowStyles,
+    ...(pink ? { backgroundColor: RALPH_PINK } : null),
+  }
   return (
     <div className={className} style={{ position: 'relative', display: 'inline-block', width: 'fit-content' }}>
       {/* Shadow — stays in place */}
-      <div style={shadowStyles} />
+      <div style={mergedShadowStyles} />
       {/* Button — moves on hover/active */}
       {href ? (
         <Link href={href} className="btn-press" style={mergedStyles}>
           {label}
         </Link>
       ) : (
-        <button type="button" onClick={onClick} className="btn-press" style={mergedStyles}>
+        <button type={type} onClick={onClick} className="btn-press" style={mergedStyles}>
           {label}
         </button>
       )}

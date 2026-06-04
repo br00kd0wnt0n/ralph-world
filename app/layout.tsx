@@ -73,7 +73,7 @@ export default function RootLayout({
           <MidgroundLayer />
           <Nav />
           <BackgroundLayer />
-          <main className="flex-1 flex flex-col relative z-10 pb-[100px]">
+          <main className="flex-1 flex flex-col relative z-10">
             <PageTransitionWrapper>
               {children}
             </PageTransitionWrapper>

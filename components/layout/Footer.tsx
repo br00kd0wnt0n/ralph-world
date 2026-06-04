@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperType } from 'swiper'
@@ -23,13 +23,19 @@ interface FooterProps {
   copy?: Partial<SiteCopy>
 }
 
-const OFFICES: { label: string; lines: string[] }[] = [
+const OFFICES: {
+  label: string
+  title: { src: string; width: number; height: number }
+  lines: string[]
+}[] = [
   {
     label: 'London',
+    title: { src: '/imgs/text_office_london.svg', width: 148, height: 60 },
     lines: ['2nd Floor', '27-33 Bethnal Green Rd', 'London', 'E1 6LA', 'UK'],
   },
   {
     label: 'U.S.A',
+    title: { src: '/imgs/text_office_usa.svg', width: 139, height: 75 },
     lines: [
       'Pacific Design Center',
       'G-684, 6th Floor',
@@ -40,6 +46,7 @@ const OFFICES: { label: string; lines: string[] }[] = [
   },
   {
     label: 'Tokyo',
+    title: { src: '/imgs/text_office_tokyo.svg', width: 117, height: 71 },
     lines: [
       '11th Floor,',
       'Aoyama Palacio Tower,',
@@ -50,6 +57,7 @@ const OFFICES: { label: string; lines: string[] }[] = [
   },
   {
     label: 'Mumbai',
+    title: { src: '/imgs/text_office_mumbai.svg', width: 162, height: 70 },
     lines: [
       '4th floor Pinnacle House',
       'Plot 604 15th Rd',
@@ -170,12 +178,14 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   }
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-10">
-      {/* footer-top — always-visible 103px bar. Globe + buttons. Pink top
-          border is the top edge of the whole footer regardless of state. */}
+    <footer className="relative z-10">
+      {/* footer-top — always-visible bar. Globe + buttons. min-height 103
+          on md+, grows on narrow viewports as the social row wraps under
+          Contact us. Pink top border is the top edge of the whole footer
+          regardless of state. */}
       <div
-        className="relative bg-black flex items-center justify-between px-6"
-        style={{ height: 103, borderTop: '4px solid #EA128B' }}
+        className="relative bg-black flex items-center justify-between px-6 py-3"
+        style={{ minHeight: 103, borderTop: '4px solid #EA128B' }}
       >
         {/* Globe — bottom left, overflows the top of the bar. Clicking
             opens the bottom panel on slide 0 (or closes if already
@@ -193,8 +203,12 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
 
         <div />
 
-        {/* Right: Contact + social icons */}
-        <div className="flex items-center" style={{ gap: 32 }}>
+        {/* Right: Contact + social icons. flex-wrap so the social icons
+            drop onto a new row under "Contact us" on narrow viewports
+            instead of overflowing. justify-end keeps each row anchored
+            to the right; gap-y/gap-x split lets wrapped rows breathe
+            vertically without enormous gaps horizontally. */}
+        <div className="flex flex-wrap items-center justify-end gap-x-3 md:gap-x-6 gap-y-3">
           <button
             type="button"
             onClick={handleContactClick}
@@ -233,42 +247,48 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
         </div>
       </div>
 
-      {/* footer-bottom — expandable panel below the bar. height 0 → auto
-          slides the bar (and therefore the whole footer) up as the panel
-          grows. Internal scroll if its content is taller than the
-          available viewport (e.g. form on mobile). */}
+      {/* footer-bottom — expandable panel. Absolutely positioned ABOVE
+          the bar (bottom: 100% of the footer = top edge of the bar) so
+          it grows UPWARD and overlays the page content above rather
+          than pushing it. The footer's collapsed height stays at the
+          bar's 103px in normal document flow. */}
       <motion.div
         initial={false}
         animate={{ height: panelOpen ? 'auto' : 0 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="bg-black overflow-hidden"
+        className="absolute left-0 right-0 bottom-full bg-black overflow-hidden"
+        style={{ borderTop: '4px solid #EA128B' }}
       >
+        {/* Close button — anchored to the panel (which spans the full
+            viewport width via left-0/right-0), so the right offset is
+            from the viewport edge, not the inner max-w-6xl container.
+            Sits above the scrollable content via z-10. Default + hover
+            states swap via the `group` parent and group-hover. */}
+        <button
+          type="button"
+          onClick={handleClose}
+          className="group absolute top-4 right-[calc(var(--spacing)*6)] w-12 h-12 z-10"
+          aria-label="Close panel"
+        >
+          <img
+            src="/imgs/close_btn.svg"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full block group-hover:hidden select-none"
+          />
+          <img
+            src="/imgs/close_btn_over.svg"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full hidden group-hover:block select-none"
+          />
+        </button>
+
         <div
           className="overflow-y-auto"
           style={{ maxHeight: 'calc(100svh - 103px)' }}
         >
-          <div className="relative max-w-6xl mx-auto px-6 py-12">
-            {/* Close button — top right of the panel */}
-            <button
-              type="button"
-              onClick={handleClose}
-              className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-white hover:text-ralph-pink transition-colors"
-              aria-label="Close panel"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <line x1="2" y1="2" x2="14" y2="14" />
-                <line x1="14" y1="2" x2="2" y2="14" />
-              </svg>
-            </button>
+          <div className="relative max-w-6xl mx-auto px-6 py-12 pb-28 md:pb-12">
 
             <Swiper
               onSwiper={(s) => {
@@ -277,58 +297,116 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
               onSlideChange={(s) => setActiveSlide(s.activeIndex)}
               initialSlide={0}
               slidesPerView={1}
-              autoHeight
+              // No autoHeight: all slides take the height of the tallest
+              // so the panel doesn't resize when switching between slides.
               spaceBetween={0}
               noSwipingSelector="input, textarea, select, button, a"
             >
-              {/* Slide 0 — offices */}
-              <SwiperSlide>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-10">
-                  {OFFICES.map((office) => (
-                    <div key={office.label}>
-                      <h3
-                        className="text-white uppercase mb-4"
-                        style={{
-                          fontFamily:
-                            'var(--font-intro, "Gooper Trial"), serif',
-                          fontWeight: 600,
-                          fontSize: 24,
-                          lineHeight: 1,
-                          letterSpacing: 0,
-                        }}
-                      >
-                        {office.label}
-                      </h3>
-                      <address
-                        className="text-white not-italic"
-                        style={{
-                          fontFamily: 'var(--font-body), Arial, sans-serif',
-                          fontWeight: 600,
-                          fontSize: 14,
-                          lineHeight: '22px',
-                          letterSpacing: 0,
-                        }}
-                      >
-                        {office.lines.map((line, i) => (
-                          <div key={i}>{line}</div>
-                        ))}
-                      </address>
-                    </div>
-                  ))}
+              {/* Slide 0 — offices. SwiperSlide is the flex column via
+                  inline style (more specific than Swiper's
+                  .swiper-slide CSS) so the grid below can flex-1 and
+                  centre vertically in the slide's remaining height.
+                  Slides share the tallest slide's height (form slide). */}
+              <SwiperSlide
+                style={{ display: 'flex', flexDirection: 'column' }}
+              >
+                <h2
+                  className="text-white mb-8"
+                  style={{
+                    fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                    fontWeight: 600,
+                    fontSize: 32,
+                    lineHeight: 1,
+                    letterSpacing: 0,
+                  }}
+                >
+                  Find us
+                </h2>
+                {/* flex-1 + items-center vertically centres the offices
+                    grid in the slide's remaining height. */}
+                <div className="flex-1 flex items-center">
+                  {/* 4 offices with 3 decorative squiggly-line dividers
+                      between them on lg+ (>=1024px). Below 1024px the
+                      grid stays at 2 columns and the dividers are
+                      display:none so the offices stack 2x2 cleanly. */}
+                  <div className="w-full grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:gap-x-6">
+                  {OFFICES.map((office, i) => {
+                    const dividerSrc =
+                      i === 0
+                        ? '/imgs/office_lines.svg'
+                        : `/imgs/office_lines_${i + 1}.svg`
+                    return (
+                      <Fragment key={office.label}>
+                        {/* < 640px: flex-start (left-aligned) — true mobile.
+                            >= 640px: centre each office's content as a
+                            single block in its column so the gap on either
+                            side of the divider (lg+) is symmetric. */}
+                        <div className="sm:text-center">
+                          <img
+                            src={office.title.src}
+                            alt={office.label}
+                            width={office.title.width}
+                            height={office.title.height}
+                            className="mb-4 sm:mx-auto select-none"
+                            style={{ height: 60, width: 'auto', maxWidth: 'none' }}
+                          />
+                          <address
+                            className="text-white not-italic inline-block text-left"
+                            style={{
+                              fontFamily: 'var(--font-body), Arial, sans-serif',
+                              fontWeight: 600,
+                              fontSize: 14,
+                              lineHeight: '22px',
+                              letterSpacing: 0,
+                            }}
+                          >
+                            {office.lines.map((line, j) => (
+                              <div key={j}>{line}</div>
+                            ))}
+                          </address>
+                        </div>
+                        {i < OFFICES.length - 1 && (
+                          <div
+                            className="hidden lg:flex items-stretch justify-center"
+                            aria-hidden="true"
+                          >
+                            <img
+                              src={dividerSrc}
+                              alt=""
+                              className="h-full w-auto select-none"
+                            />
+                          </div>
+                        )}
+                      </Fragment>
+                    )
+                  })}
+                  </div>
                 </div>
               </SwiperSlide>
 
               {/* Slide 1 — contact form */}
               <SwiperSlide>
+                <h2
+                  className="text-white mb-8"
+                  style={{
+                    fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                    fontWeight: 600,
+                    fontSize: 32,
+                    lineHeight: 1,
+                    letterSpacing: 0,
+                  }}
+                >
+                  Contact us
+                </h2>
                 <form
                   onSubmit={handleSubmit}
-                  className="max-w-2xl mx-auto flex flex-col gap-5"
+                  className="max-w-2xl mx-auto flex flex-col gap-4 pb-[10px]"
                 >
                   <select
                     required
                     value={enquiry}
                     onChange={(e) => setEnquiry(e.target.value)}
-                    className="w-full bg-white text-black rounded-xl px-5 py-3.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40 appearance-none"
+                    className="w-full bg-white text-black rounded-xl px-4 py-2.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40 appearance-none"
                     style={{ borderColor: '#EA128B' }}
                   >
                     <option value="" disabled>
@@ -347,7 +425,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Name"
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-5 py-3.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40"
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40"
                     style={{ borderColor: '#EA128B' }}
                   />
 
@@ -357,7 +435,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-5 py-3.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40"
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40"
                     style={{ borderColor: '#EA128B' }}
                   />
 
@@ -366,33 +444,13 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Message"
-                    rows={5}
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-5 py-3.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40 resize-y"
+                    rows={3}
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40 resize-y"
                     style={{ borderColor: '#EA128B' }}
                   />
 
                   <div className="mt-2 flex items-center gap-4">
-                    <button
-                      type="submit"
-                      className="btn-press relative"
-                      style={{
-                        height: 43,
-                        minWidth: 230,
-                        paddingLeft: 12,
-                        paddingRight: 12,
-                        border: '2px solid black',
-                        backgroundColor: 'white',
-                        color: 'black',
-                        fontFamily:
-                          'var(--font-intro, "Gooper Trial"), serif',
-                        fontWeight: 600,
-                        fontSize: 16,
-                        lineHeight: 1,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Submit
-                    </button>
+                    <Button label="Submit" type="submit" pink minWidth={230} />
                   </div>
                 </form>
               </SwiperSlide>

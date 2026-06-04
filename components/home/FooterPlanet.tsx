@@ -1,61 +1,27 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-
 interface FooterPlanetProps {
   tagline?: string
 }
 
 export default function FooterPlanet({ tagline = 'The Entertainment People' }: FooterPlanetProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [translateY, setTranslateY] = useState(100)
-
-  useEffect(() => {
-    function handleScroll() {
-      if (!containerRef.current) return
-
-      const rect = containerRef.current.getBoundingClientRect()
-      const windowHeight = window.innerHeight
-
-      // Calculate progress based on element bottom reaching viewport bottom
-      // When element bottom is below viewport (not visible), progress = 0
-      // When element bottom reaches viewport bottom (fully scrolled), progress = 1
-      const elementBottom = rect.bottom
-
-      // Start when element enters viewport (bottom > 0)
-      // Complete when element bottom reaches or passes viewport bottom
-      const distanceFromViewportBottom = elementBottom - windowHeight
-
-      // Animation range: from 300px below viewport to at viewport bottom
-      const startDistance = 300
-      const progress = Math.max(0, Math.min(1, 1 - (distanceFromViewportBottom / startDistance)))
-
-      // Translate from 100px to 0px
-      setTranslateY(100 * (1 - progress))
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll() // Initial check
-
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
   return (
     <div
-      ref={containerRef}
-      className="relative flex justify-center overflow-hidden"
-      style={{ paddingTop: 180, marginBottom: -1 }}
+      className="relative flex justify-center overflow-hidden pt-[100px] min-[576px]:pt-[120px] md:pt-[180px] pb-[24px] min-[576px]:pb-0"
+      style={{ marginBottom: -1 }}
     >
+      {/* White panel filling the 24px gap below the planet on < 576px.
+          Removed on larger viewports where padding-bottom is 0. */}
       <div
-        style={{
-          transform: `translateY(${translateY}px)`,
-          transition: 'transform 0.1s ease-out'
-        }}
-      >
+        className="absolute bottom-0 left-0 right-0 h-[24px] bg-white min-[576px]:hidden pointer-events-none"
+        aria-hidden="true"
+      />
+
+      <div style={{ transform: 'translateY(1px)' }}>
         <img
           src="/imgs/footer_planet.png"
           alt=""
-          style={{ width: 2898 / 2, height: 484 / 2 }}
+          style={{ width: (2898 / 2) * 0.75, height: (484 / 2) * 0.75 }}
           className="max-w-none"
         />
         <div
@@ -65,13 +31,13 @@ export default function FooterPlanet({ tagline = 'The Entertainment People' }: F
           <img
             src="/ralph-wordmark.png"
             alt="ralph"
-            style={{ height: 76, width: 'auto', filter: 'brightness(0)' }}
+            style={{ height: 60, width: 'auto', filter: 'brightness(0)' }}
             className="mb-3"
           />
           <img
             src="/imgs/text_the_entertainment_people.png"
             alt={tagline}
-            style={{ width: 958 / 2, height: 79 / 2 }}
+            className="w-[340px] min-[576px]:w-[420px] md:w-[340px] h-auto"
           />
         </div>
       </div>

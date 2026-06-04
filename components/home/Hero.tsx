@@ -13,6 +13,17 @@ interface HeroProps {
   themeKey?: string
 }
 
+// Font + weight + letter-spacing are consistent across breakpoints; size
+// and line-height come from Tailwind classes so they can flip at 576px.
+const introStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-body), Arial, sans-serif',
+  fontWeight: 600,
+  letterSpacing: 0,
+}
+
+const introClasses =
+  'text-white text-center text-[15px] leading-[19px] min-[576px]:text-[16px] min-[576px]:leading-[24px]'
+
 export default function Hero({ heading, line1, line2, line3, themeKey }: HeroProps) {
   const theme = resolveSectionTheme('home_hero', themeKey)
   const isDefault = theme.key === 'midnight'
@@ -38,20 +49,32 @@ export default function Hero({ heading, line1, line2, line3, themeKey }: HeroPro
           <img
             src="/imgs/text_welcome_to_our_world.png"
             alt={heading}
-            className="mx-auto"
-            style={{ width: 1126 / 2, height: 252 / 2 }}
+            className="mx-auto max-w-full h-auto md:h-[126px]"
+            style={{ width: 1126 / 2 }}
           />
         </motion.h1>
 
-        <motion.p variants={heroChildVariants} className="text-body text-white text-center mb-4">
+        <motion.p
+          variants={heroChildVariants}
+          className={`${introClasses} mb-4`}
+          style={introStyle}
+        >
           {line1}
         </motion.p>
 
-        <motion.p variants={heroChildVariants} className="text-body text-white text-center mb-4">
+        <motion.p
+          variants={heroChildVariants}
+          className={`${introClasses} mb-4`}
+          style={introStyle}
+        >
           {line2}
         </motion.p>
 
-        <motion.p variants={heroChildVariants} className="text-body text-white text-center mb-10">
+        <motion.p
+          variants={heroChildVariants}
+          className={`${introClasses} mb-10`}
+          style={introStyle}
+        >
           {line3}
         </motion.p>
 

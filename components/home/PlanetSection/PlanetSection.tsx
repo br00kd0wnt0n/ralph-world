@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import { motion } from 'framer-motion'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -181,11 +182,49 @@ export default function PlanetSection({
   }, [isActive, isTouch])
 
   const activate = useCallback(() => {
+    // Don't open the panel at all in planet-only mode (< 768px).
+    if (sectionWidth > 0 && sectionWidth < 768) return
     if (!isTouch) setIsActive(true)
-  }, [isTouch])
+  }, [isTouch, sectionWidth])
 
   const planetOnRight = POSITION_LAYOUTS[planetPosition] === 'right'
   const [carouselIndex, setCarouselIndex] = useState(0)
+  const router = useRouter()
+
+  const navigateToSection = useCallback(() => {
+    if (moduleCard.href) router.push(moduleCard.href)
+  }, [router, moduleCard.href])
+
+  // Below 1200px the section is too narrow to fit two 340px columns +
+  // the 411px planet inside the viewport. We just drop the right
+  // (carousel) column in that range — the title + copy + CTA in the
+  // left column is enough on its own and the single-col panel
+  // comfortably fits down to ~855px wide viewports.
+  const hasRoomForTwoColumns = sectionWidth === 0 || sectionWidth >= 1200
+
+  // Responsive planet size — must match the Tailwind classes on the
+  // rendered <img>:
+  //   < 768  → 220
+  //   768-991 → 350
+  //   >= 992 → 411 (PLANET_SIZE)
+  const planetSize =
+    sectionWidth === 0 || sectionWidth >= 992
+      ? PLANET_SIZE
+      : sectionWidth < 768
+        ? 220
+        : 350
+
+  // Below 768px the planet view collapses to "just the planet + title +
+  // tagline" — the expanding panel is suppressed and the planet doesn't
+  // respond to clicks/hover. The title image uses a fixed 52px height
+  // (width auto) instead of the half-intrinsic desktop sizing.
+  const isPlanetOnly = sectionWidth > 0 && sectionWidth < 768
+
+  // Below 575px the planet hangs 50px past the section edge (negative
+  // padding pulls it off-screen) so the title + tagline have room to
+  // breathe on narrow phones.
+  const sectionPadding =
+    sectionWidth > 0 && sectionWidth < 575 ? -50 : SECTION_PADDING
 
   // Get exit direction based on planet position (left planets slide left, right slide right)
   const exitDirection = PLANET_EXIT_DIRECTIONS[id] || (planetOnRight ? 'right' : 'left')
@@ -197,19 +236,21 @@ export default function PlanetSection({
   const panelState = isActive ? 'open' : isInView ? 'peek' : 'hidden'
 
   const planetLeft = planetOnRight
-    ? sectionWidth - SECTION_PADDING - PLANET_SIZE
-    : SECTION_PADDING
+    ? sectionWidth - sectionPadding - planetSize
+    : sectionPadding
 
   // Panel = content width + half planet (the half that tucks behind the planet)
   const hasItems = moduleCard.items.length > 0
   // TV always shows preview; magazine + shop show carousel when items exist.
-  // Events + lab are single-column (left only).
+  // Events + lab are single-column (left only). Two-column panel is also
+  // suppressed below 1200px viewport so the panel fits.
   const hasRightColumn =
-    id === 'tv' || ((id === 'magazine' || id === 'shop') && hasItems)
+    hasRoomForTwoColumns &&
+    (id === 'tv' || ((id === 'magazine' || id === 'shop') && hasItems))
   const contentWidth = hasRightColumn
     ? PANEL_PADDING * 2 + COLUMN_WIDTH * 2 + COLUMN_GAP
     : PANEL_PADDING * 2 + COLUMN_WIDTH
-  const halfPlanet = PLANET_SIZE / 2
+  const halfPlanet = planetSize / 2
   const panelWidth = contentWidth + halfPlanet
 
   // Panel starts from planet center
@@ -251,16 +292,35 @@ export default function PlanetSection({
       initial="hidden"
       animate={isExiting ? { opacity: 0 } : isVisible ? 'visible' : 'hidden'}
       transition={isExiting ? { duration: 0.25, ease: 'easeIn' } : undefined}
-      className="relative px-6 md:px-16 py-4 md:py-6 max-w-7xl mx-auto"
+      onClick={navigateToSection}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          navigateToSection()
+        }
+      }}
+      className="relative px-4 min-[420px]:px-6 md:px-16 py-4 md:py-6 max-w-7xl mx-auto cursor-pointer"
     >
-      {/* Panel — content-width, clip-path masks it, spring overshoot on open */}
+      {/* Panel — content-width, clip-path masks it, spring overshoot on open.
+          Suppressed below 768px (planet-only view).
+          Top alignment:
+            - 768-991 (single-col panel) → vertically centred on the
+              planet (panel midpoint = planet midpoint)
+            - >= 992 → panel bottom anchored 50px above the planet's
+              bottom edge (original desktop design) */}
+      {!isPlanetOnly && (
       <motion.div
         className="absolute z-[6]"
         style={{
           left: panelLeft,
           width: panelWidth,
           height: PANEL_HEIGHT,
-          top: planetCenterY + planetHeight / 2 - 50 - PANEL_HEIGHT,
+          top:
+            sectionWidth > 0 && sectionWidth < 992
+              ? planetCenterY - PANEL_HEIGHT / 2
+              : planetCenterY + planetHeight / 2 - 50 - PANEL_HEIGHT,
           backgroundColor: accentColor,
           borderRadius: 12,
           clipPath: getClipPath(),
@@ -284,8 +344,8 @@ export default function PlanetSection({
           style={{
             gap: COLUMN_GAP,
             ...(planetOnRight
-              ? { paddingRight: PLANET_SIZE / 2 }
-              : { paddingLeft: PLANET_SIZE / 2 }),
+              ? { paddingRight: planetSize / 2 }
+              : { paddingLeft: planetSize / 2 }),
           }}
         >
           {/* Column 1: text — staggered reveal */}
@@ -327,7 +387,7 @@ export default function PlanetSection({
           </motion.div>
 
           {/* Column 2: TV preview — broadcast still + subtitle + body */}
-          {id === 'tv' && (
+          {id === 'tv' && hasRightColumn && (
             <motion.div
               className="flex flex-col shrink-0"
               style={{ width: COLUMN_WIDTH }}
@@ -366,7 +426,7 @@ export default function PlanetSection({
           )}
 
           {/* Column 2: Magazine + Shop carousel — Swiper with chevron nav + touch */}
-          {(id === 'magazine' || id === 'shop') && hasItems && (() => {
+          {(id === 'magazine' || id === 'shop') && hasItems && hasRightColumn && (() => {
             const currentItem = moduleCard.items[swiperIndex] ?? moduleCard.items[0]
             const showNav = moduleCard.items.length > 1
             return (
@@ -532,24 +592,46 @@ export default function PlanetSection({
           )}
         </div>
       </motion.div>
+      )}
 
-      {/* Title/subtitle — sits between panel (z-0) and planet (z-10), panel obscures it on open */}
+      {/* Title/subtitle — sits between panel (z-0) and planet (z-10), panel
+          obscures it on open. Planet-only mode (< 768px) centres the
+          block vertically on the planet's middle instead of anchoring
+          its bottom edge there. */}
       <motion.div
         className={`absolute z-[5] flex flex-col ${planetOnRight ? 'items-end' : 'items-start'}`}
         style={{
-          bottom: `calc(100% - ${planetCenterY}px)`,
-          ...(planetOnRight
-            ? { right: SECTION_PADDING + PLANET_SIZE + 24 }
-            : { left: SECTION_PADDING + PLANET_SIZE + 24 }),
+          ...(isPlanetOnly
+            ? { top: planetCenterY }
+            : { bottom: `calc(100% - ${planetCenterY}px)` }),
+          ...(() => {
+            // Title/tagline block offset from the planet-side edge.
+            // < 400px: tightened to 160px so the title fits next to a
+            // more-offscreen planet without overflowing the viewport.
+            const titleEdgeOffset =
+              sectionWidth > 0 && sectionWidth < 400
+                ? 160
+                : sectionPadding + planetSize + 24
+            return planetOnRight
+              ? { right: titleEdgeOffset }
+              : { left: titleEdgeOffset }
+          })(),
         }}
-        animate={{ x: planetShift * 0.3 }}
+        animate={{
+          x: planetShift * 0.3,
+          y: isPlanetOnly ? '-50%' : 0,
+        }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
         {TITLE_IMAGES[id] ? (
           <img
             src={TITLE_IMAGES[id].src}
             alt={label}
-            style={{ width: TITLE_IMAGES[id].w, height: TITLE_IMAGES[id].h }}
+            style={
+              isPlanetOnly
+                ? { height: 52, width: 'auto' }
+                : { width: TITLE_IMAGES[id].w, height: TITLE_IMAGES[id].h }
+            }
             className="mb-2"
           />
         ) : (
@@ -564,13 +646,26 @@ export default function PlanetSection({
         </p>
       </motion.div>
 
-      {/* Planet — foreground, pointer-events off when panel is open so it doesn't cover panel buttons */}
+      {/* Planet — foreground, pointer-events off when panel is open so it
+          doesn't cover panel buttons. Below 575px the planet motion.div
+          gets a negative outer-side margin so the image overlaps the
+          viewport edge by ~50px (the section's px-6 24px padding is
+          neutralised + 50px of overlap). */}
       <div
         className={`relative z-10 flex ${planetOnRight ? 'justify-end' : 'justify-start'}`}
         style={{ pointerEvents: panelState === 'open' ? 'none' : 'auto' }}
       >
         <motion.div
           onMouseEnter={activate}
+          style={(() => {
+            // Push planet past the section edge so it doesn't dominate
+            // the centre horizontally. Tighter on the smallest phones.
+            if (sectionWidth === 0 || sectionWidth >= 575) return undefined
+            const offset = sectionWidth < 400 ? -104 : -74
+            return planetOnRight
+              ? { marginRight: offset }
+              : { marginLeft: offset }
+          })()}
           animate={{
             x: isExiting ? planetShift + planetExitOffset : planetShift,
             opacity: isExiting ? 0 : 1,
@@ -590,7 +685,7 @@ export default function PlanetSection({
             <img
               src={planetImageUrl || PLANET_IMAGES[id] || '/imgs/planet_tv.png'}
               alt={`${label} planet`}
-              className="w-48 md:w-[411px] h-auto object-contain transition-transform group-hover:scale-[1.03]"
+              className="w-[220px] md:w-[350px] min-[992px]:w-[411px] h-auto object-contain transition-transform group-hover:scale-[1.03]"
             />
           </button>
         </motion.div>

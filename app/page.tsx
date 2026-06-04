@@ -2,7 +2,6 @@ import { getHomepageData, getPlanetImages } from '@/lib/data/homepage'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import Hero from '@/components/home/Hero'
 import PlanetSection from '@/components/home/PlanetSection'
-import MobileHome from '@/components/home/MobileHome'
 import FooterPlanet from '@/components/home/FooterPlanet'
 import type { ModuleCardData } from '@/components/home/PlanetSection'
 
@@ -120,25 +119,15 @@ export default async function Home() {
         themeKey={copy.home_hero_theme}
       />
 
-      <div className="hidden md:block">
-        {sections.map((section) => (
-          <PlanetSection
-            key={section.id}
-            {...section}
-            planetImageUrl={
-              planetImages[section.id as keyof typeof planetImages] ?? null
-            }
-          />
-        ))}
-      </div>
-
-      <MobileHome
-        tvItems={tvItems.length > 0 ? tvItems : tvFallback}
-        magazineItems={magazineItems}
-        eventItems={eventItems}
-        labItems={labItems}
-        copy={copy}
-      />
+      {sections.map((section) => (
+        <PlanetSection
+          key={section.id}
+          {...section}
+          planetImageUrl={
+            planetImages[section.id as keyof typeof planetImages] ?? null
+          }
+        />
+      ))}
 
       {/* Footer planet — homepage only */}
       <FooterPlanet tagline={copy.footer_tagline ?? 'The Entertainment People'} />

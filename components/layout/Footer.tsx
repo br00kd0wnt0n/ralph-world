@@ -120,7 +120,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
 
   if (variant === 'light') {
     return (
-      <footer className="relative z-10 bg-surface py-8 px-6 border-t border-border/30">
+      <footer className="relative z-10 bg-surface py-8 px-4 min-[420px]:px-6 md:px-16 border-t border-border/30">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-wrap items-center justify-center gap-6 mb-4">
             <a
@@ -184,7 +184,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
           Contact us. Pink top border is the top edge of the whole footer
           regardless of state. */}
       <div
-        className="relative bg-black flex items-center justify-between px-6 py-3"
+        className="relative bg-black flex items-center justify-between px-4 min-[420px]:px-6 md:px-16 py-3"
         style={{ minHeight: 103, borderTop: '4px solid #EA128B' }}
       >
         {/* Globe — bottom left, overflows the top of the bar. Clicking
@@ -193,8 +193,8 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
         <button
           type="button"
           onClick={handleGlobeClick}
-          className="absolute z-10"
-          style={{ bottom: 24, left: 24 }}
+          className="absolute z-10 left-4 min-[420px]:left-6 md:left-16"
+          style={{ bottom: 24 }}
           aria-label="Show offices"
           aria-expanded={panelOpen}
         >
@@ -288,7 +288,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
           className="overflow-y-auto"
           style={{ maxHeight: 'calc(100svh - 103px)' }}
         >
-          <div className="relative max-w-6xl mx-auto px-6 py-12 pb-28 md:pb-12">
+          <div className="relative max-w-6xl mx-auto px-4 min-[420px]:px-6 md:px-16 py-12 pb-28 md:pb-12">
 
             <Swiper
               onSwiper={(s) => {

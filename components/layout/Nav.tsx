@@ -132,7 +132,7 @@ export default function Nav() {
     <>
       {/* ── Utility Bar (desktop) ── */}
       <div
-        className="hidden min-[1200px]:flex items-center justify-between px-6 text-xs fixed top-0 left-0 right-0 z-50 pointer-events-none"
+        className="hidden min-[1200px]:flex items-center justify-between px-4 min-[420px]:px-6 md:px-16 text-xs fixed top-0 left-0 right-0 z-50 pointer-events-none"
         style={{ height: 77 }}
       >
         {/* Stepped blur background - 11 strips of 7px each with decreasing blur.
@@ -402,7 +402,7 @@ export default function Nav() {
         <div className="min-[1200px]:hidden">
           {/* Mobile utility bar - fixed */}
           <div
-            className="pointer-events-auto fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4"
+            className="pointer-events-auto fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 min-[420px]:px-6 md:px-16"
             style={{
               height: 60,
               background: navFixed

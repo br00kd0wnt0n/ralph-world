@@ -18,7 +18,9 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const hasPaid = session.profile?.subscriptionStatus === 'paid'
+  // Use tier (post-Phase-1 source of truth) so Stripe-paid users are
+  // recognised alongside legacy Shopify-paid users.
+  const hasPaid = session.profile?.tier === 'paid'
 
   // Pull all Broadcaster assets
   const allAssets = await getAssets()

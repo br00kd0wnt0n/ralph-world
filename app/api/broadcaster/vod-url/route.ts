@@ -8,8 +8,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Paid subscription required for VOD
-  if (session.profile?.subscriptionStatus !== 'paid') {
+  // Paid subscription required for VOD. Use tier (post-Phase-1 source
+  // of truth) so Stripe-paid users are recognised alongside legacy
+  // Shopify-paid users.
+  if (session.profile?.tier !== 'paid') {
     return NextResponse.json({ error: 'Subscription required' }, { status: 403 })
   }
 

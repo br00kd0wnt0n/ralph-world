@@ -35,8 +35,15 @@ export default function RalphTVClient({
       initial="initial"
       animate="animate"
     >
-      {/* Planet + white bg layered with content */}
-      <section className="relative" style={{ marginTop: 32 }}>
+      {/* Planet + white bg layered with content.
+          min-height ensures the white background extends to the footer on
+          tall viewports (and on mobile, where the TV set is short
+          relative to the screen). 200px is approximate footer height —
+          tweak as needed. */}
+      <section
+        className="relative"
+        style={{ marginTop: 32, minHeight: 'calc(100svh - 200px)' }}
+      >
         {/* Background - animates FIRST */}
         <motion.div variants={sectionBgNoIntroVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270, marginTop: 12 }}>

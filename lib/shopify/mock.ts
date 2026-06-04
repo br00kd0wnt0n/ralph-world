@@ -47,6 +47,7 @@ function makeProduct(
       minVariantPrice: { amount: price, currencyCode: 'GBP' },
       maxVariantPrice: { amount: price, currencyCode: 'GBP' },
     },
+    dateMetafield: null,
   }
 }
 
@@ -179,6 +180,7 @@ function toSummary(p: ShopifyProduct): ProductSummary {
     productType: p.productType,
     tags: p.tags,
     variantId: p.variants.edges[0]?.node.id ?? '',
+    date: p.dateMetafield?.value ?? null,
   }
 }
 

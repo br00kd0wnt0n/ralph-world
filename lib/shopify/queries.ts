@@ -26,6 +26,14 @@ export const PRODUCT_FRAGMENT = `
       minVariantPrice { amount currencyCode }
       maxVariantPrice { amount currencyCode }
     }
+    # Custom "Date" metafield from Shopify Admin → Custom data → Products.
+    # Requires the metafield definition to have **Storefront access** enabled
+    # — without that toggle the Storefront API returns null even if the
+    # metafield has a value in Admin.
+    dateMetafield: metafield(namespace: "custom", key: "date") {
+      value
+      type
+    }
   }
 `
 

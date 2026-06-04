@@ -47,15 +47,25 @@ export default function ArticleOverlay({
     if (isOpen) {
       document.body.style.overflow = 'hidden'
       window.addEventListener('keydown', handleEsc)
-      // Update URL without navigation
+      // Update URL without navigation. Use the un-patched
+      // History.prototype.pushState directly — Next.js 16's App Router
+      // monitors `window.history.pushState`, so a path change to
+      // `/magazine/[slug]` would otherwise trigger a soft navigation:
+      // the [slug]/page.tsx redirect fires → page re-mounts → overlay
+      // state is lost. Going through the prototype bypasses that.
       if (article?.slug) {
-        window.history.pushState(null, '', `/magazine/${article.slug}`)
+        History.prototype.pushState.call(
+          window.history,
+          null,
+          '',
+          `/magazine/${article.slug}`,
+        )
       }
     } else {
       document.body.style.overflow = ''
       // Only restore URL if we were showing an article
       if (article) {
-        window.history.pushState(null, '', '/magazine')
+        History.prototype.pushState.call(window.history, null, '', '/magazine')
       }
     }
     return () => {

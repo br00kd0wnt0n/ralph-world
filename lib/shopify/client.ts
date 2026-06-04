@@ -80,6 +80,7 @@ export function toProductSummary(p: ShopifyProduct): ProductSummary {
     productType: p.productType ?? '',
     tags: p.tags ?? [],
     variantId: firstVariant?.id ?? '',
+    date: p.dateMetafield?.value ?? null,
   }
 }
 

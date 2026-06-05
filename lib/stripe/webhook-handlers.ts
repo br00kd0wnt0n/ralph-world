@@ -177,7 +177,13 @@ export async function handleSubscriptionUpdated(
   const periodEnd =
     typeof periodEndSeconds === 'number' ? new Date(periodEndSeconds * 1000) : null
 
-  const cancelAtPeriodEnd = sub.cancel_at_period_end ?? false
+  // Stripe API 2026-05-27+ (dahlia) uses cancel_at (a Unix timestamp set
+  // to the period end) rather than the legacy cancel_at_period_end boolean
+  // flag when a subscription is scheduled to cancel at the end of its
+  // current period. Treat either form as a scheduled cancellation.
+  const subWithCancelAt = sub as unknown as { cancel_at?: number | null }
+  const cancelAtPeriodEnd =
+    sub.cancel_at_period_end === true || (subWithCancelAt.cancel_at != null)
 
   const db = getDb()
   await db

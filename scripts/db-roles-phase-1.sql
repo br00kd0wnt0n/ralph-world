@@ -90,7 +90,7 @@ GRANT SELECT ON
   magazine_issues
 TO ralph_world;
 
--- ── 6. ralph_world — append-only on audit + consent + webhook + stripe ─
+-- ── 6. ralph_world — append-only on audit + consent + webhook ─────────
 -- The arch doc says these must survive even app-side compromise:
 -- INSERT only, no UPDATE, no DELETE. SELECT stays on so the consumer
 -- app can read its own history (e.g. "did we already log this consent?").
@@ -98,7 +98,14 @@ TO ralph_world;
 GRANT SELECT, INSERT ON
   audit_log,
   consent_log,
-  webhook_log,
+  webhook_log
+TO ralph_world;
+
+-- stripe_events needs UPDATE so the webhook handler can flip
+-- processing_status from 'received' → 'processed'/'failed'.
+-- Append-only is not sufficient here (idempotency INSERT + status UPDATE
+-- are both required for correct operation).
+GRANT SELECT, INSERT, UPDATE ON
   stripe_events
 TO ralph_world;
 

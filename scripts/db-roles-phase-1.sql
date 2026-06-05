@@ -122,6 +122,7 @@ GRANT UPDATE (
   stripe_subscription_id,
   subscription_status,
   subscription_current_period_end,
+  subscription_cancel_at_period_end,
   shipping_address_cached,
   shopify_customer_id,
   marketing_opt_in,

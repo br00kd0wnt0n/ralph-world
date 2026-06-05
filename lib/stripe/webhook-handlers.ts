@@ -2,8 +2,9 @@ import 'server-only'
 import type Stripe from 'stripe'
 import { eq } from 'drizzle-orm'
 import { getDb } from '@/lib/db'
-import { profiles } from '@/lib/db/schema'
+import { profiles, users } from '@/lib/db/schema'
 import { logAction } from '@/lib/audit'
+import { sendTemplate } from '@/lib/email/send'
 
 /**
  * Stripe webhook event handlers — Task 2.3, arch doc §9.
@@ -54,6 +55,38 @@ async function resolveUserId(args: {
 function extractId(v: string | { id: string } | null | undefined): string | null {
   if (!v) return null
   return typeof v === 'string' ? v : v.id
+}
+
+// ── Email helpers ─────────────────────────────────────────────────────
+
+function appUrl(path: string): string {
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.AUTH_URL ??
+    'http://localhost:3000'
+  return `${base.replace(/\/$/, '')}${path}`
+}
+
+/**
+ * Fetch user email + display name for transactional email sends.
+ * Returns null if the user can't be found — caller skips the send.
+ */
+async function fetchUserContact(
+  userId: string
+): Promise<{ email: string; displayName: string | null } | null> {
+  try {
+    const db = getDb()
+    const [row] = await db
+      .select({ email: users.email, displayName: profiles.displayName })
+      .from(users)
+      .innerJoin(profiles, eq(profiles.id, users.id))
+      .where(eq(users.id, userId))
+      .limit(1)
+    if (!row?.email) return null
+    return { email: row.email, displayName: row.displayName ?? null }
+  } catch {
+    return null
+  }
 }
 
 // ── Handlers ─────────────────────────────────────────────────────────
@@ -116,6 +149,32 @@ export async function handleCheckoutSessionCompleted(
     }
   }
 
+  // Subscription receipt email — Task 3.7.
+  try {
+    const contact = await fetchUserContact(userId)
+    if (contact) {
+      const periodEndSeconds = periodEndFromSession(session)
+      const periodEndFormatted = periodEndSeconds
+        ? new Date(periodEndSeconds * 1000).toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'long', year: 'numeric',
+          })
+        : 'your next billing date'
+      await sendTemplate({
+        userId,
+        to: contact.email,
+        templateId: 'subscription-receipt',
+        props: {
+          recipientName: contact.displayName,
+          periodEnd: periodEndFormatted,
+          amount: '£3.00',
+          manageUrl: appUrl('/account'),
+        },
+      })
+    }
+  } catch (err) {
+    console.error('[stripe-webhook] subscription-receipt email failed:', err)
+  }
+
   await logAction({
     actorId: RW_NULL_USER,
     action: 'sub_status_changed',
@@ -140,6 +199,17 @@ export async function handleCheckoutSessionCompleted(
       shippingAddressCached: Boolean(shippingAddressCached),
     },
   }
+}
+
+/** Pull period_end out of a checkout session object (from items or invoice). */
+function periodEndFromSession(
+  session: Stripe.Checkout.Session
+): number | null {
+  // The session itself doesn't carry period_end — we read it from the
+  // subscription later via the subscription.updated event. Return null here;
+  // the subscription-receipt just says "next billing date".
+  void session
+  return null
 }
 
 /**
@@ -236,6 +306,35 @@ export async function handleSubscriptionDeleted(
     })
     .where(eq(profiles.id, userId))
 
+  // Subscription cancelled email — Task 3.7.
+  try {
+    const contact = await fetchUserContact(userId)
+    if (contact) {
+      const periodEndSeconds =
+        (sub as unknown as { current_period_end?: number }).current_period_end ??
+        (sub as unknown as { items?: { data?: Array<{ current_period_end?: number }> } })
+          .items?.data?.[0]?.current_period_end ??
+        null
+      const accessUntil = periodEndSeconds
+        ? new Date(periodEndSeconds * 1000).toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'long', year: 'numeric',
+          })
+        : 'the end of your current period'
+      await sendTemplate({
+        userId,
+        to: contact.email,
+        templateId: 'subscription-cancelled',
+        props: {
+          recipientName: contact.displayName,
+          accessUntil,
+          resubscribeUrl: appUrl('/account'),
+        },
+      })
+    }
+  } catch (err) {
+    console.error('[stripe-webhook] subscription-cancelled email failed:', err)
+  }
+
   await logAction({
     actorId: RW_NULL_USER,
     action: 'sub_status_changed',
@@ -273,6 +372,24 @@ export async function handleInvoicePaymentFailed(
       updatedAt: new Date(),
     })
     .where(eq(profiles.id, userId))
+
+  // Payment failed email — Task 3.7. The portal URL lets them update their card.
+  try {
+    const contact = await fetchUserContact(userId)
+    if (contact) {
+      await sendTemplate({
+        userId,
+        to: contact.email,
+        templateId: 'payment-failed',
+        props: {
+          recipientName: contact.displayName,
+          updatePaymentUrl: appUrl('/account'),
+        },
+      })
+    }
+  } catch (err) {
+    console.error('[stripe-webhook] payment-failed email failed:', err)
+  }
 
   await logAction({
     actorId: RW_NULL_USER,

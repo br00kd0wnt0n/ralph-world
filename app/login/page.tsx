@@ -13,6 +13,8 @@ interface LoginPageProps {
     reason?: string
     /** ?mode=signup | ?mode=signin — initial form tab */
     mode?: string
+    /** ?reset=ok — set by /reset-password after successful password update */
+    reset?: string
   }>
 }
 
@@ -36,7 +38,14 @@ function bannerFor(params: {
   verify?: string
   reason?: string
   error?: string
+  reset?: string
 }): BannerState | null {
+  if (params.reset === 'ok') {
+    return {
+      tone: 'success',
+      text: 'Password updated — sign in with your new password.',
+    }
+  }
   if (params.verify === 'ok') {
     return {
       tone: 'success',
@@ -73,6 +82,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     verify,
     reason,
     mode: rawMode,
+    reset,
   } = await searchParams
   const callbackUrl = safeCallback(rawCallback)
 
@@ -83,7 +93,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const initialMode: 'signin' | 'signup' =
     rawMode === 'signup' ? 'signup' : 'signin'
-  const banner = bannerFor({ verify, reason, error })
+  const banner = bannerFor({ verify, reason, error, reset })
 
   // Google sign-in must stay a server action so it can call signIn()
   // directly (it's not allowed from client code). Defined here and

@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useState, useTransition } from 'react'
+import Link from 'next/link'
 import { signinWithCredentials, signupAction } from './actions'
 import type { SigninResult, SignupResult } from './actions'
 
@@ -146,6 +147,14 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
           >
             {signinPending ? 'Signing in…' : 'Sign in'}
           </button>
+          <div className="text-center">
+            <Link
+              href="/reset-password"
+              className="text-xs text-muted hover:text-secondary transition-colors"
+            >
+              Forgot your password?
+            </Link>
+          </div>
         </form>
       )}
 

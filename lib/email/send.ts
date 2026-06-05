@@ -30,8 +30,21 @@ import type { ReactElement } from 'react'
 // ── Template registry ──────────────────────────────────────────────────
 
 import { EmailVerification } from '@/components/emails/EmailVerification'
+import { SubscriptionReceipt } from '@/components/emails/SubscriptionReceipt'
+import { SubscriptionCancelled } from '@/components/emails/SubscriptionCancelled'
+import { PaymentFailed } from '@/components/emails/PaymentFailed'
+import { EventRsvp } from '@/components/emails/EventRsvp'
+import { MagazineShipped } from '@/components/emails/MagazineShipped'
+import { PasswordReset } from '@/components/emails/PasswordReset'
 
-export type TemplateId = 'email-verification'
+export type TemplateId =
+  | 'email-verification'
+  | 'subscription-receipt'
+  | 'subscription-cancelled'
+  | 'payment-failed'
+  | 'event-rsvp'
+  | 'magazine-shipped'
+  | 'password-reset'
 
 interface TemplateEntry<P> {
   subject: (props: P) => string
@@ -44,6 +57,78 @@ const TEMPLATES = {
     render: (props: { verificationUrl: string; recipientName?: string | null }) =>
       EmailVerification(props),
   } as TemplateEntry<{ verificationUrl: string; recipientName?: string | null }>,
+
+  'subscription-receipt': {
+    subject: () => "You're now a Ralph subscriber",
+    render: (props: {
+      recipientName?: string | null
+      periodEnd: string
+      amount: string
+      manageUrl: string
+    }) => SubscriptionReceipt(props),
+  } as TemplateEntry<{
+    recipientName?: string | null
+    periodEnd: string
+    amount: string
+    manageUrl: string
+  }>,
+
+  'subscription-cancelled': {
+    subject: () => 'Your Ralph subscription has been cancelled',
+    render: (props: {
+      recipientName?: string | null
+      accessUntil: string
+      resubscribeUrl: string
+    }) => SubscriptionCancelled(props),
+  } as TemplateEntry<{
+    recipientName?: string | null
+    accessUntil: string
+    resubscribeUrl: string
+  }>,
+
+  'payment-failed': {
+    subject: () => 'Action needed: your Ralph payment failed',
+    render: (props: { recipientName?: string | null; updatePaymentUrl: string }) =>
+      PaymentFailed(props),
+  } as TemplateEntry<{ recipientName?: string | null; updatePaymentUrl: string }>,
+
+  'event-rsvp': {
+    subject: (props: { eventTitle: string }) => `You're going to ${props.eventTitle}`,
+    render: (props: {
+      recipientName?: string | null
+      eventTitle: string
+      eventDate: string
+      eventLocation?: string | null
+      eventUrl: string
+    }) => EventRsvp(props),
+  } as TemplateEntry<{
+    recipientName?: string | null
+    eventTitle: string
+    eventDate: string
+    eventLocation?: string | null
+    eventUrl: string
+  }>,
+
+  'magazine-shipped': {
+    subject: (props: { issueTitle: string }) => `Your Ralph magazine is on its way — ${props.issueTitle}`,
+    render: (props: {
+      recipientName?: string | null
+      issueTitle: string
+      trackingUrl?: string | null
+      shippingAddress?: string | null
+    }) => MagazineShipped(props),
+  } as TemplateEntry<{
+    recipientName?: string | null
+    issueTitle: string
+    trackingUrl?: string | null
+    shippingAddress?: string | null
+  }>,
+
+  'password-reset': {
+    subject: () => 'Reset your Ralph.world password',
+    render: (props: { resetUrl: string; recipientName?: string | null }) =>
+      PasswordReset(props),
+  } as TemplateEntry<{ resetUrl: string; recipientName?: string | null }>,
 } as const
 
 // ── Idempotency ─────────────────────────────────────────────────────────

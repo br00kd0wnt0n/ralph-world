@@ -4,6 +4,31 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-06-05 — Phase 2 live acceptance: closed ✅
+
+Stripe dashboard (Task 2.1) completed by Brook/Nicola. Env vars
+(STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_PRICE_ID,
+STRIPE_WEBHOOK_SECRET) set in Railway → ralph-world. Railway redeployed.
+
+### Phase 2 smoke test results (test mode)
+- Stripe Checkout → paid tier on `/account` ✅
+- Paid copy rendered correctly ("You have full access: magazine, TV, events, shop, and lab") ✅
+- Customer Portal cancel flow ✅ (cancel at period end)
+- Webhook pipeline end-to-end confirmed ✅
+
+### Phase 2 fully closed
+All 6 tasks complete and live in test mode:
+- 2.1 Stripe dashboard ✅ (today)
+- 2.2 Checkout session creation ✅
+- 2.3 Webhook handler + 5 event processors ✅
+- 2.4 Stripe address → Shopify sync ✅
+- 2.5 Member portal subscription UI ✅
+- 2.6 Shopify webhook handlers ✅
+
+Phase 3 starts next.
+
+---
+
 ## 2026-06-03 (afternoon-2) — Phase 1.3/1.4 acceptance closed + redirect bug fix
 
 Resend DNS records landed overnight (Dany). Domain `send.ralph.world`

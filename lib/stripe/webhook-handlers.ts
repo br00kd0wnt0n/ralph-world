@@ -177,12 +177,15 @@ export async function handleSubscriptionUpdated(
   const periodEnd =
     typeof periodEndSeconds === 'number' ? new Date(periodEndSeconds * 1000) : null
 
+  const cancelAtPeriodEnd = sub.cancel_at_period_end ?? false
+
   const db = getDb()
   await db
     .update(profiles)
     .set({
       tier,
       subscriptionStatus,
+      subscriptionCancelAtPeriodEnd: cancelAtPeriodEnd,
       ...(periodEnd ? { subscriptionCurrentPeriodEnd: periodEnd } : {}),
       updatedAt: new Date(),
     })

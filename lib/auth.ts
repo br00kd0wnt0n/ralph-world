@@ -105,6 +105,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               stripeCustomerId: profile.stripeCustomerId ?? null,
               stripeSubscriptionId: profile.stripeSubscriptionId ?? null,
               subscriptionCurrentPeriodEnd: profile.subscriptionCurrentPeriodEnd ?? null,
+              subscriptionCancelAtPeriodEnd: profile.subscriptionCancelAtPeriodEnd ?? false,
             }
           }
         } catch {
@@ -203,6 +204,8 @@ export interface SessionProfile {
   stripeSubscriptionId: string | null
   /** When the current paid period ends (next billing date). */
   subscriptionCurrentPeriodEnd: Date | null
+  /** True when the user cancelled and the sub runs to period end without renewing. */
+  subscriptionCancelAtPeriodEnd: boolean
 }
 
 export interface SessionWithProfile {

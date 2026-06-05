@@ -77,6 +77,7 @@ export const profiles = pgTable('profiles', {
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   subscriptionCurrentPeriodEnd: timestamp('subscription_current_period_end', { mode: 'date' }),
+  subscriptionCancelAtPeriodEnd: boolean('subscription_cancel_at_period_end').default(false),
   shippingAddressCached: jsonb('shipping_address_cached'),
   marketingOptIn: boolean('marketing_opt_in').default(false),
   marketingOptInAt: timestamp('marketing_opt_in_at', { mode: 'date' }),

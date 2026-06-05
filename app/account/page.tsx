@@ -30,6 +30,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const shippingAddress = session.profile?.shippingAddressCached ?? null
   const subscriptionStatus = session.profile?.subscriptionStatus ?? null
   const subscriptionPeriodEnd = session.profile?.subscriptionCurrentPeriodEnd ?? null
+  const cancelAtPeriodEnd = session.profile?.subscriptionCancelAtPeriodEnd ?? false
   const { upgrade } = await searchParams
 
   // Free/guest users coming back from SubscribeModal's OAuth flow get sent
@@ -123,6 +124,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             <p className="text-secondary text-xs mb-4">
               {subscriptionStatus === 'past_due'
                 ? `Last payment attempt failed. Stripe will retry; update your card if needed. Current period ends ${formatPeriodEnd(subscriptionPeriodEnd)}.`
+                : cancelAtPeriodEnd
+                ? `Cancelled — access continues until ${formatPeriodEnd(subscriptionPeriodEnd)}.`
                 : `Next billing date: ${formatPeriodEnd(subscriptionPeriodEnd)}`}
             </p>
           )}

@@ -4,6 +4,31 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-06-05 (afternoon) — Cancellation state + DB permission fixes
+
+### Cancellation state on /account
+When a user cancels via the Stripe Customer Portal (cancel at period end),
+/account now shows "Cancelled — access continues until 5 July 2026" instead
+of "Next billing date". Required three fixes to land:
+
+1. **New column + UI** — `subscription_cancel_at_period_end boolean` added
+   to profiles. SessionProfile + session callback expose it. /account renders
+   the correct copy based on the flag.
+2. **Missing UPDATE grant** — the new column had INSERT+SELECT but no UPDATE
+   for ralph_world. Column-level grants don't auto-apply to new columns.
+   Fixed immediately; both the roles script and migration script updated.
+3. **Stripe API 2026-05-27 (dahlia) changed the field** — newer Stripe API
+   uses `cancel_at` (a Unix timestamp) instead of `cancel_at_period_end=true`
+   when scheduling portal cancellations. Handler updated to detect either form.
+
+### DB permission fixes (found during smoke testing)
+- `stripe_events` was INSERT+SELECT only for ralph_world → the webhook handler
+  could never flip processing_status from 'received' to 'processed'. Added UPDATE.
+  4 existing events backfilled to 'processed'.
+- Both fixes reflected in `scripts/db-roles-phase-1.sql`.
+
+---
+
 ## 2026-06-05 — Phase 2 live acceptance: closed ✅
 
 Stripe dashboard (Task 2.1) completed by Brook/Nicola. Env vars

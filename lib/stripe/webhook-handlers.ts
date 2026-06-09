@@ -149,31 +149,9 @@ export async function handleCheckoutSessionCompleted(
     }
   }
 
-  // Subscription receipt email — Task 3.7.
-  try {
-    const contact = await fetchUserContact(userId)
-    if (contact) {
-      const periodEndSeconds = periodEndFromSession(session)
-      const periodEndFormatted = periodEndSeconds
-        ? new Date(periodEndSeconds * 1000).toLocaleDateString('en-GB', {
-            day: 'numeric', month: 'long', year: 'numeric',
-          })
-        : 'your next billing date'
-      await sendTemplate({
-        userId,
-        to: contact.email,
-        templateId: 'subscription-receipt',
-        props: {
-          recipientName: contact.displayName,
-          periodEnd: periodEndFormatted,
-          amount: '£3.00',
-          manageUrl: appUrl('/account'),
-        },
-      })
-    }
-  } catch (err) {
-    console.error('[stripe-webhook] subscription-receipt email failed:', err)
-  }
+  // Subscription receipt email is sent from handleInvoicePaid (billing_reason
+  // === 'subscription_create') where the period_end is already resolved from
+  // the invoice lines — more reliable than fetching it here.
 
   await logAction({
     actorId: RW_NULL_USER,
@@ -441,6 +419,33 @@ export async function handleInvoicePaid(
       updatedAt: new Date(),
     })
     .where(eq(profiles.id, userId))
+
+  // Send the subscription receipt email only on the first invoice for a new
+  // subscription. billing_reason === 'subscription_create' is set by Stripe
+  // for exactly that case; 'subscription_cycle' covers renewals, which we
+  // don't email about here.
+  if (invoice.billing_reason === 'subscription_create' && periodEnd) {
+    try {
+      const contact = await fetchUserContact(userId)
+      if (contact) {
+        await sendTemplate({
+          userId,
+          to: contact.email,
+          templateId: 'subscription-receipt',
+          props: {
+            recipientName: contact.displayName,
+            periodEnd: periodEnd.toLocaleDateString('en-GB', {
+              day: 'numeric', month: 'long', year: 'numeric',
+            }),
+            amount: '£3.00',
+            manageUrl: appUrl('/account'),
+          },
+        })
+      }
+    } catch (err) {
+      console.error('[stripe-webhook] subscription-receipt email failed:', err)
+    }
+  }
 
   await logAction({
     actorId: RW_NULL_USER,

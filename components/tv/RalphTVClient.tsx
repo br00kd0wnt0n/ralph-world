@@ -18,6 +18,8 @@ interface RalphTVClientProps {
   offlineMessage?: string
   subscribeHeading?: string
   subscribeBody?: string
+  /** Seconds a guest may watch before the gate appears. 0 = gate immediately. */
+  previewSeconds?: number
   copy?: Partial<SiteCopy>
 }
 
@@ -26,6 +28,7 @@ export default function RalphTVClient({
   offlineMessage,
   subscribeHeading,
   subscribeBody,
+  previewSeconds,
 }: RalphTVClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
 
@@ -88,6 +91,7 @@ export default function RalphTVClient({
               offlineMessage={offlineMessage}
               subscribeHeading={subscribeHeading}
               subscribeBody={subscribeBody}
+              previewSeconds={previewSeconds}
             />
           </div>
         </motion.div>

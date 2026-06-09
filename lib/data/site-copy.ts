@@ -60,6 +60,8 @@ export const DEFAULT_COPY = {
   tv_subscribe_heading: 'Subscribe to keep watching',
   tv_subscribe_body:
     "Ralph.world is just bursting with Pop Culture for the Fun of It™ and experiencing it couldn't be easier.",
+  /** Seconds a guest may watch before the gate appears. '0' = gate immediately. */
+  tv_preview_seconds: '600',
 
   // Shop section
   shop_hero_heading: 'BUY RALPH STUFF',

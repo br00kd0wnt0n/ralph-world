@@ -20,6 +20,8 @@ interface TVSetProps {
   offlineMessage?: string
   subscribeHeading?: string
   subscribeBody?: string
+  /** Seconds a guest may watch before the gate appears. Omit or 0 = gate immediately. */
+  previewSeconds?: number
 }
 
 export default function TVSet({
@@ -28,10 +30,12 @@ export default function TVSet({
   offlineMessage = 'Tune in later',
   subscribeHeading,
   subscribeBody,
+  previewSeconds = 600,
 }: TVSetProps) {
   const { user } = useAuth()
   const { isLive } = useLiveStatus()
   const [overlay, setOverlay] = useState<TVOverlayState>('none')
+  const [previewExpired, setPreviewExpired] = useState(false)
   const [volume, setVolume] = useState(0.7)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [schedule, setSchedule] = useState<ScheduleItem[]>([])
@@ -77,6 +81,22 @@ export default function TVSet({
   useEffect(() => {
     safeSet('ralph-tv-volume', String(volume))
   }, [volume])
+
+  // Guest countdown preview — starts once the stream goes live.
+  // A ref prevents the timer restarting if isLive flickers.
+  const timerStartedRef = useRef(false)
+  const isGuest = !user
+
+  useEffect(() => {
+    if (!isGuest || !isLive || timerStartedRef.current) return
+    timerStartedRef.current = true
+    if (previewSeconds <= 0) {
+      setPreviewExpired(true)
+      return
+    }
+    const timer = setTimeout(() => setPreviewExpired(true), previewSeconds * 1_000)
+    return () => clearTimeout(timer)
+  }, [isLive, isGuest, previewSeconds])
 
   // Poll schedule continuously — Show Info, Schedule overlay, and the
   // "On now / Up next" status bar all read from this single state. The
@@ -137,14 +157,14 @@ export default function TVSet({
 
   const currentShow = schedule[0]
   const nextShow = schedule[1]
-  const isGuest = !user
 
-  // Determine screen state
+  // Determine screen state.
+  // Guests watch live until their preview window expires, then see the gate.
   let screenState: 'live' | 'subscribe-gate' | 'offline' = 'offline'
-  if (isLive && isGuest) {
-    screenState = 'subscribe-gate'
-  } else if (isLive) {
+  if (isLive && (!isGuest || !previewExpired)) {
     screenState = 'live'
+  } else if (isLive && isGuest && previewExpired) {
+    screenState = 'subscribe-gate'
   }
 
   return (

@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import TVStatic from './TVStatic'
 
 interface SubscribeGateProps {
@@ -10,9 +11,11 @@ interface SubscribeGateProps {
 
 export default function SubscribeGate({
   onSubscribe,
-  heading = 'Subscribe to keep watching',
-  body = "Ralph.world is just bursting with Pop Culture for the Fun of It™ and experiencing it couldn't be easier.",
+  heading = "That's your lot for now",
+  body = "Create a free account to keep watching, or go paid for the full Ralph experience — magazine, TV, events and more.",
 }: SubscribeGateProps) {
+  const router = useRouter()
+
   return (
     <div className="absolute inset-0 bg-black">
       <TVStatic />
@@ -22,19 +25,23 @@ export default function SubscribeGate({
           <h3 className="text-white text-xl font-bold mb-3">
             {heading}
           </h3>
-          <p className="text-white/80 text-sm mb-3 leading-relaxed">
+          <p className="text-white/80 text-sm mb-5 leading-relaxed">
             {body}
           </p>
-          <p className="text-white/70 text-xs mb-5 leading-relaxed">
-            Simply press the link below and sign up by providing your email
-            address. Cheap at half the price, right?
-          </p>
-          <button
-            onClick={onSubscribe}
-            className="w-full rounded-full bg-ralph-pink py-3 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
-          >
-            Subscribe now
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => router.push('/login?mode=signup')}
+              className="w-full rounded-full bg-white text-ralph-purple py-3 text-sm font-semibold hover:bg-white/90 transition-colors"
+            >
+              Sign up free
+            </button>
+            <button
+              onClick={onSubscribe}
+              className="w-full rounded-full bg-ralph-pink py-3 text-white text-sm font-medium hover:bg-ralph-pink/90 transition-colors"
+            >
+              Get magazine — £3/mo
+            </button>
+          </div>
         </div>
       </div>
     </div>

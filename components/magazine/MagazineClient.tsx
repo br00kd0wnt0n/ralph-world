@@ -79,9 +79,14 @@ export default function MagazineClient({
     return () => window.removeEventListener('popstate', onPopState)
   }, [overlayOpen])
 
-  // Client-side category filtering
+  // Client-side category filtering — case-insensitive so editors can type
+  // 'Comedy', 'comedy', 'Film & TV', or 'film-tv' and all will match.
   const filteredArticles = activeCategory
-    ? articles.filter((a) => a.contentTags?.includes(activeCategory))
+    ? articles.filter((a) =>
+        a.contentTags?.some(
+          (tag) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '') === activeCategory
+        )
+      )
     : articles
 
   const gridArticles = coverStory

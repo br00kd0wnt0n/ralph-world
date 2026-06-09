@@ -2,8 +2,8 @@
 
 import { useEffect, useCallback, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { motion } from 'framer-motion'
-import { overlayVariants, overlayContentVariants } from '@/lib/animation/magazine'
+import { motion, AnimatePresence } from 'framer-motion'
+import { overlayContentVariants } from '@/lib/animation/magazine'
 import { useAuth } from '@/context/AuthContext'
 import BlockRenderer from './BlockRenderer'
 import type { ArticleFull } from '@/lib/data/magazine'
@@ -116,46 +116,66 @@ export default function ArticleOverlay({
 
   const theme = resolveTheme(article.backgroundCanvasColour)
 
-  // Portal to body to escape main's stacking context (z-10)
+  // Portal to body to escape main's stacking context (z-10).
+  // AnimatePresence wrapping the conditional motion.div ensures the
+  // enter/exit animations actually fire — without it, the motion.div
+  // mounts/unmounts so quickly that the initial transform isn't applied
+  // before the element is in its final position.
   return createPortal(
-    <motion.div
-      ref={trapRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label={article.title ?? 'Article'}
-      variants={overlayVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      className="fixed inset-0 z-[100] overflow-y-auto overscroll-none"
-      style={{ backgroundColor: theme.bg }}
-    >
-      {/* Close button - 16px from the inner edge of 70px padding */}
+    <AnimatePresence>
+      <motion.div
+        key={article.slug}
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={article.title ?? 'Article'}
+        initial={{ opacity: 0, y: 80 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 80 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed inset-0 min-[575px]:inset-3 md:inset-4 min-[992px]:inset-6 z-[100] overflow-y-auto overscroll-none shadow-2xl"
+        style={{ backgroundColor: theme.bg }}
+      >
+      {/* Close button — same image-swap (default + hover) as the footer
+          panel. Position tracks the responsive middle-container padding
+          so the button sits ~16px inside the visible inner edge. */}
       <button
+        type="button"
         onClick={onClose}
-        className="absolute z-[101] w-12 h-12 border border-black bg-transparent text-black flex items-center justify-center text-xl hover:bg-black/10 transition-colors"
-        style={{ top: 86, right: 86 }}
+        className="group absolute z-[101] w-12 h-12 top-9 right-9 min-[575px]:top-12 min-[575px]:right-12 md:top-16 md:right-16 min-[992px]:top-[86px] min-[992px]:right-[86px]"
         aria-label="Close"
       >
-        &#10005;
+        <img
+          src="/imgs/close_btn.svg"
+          alt=""
+          aria-hidden="true"
+          className="w-full h-full block group-hover:hidden select-none"
+        />
+        <img
+          src="/imgs/close_btn_over.svg"
+          alt=""
+          aria-hidden="true"
+          className="w-full h-full hidden group-hover:block select-none"
+        />
       </button>
 
-      {/* Middle container - repeating bg image + padding */}
+      {/* Middle container - repeating bg image + responsive padding */}
       <div
-        className="relative min-h-full"
+        className="relative min-h-full p-5 min-[575px]:p-8 md:p-12 min-[992px]:p-[70px]"
         style={{
-          padding: 70,
           backgroundImage: article.leadMediaUrl ? `url(${article.leadMediaUrl})` : undefined,
           backgroundRepeat: 'repeat',
           backgroundColor: article.leadMediaUrl ? undefined : theme.bg,
         }}
       >
-        {/* Inner container - theme background + content */}
+        {/* Inner container - theme background + content. Top padding
+            bumped to 100px on <768 so the article title clears the
+            close button. */}
         <div
+          className="p-6 pt-[100px] min-[575px]:p-12 min-[575px]:pt-[100px] md:p-[72px] min-[992px]:p-[110px]"
           style={{
             backgroundColor: theme.bg,
             color: theme.text,
-            padding: 110,
           }}
         >
           <motion.div
@@ -349,7 +369,8 @@ export default function ArticleOverlay({
           </motion.div>
         </div>
       </div>
-    </motion.div>,
+      </motion.div>
+    </AnimatePresence>,
     document.body
   )
 }

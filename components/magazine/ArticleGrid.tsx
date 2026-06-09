@@ -36,18 +36,56 @@ const GRID_2x3 = [
 ]
 const EXPLODE_PX = 16
 
-// 3D shadow clip-path: only cut corners for diagonal movement
-function shadowClipPath(dx: number, dy: number): string {
-  // Single-axis movement: no clip needed, just a rectangle
-  if (dx === 0 || dy === 0) {
-    return 'none'
+// 3D extrusion faces. Each tile may show up to two faces (one horizontal,
+// one vertical) depending on its position. Faces are absolutely positioned
+// over the cell with `inset: -K` so coordinates address a box K-pixels
+// larger than the cell on every side:
+//   cell top-left      → (K, K)
+//   cell bottom-right  → (100% - K, 100% - K)
+//   moved card corners → cell corners shifted by (dx*K, dy*K)
+// At rest the quadrilateral collapses onto the cell edge (zero area);
+// on hover it expands to a trapezoid connecting the cell edge to the
+// moved card edge, simulating an extruded 3D side.
+function faceClipPath(
+  axis: 'x' | 'y',
+  dx: number,
+  dy: number,
+  K: number,
+  hovered: boolean,
+): string {
+  const px = (n: number) => `${n}px`
+  const calc = (n: number) => `calc(100% - ${n}px)`
+
+  const cellL = px(K)
+  const cellR = calc(K)
+  const cellT = px(K)
+  const cellB = calc(K)
+
+  // Moved card edges (cell shifted by dx*K, dy*K)
+  const mvdL = px((1 + dx) * K)
+  const mvdR = calc((1 - dx) * K)
+  const mvdT = px((1 + dy) * K)
+  const mvdB = calc((1 - dy) * K)
+
+  // Faces render OPPOSITE to the direction of movement: if the card lifts
+  // up-left, the bottom + right faces of the extruded block are exposed.
+  if (axis === 'y') {
+    if (dy === 0) return 'polygon(0 0, 0 0, 0 0, 0 0)'
+    const cellEdge = dy < 0 ? cellB : cellT
+    const mvdEdge = dy < 0 ? mvdB : mvdT
+    if (hovered) {
+      return `polygon(${mvdL} ${mvdEdge}, ${mvdR} ${mvdEdge}, ${cellR} ${cellEdge}, ${cellL} ${cellEdge})`
+    }
+    return `polygon(${cellL} ${cellEdge}, ${cellR} ${cellEdge}, ${cellR} ${cellEdge}, ${cellL} ${cellEdge})`
   }
-  // Diagonal movement: cut corners based on direction
-  const cutSize = EXPLODE_PX - 1
-  const cutTopRightAndBottomLeft = dx * dy > 0
-  return cutTopRightAndBottomLeft
-    ? `polygon(0 0, calc(100% - ${cutSize}px) 0, 100% ${cutSize}px, 100% 100%, ${cutSize}px 100%, 0 calc(100% - ${cutSize}px))`
-    : `polygon(${cutSize}px 0, 100% 0, 100% calc(100% - ${cutSize}px), calc(100% - ${cutSize}px) 100%, 0 100%, 0 ${cutSize}px)`
+
+  if (dx === 0) return 'polygon(0 0, 0 0, 0 0, 0 0)'
+  const cellEdge = dx < 0 ? cellR : cellL
+  const mvdEdge = dx < 0 ? mvdR : mvdL
+  if (hovered) {
+    return `polygon(${mvdEdge} ${mvdT}, ${cellEdge} ${cellT}, ${cellEdge} ${cellB}, ${mvdEdge} ${mvdB})`
+  }
+  return `polygon(${cellEdge} ${cellT}, ${cellEdge} ${cellT}, ${cellEdge} ${cellB}, ${cellEdge} ${cellB})`
 }
 
 // Placeholder articles for when no data exists
@@ -98,7 +136,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
   return (
     <section className="bg-white px-6 py-0" style={{ marginTop: 20 }}>
       <div className="relative mx-auto" style={{ maxWidth: 1168 }}>
-        {/* Black grid lines layer — lowest */}
+        {/* Black grid background — lowest */}
         <div
           className="absolute grid grid-cols-2 lg:grid-cols-3"
           style={{
@@ -117,60 +155,66 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
           ))}
         </div>
 
-        {/* Shadow layer — above grid lines, below cards */}
+        {/* Extrusion faces layer — below cards.
+            Each tile renders up to two trapezoidal faces (horizontal + vertical)
+            that stay anchored at the resting cell edge. The clip-path animates
+            from a collapsed edge to a quadrilateral whose far edge tracks the
+            card's hovered position — simulating an extruded 3D block side. */}
         <div
           className="absolute inset-0 grid grid-cols-2 lg:grid-cols-3 pointer-events-none"
-          style={{ ...gridStyles, zIndex: 1 }}
+          style={{ ...gridStyles, zIndex: 11 }}
         >
           {displayArticles.slice(0, 6).map((article, i) => {
             const isHovered = hoveredId === article.id
             const vec = vectors[i] ?? { dx: 0, dy: 0 }
-            const hoverTransform = isHovered
-              ? `translate(${vec.dx * EXPLODE_PX}px, ${vec.dy * EXPLODE_PX}px)`
-              : 'translate(0, 0)'
+            const faceTransition =
+              'clip-path 0.45s cubic-bezier(0.22, 1, 0.36, 1)'
             return (
               <div
                 key={`shadow-${article.id}`}
                 className="relative"
                 style={{ aspectRatio: 1.09604519774 }}
               >
-                {/* Shadow is always full size, hidden until hovered */}
-                <div
-                  className="absolute"
-                  style={{
-                    // Always extended in opposite direction of movement
-                    // For central items (dx=0 or dy=0), use full width/height on that axis
-                    top: vec.dy > 0 ? -(EXPLODE_PX - 1) : (vec.dy === 0 ? 0 : 1),
-                    bottom: vec.dy < 0 ? -(EXPLODE_PX - 1) : (vec.dy === 0 ? 0 : 1),
-                    left: vec.dx > 0 ? -(EXPLODE_PX - 1) : (vec.dx === 0 ? 0 : 1),
-                    right: vec.dx < 0 ? -(EXPLODE_PX - 1) : (vec.dx === 0 ? 0 : 1),
-                    backgroundColor: 'var(--color-ralph-orange)',
-                    clipPath: shadowClipPath(vec.dx, vec.dy),
-                    visibility: isHovered ? 'visible' : 'hidden',
-                    // Shadow transforms WITH the card
-                    transform: hoverTransform,
-                    // Show immediately, hide after transform completes
-                    transition: isHovered
-                      ? 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s'
-                      : 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s 0.45s',
-                  }}
-                />
+                {vec.dy !== 0 && (
+                  <div
+                    className="absolute pointer-events-none"
+                    style={{
+                      inset: -EXPLODE_PX,
+                      backgroundColor: 'var(--color-ralph-orange)',
+                      clipPath: faceClipPath(
+                        'y',
+                        vec.dx,
+                        vec.dy,
+                        EXPLODE_PX,
+                        isHovered,
+                      ),
+                      transition: faceTransition,
+                    }}
+                  />
+                )}
+                {vec.dx !== 0 && (
+                  <div
+                    className="absolute pointer-events-none"
+                    style={{
+                      inset: -EXPLODE_PX,
+                      backgroundColor: 'var(--color-ralph-orange)',
+                      clipPath: faceClipPath(
+                        'x',
+                        vec.dx,
+                        vec.dy,
+                        EXPLODE_PX,
+                        isHovered,
+                      ),
+                      transition: faceTransition,
+                    }}
+                  />
+                )}
               </div>
             )
           })}
         </div>
 
-        {/* Grid lines — absolute positioned lines on top */}
-        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
-          {/* Horizontal line at 50% */}
-          <div className="absolute left-0 right-0 h-px bg-black" style={{ top: '50%' }} />
-          {/* Vertical line at 33.333% */}
-          <div className="absolute top-0 bottom-0 w-px bg-black" style={{ left: '33.333%' }} />
-          {/* Vertical line at 66.666% */}
-          <div className="absolute top-0 bottom-0 w-px bg-black" style={{ left: '66.666%' }} />
-        </div>
-
-        {/* Card layer — above shadows */}
+        {/* Card layer — above extrusion faces */}
         <motion.div
           ref={ref}
           variants={gridContainerVariants}
@@ -179,7 +223,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
           className="relative grid grid-cols-2 lg:grid-cols-3"
           style={{
             ...gridStyles,
-            zIndex: 2,
+            zIndex: 12,
           }}
         >
           {displayArticles.slice(0, 6).map((article, i) => {
@@ -214,7 +258,8 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                       <img
                         src={article.leadMediaUrl || '/imgs/article_lead.png'}
                         alt={article.title ?? ''}
-                        className="w-full h-full object-cover"
+                        draggable={false}
+                        className="w-full h-full object-cover select-none"
                       />
                     </div>
 

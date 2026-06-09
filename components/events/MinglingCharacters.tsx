@@ -61,6 +61,18 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
   // Expanded state — when set, hides other arms, centers the active one,
   // and grows the panel into a 2-col layout. URL becomes /events/[slug].
   const [expandedArm, setExpandedArm] = useState<number | null>(null)
+  // < 992 swaps the layout: characters hidden, arms enter from the
+  // left/right edges alternately and rotate horizontally.
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 991px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   useEffect(() => {
     const container = containerRef.current
@@ -293,10 +305,32 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
     }
   }
 
+  // Mobile vertical-stack geometry. Each event becomes a roughly square
+  // card stacked vertically with a clear gap; the container grows to fit
+  // them all so the layout no longer fights a fixed 500px height.
+  // Top padding clears the 270px top planet decoration so the cards
+  // appear centred between top planet and section bottom.
+  const MOBILE_CARD_W = 260
+  const MOBILE_CARD_H = 290
+  const MOBILE_CARD_GAP = 36
+  const MOBILE_PAD_TOP = 100
+  const MOBILE_PAD_BOTTOM = 100
+  const mobileContainerHeight =
+    MOBILE_PAD_TOP +
+    MOBILE_PAD_BOTTOM +
+    eventCount * MOBILE_CARD_H +
+    Math.max(0, eventCount - 1) * MOBILE_CARD_GAP
+  const mobileCardTop = (i: number) =>
+    MOBILE_PAD_TOP + i * (MOBILE_CARD_H + MOBILE_CARD_GAP)
+  const mobileCardCenter = (i: number) => mobileCardTop(i) + MOBILE_CARD_H / 2
+
   return (
     <div
       className="relative"
-      style={{ height: 500, width: '100%' }}
+      style={{
+        height: isMobile ? mobileContainerHeight : 500,
+        width: '100%',
+      }}
       aria-hidden="true"
     >
       {/* Panels layer - outside clipped area so they can overflow */}
@@ -304,48 +338,98 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
         const { left, bunchDirection } = getArmPosition(i)
         const isActive = activeArm === i
         const isThisExpanded = expandedArm === i
-        const panelOnRight = bunchDirection === 'right' || (bunchDirection === null && i < eventCount / 2)
 
-        // When expanded, the panel grows to a 2-col layout and centres on
-        // the active arm (which is also centred horizontally).
-        const panelWidth = isThisExpanded ? 760 : 388
-        const panelHeight = isThisExpanded ? 420 : 276
-        const wrapperTransform = isThisExpanded
-          ? 'translateX(-50%)'
-          : panelOnRight ? 'translateX(-80%)' : 'translateX(-20%)'
+        // Mobile (<992): vertical card stack. Cards alternate which side
+        // they're aligned to, with the arm coming in from the opposite side.
+        const fromLeft = i % 2 === 0
+        const panelOnRight = isMobile
+          ? !fromLeft
+          : bunchDirection === 'right' || (bunchDirection === null && i < eventCount / 2)
+
+        // On mobile every mini panel is open by default — tapping it opens
+        // the expanded view. So treat all mini panels as "active" unless
+        // another arm is currently expanded (others fade then).
+        const isPanelOpen = isMobile
+          ? !isExpanded || isThisExpanded
+          : isActive
+
+        // Panel dimensions.
+        const panelWidth = isMobile
+          ? isThisExpanded
+            ? 'min(calc(100vw - 32px), 520px)'
+            : MOBILE_CARD_W
+          : isThisExpanded
+            ? 760
+            : 388
+        const panelHeight = isMobile
+          ? isThisExpanded
+            ? 520
+            : MOBILE_CARD_H
+          : isThisExpanded
+            ? 420
+            : 276
+
+        const wrapperStyle: React.CSSProperties = isMobile
+          ? isThisExpanded
+            ? {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+              }
+            : {
+                top: mobileCardTop(i),
+                left: '50%',
+                transform: 'translateX(-50%)',
+              }
+          : {
+              bottom: isThisExpanded ? 205 : -100 + arm.height - 150,
+              left: isThisExpanded ? '50%' : `${left}%`,
+              transform: isThisExpanded
+                ? 'translateX(-50%)'
+                : panelOnRight
+                  ? 'translateX(-80%)'
+                  : 'translateX(-20%)',
+            }
 
         return (
           <div
             key={`panel-${i}`}
             className="absolute z-[15] transition-all duration-500 ease-out pointer-events-none"
-            style={{
-              bottom: isThisExpanded ? 205 : -100 + arm.height - 150,
-              left: isThisExpanded ? '50%' : `${left}%`,
-              transform: wrapperTransform,
-            }}
+            style={wrapperStyle}
           >
             {/* Panel */}
             <div
               className={`transition-all duration-500 ease-out ${
-                isActive ? 'opacity-100 pointer-events-auto' : 'opacity-0'
-              }`}
+                isPanelOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0'
+              } ${isMobile && !isThisExpanded ? 'cursor-pointer' : ''}`}
+              onClick={
+                isMobile && !isThisExpanded
+                  ? () => handleShowMore(i)
+                  : undefined
+              }
               style={{
                 width: panelWidth,
                 height: panelHeight,
                 borderRadius: 12,
                 position: 'relative',
                 backgroundColor: arm.accentColour || 'var(--color-ralph-green)',
-                transform: isActive
+                transform: isPanelOpen
                   ? `scale(1) rotate(${isThisExpanded ? 0 : arm.panelRotation}deg)`
                   : `scale(0) rotate(${panelOnRight ? 100 : -100}deg)`,
                 transformOrigin: isThisExpanded
                   ? 'bottom center'
-                  : panelOnRight ? 'bottom right' : 'bottom left',
+                  : isMobile
+                    ? 'center center'
+                    : panelOnRight ? 'bottom right' : 'bottom left',
               }}
             >
-              {/* Close button — top-right when expanded, otherwise mirrors panel side */}
+              {/* Close button — top-right when expanded, otherwise mirrors panel side.
+                  Hidden on mobile mini state (the whole panel is the tap target). */}
               <div
-                className={`absolute top-4 z-10 ${isThisExpanded || panelOnRight ? 'right-4' : 'left-4'}`}
+                className={`absolute top-4 z-10 ${isThisExpanded || panelOnRight ? 'right-4' : 'left-4'} ${
+                  isMobile && !isThisExpanded ? 'hidden' : ''
+                }`}
                 style={{ position: 'absolute' }}
               >
                 {/* Shadow */}
@@ -388,9 +472,10 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
                 </button>
               </div>
 
-              {/* Event content — mini (single col) vs expanded (2 col with poster) */}
+              {/* Event content — mini (single col) vs expanded (stacks
+                  vertically on narrow screens, 2 col on >=576). */}
               {isThisExpanded ? (
-                <div className="flex flex-row h-full text-black gap-8 p-8 pr-12">
+                <div className="flex flex-col min-[576px]:flex-row h-full text-black gap-4 min-[576px]:gap-8 p-6 min-[576px]:p-8 min-[576px]:pr-12 overflow-y-auto">
                   {/* Left col — copy + CTA */}
                   <div className="flex-1 flex flex-col min-w-0">
                     <h3
@@ -484,18 +569,22 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
                   </div>
                 </div>
               ) : (
-                <div className={`p-6 flex flex-col h-full text-black ${panelOnRight ? '' : 'text-right items-end'}`}>
+                <div
+                  className={`p-6 flex flex-col h-full text-black ${
+                    isMobile ? '' : panelOnRight ? '' : 'text-right items-end'
+                  }`}
+                >
                   {/* Title */}
                   <h3
                     style={{
                       fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
                       fontWeight: 600,
-                      fontSize: 24,
-                      lineHeight: '100%',
+                      fontSize: isMobile ? 20 : 24,
+                      lineHeight: '110%',
                       letterSpacing: 0,
                       marginBottom: 12,
-                      paddingRight: panelOnRight ? 32 : 0,
-                      paddingLeft: panelOnRight ? 0 : 32,
+                      paddingRight: isMobile ? 0 : panelOnRight ? 32 : 0,
+                      paddingLeft: isMobile ? 0 : panelOnRight ? 0 : 32,
                     }}
                   >
                     {arm.title}
@@ -505,7 +594,7 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
                   {arm.description && (
                     <p
                       className="text-body-sm"
-                      style={{ marginBottom: 12, opacity: 0.8 }}
+                      style={{ marginBottom: 12, opacity: 0.85 }}
                     >
                       {arm.description}
                     </p>
@@ -517,8 +606,8 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
                       style={{
                         fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
                         fontWeight: 600,
-                        fontSize: 16,
-                        lineHeight: '18px',
+                        fontSize: isMobile ? 14 : 16,
+                        lineHeight: isMobile ? '18px' : '18px',
                         letterSpacing: 0,
                         marginBottom: 16,
                       }}
@@ -527,7 +616,7 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
                     </p>
                   )}
 
-                  {/* Show me more — opens expanded view (URL + layout) */}
+                  {/* Show me more — opens expanded view */}
                   <div className="mt-auto">
                     <Button onClick={() => handleShowMore(i)} label="Show me more" />
                   </div>
@@ -538,17 +627,63 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
         )
       })}
 
-      {/* Arms container - clip only vertically to hide arm bases, allow horizontal overflow */}
+      {/* Arms container.
+          Desktop (>=992): clip vertically so arm bases hide, allow horizontal overflow.
+          Mobile (<992):   clip horizontally so arm bases hide, allow vertical overflow. */}
       <div
         className="absolute inset-0 z-20 pointer-events-none"
-        style={{
-          overflowX: 'visible',
-          overflowY: 'clip',
-        }}
+        style={
+          isMobile
+            ? { overflowX: 'clip', overflowY: 'visible' }
+            : { overflowX: 'visible', overflowY: 'clip' }
+        }
       >
         {arms.map((arm, i) => {
-          const { left } = getArmPosition(i)
           const isThisExpanded = expandedArm === i
+          const isHidden = isExpanded && !isThisExpanded
+
+          if (isMobile) {
+            // Arms decorate behind each card. Card on the right of the
+            // viewport pairs with an arm from the left, and vice versa.
+            const fromLeft = i % 2 === 0
+            const armBreadth = 110 // visual thickness of the rotated arm
+            const MOBILE_ARM_LEN = 280
+            const sideOffset = isHidden ? -MOBILE_ARM_LEN - 20 : -90
+
+            return (
+              <div
+                key={`arm-${i}`}
+                className={`group absolute z-[5] transition-all duration-500 ease-out ${
+                  isHidden ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'
+                }`}
+                style={{
+                  top: mobileCardCenter(i),
+                  [fromLeft ? 'left' : 'right']: sideOffset,
+                  width: MOBILE_ARM_LEN,
+                  height: armBreadth,
+                  transform: 'translateY(-50%)',
+                  opacity: isHidden ? 0 : 1,
+                }}
+                onClick={() => handleShowMore(i)}
+              >
+                <img
+                  src={arm.src}
+                  alt=""
+                  draggable={false}
+                  className="max-w-none select-none absolute"
+                  style={{
+                    height: MOBILE_ARM_LEN,
+                    width: 'auto',
+                    top: '50%',
+                    left: '50%',
+                    transform: `translate(-50%, -50%) rotate(${fromLeft ? 90 : -90}deg)`,
+                  }}
+                />
+              </div>
+            )
+          }
+
+          const { left } = getArmPosition(i)
           // When ANY arm is expanded, non-expanded arms slide down out of
           // view. The expanded arm centers horizontally (left: 50%).
           const effectiveLeft = isThisExpanded ? 50 : left
@@ -563,7 +698,7 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
               key={`arm-${i}`}
               className={`group absolute z-20 transition-all duration-500 ease-out ${
                 isAnyActive ? '' : 'animate-wave'
-              } ${isExpanded && !isThisExpanded ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
+              } ${isHidden ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
               style={{
                 bottom: -100,
                 left: `${effectiveLeft}%`,
@@ -572,7 +707,7 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
                 animationDelay: `${(i * 0.7) % 2}s`,
                 animationDuration: `${1.8 + (i % 4) * 0.3}s`,
                 animationPlayState: isAnyActive ? 'paused' : 'running',
-                opacity: isExpanded && !isThisExpanded ? 0 : 1,
+                opacity: isHidden ? 0 : 1,
               }}
               onClick={() => handleArmClick(i)}
             >
@@ -592,10 +727,11 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
         })}
       </div>
 
-      {/* Character container - absolutely positioned at bottom */}
+      {/* Character container - absolutely positioned at bottom.
+          Hidden < 992 — mobile arms enter from the sides instead. */}
       <div
         ref={containerRef}
-        className="absolute bottom-0 left-0 right-0 overflow-hidden z-10"
+        className="absolute bottom-0 left-0 right-0 overflow-hidden z-10 hidden min-[992px]:block"
         style={{ height: 500 }}
       >
         {CHARACTERS.map((src, i) => (

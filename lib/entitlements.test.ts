@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   canAccess,
+  isPremiumContent,
   tvPreviewSeconds,
   tierFromSession,
   DEFAULT_TV_PREVIEW_SECONDS,
@@ -8,12 +9,13 @@ import {
   type UserTier,
 } from './entitlements'
 
-// Full access matrix per §8 — 3 user tiers × 3 content tiers = 9 cases.
+// Full access matrix per §8 — 3 user tiers × 4 content tiers = 12 cases.
 // Rows = content access_tier, columns = user tier.
 const MATRIX: Record<AccessTier, Record<UserTier, boolean>> = {
-  everyone: { guest: true, free: true, paid: true },
-  members: { guest: false, free: true, paid: true },
-  paid_subscribers: { guest: false, free: false, paid: true },
+  everyone:         { guest: true,  free: true,  paid: true  },
+  premium:          { guest: true,  free: true,  paid: true  },
+  members:          { guest: false, free: true,  paid: true  },
+  paid_subscribers: { guest: false, free: false, paid: true  },
 }
 
 describe('canAccess — full 9-way matrix', () => {
@@ -47,8 +49,17 @@ describe('canAccess — unknown access tier denies', () => {
   it('returns false for an unrecognised access tier', () => {
     // Simulates a future/typo tier slipping through at runtime.
     expect(
-      canAccess({ tier: 'paid' }, { accessTier: 'premium' as AccessTier })
+      canAccess({ tier: 'paid' }, { accessTier: 'vip' as AccessTier })
     ).toBe(false)
+  })
+})
+
+describe('isPremiumContent', () => {
+  it('returns true only for premium tier', () => {
+    expect(isPremiumContent('premium')).toBe(true)
+    expect(isPremiumContent('everyone')).toBe(false)
+    expect(isPremiumContent('members')).toBe(false)
+    expect(isPremiumContent('paid_subscribers')).toBe(false)
   })
 })
 

@@ -10,7 +10,7 @@
  * that read the real session live in `lib/entitlements-server.ts`.
  */
 
-export type AccessTier = 'everyone' | 'members' | 'paid_subscribers'
+export type AccessTier = 'everyone' | 'premium' | 'members' | 'paid_subscribers'
 export type UserTier = 'guest' | 'free' | 'paid'
 
 /** Minimal user shape the entitlement logic needs. */
@@ -24,6 +24,9 @@ export const DEFAULT_TV_PREVIEW_SECONDS = 600
 /**
  * Can this user read this content?
  * - everyone:          all users (incl. guests)
+ * - premium:           all users (incl. guests) — same access as everyone, but
+ *                      content is badged as subscriber-quality. Lets editors
+ *                      signal value without hard-gating at launch.
  * - members:           signed-in users (free or paid)
  * - paid_subscribers:  paid only
  */
@@ -34,6 +37,7 @@ export function canAccess(
   const userTier: UserTier = user?.tier ?? 'guest'
   switch (content.accessTier) {
     case 'everyone':
+    case 'premium':
       return true
     case 'members':
       return userTier === 'free' || userTier === 'paid'
@@ -43,6 +47,15 @@ export function canAccess(
       // Exhaustiveness guard — unknown tier denies by default.
       return false
   }
+}
+
+/**
+ * Is this content marked as premium-quality content that is still publicly
+ * readable? Used by the UI to render a "PREMIUM" badge without blocking
+ * access — the soft-gate pattern for launch.
+ */
+export function isPremiumContent(accessTier: AccessTier): boolean {
+  return accessTier === 'premium'
 }
 
 /**

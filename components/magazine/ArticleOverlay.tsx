@@ -9,6 +9,7 @@ import BlockRenderer from './BlockRenderer'
 import type { ArticleFull } from '@/lib/data/magazine'
 import { resolveTheme } from '@/lib/article-themes'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { canAccess, isPremiumContent, type AccessTier, type UserTier } from '@/lib/entitlements'
 
 interface ArticleOverlayProps {
   article: ArticleFull | null
@@ -87,19 +88,29 @@ export default function ArticleOverlay({
     signoffText?: string
   }>
 
-  // Access gating:
-  // - Guest (no user): ~200 word preview, then sign-up gate
-  // - Free user reading a paid article: full preview but subscribe gate
-  // - Free user reading a free article: full access
-  // - Paid user: full access, optional PDF
-  const isGuest = !user
-  const isPaidArticle = article.accessTier === 'paid'
-  const hasPaidAccess = tier === 'paid'
-  const needsUpgrade = isPaidArticle && !hasPaidAccess && !isGuest
+  // Access gating via entitlements module (§8).
+  //
+  // Three content tiers:
+  //   everyone        — open to all, no badge
+  //   premium         — open to all, but badged as subscriber content
+  //   paid_subscribers — hard gate; ~200-word preview then CTA
+  //
+  // Gate reasons drive which CTA copy we show:
+  //   'guest'   — not signed in → "Sign up to read"
+  //   'upgrade' — signed in but not paid → "Upgrade to paid"
+  //   null      — full access
+  const userEntitlement = user ? { tier: (tier ?? 'free') as UserTier } : null
+  const articleAccessTier = (article.accessTier ?? 'everyone') as AccessTier
+  const canRead = canAccess(userEntitlement, { accessTier: articleAccessTier })
+  const isPremium = isPremiumContent(articleAccessTier)
+  const gateReason: 'guest' | 'upgrade' | null = !canRead
+    ? (!user ? 'guest' : 'upgrade')
+    : null
 
-  let wordCount = 0
+  // Compute the soft preview cut-point (~200 words) for gated readers.
   let gateIndex = blocks.length
-  if (isGuest || needsUpgrade) {
+  if (gateReason) {
+    let wordCount = 0
     for (let i = 0; i < blocks.length; i++) {
       if (blocks[i].type === 'ArticleText' && blocks[i].text) {
         wordCount += blocks[i].text!.split(/\s+/).length
@@ -111,8 +122,7 @@ export default function ArticleOverlay({
     }
   }
 
-  const isGated = isGuest || needsUpgrade
-  const visibleBlocks = isGated ? blocks.slice(0, gateIndex) : blocks
+  const visibleBlocks = gateReason ? blocks.slice(0, gateIndex) : blocks
 
   const theme = resolveTheme(article.backgroundCanvasColour)
 
@@ -164,6 +174,15 @@ export default function ArticleOverlay({
             animate="visible"
             className="max-w-[1024px] mx-auto"
           >
+        {/* Premium badge — soft signal, not a gate */}
+        {isPremium && (
+          <div className="flex justify-center mb-5">
+            <span className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-ralph-yellow/20 border border-ralph-yellow/50 text-[11px] font-bold uppercase tracking-widest" style={{ color: '#b45309' }}>
+              ★ Premium
+            </span>
+          </div>
+        )}
+
         {/* Title — inherits theme.text from the parent overlay */}
         <h1
           className="max-w-[700px] mx-auto text-3xl md:text-5xl font-bold text-center"
@@ -291,11 +310,11 @@ export default function ArticleOverlay({
         </div>
 
         {/* Access gate */}
-        {isGated && gateIndex < blocks.length && (
+        {gateReason && gateIndex < blocks.length && (
           <div className="relative mt-8">
             <div className="absolute inset-x-0 -top-24 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
             <div className="text-center py-12 px-6 rounded-2xl bg-white shadow-lg border border-ralph-pink/20">
-              {isGuest ? (
+              {gateReason === 'guest' ? (
                 <>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     Sign up to keep reading

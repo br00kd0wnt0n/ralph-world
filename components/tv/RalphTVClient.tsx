@@ -48,25 +48,23 @@ export default function RalphTVClient({
         <motion.div variants={sectionBgNoIntroVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270, marginTop: 12 }}>
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
               style={{
                 backgroundImage: 'url(/imgs/planet_background_tv.svg)',
                 backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
-                minWidth: 1380,
                 width: '100%',
               }}
               aria-hidden="true"
             />
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none planet-bg-cover"
               style={{
                 backgroundImage: 'url(/imgs/planet_foreground_tv.svg)',
                 backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
-                minWidth: 1380,
                 width: '100%',
               }}
               aria-hidden="true"

@@ -58,15 +58,20 @@ export const gridContainerVariants: Variants = {
 }
 
 // ── Article Overlay ──
+// Slides up from below + fades in so it's clear the article is opening
+// as an overlay rather than as a route change. Bezier values mirror the
+// project's standard easeOut / easeIn used by the page transitions.
 export const overlayVariants: Variants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, y: 80 },
   visible: {
     opacity: 1,
-    transition: { duration: 0.3, ease: 'easeOut' },
+    y: 0,
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
   },
   exit: {
     opacity: 0,
-    transition: { duration: 0.2, ease: 'easeIn' },
+    y: 80,
+    transition: { duration: 0.3, ease: [0.4, 0, 1, 1] },
   },
 }
 

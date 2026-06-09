@@ -39,32 +39,30 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
           mt-auto so the characters/hands block anchors to the bottom of
           the section (just above the footer) instead of leaving a gap. */}
       <section
-        className="relative flex flex-col"
+        className="relative flex flex-col mb-[300px] min-[992px]:mb-0"
         style={{ minHeight: 'calc(100svh - 200px)' }}
       >
         {/* Background - animates SECOND */}
         <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
               style={{
                 backgroundImage: 'url(/imgs/planet_background_events.svg)',
                 backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
-                minWidth: 1380,
                 width: '100%',
               }}
               aria-hidden="true"
             />
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none planet-bg-cover"
               style={{
                 backgroundImage: 'url(/imgs/planet_foreground_events.svg)',
                 backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
-                minWidth: 1380,
                 width: '100%',
               }}
               aria-hidden="true"
@@ -74,6 +72,39 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
             className="absolute bg-white"
             style={{ top: 270, left: 0, right: 0, bottom: 0 }}
           />
+
+          {/* Bottom planet — only < 992, flipped vertically so combined
+              with the top planet it reads as a full planet. */}
+          <div
+            className="absolute left-0 right-0 min-[992px]:hidden overflow-hidden"
+            style={{ bottom: 0, height: 270, transform: 'translateY(99%)' }}
+            aria-hidden="true"
+          >
+            <div
+              className="absolute left-1/2 h-full planet-bg-cover"
+              style={{
+                backgroundImage: 'url(/imgs/planet_background_events.svg)',
+                backgroundPosition: 'top center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
+                width: '100%',
+                top: 0,
+                transform: 'translateX(-50%) scaleY(-1)',
+              }}
+            />
+            <div
+              className="absolute left-1/2 h-full pointer-events-none planet-bg-cover"
+              style={{
+                backgroundImage: 'url(/imgs/planet_foreground_events.svg)',
+                backgroundPosition: 'top center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
+                width: '100%',
+                top: 0,
+                transform: 'translateX(-50%) scaleY(-1)',
+              }}
+            />
+          </div>
         </motion.div>
 
         {/* Content layer - animates LAST. mt-auto pushes the characters

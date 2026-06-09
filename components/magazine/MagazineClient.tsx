@@ -30,13 +30,16 @@ export default function MagazineClient({
   const [overlayArticle, setOverlayArticle] = useState<ArticleFull | null>(null)
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
-  const [activeCategory, setActiveCategory] = useState('')
+  // Comedy is the default active category on landing.
+  const [activeCategory, setActiveCategory] = useState('comedy')
 
-  // Sync category from URL on mount + popstate
+  // Sync category from URL on mount + popstate. Default to 'comedy' when
+  // no ?category param is present so the landing view always opens with
+  // the Comedy tab active.
   useEffect(() => {
     function sync() {
       const params = new URLSearchParams(window.location.search)
-      setActiveCategory(params.get('category') ?? '')
+      setActiveCategory(params.get('category') ?? 'comedy')
     }
     sync()
     window.addEventListener('popstate', sync)
@@ -109,25 +112,23 @@ export default function MagazineClient({
           {/* Planet - fixed height at the top of the bg container */}
           <div className="relative w-full" style={{ height: 270 }}>
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
               style={{
                 backgroundImage: 'url(/imgs/planet_background_magazine.svg)',
                 backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
-                minWidth: 1380,
                 width: '100%',
               }}
               aria-hidden="true"
             />
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none planet-bg-cover"
               style={{
                 backgroundImage: 'url(/imgs/planet_foreground_magazine.svg)',
                 backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover',
-                minWidth: 1380,
                 width: '100%',
               }}
               aria-hidden="true"
@@ -143,8 +144,7 @@ export default function MagazineClient({
         {/* Content layer - animates LAST */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 pb-8 min-h-[50vh]"
-          style={{ paddingTop: 200 }}
+          className="relative z-10 pb-8 min-h-[50vh] pt-[120px] min-[768px]:pt-[160px] min-[992px]:pt-[200px]"
         >
           {/* Cover Story title */}
           <h2 className="max-w-5xl mx-auto px-6 mb-6">

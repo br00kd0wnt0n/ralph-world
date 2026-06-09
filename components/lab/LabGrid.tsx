@@ -5,6 +5,7 @@ import { labCardVariants } from '@/lib/animation/lab'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useAuth } from '@/context/AuthContext'
 import { isSafeUrl } from '@/lib/safe-url'
+import { canAccess, isPremiumContent, type AccessTier, type UserTier } from '@/lib/entitlements'
 import type { LabItem } from '@/lib/data/lab'
 
 interface LabGridProps {
@@ -38,8 +39,10 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item, i) => {
-            const isLocked =
-              item.accessTier === 'paid' && tier !== 'paid'
+            const userEntitlement = tier && tier !== 'guest' ? { tier: tier as UserTier } : null
+            const itemAccessTier = (item.accessTier ?? 'everyone') as AccessTier
+            const isLocked = !canAccess(userEntitlement, { accessTier: itemAccessTier })
+            const isPremium = isPremiumContent(itemAccessTier)
 
             return (
               <motion.article
@@ -50,17 +53,21 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
                 transition={{ delay: i * 0.08 }}
                 className="relative bg-surface rounded-xl overflow-hidden border border-border/30 flex flex-col group"
               >
-                {/* Badge — fully CMS-controlled. FRESH/NEW/etc. pick the
-                    colour; unknown values fall back to pink. */}
-                {item.badge && (
-                  <div className="absolute top-3 left-3 z-10">
+                {/* CMS badge (FRESH/NEW/etc.) and access-tier badge */}
+                <div className="absolute top-3 left-3 z-10 flex gap-1.5">
+                  {item.badge && (
                     <span
                       className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${badgeClasses(item.badge)}`}
                     >
                       {item.badge}
                     </span>
-                  </div>
-                )}
+                  )}
+                  {isPremium && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider bg-ralph-yellow/90 text-black">
+                      ★ Premium
+                    </span>
+                  )}
+                </div>
 
                 {/* Thumbnail */}
                 <div className="aspect-video bg-background relative">

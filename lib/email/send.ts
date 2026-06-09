@@ -206,9 +206,12 @@ export async function sendTemplate(
   const subject = entry.subject(props as never)
   const react = entry.render(props as never)
   const from = process.env.RESEND_FROM ?? 'Ralph.world <hello@ralph.world>'
+  // Optional reply-to — lets us send from a system address (send.ralph.world)
+  // while replies land somewhere a human reads (e.g. hello@ralph.world).
+  const replyTo = process.env.RESEND_REPLY_TO ?? 'subscriptions@ralph.world'
 
   const client = getResendClient()
-  const result = await client.emails.send({ from, to, subject, react })
+  const result = await client.emails.send({ from, to, subject, react, replyTo })
 
   if (result.error) {
     // Resend rejected. Don't write the 'sent' row — caller can inspect

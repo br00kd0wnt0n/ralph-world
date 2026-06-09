@@ -153,7 +153,12 @@ export async function POST(request: NextRequest) {
       processingStatus: 'received',
     })
   } catch (err) {
-    const code = (err as { code?: string })?.code
+    // Drizzle wraps postgres-js errors in DrizzleQueryError, storing the
+    // original PostgresError as `.cause`. Check both locations so the
+    // 23505 unique-violation catch works whether or not Drizzle wrapped it.
+    const code =
+      (err as { code?: string })?.code ??
+      (err as { cause?: { code?: string } })?.cause?.code
     if (code === '23505') {
       // Replay — already processed (or in flight). Return 200 so
       // Stripe stops retrying.

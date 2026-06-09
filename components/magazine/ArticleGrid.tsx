@@ -8,6 +8,7 @@ import {
 } from '@/lib/animation/magazine'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import type { ArticleSummary } from '@/lib/data/magazine'
+import type { AccessTier } from '@/lib/entitlements'
 
 interface ArticleGridProps {
   articles: ArticleSummary[]
@@ -262,6 +263,22 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                         className="w-full h-full object-cover select-none"
                       />
                     </div>
+
+                    {/* Access tier badge — always visible, top-left */}
+                    {article.accessTier === 'premium' && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-ralph-yellow/90 text-black">
+                          ★ Premium
+                        </span>
+                      </div>
+                    )}
+                    {(article.accessTier as AccessTier) === 'paid_subscribers' && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-ralph-pink/90 text-white">
+                          Subscribers
+                        </span>
+                      </div>
+                    )}
 
                     {/* Yellow border - appears instantly */}
                     <div

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { resolveSectionTheme } from '@/lib/section-themes'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 
@@ -16,15 +16,9 @@ interface SubscribeModalProps {
   returnTo?: string
 }
 
-// Internal-only redirect guard. We trust returnTo only when it's a
-// same-site relative path (starts with '/', no '//', no ':').
-function safeReturnTo(returnTo: string | undefined): string {
-  if (!returnTo) return '/account'
-  if (!returnTo.startsWith('/')) return '/account'
-  if (returnTo.startsWith('//')) return '/account'
-  if (returnTo.includes(':')) return '/account'
-  return returnTo
-}
+// The modal is now a lightweight upsell shortcut — buttons route the
+// user to /join-ralph (the canonical signup flow) with their chosen
+// tier pre-selected, rather than triggering OAuth directly.
 
 export default function SubscribeModal({
   isOpen,
@@ -32,18 +26,17 @@ export default function SubscribeModal({
   themeKey,
   returnTo,
 }: SubscribeModalProps) {
+  const router = useRouter()
   const theme = resolveSectionTheme('subscribe_modal', themeKey)
   // Default (ralph-purple) keeps the hard-coded #0F0420 palette the
   // embedded SVG illustrations are matched to. Any other theme swaps
   // the outer canvas only.
   const isDefault = theme.key === 'ralph-purple'
-  const [isLoading, setIsLoading] = useState<'free' | 'paid' | null>(null)
   const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
-      setIsLoading(null)
     } else {
       document.body.style.overflow = ''
     }
@@ -62,17 +55,13 @@ export default function SubscribeModal({
     }
   }, [isOpen, onClose])
 
-  function handleFreeSignup() {
-    setIsLoading('free')
-    signIn('google', { callbackUrl: safeReturnTo(returnTo) })
-  }
-
-  function handlePaidSignup() {
-    setIsLoading('paid')
-    // Paid signup always lands on the upgrade flow first, then bounces
-    // the user back to the original page after checkout.
-    const after = encodeURIComponent(safeReturnTo(returnTo))
-    signIn('google', { callbackUrl: `/account?upgrade=paid&returnTo=${after}` })
+  function goToJoinRalph(tier: 'free' | 'paid') {
+    onClose()
+    const sp = new URLSearchParams()
+    sp.set('step', '2')
+    sp.set('tier', tier)
+    if (returnTo) sp.set('returnTo', returnTo)
+    router.push(`/join-ralph?${sp.toString()}`)
   }
 
   if (!isOpen) return null
@@ -186,11 +175,10 @@ export default function SubscribeModal({
                 what&apos;s stopping you?
               </p>
               <button
-                onClick={handleFreeSignup}
-                disabled={isLoading !== null}
-                className="border border-black rounded-md px-5 py-2 text-black font-medium text-sm hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+                onClick={() => goToJoinRalph('free')}
+                className="border border-black rounded-md px-5 py-2 text-black font-medium text-sm hover:bg-black hover:text-white transition-colors"
               >
-                {isLoading === 'free' ? 'Signing in…' : 'Hook me up for free'}
+                Hook me up for free
               </button>
             </div>
 
@@ -207,11 +195,10 @@ export default function SubscribeModal({
                 everything else Ralph World has to offer.
               </p>
               <button
-                onClick={handlePaidSignup}
-                disabled={isLoading !== null}
-                className="border border-black rounded-md px-5 py-2 text-black font-medium text-sm hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+                onClick={() => goToJoinRalph('paid')}
+                className="border border-black rounded-md px-5 py-2 text-black font-medium text-sm hover:bg-black hover:text-white transition-colors"
               >
-                {isLoading === 'paid' ? 'Signing in…' : 'Join for £3 per month'}
+                Join for £3 per month
               </button>
             </div>
           </div>

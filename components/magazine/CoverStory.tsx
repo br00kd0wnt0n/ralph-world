@@ -3,6 +3,7 @@
 import { useAuth } from '@/context/AuthContext'
 import Button from '@/components/ui/Button'
 import type { ArticleSummary } from '@/lib/data/magazine'
+import { canAccess, type AccessTier, type UserTier } from '@/lib/entitlements'
 
 interface CoverStoryProps {
   article: ArticleSummary
@@ -11,7 +12,12 @@ interface CoverStoryProps {
 }
 
 export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryProps) {
-  const { user } = useAuth()
+  const { user, tier } = useAuth()
+
+  // Access gating — same logic as ArticleOverlay
+  const userEntitlement = user ? { tier: (tier ?? 'free') as UserTier } : null
+  const articleAccessTier = (article.accessTier ?? 'everyone') as AccessTier
+  const canRead = canAccess(userEntitlement, { accessTier: articleAccessTier })
 
   // Get first tag for the ribbon (if available)
   const ribbonTag = article.contentTags?.[0]
@@ -75,13 +81,15 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
             </p>
           )}
 
-          {/* Tagline + Title — Gooper Trial 600, 18px, line-height 100% */}
-          <p
-            className="text-intro text-black mb-1"
-            style={{ fontSize: 18, lineHeight: 1 }}
-          >
-            All the information is on the task.
-          </p>
+          {/* Kicker / subtitle — Gooper Trial 600, 18px, line-height 100% */}
+          {article.subtitle && (
+            <p
+              className="text-intro text-black mb-1"
+              style={{ fontSize: 18, lineHeight: 1 }}
+            >
+              {article.subtitle}
+            </p>
+          )}
           <h3
             className="text-intro text-black mb-4"
             style={{ fontSize: 18, lineHeight: 1 }}
@@ -99,15 +107,15 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
             </p>
           )}
 
-          {/* Read button */}
-          {user ? (
+          {/* Read button — respects accessTier, same logic as ArticleOverlay */}
+          {canRead ? (
             <Button
               label="Read now"
               onClick={() => onRead(article.slug)}
             />
           ) : (
             <Button
-              label="Sign up to read"
+              label={user ? 'Upgrade to read' : 'Sign up to read'}
               onClick={onSubscribe}
             />
           )}

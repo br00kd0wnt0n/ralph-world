@@ -5,6 +5,8 @@ interface ContentBlock {
   text?: string
   caption?: string
   imageUrl?: string
+  /** 'cover' (default) — 16:9 crop. 'contain' — full image at natural proportions. */
+  imageFit?: string
   videoUrl?: string
   quote?: string
   attribution?: string
@@ -26,19 +28,37 @@ export default function BlockRenderer({ blocks }: { blocks: ContentBlock[] }) {
           case 'ArticleImage1Col':
             return (
               <figure key={i}>
-                <div className="w-full aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden">
-                  {block.imageUrl ? (
-                    <img
-                      src={block.imageUrl}
-                      alt={block.caption ?? ''}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                      Image
-                    </div>
-                  )}
-                </div>
+                {block.imageFit === 'contain' ? (
+                  // Fit mode — no forced aspect ratio, full image at natural proportions
+                  <div className="w-full bg-gray-100 rounded-lg overflow-hidden">
+                    {block.imageUrl ? (
+                      <img
+                        src={block.imageUrl}
+                        alt={block.caption ?? ''}
+                        className="w-full h-auto block"
+                      />
+                    ) : (
+                      <div className="w-full h-32 flex items-center justify-center text-gray-400 text-sm">
+                        Image
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Fill mode (default) — 16:9 crop
+                  <div className="w-full aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden">
+                    {block.imageUrl ? (
+                      <img
+                        src={block.imageUrl}
+                        alt={block.caption ?? ''}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                        Image
+                      </div>
+                    )}
+                  </div>
+                )}
                 {block.caption && (
                   <figcaption className="text-xs text-gray-500 mt-2 text-center">
                     {block.caption}

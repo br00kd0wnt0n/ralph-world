@@ -18,6 +18,8 @@ interface RalphTVClientProps {
   offlineMessage?: string
   subscribeHeading?: string
   subscribeBody?: string
+  /** Whether the freeview timer is active. false = unrestricted playback for everyone. */
+  previewEnabled?: boolean
   /** Seconds a guest may watch before the gate appears. 0 = gate immediately. */
   previewSeconds?: number
   copy?: Partial<SiteCopy>
@@ -28,6 +30,7 @@ export default function RalphTVClient({
   offlineMessage,
   subscribeHeading,
   subscribeBody,
+  previewEnabled,
   previewSeconds,
 }: RalphTVClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
@@ -91,6 +94,7 @@ export default function RalphTVClient({
               offlineMessage={offlineMessage}
               subscribeHeading={subscribeHeading}
               subscribeBody={subscribeBody}
+              previewEnabled={previewEnabled}
               previewSeconds={previewSeconds}
             />
           </div>

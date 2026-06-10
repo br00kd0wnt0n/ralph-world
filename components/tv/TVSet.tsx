@@ -20,8 +20,16 @@ interface TVSetProps {
   offlineMessage?: string
   subscribeHeading?: string
   subscribeBody?: string
+  /** Whether the freeview timer is active. false = unrestricted for all guests. */
+  previewEnabled?: boolean
   /** Seconds a guest may watch before the gate appears. Omit or 0 = gate immediately. */
   previewSeconds?: number
+}
+
+function formatCountdown(secs: number): string {
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 export default function TVSet({
@@ -30,12 +38,14 @@ export default function TVSet({
   offlineMessage = 'Tune in later',
   subscribeHeading,
   subscribeBody,
+  previewEnabled = true,
   previewSeconds = 600,
 }: TVSetProps) {
   const { user } = useAuth()
   const { isLive } = useLiveStatus()
   const [overlay, setOverlay] = useState<TVOverlayState>('none')
   const [previewExpired, setPreviewExpired] = useState(false)
+  const [previewSecondsLeft, setPreviewSecondsLeft] = useState(previewSeconds)
   const [volume, setVolume] = useState(0.7)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [schedule, setSchedule] = useState<ScheduleItem[]>([])
@@ -84,19 +94,36 @@ export default function TVSet({
 
   // Guest countdown preview — starts once the stream goes live.
   // A ref prevents the timer restarting if isLive flickers.
+  // Uses setInterval (not setTimeout) so we can track seconds remaining for the
+  // on-screen countdown badge. When previewEnabled is false the timer never runs.
   const timerStartedRef = useRef(false)
   const isGuest = !user
 
   useEffect(() => {
-    if (!isGuest || !isLive || timerStartedRef.current) return
+    if (!previewEnabled || !isGuest || !isLive || timerStartedRef.current) return
     timerStartedRef.current = true
+
     if (previewSeconds <= 0) {
       setPreviewExpired(true)
+      setPreviewSecondsLeft(0)
       return
     }
-    const timer = setTimeout(() => setPreviewExpired(true), previewSeconds * 1_000)
-    return () => clearTimeout(timer)
-  }, [isLive, isGuest, previewSeconds])
+
+    setPreviewSecondsLeft(previewSeconds)
+
+    const interval = setInterval(() => {
+      setPreviewSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          setPreviewExpired(true)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1_000)
+
+    return () => clearInterval(interval)
+  }, [isLive, isGuest, previewEnabled, previewSeconds])
 
   // Poll schedule continuously — Show Info, Schedule overlay, and the
   // "On now / Up next" status bar all read from this single state. The
@@ -159,11 +186,13 @@ export default function TVSet({
   const nextShow = schedule[1]
 
   // Determine screen state.
-  // Guests watch live until their preview window expires, then see the gate.
+  // When previewEnabled is false, guests watch freely with no expiry.
+  // When previewEnabled is true, guests are gated once previewExpired flips.
+  const gateActive = previewEnabled && isGuest && previewExpired
   let screenState: 'live' | 'subscribe-gate' | 'offline' = 'offline'
-  if (isLive && (!isGuest || !previewExpired)) {
+  if (isLive && !gateActive) {
     screenState = 'live'
-  } else if (isLive && isGuest && previewExpired) {
+  } else if (isLive && gateActive) {
     screenState = 'subscribe-gate'
   }
 
@@ -250,6 +279,27 @@ export default function TVSet({
                       {offlineMessage}
                     </p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Freeview countdown badge — top-left, guests only, pre-expiry */}
+            {previewEnabled && isGuest && isLive && !previewExpired && (
+              <div
+                className="absolute top-2 left-2 z-20 pointer-events-none select-none"
+                aria-live="polite"
+                aria-label={`Free view ends in ${formatCountdown(previewSecondsLeft)}`}
+              >
+                <div className="bg-black/75 backdrop-blur-sm rounded-md px-2.5 py-1.5 border border-white/10">
+                  <p className="text-white font-mono font-bold leading-none" style={{ fontSize: '0.65em' }}>
+                    Free view ends in{' '}
+                    <span className={previewSecondsLeft <= 60 ? 'text-ralph-pink' : 'text-white'}>
+                      {formatCountdown(previewSecondsLeft)}
+                    </span>
+                  </p>
+                  <p className="text-white/60 mt-0.5 leading-none" style={{ fontSize: '0.55em' }}>
+                    Subscribe to unlock →
+                  </p>
                 </div>
               </div>
             )}

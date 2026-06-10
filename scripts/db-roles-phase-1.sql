@@ -51,6 +51,14 @@ ALTER ROLE ralph_world WITH PASSWORD :'ralph_world_password';
 
 GRANT USAGE ON SCHEMA public TO ralph_cms, ralph_world;
 
+-- ralph_cms owns schema migrations, so it needs CREATE on the schema —
+-- not just USAGE. Without this it can operate on existing tables (via the
+-- GRANT ALL below) but cannot CREATE new ones, so `db:push` / migration
+-- DDL fails with "permission denied for schema public" and all DDL falls
+-- back to the superuser. (Fixed 2026-06-10 — originally only USAGE was
+-- granted, which silently blocked ralph_cms from creating tables.)
+GRANT CREATE ON SCHEMA public TO ralph_cms;
+
 -- ── 3. ralph_cms — full r/w everywhere ────────────────────────────────
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO ralph_cms;

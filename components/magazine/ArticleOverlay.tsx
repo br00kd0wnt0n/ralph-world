@@ -82,6 +82,7 @@ export default function ArticleOverlay({
     text?: string
     caption?: string
     imageUrl?: string
+    imageFit?: string
     videoUrl?: string
     quote?: string
     attribution?: string
@@ -113,7 +114,9 @@ export default function ArticleOverlay({
     let wordCount = 0
     for (let i = 0; i < blocks.length; i++) {
       if (blocks[i].type === 'ArticleText' && blocks[i].text) {
-        wordCount += blocks[i].text!.split(/\s+/).length
+        // Strip HTML tags before counting so rich-text content counts correctly
+        const plain = blocks[i].text!.replace(/<[^>]*>/g, ' ')
+        wordCount += plain.split(/\s+/).filter(Boolean).length
       }
       if (wordCount > 200) {
         gateIndex = i + 1

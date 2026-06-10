@@ -20,9 +20,12 @@ export default function BlockRenderer({ blocks }: { blocks: ContentBlock[] }) {
         switch (block.type) {
           case 'ArticleText':
             return (
-              <p key={i} className="text-gray-800 leading-relaxed">
-                {block.text}
-              </p>
+              <div
+                key={i}
+                // eslint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{ __html: block.text ?? '' }}
+                className="leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:underline [&_a]:text-ralph-orange [&_a:hover]:opacity-80 [&_strong]:font-bold [&_em]:italic"
+              />
             )
 
           case 'ArticleImage1Col':

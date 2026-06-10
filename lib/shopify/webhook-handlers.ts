@@ -5,8 +5,11 @@ import {
   profiles,
   shopifyLinks,
   magazineShipments,
+  magazineIssues,
+  users,
 } from '@/lib/db/schema'
 import { logAction } from '@/lib/audit'
+import { sendTemplate } from '@/lib/email/send'
 
 /**
  * Shopify webhook event handlers — Task 2.6.
@@ -153,6 +156,49 @@ export async function handleFulfillmentsCreate(
     after: { shopify_order_id: orderId, user_id: shipment.userId },
     source: 'webhook',
   })
+
+  // Fire the magazine-shipped confirmation email. Best-effort —
+  // a Resend outage shouldn't fail the webhook (Shopify would retry,
+  // and the row is already 'fulfilled' so the second pass would skip).
+  try {
+    const [recipient] = await db
+      .select({
+        email: users.email,
+        name: users.name,
+        issueId: magazineShipments.issueId,
+      })
+      .from(magazineShipments)
+      .innerJoin(users, eq(users.id, magazineShipments.userId))
+      .where(eq(magazineShipments.id, shipment.id))
+      .limit(1)
+
+    if (recipient?.email) {
+      const [issue] = await db
+        .select({
+          issueNumber: magazineIssues.issueNumber,
+          title: magazineIssues.title,
+        })
+        .from(magazineIssues)
+        .where(eq(magazineIssues.id, recipient.issueId))
+        .limit(1)
+
+      const issueTitle = issue?.title || `Issue ${issue?.issueNumber ?? ''}`.trim()
+
+      await sendTemplate({
+        userId: shipment.userId,
+        to: recipient.email,
+        templateId: 'magazine-shipped',
+        props: {
+          recipientName: recipient.name ?? null,
+          issueTitle,
+          trackingUrl: null, // Shopify fulfilment payload may carry a URL; future improvement
+          shippingAddress: null,
+        },
+      })
+    }
+  } catch (err) {
+    console.error('[fulfilments/create] magazine-shipped email failed', err)
+  }
 
   return {
     ok: true,

@@ -43,10 +43,17 @@ Each lab item renders as a **bell jar** built from layered SVGs:
 - Uses `swiper/react` (`Swiper` + `SwiperSlide`)
 - `swiperRef` exposes the imperative `slidePrev` / `slideNext` API
 - `activeIndex` state tracks the current slide so the cloud, bubbles, and copy stay in sync
+- `slidesPerView={2.2}` with `centeredSlides` so the active jar is centred and the neighbours peek on each side
+- Jars are a fixed `201px` wide; the carousel positioner is nudged `translateY(40px)` to sit the jars on the belt
 - Carousel nav buttons styled to match the **home-page planet panels**:
-  - 30×30, square corners, `bg-black text-white` with `hover:bg-black/80`
-  - Positioned at `left: 1` / `right: 1` (just inside the carousel edge)
+  - 36×36, `borderRadius: 6`, `bg-black text-white`
+  - Positioned at `left: -4` / `right: -4` (straddling the carousel edge)
   - Same chevron SVG as the planet panel buttons
+
+### Cloud mask + conveyor
+
+- The whole carousel is wrapped in a full-cloud-size layer that uses **`labs-cloud-mask.svg`** (612×419) as a CSS `mask-image` at `100% 100%`. Any jar peeking past the cloud's edge is clipped to the cloud silhouette instead of spilling out — this replaced an earlier `labs-cloud_overlay.png` overlay approach.
+- **`conveyor-belt.svg`** sits behind the jars (`z-0`), `584px` wide (`max-w-full` so it shrinks on narrow viewports), pinned at `bottom: 7%`.
 
 ### Character (portalled, scroll-anchored)
 

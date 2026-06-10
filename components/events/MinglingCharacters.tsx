@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import Button from '@/components/ui/Button'
+import { useAuth } from '@/context/AuthContext'
 
 const CHARACTERS = [
   '/imgs/event_character_01.png',
@@ -31,6 +32,7 @@ interface CharacterState {
 }
 
 interface Event {
+  id?: string
   slug: string
   title?: string | null
   descriptionShort?: string | null
@@ -41,10 +43,15 @@ interface Event {
   accentColour?: string | null
   thumbnailUrl?: string | null
   externalTicketUrl?: string | null
+  rsvpEnabled?: boolean | null
 }
+
+/** Tracks per-event RSVP status within the session. */
+type RsvpStatus = 'idle' | 'loading' | 'attending' | 'full' | 'error'
 
 interface MinglingCharactersProps {
   events?: Event[]
+  onSubscribe?: () => void
 }
 
 /**
@@ -52,12 +59,15 @@ interface MinglingCharactersProps {
  * Each character moves slowly left/right with slight randomness.
  * Arms stick up from the crowd representing active events.
  */
-export default function MinglingCharacters({ events = [] }: MinglingCharactersProps) {
+export default function MinglingCharacters({ events = [], onSubscribe }: MinglingCharactersProps) {
+  const { user } = useAuth()
   const eventCount = events.length
   const containerRef = useRef<HTMLDivElement>(null)
   const statesRef = useRef<CharacterState[]>([])
   const rafRef = useRef<number>(0)
   const [activeArm, setActiveArm] = useState<number | null>(null)
+  // Per-event RSVP status, keyed by event id
+  const [rsvpStatus, setRsvpStatus] = useState<Record<string, RsvpStatus>>({})
   // Expanded state — when set, hides other arms, centers the active one,
   // and grows the panel into a 2-col layout. URL becomes /events/[slug].
   const [expandedArm, setExpandedArm] = useState<number | null>(null)
@@ -143,6 +153,35 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
     }
   }, [])
 
+  // Submit RSVP for an event
+  const handleRsvp = useCallback(async (eventId: string) => {
+    if (!eventId) return
+    if (!user) {
+      onSubscribe?.()
+      return
+    }
+    setRsvpStatus((prev) => ({ ...prev, [eventId]: 'loading' }))
+    try {
+      const res = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId }),
+      })
+      if (res.status === 201) {
+        setRsvpStatus((prev) => ({ ...prev, [eventId]: 'attending' }))
+      } else if (res.status === 200) {
+        // already attending (idempotent)
+        setRsvpStatus((prev) => ({ ...prev, [eventId]: 'attending' }))
+      } else if (res.status === 409) {
+        setRsvpStatus((prev) => ({ ...prev, [eventId]: 'full' }))
+      } else {
+        setRsvpStatus((prev) => ({ ...prev, [eventId]: 'error' }))
+      }
+    } catch {
+      setRsvpStatus((prev) => ({ ...prev, [eventId]: 'error' }))
+    }
+  }, [user, onSubscribe])
+
   // Format date for display
   const formatDate = (date: Date | null | undefined) => {
     if (!date) return null
@@ -163,6 +202,7 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
       // Random slight rotation for panel (-8 to 8 degrees), deterministic per arm
       panelRotation: ((i * 7 + 3) % 17) - 8,
       // Event data
+      id: event?.id || '',
       slug: event?.slug || '',
       title: event?.title || 'Untitled Event',
       description: event?.descriptionShort || '',
@@ -173,6 +213,7 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
       accentColour: event?.accentColour || null,
       thumbnailUrl: event?.thumbnailUrl || null,
       externalTicketUrl: event?.externalTicketUrl || null,
+      rsvpEnabled: event?.rsvpEnabled ?? false,
     }
   })
 
@@ -536,10 +577,40 @@ export default function MinglingCharacters({ events = [] }: MinglingCharactersPr
 
                     <div className="mt-auto">
                       {arm.externalTicketUrl ? (
+                        // Eventbrite / external ticketing — open in new tab for all users
                         <Button href={arm.externalTicketUrl} label="Get tickets" />
-                      ) : (
-                        <Button label="Subscribe for ticket access" />
-                      )}
+                      ) : arm.rsvpEnabled ? (
+                        // Free event with RSVP — requires sign-in
+                        (() => {
+                          const status = rsvpStatus[arm.id] ?? 'idle'
+                          if (status === 'attending') {
+                            return (
+                              <Button
+                                label="You're attending ✓"
+                                disabled
+                              />
+                            )
+                          }
+                          if (status === 'full') {
+                            return <Button label="Event is full" disabled />
+                          }
+                          if (!user) {
+                            return (
+                              <Button
+                                label="Sign in to RSVP"
+                                onClick={() => onSubscribe?.()}
+                              />
+                            )
+                          }
+                          return (
+                            <Button
+                              label={status === 'loading' ? 'Saving…' : 'RSVP to this event'}
+                              onClick={() => handleRsvp(arm.id)}
+                              disabled={status === 'loading'}
+                            />
+                          )
+                        })()
+                      ) : null}
                     </div>
                   </div>
 

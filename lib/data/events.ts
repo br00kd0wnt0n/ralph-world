@@ -19,6 +19,8 @@ export interface EventRow {
   creatureY: string | null
   verdict: string | null
   externalTicketUrl: string | null
+  rsvpEnabled: boolean | null
+  rsvpCapacity: number | null
   isPast: boolean | null
 }
 

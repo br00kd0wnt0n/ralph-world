@@ -332,6 +332,35 @@ export default function ArticleOverlay({
           </div>
         </div>
 
+        {/* Guest upsell strip — shown at end of fully accessible articles for non-logged-in readers */}
+        {!user && !gateReason && (
+          <div className="mt-10 mb-2 rounded-2xl border border-ralph-pink/30 bg-white px-6 py-8 text-center shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-widest text-ralph-pink mb-3">
+              Free to read
+            </p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: "'Gooper Trial', serif" }}>
+              Enjoying Ralph?
+            </h3>
+            <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto leading-relaxed">
+              Create a free account to follow your favourite writers, save articles, and get access to the full magazine experience.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={onSubscribe}
+                className="rounded-full bg-ralph-pink px-7 py-2.5 text-white font-medium text-sm hover:bg-ralph-pink/90 transition-colors"
+              >
+                Sign up free
+              </button>
+              <a
+                href="/login"
+                className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
+              >
+                Already a member? Log in
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Access gate */}
         {gateReason && gateIndex < blocks.length && (
           <div className="relative mt-8">

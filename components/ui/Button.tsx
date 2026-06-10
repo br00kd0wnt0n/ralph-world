@@ -15,6 +15,7 @@ interface ButtonProps {
   // accidentally submits a parent form. Pass "submit" to use as a form
   // submit control.
   type?: 'button' | 'submit'
+  disabled?: boolean
 }
 
 const RALPH_PINK = '#EA128B'
@@ -59,11 +60,13 @@ export default function Button({
   minWidth,
   pink = false,
   type = 'button',
+  disabled = false,
 }: ButtonProps) {
   const mergedStyles: React.CSSProperties = {
     ...btnStyles,
     ...(minWidth !== undefined ? { minWidth } : null),
     ...(pink ? { border: `2px solid ${RALPH_PINK}` } : null),
+    ...(disabled ? { opacity: 0.55, cursor: 'not-allowed' } : null),
   }
   const mergedShadowStyles: React.CSSProperties = {
     ...shadowStyles,
@@ -74,12 +77,18 @@ export default function Button({
       {/* Shadow — stays in place */}
       <div style={mergedShadowStyles} />
       {/* Button — moves on hover/active */}
-      {href ? (
+      {href && !disabled ? (
         <Link href={href} className="btn-press" style={mergedStyles}>
           {label}
         </Link>
       ) : (
-        <button type={type} onClick={onClick} className="btn-press" style={mergedStyles}>
+        <button
+          type={type}
+          onClick={disabled ? undefined : onClick}
+          disabled={disabled}
+          className={disabled ? undefined : 'btn-press'}
+          style={mergedStyles}
+        >
           {label}
         </button>
       )}

@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import SectionIntro from '@/components/layout/SectionIntro'
 import MinglingCharacters from './MinglingCharacters'
+import SubscribeModal from '@/components/layout/SubscribeModal'
 import {
   sectionContainerVariants,
   sectionBgVariants,
@@ -17,6 +19,7 @@ interface EventsClientProps {
 }
 
 export default function EventsClient({ activeEvents = [], copy }: EventsClientProps) {
+  const [subscribeOpen, setSubscribeOpen] = useState(false)
   return (
     <motion.div
       variants={sectionContainerVariants}
@@ -115,9 +118,17 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
           className="relative z-10 w-full mt-auto"
           style={{ paddingTop: 0 }}
         >
-          <MinglingCharacters events={activeEvents} />
+          <MinglingCharacters
+            events={activeEvents}
+            onSubscribe={() => setSubscribeOpen(true)}
+          />
         </motion.div>
       </section>
+
+      <SubscribeModal
+        isOpen={subscribeOpen}
+        onClose={() => setSubscribeOpen(false)}
+      />
     </motion.div>
   )
 }

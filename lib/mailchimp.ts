@@ -23,6 +23,15 @@ import 'server-only'
  * (already_subscribed). For an opt-out flow, calling with
  * `status: 'unsubscribed'` is also idempotent.
  *
+ * Dry-run kill switch: set MAILCHIMP_DRY_RUN=true to short-circuit
+ * EVERY call before it hits Mailchimp. The function still resolves to
+ * a success result so the caller's flow proceeds normally (consent_log
+ * + profile.marketingOptIn still update); only the HTTP request is
+ * skipped. Used during the pre-DNS-cutover window so that any
+ * misconfigured welcome automation or double-opt-in confirmation can't
+ * email the audience by accident. Switch off after cutover, then run
+ * the /api/admin/mailchimp-backfill endpoint to sync the backlog.
+ *
  * The Mailchimp Marketing API docs:
  * https://mailchimp.com/developer/marketing/api/list-members/
  */
@@ -42,9 +51,21 @@ export interface SubscribeToAudienceInput {
 }
 
 export type SubscribeToAudienceResult =
-  | { ok: true; status: 'subscribed' | 'already_subscribed' | 'pending' | 'unsubscribed' }
+  | { ok: true; status: 'subscribed' | 'already_subscribed' | 'pending' | 'unsubscribed' | 'dry_run' }
   | { ok: false; skipped: true; reason: 'missing_env' }
   | { ok: false; skipped?: false; status: 'failed'; error: string }
+
+/**
+ * Read MAILCHIMP_DRY_RUN as a strict boolean — only the literal string
+ * 'true' (case-insensitive) counts. Anything else (unset, '0', 'false',
+ * 'yes', a typo) means "go live". This is deliberate: a typo on Railway
+ * shouldn't accidentally activate sends to the audience.
+ */
+function isDryRun(): boolean {
+  const raw = process.env.MAILCHIMP_DRY_RUN
+  if (!raw) return false
+  return raw.toLowerCase() === 'true'
+}
 
 interface MailchimpErrorBody {
   type?: string
@@ -103,6 +124,18 @@ export async function subscribeToAudience(
   }
 
   const email = input.email.trim().toLowerCase()
+
+  // Kill switch: log the intended call but don't fire HTTP. Logged at
+  // info-level so Railway logs let you confirm the integration is
+  // wired correctly without anything reaching Mailchimp.
+  if (isDryRun()) {
+    console.info(
+      `[mailchimp:dry-run] would PUT lists/${creds.audienceId}/members for ${email} status=${
+        input.status ?? 'subscribed'
+      } tags=${(input.tags ?? []).join(',') || '-'}`
+    )
+    return { ok: true, status: 'dry_run' }
+  }
   // Mailchimp's subscriber_hash is the MD5 of the lowercased email.
   const subscriberHash = await md5Hex(email)
   const url = `https://${creds.serverPrefix}.api.mailchimp.com/3.0/lists/${encodeURIComponent(

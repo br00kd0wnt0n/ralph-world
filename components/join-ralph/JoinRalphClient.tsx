@@ -531,6 +531,20 @@ function Slide3({
               Minimum 10 characters.
             </p>
 
+            {/* Marketing opt-in — GDPR requires this to be an unchecked,
+                granular, explicit choice (no pre-ticked boxes). */}
+            <label className="flex items-start gap-2 pt-1 cursor-pointer text-xs text-black/75">
+              <input
+                type="checkbox"
+                name="marketing_opt_in"
+                className="mt-0.5 h-4 w-4 accent-ralph-pink shrink-0"
+              />
+              <span>
+                Send me the Ralph newsletter — news, drops, and the
+                occasional pun. You can unsubscribe any time.
+              </span>
+            </label>
+
             {signupState && !signupState.ok && (
               <p className="text-sm text-red-600" role="alert">
                 {signupState.message}

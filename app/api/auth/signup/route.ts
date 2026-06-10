@@ -21,17 +21,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'invalid_body' }, { status: 400 })
   }
 
-  const b = body as { email?: unknown; password?: unknown; name?: unknown }
+  const b = body as {
+    email?: unknown
+    password?: unknown
+    name?: unknown
+    marketingOptIn?: unknown
+  }
   const email = typeof b.email === 'string' ? b.email : ''
   const password = typeof b.password === 'string' ? b.password : ''
   const name = typeof b.name === 'string' ? b.name : null
+  const marketingOptIn = b.marketingOptIn === true
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.AUTH_URL ??
     `${request.nextUrl.protocol}//${request.nextUrl.host}`
 
-  const result = await signupWithPassword({ email, password, name, appUrl })
+  const result = await signupWithPassword({ email, password, name, marketingOptIn, appUrl })
 
   if (result.ok) {
     return NextResponse.json({ ok: true, message: 'Check your inbox to verify your email.' })

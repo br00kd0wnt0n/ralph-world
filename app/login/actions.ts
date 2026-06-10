@@ -89,6 +89,10 @@ export async function signupAction(
   const email = String(formData.get('email') ?? '')
   const password = String(formData.get('password') ?? '')
   const name = String(formData.get('name') ?? '').trim() || null
+  // HTML checkboxes only submit if checked, so absence === false.
+  // Tolerate any truthy string ('on', 'true', '1') for forward compat.
+  const marketingRaw = formData.get('marketing_opt_in')
+  const marketingOptIn = marketingRaw === 'on' || marketingRaw === 'true' || marketingRaw === '1'
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
@@ -96,7 +100,7 @@ export async function signupAction(
     'https://ralph.world'
 
   try {
-    const result = await signupWithPassword({ email, password, name, appUrl })
+    const result = await signupWithPassword({ email, password, name, marketingOptIn, appUrl })
     if (result.ok) {
       return { ok: true, message: 'Check your inbox — we’ve sent you a verification link.' }
     }

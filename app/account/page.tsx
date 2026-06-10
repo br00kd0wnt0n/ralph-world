@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { auth, type SessionWithProfile } from '@/lib/auth'
 import Footer from '@/components/layout/Footer'
 import AccountPreferences from '@/components/account/AccountPreferences'
+import PrivacyControls from '@/components/account/PrivacyControls'
 import SignOutButton from '@/components/account/SignOutButton'
 import { startSubscriptionCheckout, openBillingPortal } from './actions'
 
@@ -176,26 +177,11 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           )}
         </Section>
 
-        {/* Mailing preferences — Phase 1 view-only. Toggle lands with Mailchimp sync (Phase 4). */}
-        <Section title="Mailing preferences">
-          <div className="flex items-center justify-between">
-            <p className="text-primary text-sm">
-              Ralph newsletter
-            </p>
-            <span
-              className={`text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
-                marketingOptIn
-                  ? 'bg-ralph-teal/20 text-ralph-teal'
-                  : 'bg-gray-500/20 text-gray-400'
-              }`}
-            >
-              {marketingOptIn ? 'subscribed' : 'not subscribed'}
-            </span>
-          </div>
-          <p className="text-secondary text-xs mt-3">
-            You can subscribe or unsubscribe via any newsletter we send you. A
-            toggle here is coming.
-          </p>
+        {/* Privacy & data rights — Task 3.10. Marketing toggle, DSAR export,
+            account deletion. Replaces the previous view-only mailing
+            preferences + 'email us to delete' link. */}
+        <Section title="Privacy &amp; data">
+          <PrivacyControls initialMarketingOptIn={marketingOptIn} />
         </Section>
 
         {/* Preferences */}
@@ -206,23 +192,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           />
         </Section>
 
-        {/* Danger zone */}
-        <Section title="Danger zone" tone="muted">
+        {/* Sign out */}
+        <Section title="Sign out" tone="muted">
           <p className="text-secondary text-sm mb-4">
-            Sign out on this device, or request we delete your account and
-            associated data.
+            Sign out on this device.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <SignOutButton />
-            <a
-              href={`mailto:hello@ralph.world?subject=Delete%20my%20Ralph%20account&body=Please%20delete%20the%20account%20and%20associated%20data%20for%20${encodeURIComponent(
-                session.user.email ?? ''
-              )}.`}
-              className="rounded-full border border-red-400/40 px-5 py-2 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
-            >
-              Request account deletion
-            </a>
-          </div>
+          <SignOutButton />
         </Section>
       </section>
       <Footer variant="dark" />

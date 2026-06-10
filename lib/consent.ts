@@ -16,11 +16,17 @@ import { consentLog } from '@/lib/db/schema'
  *   - 'privacy'   — acceptance of privacy policy
  */
 
-export type ConsentType = 'marketing' | 'terms' | 'privacy'
+export type ConsentType =
+  | 'marketing' // explicit opt-in for newsletter / promo sends
+  | 'terms' // acceptance of terms of service
+  | 'privacy' // acceptance of privacy policy
+  | 'cookies_all' // cookie banner — accept all (analytics + functional + necessary)
+  | 'cookies_necessary' // cookie banner — necessary only (no analytics)
 export type ConsentSource =
   | 'signup_form'
   | 'portal'
   | 'api'
+  | 'cookie_banner'
   | 'substack_migration'
 
 /**

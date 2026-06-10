@@ -11,6 +11,7 @@ import ForegroundLayer from '@/components/layout/ForegroundLayer'
 import MidgroundLayer from '@/components/layout/MidgroundLayer'
 import PlanetPreloader from '@/components/layout/PlanetPreloader'
 import PageTransitionWrapper from '@/components/layout/PageTransitionWrapper'
+import CookieBanner from '@/components/legal/CookieBanner'
 
 const playfair = Playfair_Display({
   variable: '--font-display',
@@ -81,6 +82,7 @@ export default function RootLayout({
           <Footer variant="dark" />
           <ForegroundLayer />
           <CartDrawer />
+          <CookieBanner />
         </Providers>
       </body>
     </html>

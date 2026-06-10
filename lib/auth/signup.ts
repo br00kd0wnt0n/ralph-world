@@ -5,7 +5,7 @@ import { users, profiles } from '@/lib/db/schema'
 import { hashPassword, validatePassword } from './passwords'
 import { issueVerificationToken, purgeExpiredTokens } from './verification-tokens'
 import { sendTemplate } from '@/lib/email/send'
-import { logSignupConsents } from '@/lib/consent'
+import { logSignupConsents, logConsent } from '@/lib/consent'
 
 /**
  * Email/password signup — Task 1.3, arch doc §4.
@@ -37,6 +37,8 @@ export async function signupWithPassword(args: {
   email: string
   password: string
   name?: string | null
+  /** True iff the user ticked the marketing opt-in box. Defaults to false. */
+  marketingOptIn?: boolean
   appUrl: string
   now?: () => number
 }): Promise<SignupResult> {
@@ -104,17 +106,31 @@ export async function signupWithPassword(args: {
   // Profile row mirrors what the Auth.js createUser event does for OAuth.
   // We're not going through createUser here (Credentials provider doesn't
   // fire it on initial signup) so we replicate the side effects.
+  const marketingOptIn = Boolean(args.marketingOptIn)
   try {
     await db.insert(profiles).values({
       id: userId,
       displayName: args.name ?? null,
       tier: 'free',
       subscriptionStatus: 'free',
+      marketingOptIn,
+      marketingOptInAt: marketingOptIn ? new Date() : null,
+      marketingOptInSource: marketingOptIn ? 'signup_form' : null,
     })
   } catch {
     // Race / already-exists — non-fatal.
   }
   await logSignupConsents(userId)
+  // Marketing is a separate explicit consent — only log when granted (no
+  // implicit-deny rows; absence of a row means "never opted in").
+  if (marketingOptIn) {
+    await logConsent({
+      userId,
+      consentType: 'marketing',
+      granted: true,
+      source: 'signup_form',
+    })
+  }
 
   await sendVerificationEmail({ userId, email, name: args.name ?? null, appUrl: args.appUrl, now: args.now })
 

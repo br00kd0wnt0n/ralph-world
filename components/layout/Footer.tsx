@@ -8,6 +8,7 @@ import 'swiper/css'
 import Link from 'next/link'
 import Globe from './Globe'
 import Button from '@/components/ui/Button'
+import CookiePreferencesLink from '@/components/legal/CookiePreferencesLink'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 const ENQUIRY_OPTIONS = [
@@ -172,6 +173,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
               {agencyCta}
             </Link>
           </div>
+          <FooterLegalLinks />
         </div>
       </footer>
     )
@@ -458,6 +460,35 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
           </div>
         </div>
       </motion.div>
+      <div className="bg-black px-4 py-3 border-t border-white/10">
+        <FooterLegalLinks />
+      </div>
     </footer>
+  )
+}
+
+/**
+ * Legal links row — Task 3.10. Linked from both footer variants.
+ * Includes a "Cookie preferences" button that re-opens the consent banner.
+ */
+function FooterLegalLinks() {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted">
+      <Link href="/legal/terms" className="hover:text-primary transition-colors">
+        Terms
+      </Link>
+      <span>·</span>
+      <Link href="/legal/privacy" className="hover:text-primary transition-colors">
+        Privacy
+      </Link>
+      <span>·</span>
+      <Link href="/legal/cookies" className="hover:text-primary transition-colors">
+        Cookies
+      </Link>
+      <span>·</span>
+      <CookiePreferencesLink className="hover:text-primary transition-colors underline-offset-2 hover:underline cursor-pointer">
+        Cookie preferences
+      </CookiePreferencesLink>
+    </div>
   )
 }

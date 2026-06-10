@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { eq, and, count } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { getDb } from '@/lib/db'
-import { events, eventRsvps } from '@/lib/db/schema'
+import { events, eventRsvps, users } from '@/lib/db/schema'
+import { sendTemplate } from '@/lib/email/send'
 
 export const runtime = 'nodejs'
 
@@ -48,6 +49,10 @@ export async function POST(req: NextRequest) {
     const [event] = await db
       .select({
         id: events.id,
+        title: events.title,
+        eventDate: events.eventDate,
+        locationName: events.locationName,
+        slug: events.slug,
         rsvpEnabled: events.rsvpEnabled,
         rsvpCapacity: events.rsvpCapacity,
       })
@@ -84,6 +89,36 @@ export async function POST(req: NextRequest) {
 
     // Create RSVP
     await db.insert(eventRsvps).values({ eventId, userId })
+
+    // Fire confirmation email (best-effort — don't fail the RSVP if email fails)
+    const userEmail = session.user.email
+    if (userEmail) {
+      const [userRow] = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1)
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ralph.world'
+      const eventDate = event.eventDate
+        ? new Date(event.eventDate).toLocaleDateString('en-GB', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+          })
+        : 'Date TBC'
+
+      sendTemplate({
+        userId,
+        to: userEmail,
+        templateId: 'event-rsvp',
+        props: {
+          recipientName: userRow?.name ?? null,
+          eventTitle: event.title ?? 'Event',
+          eventDate,
+          eventLocation: event.locationName ?? null,
+          eventUrl: `${appUrl}/events/${event.slug}`,
+        },
+      }).catch((err) => console.error('[RSVP] email send failed', err))
+    }
 
     return NextResponse.json({ status: 'attending' }, { status: 201 })
   } catch (err) {

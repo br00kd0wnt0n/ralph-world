@@ -1,12 +1,10 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth, type SessionWithProfile } from '@/lib/auth'
-import Footer from '@/components/layout/Footer'
 import AccountPreferences from '@/components/account/AccountPreferences'
 import PrivacyControls from '@/components/account/PrivacyControls'
 import SignOutButton from '@/components/account/SignOutButton'
 import { startSubscriptionCheckout, openBillingPortal } from './actions'
-import { getSiteCopy } from '@/lib/data/site-copy'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,8 +18,6 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   if (!session?.user) {
     redirect('/login?callbackUrl=/account')
   }
-
-  const copy = await getSiteCopy()
 
   // Prefer the RW2.0 tier column; fall back to legacy subscription_status
   // until Phase 4 cutover (SOW §1.1). Guest is the implicit default for
@@ -49,8 +45,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const avatarUrl = session.user.image
 
   return (
-    <>
-      <section className="px-6 py-16">
+    <section className="px-6 py-16">
         {/* Solid white sheet on the dark canvas — matches the legal pages. */}
         <div className="max-w-2xl mx-auto bg-white text-black rounded-2xl shadow-xl px-6 sm:px-10 py-10">
           <Link
@@ -213,9 +208,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             <SignOutButton />
           </Section>
         </div>
-      </section>
-      <Footer variant="dark" copy={copy} />
-    </>
+    </section>
   )
 }
 

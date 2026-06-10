@@ -6,9 +6,13 @@ import {
   shopifyLinks,
   magazineIssues,
   magazineShipments,
+  magazineFulfilmentRuns,
 } from '@/lib/db/schema'
 import { createMagazineOrder } from '@/lib/shopify/orders'
 import { logAction } from '@/lib/audit'
+
+/** A fulfilment run lock is considered stale (abandoned) after this long. */
+const RUN_LOCK_TTL_MS = 5 * 60_000
 
 /**
  * Magazine fulfilment batch job — Task 3.9.
@@ -47,6 +51,8 @@ export type FulfillmentStatus =
 export interface FulfilIssueInput {
   issueId: string
   dryRun?: boolean
+  /** Who triggered the run — threaded from the CMS for the audit trail. */
+  actorId?: string | null
 }
 
 export interface FulfilIssueResult {
@@ -155,11 +161,75 @@ export async function fulfilIssue(
     dryRun: Boolean(input.dryRun),
   }
 
-  // Short-circuit on dry run — no DB writes, no Shopify calls.
+  // Short-circuit on dry run — no DB writes, no Shopify calls, no lock.
+  // (Dry runs are metered by the route's per-IP backstop instead.)
   if (input.dryRun) {
     return result
   }
 
+  // ── 3b. Acquire the per-issue run lock (security #3/#7) ───────
+  // Insert-or-claim the lock row before any Shopify work. A fresh lock
+  // (started < TTL ago, not finished) means a run is already in flight
+  // for this issue — refuse, so a leaked token can't spam orders and
+  // two operators can't double-fire.
+  const lockNow = new Date()
+  const claimed = await db
+    .insert(magazineFulfilmentRuns)
+    .values({
+      issueId: issue.id,
+      startedAt: lockNow,
+      actorId: input.actorId ?? null,
+    })
+    .onConflictDoNothing({ target: magazineFulfilmentRuns.issueId })
+    .returning({ issueId: magazineFulfilmentRuns.issueId })
+
+  if (claimed.length === 0) {
+    const [existingLock] = await db
+      .select({
+        startedAt: magazineFulfilmentRuns.startedAt,
+        finishedAt: magazineFulfilmentRuns.finishedAt,
+      })
+      .from(magazineFulfilmentRuns)
+      .where(eq(magazineFulfilmentRuns.issueId, issue.id))
+      .limit(1)
+
+    const isFresh =
+      existingLock &&
+      existingLock.finishedAt === null &&
+      lockNow.getTime() - existingLock.startedAt.getTime() < RUN_LOCK_TTL_MS
+
+    if (isFresh) {
+      return {
+        ...result,
+        ok: false,
+        error:
+          'A fulfilment run for this issue is already in progress. Wait a few minutes and check the counts before retrying.',
+      }
+    }
+
+    // Stale or already-finished lock — reclaim it for this run.
+    await db
+      .update(magazineFulfilmentRuns)
+      .set({ startedAt: lockNow, finishedAt: null, actorId: input.actorId ?? null })
+      .where(eq(magazineFulfilmentRuns.issueId, issue.id))
+  }
+
+  // Start-of-run audit row — so a crashed/timed-out run still leaves a
+  // trace of who kicked it off, even if the summary row never lands.
+  await logAction({
+    actorId: input.actorId ?? null,
+    action: 'magazine_fulfilment_batch_started',
+    targetType: 'magazine_issue',
+    targetId: issue.id,
+    after: {
+      issue_number: issue.issueNumber,
+      eligible: result.eligibleCount,
+      to_process: toProcess.length,
+    },
+    source: 'system',
+  })
+
+  try {
   // ── 4. Process each eligible subscriber ──────────────────────
   // Sequential rather than parallel. Shopify rate-limits aggressively
   // (~2 req/s for Plus, lower otherwise) and the admin-client already
@@ -229,9 +299,9 @@ export async function fulfilIssue(
     }
   }
 
-  // ── 5. Audit + return ──────────────────────────────────────
+  // ── 5. Summary audit ────────────────────────────────────────
   await logAction({
-    actorId: null,
+    actorId: input.actorId ?? null,
     action: 'magazine_fulfilment_batch_run',
     targetType: 'magazine_issue',
     targetId: issue.id,
@@ -246,6 +316,19 @@ export async function fulfilIssue(
   })
 
   return result
+  } finally {
+    // Release the lock so a later run (retry of failures, next issue
+    // cycle) isn't blocked. Best-effort — a failed release just means the
+    // lock expires naturally after RUN_LOCK_TTL_MS.
+    try {
+      await db
+        .update(magazineFulfilmentRuns)
+        .set({ finishedAt: new Date() })
+        .where(eq(magazineFulfilmentRuns.issueId, issue.id))
+    } catch (err) {
+      console.error('[magazine-fulfilment] failed to release run lock', err)
+    }
+  }
 }
 
 /**

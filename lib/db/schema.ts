@@ -371,3 +371,22 @@ export const magazineShipments = pgTable(
     uniqueIndex('magazine_shipments_user_issue_unique').on(table.userId, table.issueId),
   ]
 )
+
+/**
+ * Per-issue fulfilment run lock (security hardening — audit item #3/#7).
+ * One row per issue id (PK). A run inserts/claims the row before doing any
+ * Shopify work; a second concurrent or rapid-repeat request for the same
+ * issue is refused while the lock is fresh (< 5 min). This is the primary
+ * defence against a leaked INTERNAL_API_TOKEN being used to spam real
+ * Shopify orders, AND it makes the issue editor's "Unpublish" able to
+ * refuse while a run is active. actor_id records who started the active
+ * run. finished_at is set when the run completes (lock released early).
+ */
+export const magazineFulfilmentRuns = pgTable('magazine_fulfilment_runs', {
+  issueId: uuid('issue_id')
+    .primaryKey()
+    .references(() => magazineIssues.id, { onDelete: 'cascade' }),
+  startedAt: timestamp('started_at', { mode: 'date' }).notNull(),
+  finishedAt: timestamp('finished_at', { mode: 'date' }),
+  actorId: uuid('actor_id'),
+})

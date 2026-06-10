@@ -5,6 +5,7 @@ import { Providers } from './providers'
 import Nav from '@/components/layout/Nav'
 import Footer from '@/components/layout/Footer'
 import CartDrawer from '@/components/layout/CartDrawer'
+import { getSiteCopy } from '@/lib/data/site-copy'
 import { BackgroundLayer } from '@/context/ThemeContext'
 import Starfield from '@/components/layout/Starfield'
 import ForegroundLayer from '@/components/layout/ForegroundLayer'
@@ -56,11 +57,15 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Site copy feeds the global footer (tagline, socials, copyright).
+  // Cached via unstable_cache + tagged 'site-copy', so this is a cheap
+  // shared read and safe-falls-back to defaults if the DB is unreachable.
+  const copy = await getSiteCopy()
   return (
     <html
       lang="en"
@@ -79,7 +84,7 @@ export default function RootLayout({
               {children}
             </PageTransitionWrapper>
           </main>
-          <Footer variant="dark" />
+          <Footer variant="dark" copy={copy} />
           <ForegroundLayer />
           <CartDrawer />
           <CookieBanner />

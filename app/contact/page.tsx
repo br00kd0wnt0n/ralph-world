@@ -1,12 +1,14 @@
 import type { Metadata } from 'next'
 import Footer from '@/components/layout/Footer'
+import { getSiteCopy } from '@/lib/data/site-copy'
 
 export const metadata: Metadata = {
   title: 'Contact',
   description: 'Get in touch with the Ralph team.',
 }
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const copy = await getSiteCopy()
   return (
     <>
       <section className="px-6 py-20 max-w-xl mx-auto text-center">
@@ -24,7 +26,7 @@ export default function ContactPage() {
           hello@ralph.world
         </a>
       </section>
-      <Footer variant="dark" />
+      <Footer variant="dark" copy={copy} />
     </>
   )
 }

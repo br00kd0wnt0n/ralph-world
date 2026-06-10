@@ -71,6 +71,7 @@ const OFFICES: {
 
 export default function Footer({ variant = 'dark', copy }: FooterProps) {
   const tagline = copy?.footer_tagline ?? 'The Entertainment People'
+  const copyright = copy?.footer_copyright ?? '© Ralph Creative Ltd, 2026'
   const agencyCta = copy?.footer_agency_cta ?? "Hey. Aren't you an agency?"
   const contactHref = copy?.footer_contact_email || '/contact'
   const tiktokUrl = copy?.footer_tiktok_url
@@ -173,7 +174,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
               {agencyCta}
             </Link>
           </div>
-          <FooterLegalLinks />
+          <FooterLegalLinks copyright={copyright} />
         </div>
       </footer>
     )
@@ -461,7 +462,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
         </div>
       </motion.div>
       <div className="bg-black px-4 py-3 border-t border-white/10">
-        <FooterLegalLinks />
+        <FooterLegalLinks copyright={copyright} />
       </div>
     </footer>
   )
@@ -469,26 +470,32 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
 
 /**
  * Legal links row — Task 3.10. Linked from both footer variants.
- * Includes a "Cookie preferences" button that re-opens the consent banner.
+ * Includes a "Cookie preferences" button that re-opens the consent banner,
+ * plus the editable copyright line beneath.
  */
-function FooterLegalLinks() {
+function FooterLegalLinks({ copyright }: { copyright: string }) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted">
-      <Link href="/legal/terms" className="hover:text-primary transition-colors">
-        Terms
-      </Link>
-      <span>·</span>
-      <Link href="/legal/privacy" className="hover:text-primary transition-colors">
-        Privacy
-      </Link>
-      <span>·</span>
-      <Link href="/legal/cookies" className="hover:text-primary transition-colors">
-        Cookies
-      </Link>
-      <span>·</span>
-      <CookiePreferencesLink className="hover:text-primary transition-colors underline-offset-2 hover:underline cursor-pointer">
-        Cookie preferences
-      </CookiePreferencesLink>
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted">
+        <Link href="/legal/terms" className="hover:text-primary transition-colors">
+          Terms
+        </Link>
+        <span>·</span>
+        <Link href="/legal/privacy" className="hover:text-primary transition-colors">
+          Privacy
+        </Link>
+        <span>·</span>
+        <Link href="/legal/cookies" className="hover:text-primary transition-colors">
+          Cookies
+        </Link>
+        <span>·</span>
+        <CookiePreferencesLink className="hover:text-primary transition-colors underline-offset-2 hover:underline cursor-pointer">
+          Cookie preferences
+        </CookiePreferencesLink>
+      </div>
+      {copyright && (
+        <p className="text-[11px] text-muted/80 text-center">{copyright}</p>
+      )}
     </div>
   )
 }

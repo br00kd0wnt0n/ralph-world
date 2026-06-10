@@ -117,6 +117,7 @@ export const DEFAULT_COPY = {
 
   // Footer
   footer_tagline: 'The Entertainment People',
+  footer_copyright: '© Ralph Creative Ltd, 2026',
   footer_agency_cta: "Hey. Aren't you an agency?",
   footer_contact_email: 'mailto:hello@ralph.world',
   footer_tiktok_url: '',

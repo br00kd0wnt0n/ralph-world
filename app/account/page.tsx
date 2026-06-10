@@ -6,6 +6,7 @@ import AccountPreferences from '@/components/account/AccountPreferences'
 import PrivacyControls from '@/components/account/PrivacyControls'
 import SignOutButton from '@/components/account/SignOutButton'
 import { startSubscriptionCheckout, openBillingPortal } from './actions'
+import { getSiteCopy } from '@/lib/data/site-copy'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   if (!session?.user) {
     redirect('/login?callbackUrl=/account')
   }
+
+  const copy = await getSiteCopy()
 
   // Prefer the RW2.0 tier column; fall back to legacy subscription_status
   // until Phase 4 cutover (SOW §1.1). Guest is the implicit default for
@@ -200,7 +203,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           <SignOutButton />
         </Section>
       </section>
-      <Footer variant="dark" />
+      <Footer variant="dark" copy={copy} />
     </>
   )
 }

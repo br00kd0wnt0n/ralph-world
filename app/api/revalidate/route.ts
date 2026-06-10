@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import crypto from 'crypto'
 
 function verifyBearer(authHeader: string | null, secret: string): boolean {
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
   }
 
   let paths: string[] = []
+  let tags: string[] = []
   try {
     const body = await request.json()
     if (Array.isArray(body.paths)) {
@@ -40,17 +41,35 @@ export async function POST(request: Request) {
     } else if (typeof body.path === 'string') {
       paths = [body.path]
     }
+    if (Array.isArray(body.tags)) {
+      tags = body.tags.filter((t: unknown): t is string => typeof t === 'string')
+    } else if (typeof body.tag === 'string') {
+      tags = [body.tag]
+    }
   } catch {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
   }
 
-  if (paths.length === 0) {
-    return NextResponse.json({ error: 'No paths provided' }, { status: 400 })
+  if (paths.length === 0 && tags.length === 0) {
+    return NextResponse.json(
+      { error: 'No paths or tags provided' },
+      { status: 400 }
+    )
   }
 
   for (const path of paths) {
     revalidatePath(path)
   }
+  // revalidatePath does NOT invalidate `unstable_cache` entries — we tag
+  // those (e.g. 'site-copy' on `getSiteCopy`) and bust them explicitly
+  // here. Without this, a CMS toggle change would wait up to 5 minutes
+  // for the natural TTL to expire.
+  //
+  // Next.js 16 requires a profile argument; 'default' triggers an
+  // immediate cache bust for tagged unstable_cache entries.
+  for (const tag of tags) {
+    revalidateTag(tag, 'default')
+  }
 
-  return NextResponse.json({ ok: true, revalidated: paths })
+  return NextResponse.json({ ok: true, revalidated: { paths, tags } })
 }

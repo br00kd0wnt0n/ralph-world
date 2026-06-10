@@ -153,10 +153,15 @@ async function fetchSiteCopy(): Promise<SiteCopy> {
 
 /**
  * Fetch all site copy, merged with defaults. Safe to call from server components.
- * Returns defaults if DB is unreachable. Cached for 5 minutes.
+ * Returns defaults if DB is unreachable.
+ *
+ * Cached for 5 minutes but TAGGED so the CMS can bust the cache on save —
+ * `revalidatePath` does NOT invalidate `unstable_cache` entries, so without
+ * the tag a CMS edit would take up to 5 minutes to surface on the public
+ * site (this was the freeview toggle bug). Cross-bust via revalidateTag.
  */
 export const getSiteCopy = unstable_cache(
   fetchSiteCopy,
   ['site-copy'],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ['site-copy'] }
 )

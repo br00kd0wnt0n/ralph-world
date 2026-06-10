@@ -96,11 +96,27 @@ export default function TVSet({
   // A ref prevents the timer restarting if isLive flickers.
   // Uses setInterval (not setTimeout) so we can track seconds remaining for the
   // on-screen countdown badge. When previewEnabled is false the timer never runs.
+  //
+  // PERSISTENCE: writes the expiry timestamp to localStorage so a page refresh
+  // (or a new tab) cannot reset the countdown. The stored value survives
+  // until the user signs in or clears site data.
+  //   ralph-tv-preview-expires-at = epoch ms when the gate should activate
+  const PREVIEW_KEY = 'ralph-tv-preview-expires-at'
   const timerStartedRef = useRef(false)
   const isGuest = !user
 
   useEffect(() => {
-    if (!previewEnabled || !isGuest || !isLive || timerStartedRef.current) return
+    // Anyone signed in clears the stored expiry — no need to penalise a
+    // returning guest who upgraded mid-session.
+    if (!isGuest) {
+      try {
+        if (typeof window !== 'undefined') window.localStorage.removeItem(PREVIEW_KEY)
+      } catch {
+        /* private mode etc — ignore */
+      }
+      return
+    }
+    if (!previewEnabled || !isLive || timerStartedRef.current) return
     timerStartedRef.current = true
 
     if (previewSeconds <= 0) {
@@ -109,17 +125,43 @@ export default function TVSet({
       return
     }
 
-    setPreviewSecondsLeft(previewSeconds)
+    // Resolve expiry timestamp:
+    //   - if a valid future timestamp exists in storage, RESUME from it
+    //   - if a past timestamp exists, the gate already fired — flip now
+    //   - otherwise, this is the first watch session — write a fresh one
+    let expiresAt = 0
+    try {
+      const stored = safeGet(PREVIEW_KEY)
+      if (stored) {
+        const n = Number(stored)
+        if (Number.isFinite(n) && n > 0) expiresAt = n
+      }
+    } catch {
+      /* ignore */
+    }
+    const now = Date.now()
+    if (!expiresAt) {
+      expiresAt = now + previewSeconds * 1_000
+      safeSet(PREVIEW_KEY, String(expiresAt))
+    }
+
+    if (expiresAt <= now) {
+      // Refresh after countdown already expired — stay gated.
+      setPreviewExpired(true)
+      setPreviewSecondsLeft(0)
+      return
+    }
+
+    const initialSecondsLeft = Math.max(0, Math.ceil((expiresAt - now) / 1_000))
+    setPreviewSecondsLeft(initialSecondsLeft)
 
     const interval = setInterval(() => {
-      setPreviewSecondsLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          setPreviewExpired(true)
-          return 0
-        }
-        return prev - 1
-      })
+      const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1_000))
+      setPreviewSecondsLeft(remaining)
+      if (remaining <= 0) {
+        clearInterval(interval)
+        setPreviewExpired(true)
+      }
     }, 1_000)
 
     return () => clearInterval(interval)

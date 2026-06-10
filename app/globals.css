@@ -301,3 +301,32 @@ main > [data-transitioning] {
     min-width: 1380px;
   }
 }
+
+/* Legal pages (privacy / terms / cookies) — all titles use the Gooper
+   title face. Done in CSS because the equivalent Tailwind arbitrary
+   font-family class doesn't compile (commas/parens in the value). */
+.legal-prose :is(h1, h2, h3, h4) {
+  font-family: var(--font-intro, 'Gooper Trial'), serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: #000;
+}
+
+/* Spacing: breathing room above section titles and between blocks */
+.legal-prose :is(h2, h3, h4) {
+  margin-top: 2.25rem;
+  margin-bottom: 0.85rem;
+}
+.legal-prose h1 {
+  margin-bottom: 0.5rem;
+}
+.legal-prose :is(p, ul, ol, table) {
+  margin-top: 0;
+  margin-bottom: 1.15rem;
+}
+.legal-prose :is(ul, ol) li {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+}

@@ -174,7 +174,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
               {agencyCta}
             </Link>
           </div>
-          <FooterLegalLinks copyright={copyright} />
+          <FooterLegalLinks copyright={copyright} variant="light" />
         </div>
       </footer>
     )
@@ -473,10 +473,19 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
  * Includes a "Cookie preferences" button that re-opens the consent banner,
  * plus the editable copyright line beneath.
  */
-function FooterLegalLinks({ copyright }: { copyright: string }) {
+function FooterLegalLinks({
+  copyright,
+  variant = 'dark',
+}: {
+  copyright: string
+  variant?: 'dark' | 'light'
+}) {
+  // Dark footer sits on black → muted white; light footer keeps the theme muted.
+  const linksColor = variant === 'light' ? 'text-muted' : 'text-white/70'
+  const copyrightColor = variant === 'light' ? 'text-muted/80' : 'text-white/60'
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted">
+    <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className={`flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs ${linksColor}`}>
         <Link href="/legal/terms" className="hover:text-primary transition-colors">
           Terms
         </Link>
@@ -494,7 +503,7 @@ function FooterLegalLinks({ copyright }: { copyright: string }) {
         </CookiePreferencesLink>
       </div>
       {copyright && (
-        <p className="text-[11px] text-muted/80 text-center">{copyright}</p>
+        <p className={`text-[11px] ${copyrightColor} text-center sm:text-right`}>{copyright}</p>
       )}
     </div>
   )

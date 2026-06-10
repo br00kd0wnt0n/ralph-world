@@ -50,158 +50,169 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   return (
     <>
-      <section className="px-6 py-16 max-w-2xl mx-auto">
-        <Link
-          href="/"
-          className="inline-block text-sm text-secondary hover:text-primary transition-colors mb-8"
-        >
-          &larr; Back to Ralph.World
-        </Link>
+      <section className="px-6 py-16">
+        {/* Solid white sheet on the dark canvas — matches the legal pages. */}
+        <div className="max-w-2xl mx-auto bg-white text-black rounded-2xl shadow-xl px-6 sm:px-10 py-10">
+          <Link
+            href="/"
+            className="inline-block text-sm font-semibold text-black/60 hover:text-black transition-colors mb-8"
+          >
+            &larr; Back to Ralph.World
+          </Link>
 
-        {/* Profile header */}
-        <div className="flex items-center gap-4 mb-10">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={avatarUrl}
-              alt={displayName ?? 'avatar'}
-              className="w-16 h-16 rounded-full border-2 border-ralph-pink/30"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full border-2 border-ralph-pink/30 bg-surface flex items-center justify-center text-xl font-bold text-primary">
-              {displayName?.[0]?.toUpperCase() ?? '?'}
+          {/* Profile header */}
+          <div className="flex items-center gap-4 mb-10">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt={displayName ?? 'avatar'}
+                className="w-16 h-16 rounded-full border-2 border-ralph-pink/40"
+              />
+            ) : (
+              <div
+                className="w-16 h-16 rounded-full border-2 border-ralph-pink/40 bg-black/[0.04] flex items-center justify-center text-xl text-black"
+                style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
+              >
+                {displayName?.[0]?.toUpperCase() ?? '?'}
+              </div>
+            )}
+            <div className="min-w-0">
+              <h1
+                className="text-2xl md:text-3xl text-black truncate"
+                style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600, lineHeight: 1 }}
+              >
+                {displayName}
+              </h1>
+              <p className="text-black/60 text-sm font-semibold truncate">
+                {session.user.email}
+              </p>
+            </div>
+          </div>
+
+          {upgradeError && (
+            <div className="bg-ralph-pink/10 border border-ralph-pink/40 rounded-2xl p-4 mb-6 text-sm font-semibold text-black">
+              We couldn&apos;t start your checkout. Please try again, or{' '}
+              <a
+                href="mailto:hello@ralph.world"
+                className="underline text-ralph-pink hover:opacity-80 transition-opacity"
+              >
+                drop us a line
+              </a>
+              .
             </div>
           )}
-          <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold text-primary font-[family-name:var(--font-display)] truncate">
-              {displayName}
-            </h1>
-            <p className="text-secondary text-sm truncate">
-              {session.user.email}
-            </p>
-          </div>
-        </div>
 
-        {upgradeError && (
-          <div className="bg-ralph-pink/10 border border-ralph-pink/40 rounded-2xl p-4 mb-6 text-sm text-primary">
-            We couldn&apos;t start your checkout. Please try again, or{' '}
-            <a
-              href="mailto:hello@ralph.world"
-              className="underline hover:text-ralph-pink transition-colors"
-            >
-              drop us a line
-            </a>
-            .
-          </div>
-        )}
-
-        {/* Subscription */}
-        <Section title="Subscription">
-          <div className="flex items-center gap-2 mb-3">
-            <span
-              className={`text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
-                tier === 'paid'
-                  ? 'bg-ralph-pink/20 text-ralph-pink'
-                  : tier === 'free'
-                  ? 'bg-ralph-teal/20 text-ralph-teal'
-                  : 'bg-gray-500/20 text-gray-400'
-              }`}
-            >
-              {tier ?? 'guest'}
-            </span>
-            {subscriptionStatus === 'past_due' && (
-              <span className="text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-red-500/20 text-red-300">
-                payment failed
+          {/* Subscription */}
+          <Section title="Subscription">
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                className={`text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${
+                  tier === 'paid'
+                    ? 'bg-ralph-pink text-white'
+                    : tier === 'free'
+                    ? 'bg-ralph-teal text-black'
+                    : 'bg-black/10 text-black/60'
+                }`}
+              >
+                {tier ?? 'guest'}
               </span>
+              {subscriptionStatus === 'past_due' && (
+                <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+                  payment failed
+                </span>
+              )}
+            </div>
+            <p className="text-black text-sm font-semibold mb-2">
+              {tier === 'paid'
+                ? 'You have full access: magazine, TV, events, shop, and lab. Thanks for backing us.'
+                : tier === 'free'
+                ? 'You have access to magazine, TV, and events. Upgrade for the quarterly print mag and premium content.'
+                : tier === 'guest'
+                ? 'Verify your email to unlock free-tier perks: TV, members-only articles, and event RSVPs.'
+                : 'Get started to unlock the full Ralph experience.'}
+            </p>
+            {tier === 'paid' && subscriptionPeriodEnd && (
+              <p className="text-black/60 text-xs font-semibold mb-4">
+                {subscriptionStatus === 'past_due'
+                  ? `Last payment attempt failed. Stripe will retry; update your card if needed. Current period ends ${formatPeriodEnd(subscriptionPeriodEnd)}.`
+                  : cancelAtPeriodEnd
+                  ? `Cancelled — access continues until ${formatPeriodEnd(subscriptionPeriodEnd)}.`
+                  : `Next billing date: ${formatPeriodEnd(subscriptionPeriodEnd)}`}
+              </p>
             )}
-          </div>
-          <p className="text-primary text-sm mb-2">
-            {tier === 'paid'
-              ? 'You have full access: magazine, TV, events, shop, and lab. Thanks for backing us.'
-              : tier === 'free'
-              ? 'You have access to magazine, TV, and events. Upgrade for the quarterly print mag and premium content.'
-              : tier === 'guest'
-              ? 'Verify your email to unlock free-tier perks: TV, members-only articles, and event RSVPs.'
-              : 'Get started to unlock the full Ralph experience.'}
-          </p>
-          {tier === 'paid' && subscriptionPeriodEnd && (
-            <p className="text-secondary text-xs mb-4">
-              {subscriptionStatus === 'past_due'
-                ? `Last payment attempt failed. Stripe will retry; update your card if needed. Current period ends ${formatPeriodEnd(subscriptionPeriodEnd)}.`
-                : cancelAtPeriodEnd
-                ? `Cancelled — access continues until ${formatPeriodEnd(subscriptionPeriodEnd)}.`
-                : `Next billing date: ${formatPeriodEnd(subscriptionPeriodEnd)}`}
+
+            {tier === 'paid' ? (
+              <form action={openBillingPortal}>
+                <button
+                  type="submit"
+                  className="inline-block rounded-full border-2 border-black/30 px-5 py-2 text-black text-sm hover:border-black transition-colors"
+                  style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
+                >
+                  Manage subscription
+                </button>
+              </form>
+            ) : (
+              <form action={startSubscriptionCheckout}>
+                <button
+                  type="submit"
+                  className="inline-block rounded-full bg-ralph-pink text-white px-5 py-2 text-sm hover:bg-ralph-pink/90 transition-colors"
+                  style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
+                >
+                  Upgrade to paid &mdash; £3/month
+                </button>
+              </form>
+            )}
+          </Section>
+
+          {/* Events — RSVPs land here once Phase 2 ships them. */}
+          <Section title="Your events">
+            <p className="text-black/70 text-sm font-semibold">
+              RSVPs to Ralph events will show up here. None yet — keep an eye on{' '}
+              <Link href="/events" className="underline text-ralph-pink hover:opacity-80 transition-opacity">
+                the events page
+              </Link>
+              .
             </p>
-          )}
+          </Section>
 
-          {tier === 'paid' ? (
-            <form action={openBillingPortal}>
-              <button
-                type="submit"
-                className="inline-block rounded-full border border-border px-5 py-2 text-primary font-medium text-sm hover:border-secondary transition-colors"
-              >
-                Manage subscription
-              </button>
-            </form>
-          ) : (
-            <form action={startSubscriptionCheckout}>
-              <button
-                type="submit"
-                className="inline-block rounded-full bg-ralph-pink text-white px-5 py-2 font-medium text-sm hover:bg-ralph-pink/90 transition-colors"
-              >
-                Upgrade to paid &mdash; £3/month
-              </button>
-            </form>
-          )}
-        </Section>
+          {/* Shipping address — mirror of Shopify once a purchase is made (Phase 2). */}
+          <Section title="Shipping address">
+            {shippingAddress ? (
+              <pre className="text-black text-sm font-semibold whitespace-pre-wrap font-sans">
+                {formatShippingAddress(shippingAddress)}
+              </pre>
+            ) : (
+              <p className="text-black/70 text-sm font-semibold">
+                We&apos;ll show your shipping address here once you&apos;ve made a
+                purchase — it mirrors the address on file with Shopify.
+              </p>
+            )}
+          </Section>
 
-        {/* Events — RSVPs land here once Phase 2 ships them. */}
-        <Section title="Your events">
-          <p className="text-secondary text-sm">
-            RSVPs to Ralph events will show up here. None yet — keep an eye on{' '}
-            <Link href="/events" className="underline hover:text-ralph-pink transition-colors">
-              the events page
-            </Link>
-            .
-          </p>
-        </Section>
+          {/* Privacy & data rights — Task 3.10. Marketing toggle, DSAR export,
+              account deletion. Replaces the previous view-only mailing
+              preferences + 'email us to delete' link. */}
+          <Section title="Privacy &amp; data">
+            <PrivacyControls initialMarketingOptIn={marketingOptIn} />
+          </Section>
 
-        {/* Shipping address — mirror of Shopify once a purchase is made (Phase 2). */}
-        <Section title="Shipping address">
-          {shippingAddress ? (
-            <pre className="text-primary text-sm whitespace-pre-wrap font-sans">
-              {formatShippingAddress(shippingAddress)}
-            </pre>
-          ) : (
-            <p className="text-secondary text-sm">
-              We&apos;ll show your shipping address here once you&apos;ve made a
-              purchase — it mirrors the address on file with Shopify.
+          {/* Preferences */}
+          <Section title="Preferences">
+            <AccountPreferences
+              initialLanguage={session.profile?.languagePreference ?? 'en'}
+              initialTheme={session.profile?.themePreference ?? 'cosy-dynamics'}
+            />
+          </Section>
+
+          {/* Sign out */}
+          <Section title="Sign out">
+            <p className="text-black/70 text-sm font-semibold mb-4">
+              Sign out on this device.
             </p>
-          )}
-        </Section>
-
-        {/* Privacy & data rights — Task 3.10. Marketing toggle, DSAR export,
-            account deletion. Replaces the previous view-only mailing
-            preferences + 'email us to delete' link. */}
-        <Section title="Privacy &amp; data">
-          <PrivacyControls initialMarketingOptIn={marketingOptIn} />
-        </Section>
-
-        {/* Preferences */}
-        <Section title="Preferences">
-          <AccountPreferences
-            initialLanguage={session.profile?.languagePreference ?? 'en'}
-            initialTheme={session.profile?.themePreference ?? 'cosy-dynamics'}
-          />
-        </Section>
-
-        {/* Sign out */}
-        <Section title="Sign out" tone="muted">
-          <p className="text-secondary text-sm mb-4">
-            Sign out on this device.
-          </p>
-          <SignOutButton />
-        </Section>
+            <SignOutButton />
+          </Section>
+        </div>
       </section>
       <Footer variant="dark" copy={copy} />
     </>
@@ -247,21 +258,22 @@ function formatShippingAddress(addr: unknown): string {
 function Section({
   title,
   children,
-  tone,
 }: {
   title: string
   children: React.ReactNode
-  tone?: 'muted'
 }) {
   return (
-    <div
-      className={`rounded-2xl border p-6 mb-6 ${
-        tone === 'muted'
-          ? 'bg-background border-border/50'
-          : 'bg-surface border-border'
-      }`}
-    >
-      <h2 className="text-xs uppercase tracking-widest text-muted mb-4">
+    <div className="py-7 border-t border-black/10 first:border-t-0 first:pt-0">
+      <h2
+        className="text-black mb-4"
+        style={{
+          fontFamily: "'Gooper Trial', serif",
+          fontWeight: 600,
+          fontSize: 18,
+          lineHeight: 1,
+          letterSpacing: 0,
+        }}
+      >
         {title}
       </h2>
       {children}

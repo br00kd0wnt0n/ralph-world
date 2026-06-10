@@ -18,7 +18,8 @@ export default function SignOutButton() {
       onClick={() => {
         void signOut({ callbackUrl: '/' })
       }}
-      className="rounded-full border border-border px-5 py-2 text-sm text-secondary hover:text-primary hover:border-secondary transition-colors"
+      className="rounded-full border-2 border-black/30 px-5 py-2 text-sm text-black hover:border-black transition-colors"
+      style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
     >
       Sign out
     </button>

@@ -84,7 +84,7 @@ export default function AccountPreferences({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-[10px] uppercase tracking-widest text-muted mb-2">
+        <label className="block text-[10px] uppercase tracking-widest text-black/60 font-bold mb-2">
           Theme
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -93,15 +93,15 @@ export default function AccountPreferences({
               key={t.id}
               onClick={() => saveTheme(t.id)}
               disabled={savingField === 'theme'}
-              className={`text-left rounded-lg border px-3 py-2 text-sm transition-colors ${
+              className={`text-left rounded-lg border-2 px-3 py-2 text-sm transition-colors ${
                 activeTheme === t.id
-                  ? 'border-ralph-pink bg-ralph-pink/10 text-primary'
-                  : 'border-border text-secondary hover:text-primary hover:border-secondary'
+                  ? 'border-ralph-pink bg-ralph-pink/10 text-black'
+                  : 'border-black/20 text-black/70 hover:text-black hover:border-black/40'
               } disabled:opacity-60`}
             >
-              <span className="block font-medium">{t.label}</span>
+              <span className="block font-semibold">{t.label}</span>
               {t.type === 'immersive' && (
-                <span className="text-[10px] text-muted uppercase tracking-widest">
+                <span className="text-[10px] text-black/50 uppercase tracking-widest font-semibold">
                   Coming soon
                 </span>
               )}
@@ -111,7 +111,7 @@ export default function AccountPreferences({
       </div>
 
       <div>
-        <label className="block text-[10px] uppercase tracking-widest text-muted mb-2">
+        <label className="block text-[10px] uppercase tracking-widest text-black/60 font-bold mb-2">
           Language
         </label>
         <div className="flex flex-wrap gap-2">
@@ -120,10 +120,10 @@ export default function AccountPreferences({
               key={l.code}
               onClick={() => saveLanguage(l.code)}
               disabled={savingField === 'language'}
-              className={`rounded-full border px-4 py-1.5 text-sm transition-colors ${
+              className={`rounded-full border-2 px-4 py-1.5 text-sm font-semibold transition-colors ${
                 language === l.code
-                  ? 'border-ralph-pink bg-ralph-pink/10 text-primary'
-                  : 'border-border text-secondary hover:text-primary hover:border-secondary'
+                  ? 'border-ralph-pink bg-ralph-pink/10 text-black'
+                  : 'border-black/20 text-black/70 hover:text-black hover:border-black/40'
               } disabled:opacity-60`}
             >
               {l.label}
@@ -132,7 +132,7 @@ export default function AccountPreferences({
         </div>
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
     </div>
   )
 }

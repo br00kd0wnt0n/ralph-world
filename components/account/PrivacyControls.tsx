@@ -84,10 +84,10 @@ export default function PrivacyControls({
       <div>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-primary text-sm font-medium">
+            <p className="text-black text-sm font-bold">
               Ralph newsletter
             </p>
-            <p className="text-secondary text-xs mt-0.5">
+            <p className="text-black/70 text-xs font-semibold mt-0.5">
               News, drops, and the occasional pun. Unsubscribe any time.
             </p>
           </div>
@@ -98,8 +98,8 @@ export default function PrivacyControls({
             aria-label="Toggle Ralph newsletter"
             onClick={toggleMarketing}
             disabled={marketingBusy}
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ralph-pink focus:ring-offset-2 focus:ring-offset-background ${
-              marketingOptIn ? 'bg-ralph-pink' : 'bg-gray-500'
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ralph-pink focus:ring-offset-2 focus:ring-offset-white ${
+              marketingOptIn ? 'bg-ralph-pink' : 'bg-black/25'
             } ${marketingBusy ? 'opacity-60' : ''}`}
           >
             <span
@@ -109,11 +109,11 @@ export default function PrivacyControls({
             />
           </button>
         </div>
-        <p className="text-xs mt-2 min-h-[1rem]">
+        <p className="text-xs font-semibold mt-2 min-h-[1rem]">
           {marketingError ? (
-            <span className="text-red-400">{marketingError}</span>
+            <span className="text-red-600">{marketingError}</span>
           ) : marketingSavedAt ? (
-            <span className="text-muted">
+            <span className="text-black/60">
               Saved{' '}
               {marketingSavedAt.toLocaleTimeString('en-GB', {
                 hour: '2-digit',
@@ -125,14 +125,14 @@ export default function PrivacyControls({
       </div>
 
       {/* Download my data */}
-      <div className="pt-4 border-t border-border/40">
-        <p className="text-primary text-sm font-medium">Download my data</p>
-        <p className="text-secondary text-xs mt-0.5 mb-2">
+      <div className="pt-5 border-t border-black/10">
+        <p className="text-black text-sm font-bold">Download my data</p>
+        <p className="text-black/70 text-xs font-semibold mt-0.5 mb-2">
           Export a JSON file with the personal data Ralph holds about you (UK
           GDPR Art. 15). For data held by Stripe / Shopify / Sentry / Resend,{' '}
           <a
             href="mailto:hello@ralph.world?subject=Data%20export%20request"
-            className="underline hover:text-primary"
+            className="underline text-ralph-pink hover:opacity-80"
           >
             email us
           </a>
@@ -141,16 +141,17 @@ export default function PrivacyControls({
         <button
           type="button"
           onClick={downloadData}
-          className="rounded-full border border-border px-4 py-1.5 text-sm text-secondary hover:text-primary hover:border-primary transition-colors"
+          className="rounded-full border-2 border-black/30 px-4 py-1.5 text-sm text-black hover:border-black transition-colors"
+          style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
         >
           Download as JSON
         </button>
       </div>
 
       {/* Delete account */}
-      <div className="pt-4 border-t border-border/40">
-        <p className="text-red-400 text-sm font-medium">Delete account</p>
-        <p className="text-secondary text-xs mt-0.5 mb-3">
+      <div className="pt-5 border-t border-black/10">
+        <p className="text-red-600 text-sm font-bold">Delete account</p>
+        <p className="text-black/70 text-xs font-semibold mt-0.5 mb-3">
           Removes your account, profile, and most associated data. Records we
           must keep for legal/financial reasons (consent log,
           subscription/order history) are retained but unlinked from your
@@ -160,13 +161,14 @@ export default function PrivacyControls({
           <button
             type="button"
             onClick={() => setConfirmDelete(true)}
-            className="rounded-full border border-red-400/40 px-4 py-1.5 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
+            className="rounded-full border-2 border-red-300 px-4 py-1.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
           >
             Delete my account…
           </button>
         ) : (
-          <div className="rounded-md border border-red-400/30 bg-red-400/5 p-3">
-            <p className="text-red-300 text-xs mb-3">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3">
+            <p className="text-red-700 text-xs font-semibold mb-3">
               Are you sure? This is permanent.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -174,7 +176,8 @@ export default function PrivacyControls({
                 type="button"
                 onClick={deleteAccount}
                 disabled={deletePending}
-                className="rounded-full bg-red-500/90 text-white px-4 py-1.5 text-sm font-medium hover:bg-red-500 transition-colors disabled:opacity-60"
+                className="rounded-full bg-red-600 text-white px-4 py-1.5 text-sm hover:bg-red-700 transition-colors disabled:opacity-60"
+                style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
               >
                 {deletePending ? 'Deleting…' : 'Yes, delete my account'}
               </button>
@@ -182,13 +185,14 @@ export default function PrivacyControls({
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 disabled={deletePending}
-                className="rounded-full border border-border px-4 py-1.5 text-sm text-secondary hover:text-primary"
+                className="rounded-full border-2 border-black/30 px-4 py-1.5 text-sm text-black hover:border-black"
+                style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
               >
                 Cancel
               </button>
             </div>
             {deleteError && (
-              <p className="text-red-400 text-xs mt-2">{deleteError}</p>
+              <p className="text-red-600 text-xs font-semibold mt-2">{deleteError}</p>
             )}
           </div>
         )}

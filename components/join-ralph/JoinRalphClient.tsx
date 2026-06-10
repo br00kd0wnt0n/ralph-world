@@ -25,6 +25,29 @@ const slideVariants = {
 
 const slideTransition = { type: 'tween' as const, duration: 0.4, ease: 'easeInOut' as const }
 
+// Shared signup field style — grey fill, 8px radius, black Gooper text.
+const fieldClass =
+  'w-full bg-gray-200 px-4 placeholder-black/40 focus:outline-none focus:ring-2 focus:ring-ralph-pink/40'
+const fieldStyle: React.CSSProperties = {
+  height: 43,
+  borderRadius: 8,
+  color: 'black',
+  fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+  fontWeight: 600,
+  fontSize: 16,
+  lineHeight: 1,
+}
+
+// Body copy — Roboto 600, 13px / 23px, black, centred.
+const bodyCopyStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-body), Arial, sans-serif',
+  fontWeight: 600,
+  fontSize: 13,
+  lineHeight: '23px',
+  letterSpacing: 0,
+  color: '#000',
+}
+
 // Shop-style back button — `< Back` in ralph-pink Gooper Trial 600/18.
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
@@ -45,6 +68,59 @@ function BackButton({ onClick }: { onClick: () => void }) {
   )
 }
 
+// Full-width shadow button (skeuomorphic offset shadow + black rim, Gooper
+// face). Accepts an icon + text as children. Matches the shared Button look.
+function ShadowButton({
+  children,
+  type = 'button',
+  onClick,
+  disabled = false,
+}: {
+  children: React.ReactNode
+  type?: 'button' | 'submit'
+  onClick?: () => void
+  disabled?: boolean
+}) {
+  return (
+    <div className="relative w-full">
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 4,
+          left: 4,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'black',
+          pointerEvents: 'none',
+        }}
+      />
+      <button
+        type={type}
+        onClick={onClick}
+        disabled={disabled}
+        className={`relative w-full inline-flex items-center justify-center gap-3 ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'btn-press'
+        }`}
+        style={{
+          height: 43,
+          border: '2px solid black',
+          backgroundColor: 'white',
+          color: 'black',
+          fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+          fontWeight: 600,
+          fontSize: 16,
+          lineHeight: 1,
+          cursor: 'pointer',
+          transition: 'transform 0.15s ease',
+        }}
+      >
+        {children}
+      </button>
+    </div>
+  )
+}
+
 export default function JoinRalphClient() {
   const router = useRouter()
   const params = useSearchParams()
@@ -52,6 +128,10 @@ export default function JoinRalphClient() {
   const rawStep = parseInt(params.get('step') ?? '1', 10) || 1
   const step = Math.max(1, Math.min(4, rawStep)) as Step
   const tier: Tier = params.get('tier') === 'paid' ? 'paid' : 'free'
+  // Preview mode (?preview=1): skip the "needs form data" guard and seed
+  // placeholder name/email so slides 3 & 4 can be styled without filling
+  // out the flow. Dev/design aid only.
+  const preview = params.get('preview') === '1'
 
   // Form state carried across slides 2 → 3 → 4. Held in component state
   // rather than URL so we don't leak emails into the URL/history.
@@ -87,11 +167,11 @@ export default function JoinRalphClient() {
   // of where the state can support.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    if ((step === 3 || step === 4) && !email) {
+    if (!preview && (step === 3 || step === 4) && !email) {
       router.replace(buildHref(2))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, email])
+  }, [step, email, preview])
 
   // When the signup action succeeds, advance to the verify slide.
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -164,11 +244,14 @@ export default function JoinRalphClient() {
         </div>
 
         {/* Content */}
+        {/* overflow-hidden on the slides container is needed for the horizontal
+            slide transitions, so 100px of the top offset lives *inside* it
+            (as padding) to give slide characters headroom without being clipped. */}
         <div
           className="relative z-10 pb-16 min-h-[60vh]"
-          style={{ paddingTop: 200 }}
+          style={{ paddingTop: 100 }}
         >
-          <div className="max-w-5xl mx-auto px-6 overflow-hidden">
+          <div className="max-w-5xl mx-auto px-6 overflow-hidden" style={{ paddingTop: 100 }}>
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={step}
@@ -193,7 +276,7 @@ export default function JoinRalphClient() {
                 )}
                 {step === 3 && (
                   <Slide3
-                    email={email}
+                    email={email || (preview ? 'you@example.com' : '')}
                     firstName={firstName}
                     setFirstName={setFirstName}
                     lastName={lastName}
@@ -208,8 +291,8 @@ export default function JoinRalphClient() {
                 )}
                 {step === 4 && (
                   <Slide4
-                    email={email}
-                    firstName={firstName}
+                    email={email || (preview ? 'you@example.com' : '')}
+                    firstName={firstName || (preview ? 'Alex' : '')}
                     onBack={() => goToStep(3)}
                   />
                 )}
@@ -247,10 +330,14 @@ function Slide1({ onSelectTier }: { onSelectTier: (t: Tier) => void }) {
           className="relative z-10 block mx-auto w-full max-w-[250px] h-auto"
         />
 
-        {/* Astronaut placeholder */}
-        <div className="relative z-10 w-28 h-36 bg-black/5 border border-black/30 rounded flex items-center justify-center text-[10px] text-gray-500 mt-8 ml-auto">
-          astronaut
-        </div>
+        {/* Painter character */}
+        <img
+          src="/imgs/join-ralph-painter.svg"
+          alt=""
+          aria-hidden="true"
+          className="relative z-10 block mt-8 ml-auto pointer-events-none select-none"
+          style={{ width: 153, height: 'auto', transform: 'translate(20px, -100px)' }}
+        />
       </div>
 
       {/* Right: tiers */}
@@ -362,22 +449,20 @@ function Slide2({
 }) {
   return (
     <div>
-      <BackButton onClick={onBack} />
-      <div className="grid md:grid-cols-[1fr_auto] gap-8 md:gap-16 items-start">
-        {/* Left: methods */}
-        <div className="max-w-md w-full">
-          <button
-            type="button"
-            onClick={onGoogle}
-            disabled={googlePending}
-            className="w-full flex items-center justify-center gap-3 rounded-lg bg-white border-2 border-black py-3 text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
-            style={{
-              fontFamily: "'Gooper Trial', serif",
-              fontWeight: 600,
-              fontSize: 16,
-              lineHeight: 1,
-            }}
-          >
+      {/* Centred form column. Astronaut is absolutely positioned just to the
+        right of the form (decorative; hidden on mobile where there's no room). */}
+      <div className="relative mx-auto w-full" style={{ maxWidth: 361 }}>
+        <BackButton onClick={onBack} />
+        <img
+          src="/imgs/join-raph-astronaut.svg"
+          alt=""
+          aria-hidden="true"
+          className="hidden md:block absolute left-full top-1/2 -translate-y-1/2 ml-2 pointer-events-none select-none"
+          style={{ width: 182, height: 'auto' }}
+        />
+        <div className="w-full">
+          {/* Google — shadow button style */}
+          <ShadowButton onClick={onGoogle} disabled={googlePending}>
             <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -397,14 +482,21 @@ function Slide2({
               />
             </svg>
             {googlePending ? 'Opening Google…' : 'Continue with Google'}
-          </button>
+          </ShadowButton>
 
-          <div className="flex items-center my-5">
-            <div className="flex-1 h-px bg-black/15" />
-            <span className="px-3 text-xs uppercase tracking-widest text-black/60">
+          <div className="flex items-center justify-center my-5">
+            <span
+              style={{
+                fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+                fontWeight: 600,
+                fontSize: 16,
+                lineHeight: 1,
+                letterSpacing: 0,
+                color: '#000000',
+              }}
+            >
               or
             </span>
-            <div className="flex-1 h-px bg-black/15" />
           </div>
 
           <form onSubmit={onSubmit} className="space-y-3">
@@ -415,32 +507,50 @@ function Slide2({
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg bg-gray-200 px-4 py-3 text-black text-sm border border-transparent focus:outline-none focus:border-ralph-pink"
+              className={fieldClass}
+              style={fieldStyle}
             />
-            <div className="flex justify-center pt-1">
-              <Button label="Continue" type="submit" minWidth={230} />
-            </div>
+            <button
+              type="submit"
+              className="w-full hover:bg-black/5 transition-colors"
+              style={{
+                height: 43,
+                border: '2px solid #00000066',
+                backgroundColor: 'transparent',
+                color: 'black',
+                fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+                fontWeight: 600,
+                fontSize: 16,
+                lineHeight: 1,
+                cursor: 'pointer',
+              }}
+            >
+              Continue
+            </button>
           </form>
 
-          <p className="text-xs text-black/60 mt-4 text-center">
+          <p
+            className="text-black mt-4 text-center mx-auto"
+            style={{
+              fontFamily: 'var(--font-body), Arial, sans-serif',
+              fontWeight: 600,
+              fontSize: 12,
+              lineHeight: 1,
+              letterSpacing: 0,
+              maxWidth: '80%',
+            }}
+          >
             By signing up, you are creating an account with Ralph and agree to
             Ralph&apos;s{' '}
-            <a href="/legal/terms" className="underline">
+            <a href="/legal/terms" className="underline font-extrabold">
               Terms
             </a>{' '}
             and{' '}
-            <a href="/legal/privacy" className="underline">
+            <a href="/legal/privacy" className="underline font-extrabold">
               Privacy Policy
             </a>
             .
           </p>
-        </div>
-
-        {/* Right: character placeholder */}
-        <div className="hidden md:block">
-          <div className="w-40 h-56 bg-black/5 border border-black/30 rounded flex items-center justify-center text-[10px] text-gray-500">
-            astronaut
-          </div>
         </div>
       </div>
     </div>
@@ -478,18 +588,38 @@ function Slide3({
 }) {
   return (
     <div>
-      <BackButton onClick={onBack} />
-      <div className="grid md:grid-cols-[1fr_auto] gap-8 md:gap-16 items-start">
-        <div className="max-w-md w-full">
+      {/* Centred form column with the eyes character to its right (matches Slide 2). */}
+      <div className="relative mx-auto w-full" style={{ maxWidth: 361 }}>
+        <BackButton onClick={onBack} />
+        <img
+          src="/imgs/join-ralph-eyes.svg"
+          alt=""
+          aria-hidden="true"
+          className="hidden md:block absolute left-full top-1/2 -translate-y-1/2 ml-2 pointer-events-none select-none"
+          style={{ width: 120, height: 'auto' }}
+        />
+        <div className="w-full">
           <h2
             className="text-2xl text-black text-center mb-2"
             style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
           >
             Complete your account
           </h2>
-          <p className="text-sm text-black/70 text-center mb-6">{email}</p>
+          <p
+            className="text-center mb-6"
+            style={{
+              fontFamily: 'var(--font-body), Arial, sans-serif',
+              fontWeight: 600,
+              fontSize: 13,
+              lineHeight: '33px',
+              letterSpacing: 0,
+              color: '#000',
+            }}
+          >
+            {email}
+          </p>
 
-          <form action={signupFormAction} className="space-y-3">
+          <form action={signupFormAction}>
             {/* Server-action FormData: combine first + last into `name`. */}
             <input
               type="hidden"
@@ -498,42 +628,50 @@ function Slide3({
             />
             <input type="hidden" name="email" value={email} />
 
-            <input
-              type="text"
-              autoComplete="given-name"
-              required
-              placeholder="First name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="w-full rounded-lg bg-gray-200 px-4 py-3 text-black text-sm border border-transparent focus:outline-none focus:border-ralph-pink"
-            />
-            <input
-              type="text"
-              autoComplete="family-name"
-              required
-              placeholder="Last name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="w-full rounded-lg bg-gray-200 px-4 py-3 text-black text-sm border border-transparent focus:outline-none focus:border-ralph-pink"
-            />
-            <input
-              type="password"
-              name="password"
-              autoComplete="new-password"
-              required
-              minLength={10}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg bg-gray-200 px-4 py-3 text-black text-sm border border-transparent focus:outline-none focus:border-ralph-pink"
-            />
-            <p className="text-xs text-black/60">
-              Minimum 10 characters.
-            </p>
+            {/* Name fields */}
+            <div className="space-y-3">
+              <input
+                type="text"
+                autoComplete="given-name"
+                required
+                placeholder="First name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className={fieldClass}
+                style={fieldStyle}
+              />
+              <input
+                type="text"
+                autoComplete="family-name"
+                required
+                placeholder="Last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className={fieldClass}
+                style={fieldStyle}
+              />
+            </div>
+
+            {/* Password — double gap above to separate from the name fields */}
+            <div className="mt-6 space-y-2">
+              <input
+                type="password"
+                name="password"
+                autoComplete="new-password"
+                required
+                minLength={10}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={fieldClass}
+                style={fieldStyle}
+              />
+              <p className="text-xs text-black/60">Minimum 10 characters.</p>
+            </div>
 
             {/* Marketing opt-in — GDPR requires this to be an unchecked,
                 granular, explicit choice (no pre-ticked boxes). */}
-            <label className="flex items-start gap-2 pt-1 cursor-pointer text-xs text-black/75">
+            <label className="flex items-start gap-2 mt-4 cursor-pointer text-xs text-black">
               <input
                 type="checkbox"
                 name="marketing_opt_in"
@@ -546,25 +684,17 @@ function Slide3({
             </label>
 
             {signupState && !signupState.ok && (
-              <p className="text-sm text-red-600" role="alert">
+              <p className="text-sm text-red-600 mt-3" role="alert">
                 {signupState.message}
               </p>
             )}
 
-            <div className="flex justify-center pt-1">
-              <Button
-                label={signupPending ? 'Creating account…' : 'Continue'}
-                type="submit"
-                minWidth={230}
-              />
+            <div className="mt-4">
+              <ShadowButton type="submit" disabled={signupPending}>
+                {signupPending ? 'Creating account…' : 'Continue'}
+              </ShadowButton>
             </div>
           </form>
-        </div>
-
-        <div className="hidden md:block">
-          <div className="w-40 h-56 bg-black/5 border border-black/30 rounded flex items-center justify-center text-[10px] text-gray-500">
-            character
-          </div>
         </div>
       </div>
     </div>
@@ -604,23 +734,39 @@ function Slide4({
 
   return (
     <div>
-      <BackButton onClick={onBack} />
-      <div className="grid md:grid-cols-[auto_1fr] gap-8 md:gap-16 items-start">
-        {/* Left: character placeholder */}
-        <div className="hidden md:block">
-          <div className="w-32 h-40 bg-black/5 border border-black/30 rounded flex items-center justify-center text-[10px] text-gray-500">
-            character
+      {/* Centred column with the character to the side. Wider than Slides 2 & 3. */}
+      <div className="relative mx-auto w-full text-center" style={{ maxWidth: 620 }}>
+        <BackButton onClick={onBack} />
+        <div className="w-full">
+          {/* Title with the wave character to its left */}
+          <div className="relative flex justify-center mb-2">
+            <h2
+              className="relative text-2xl text-black"
+              style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
+            >
+              <img
+                src="/imgs/join-ralph-wave.svg"
+                alt=""
+                aria-hidden="true"
+                className="hidden md:block absolute right-full top-1/2 mr-3 pointer-events-none select-none"
+                style={{ width: 120, height: 'auto', transform: 'translateY(calc(-50% - 40px))' }}
+              />
+              Verify your email{firstName ? `, ${firstName}` : ''}
+            </h2>
           </div>
-        </div>
-
-        <div className="max-w-md w-full">
-          <h2
-            className="text-2xl text-black mb-2"
-            style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
+          <p
+            className="mb-6"
+            style={{
+              fontFamily: 'var(--font-body), Arial, sans-serif',
+              fontWeight: 600,
+              fontSize: 13,
+              lineHeight: '33px',
+              letterSpacing: 0,
+              color: '#000',
+            }}
           >
-            Verify your email{firstName ? `, ${firstName}` : ''}
-          </h2>
-          <p className="text-sm text-black/70 mb-6">{email}</p>
+            {email}
+          </p>
 
           <h3
             className="text-base text-black mb-3"
@@ -628,29 +774,31 @@ function Slide4({
           >
             Welcome to Ralph&apos;s World
           </h3>
-          <p className="text-sm text-black/80 mb-4 leading-relaxed">
+          <p className="mb-4" style={bodyCopyStyle}>
             Just one more step — we need to confirm your email, so you don&apos;t
             miss out on updates, offers, events and all the other good stuff.
           </p>
-          <p className="text-sm text-black/80 mb-6 leading-relaxed">
+          <p className="mb-6" style={bodyCopyStyle}>
             We&apos;ve already pinged you an email to the above address. Simply
             press the link in that email to verify.
           </p>
 
-          <p className="text-sm text-black/60 mb-2">No email? Check spam.</p>
-          <p className="text-sm text-black/60 mb-6">Still nothing?</p>
+          <p className="mb-2" style={bodyCopyStyle}>No email? Check spam.</p>
+          <p className="mb-6" style={bodyCopyStyle}>Still nothing?</p>
 
-          <Button
-            label={
-              resending
-                ? 'Sending…'
-                : resent
-                  ? 'Sent — check your inbox'
-                  : 'Send a new verify link'
-            }
-            onClick={handleResend}
-            minWidth={230}
-          />
+          <div className="flex justify-center">
+            <Button
+              label={
+                resending
+                  ? 'Sending…'
+                  : resent
+                    ? 'Sent — check your inbox'
+                    : 'Send a new verify link'
+              }
+              onClick={handleResend}
+              minWidth={230}
+            />
+          </div>
         </div>
       </div>
     </div>

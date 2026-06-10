@@ -88,6 +88,29 @@ const BUBBLES = [
 
 Scroll down → cloud rises → wide gap → circles spread out. Scroll up → cloud descends → bubbles bunch closer to the forehead.
 
+The bubble circles are solid brand yellow (`#FBC000`), no stroke.
+
+### Experiment info block (fixed height, crossfade)
+
+Below the cloud sits the active experiment's badge / title / description / CTA. To avoid the layout "jolt" of the block resizing as you move between entries with different description lengths, **every entry is rendered into the same CSS grid cell** (`gridArea: '1 / 1'`):
+
+- The grid container auto-sizes to the **tallest** entry, so the block height never changes between slides (no JS measuring, recalculates on resize/font-load).
+- Only the active entry is `opacity: 1`; the rest are `opacity: 0` and crossfade via a `transition-opacity duration-300`.
+- Inactive entries are inert: `pointer-events: none`, `aria-hidden`, and `tabIndex={-1}` so their CTAs aren't clickable or focusable.
+- This replaced an earlier Framer Motion `layout` + `AnimatePresence` height animation, which read as too jolty.
+
+Trade-off: all entries' copy is in the DOM at once (hidden) — fine for the handful of lab items; worth revisiting only if the list grows very large.
+
+### Typography
+
+| Element     | Font                        | Weight | Size | Line height |
+| ----------- | --------------------------- | ------ | ---- | ----------- |
+| Title       | Gooper Trial (`--font-intro`) | 600  | 22px | 100%        |
+| Description | Roboto (`--font-body`)        | 600  | 16px | 30px        |
+| CTA link    | Gooper Trial (`--font-intro`) | 600  | 18px | —           |
+
+The CTA (`Check it out →` / `Subscribe to access →`) is ralph-pink in the title's Gooper face, via a shared `ctaStyle` constant. All three are centred and black (per the white-surface text convention).
+
 ---
 
 ## `LabClient.tsx`
@@ -147,7 +170,9 @@ Added to `public/imgs/`:
 - `jar-mask.svg` — mask used to clip experiment thumbnails to the jar interior
 - `conveyor-belt.svg` — supporting illustration for the lab section
 - `labs-character.svg` — the character rendered via portal at the bottom-left
-- `labs-cloud.svg` + `labs-cloud-mask.svg` + `labs-cloud_overlay.png` — the cloud above the active jar (thought-bubble trail target)
+- `labs-cloud.svg` — the cloud backdrop above the active jar (thought-bubble trail target)
+- `labs-cloud-mask.svg` — clips the carousel to the cloud silhouette (CSS `mask-image`)
+- `labs-cloud_overlay.png` — superseded by the mask approach; kept in the repo but no longer referenced
 - `text-come-up-to-the-lab.svg` — new section-intro wordmark
 
 ---

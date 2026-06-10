@@ -166,3 +166,44 @@ export const getSiteCopy = unstable_cache(
   ['site-copy'],
   { revalidate: 300, tags: ['site-copy'] }
 )
+
+/**
+ * Live (UNCACHED) read of just the TV freeview gate settings.
+ *
+ * The freeview gate is an admin control that must take effect reliably —
+ * relying on the 300s `getSiteCopy` unstable_cache + ISR page cache +
+ * cross-service revalidation proved too fragile (the toggle appeared not
+ * to work because the public page kept serving a cached render baked from
+ * a cached fetch). This reads the two keys directly on every call. Paired
+ * with `export const dynamic = 'force-dynamic'` on app/tv/page.tsx, the
+ * gate always reflects the current DB value. The values are tiny and TV
+ * is not a hot path, so the uncached read is a fine trade for correctness.
+ */
+export async function getTvPreviewSettings(): Promise<{
+  enabled: boolean
+  seconds: number
+}> {
+  const defaults = { enabled: true, seconds: 600 }
+  try {
+    const db = getDb()
+    const rows = await db
+      .select()
+      .from(homepageConfig)
+      .where(
+        inArray(homepageConfig.key, ['tv_preview_enabled', 'tv_preview_seconds'])
+      )
+    let enabled = defaults.enabled
+    let seconds = defaults.seconds
+    for (const row of rows) {
+      if (typeof row.value !== 'string') continue
+      if (row.key === 'tv_preview_enabled') enabled = row.value !== 'false'
+      if (row.key === 'tv_preview_seconds') {
+        const n = Number(row.value)
+        if (Number.isFinite(n) && n >= 0) seconds = Math.floor(n)
+      }
+    }
+    return { enabled, seconds }
+  } catch {
+    return defaults
+  }
+}

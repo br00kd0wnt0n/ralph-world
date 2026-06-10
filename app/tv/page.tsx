@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
-import { getSiteCopy } from '@/lib/data/site-copy'
+import { getSiteCopy, getTvPreviewSettings } from '@/lib/data/site-copy'
 import RalphTVClient from '@/components/tv/RalphTVClient'
 
-export const revalidate = 60
+// Force dynamic so the freeview gate setting is always read live. The page
+// was previously ISR-cached (revalidate=60), which baked previewEnabled
+// into a stale prerender — toggling the gate in the CMS didn't reliably
+// surface here. The bulk copy still comes from the cached getSiteCopy;
+// only the gate flag is read fresh via getTvPreviewSettings().
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Ralph TV',
@@ -16,7 +21,10 @@ export const metadata: Metadata = {
 }
 
 export default async function RalphTVPage() {
-  const copy = await getSiteCopy()
+  const [copy, preview] = await Promise.all([
+    getSiteCopy(),
+    getTvPreviewSettings(),
+  ])
 
   return (
     <RalphTVClient
@@ -26,8 +34,8 @@ export default async function RalphTVPage() {
       offlineMessage={copy.tv_offline_message}
       subscribeHeading={copy.tv_subscribe_heading}
       subscribeBody={copy.tv_subscribe_body}
-      previewEnabled={copy.tv_preview_enabled !== 'false'}
-      previewSeconds={Number(copy.tv_preview_seconds)}
+      previewEnabled={preview.enabled}
+      previewSeconds={preview.seconds}
       copy={copy}
     />
   )

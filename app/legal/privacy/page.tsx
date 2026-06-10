@@ -19,7 +19,7 @@ export default function PrivacyPage() {
   return (
     <article>
       <h1>Privacy Policy</h1>
-      <p className="text-black/60 text-sm">
+      <p className="text-white/60 text-sm">
         Last updated:{' '}
         <strong>
           [LEGAL: insert effective date — must match POLICY_VERSION in

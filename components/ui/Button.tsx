@@ -11,6 +11,10 @@ interface ButtonProps {
   minWidth?: number
   // If true, border + shadow flip from black to ralph-pink.
   pink?: boolean
+  // If true, the button fills ralph-pink with white text. Border + shadow
+  // stay black (unless `pink` is also set) — a solid pink button rather
+  // than a pink-outlined white one.
+  filled?: boolean
   // type for the rendered <button>. Defaults to "button" so it never
   // accidentally submits a parent form. Pass "submit" to use as a form
   // submit control.
@@ -59,6 +63,7 @@ export default function Button({
   className = '',
   minWidth,
   pink = false,
+  filled = false,
   type = 'button',
   disabled = false,
 }: ButtonProps) {
@@ -66,6 +71,7 @@ export default function Button({
     ...btnStyles,
     ...(minWidth !== undefined ? { minWidth } : null),
     ...(pink ? { border: `2px solid ${RALPH_PINK}` } : null),
+    ...(filled ? { backgroundColor: RALPH_PINK, color: 'white' } : null),
     ...(disabled ? { opacity: 0.55, cursor: 'not-allowed' } : null),
   }
   const mergedShadowStyles: React.CSSProperties = {

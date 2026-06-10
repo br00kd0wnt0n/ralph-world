@@ -1,19 +1,16 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import RalphOMatic from './RalphOMatic'
 import LabGrid from './LabGrid'
+import SectionIntro from '@/components/layout/SectionIntro'
 import SubscribeModal from '@/components/layout/SubscribeModal'
-import { SPIN_DURATION_MS } from '@/lib/animation/lab'
 import {
   sectionContainerVariants,
-  sectionBgNoIntroVariants,
-  sectionContentNoIntroVariants,
+  sectionBgVariants,
+  sectionContentVariants,
 } from '@/lib/animation/page-transitions'
-import { isSafeUrl } from '@/lib/safe-url'
 import type { LabItem } from '@/lib/data/lab'
-import type { MachineState } from './RalphOMatic.types'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 interface LabClientProps {
@@ -21,41 +18,8 @@ interface LabClientProps {
   copy?: Partial<SiteCopy>
 }
 
-export default function LabClient({ items }: LabClientProps) {
-  const [state, setState] = useState<MachineState>('idle')
-  const [settledItemId, setSettledItemId] = useState<string | null>(null)
+export default function LabClient({ items, copy }: LabClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
-
-  // Only items with an external URL are valid candidates for the machine —
-  // otherwise tapping the settled bell jar would do nothing.
-  const machineItems = items.filter((i) => Boolean(i.externalUrl))
-
-  const handleLeverPull = useCallback(() => {
-    if (state === 'spinning') return
-    if (machineItems.length === 0) return
-
-    setState('lever-pulled')
-    setSettledItemId(null)
-
-    setTimeout(() => setState('spinning'), 300)
-
-    setTimeout(() => {
-      const picked =
-        machineItems[Math.floor(Math.random() * machineItems.length)]
-      setSettledItemId(picked.id)
-      setState('settled')
-    }, 300 + SPIN_DURATION_MS)
-  }, [state, machineItems])
-
-  const handleItemSelect = useCallback(
-    (itemId: string) => {
-      const item = items.find((i) => i.id === itemId)
-      if (item?.externalUrl && isSafeUrl(item.externalUrl)) {
-        window.open(item.externalUrl, '_blank', 'noopener,noreferrer')
-      }
-    },
-    [items]
-  )
 
   return (
     <motion.div
@@ -63,10 +27,22 @@ export default function LabClient({ items }: LabClientProps) {
       initial="initial"
       animate="animate"
     >
+      {/* Intro section - animates itself via heroContainerVariants */}
+      <SectionIntro
+        section="lab"
+        heading={copy?.lab_hero_heading ?? 'Lab'}
+        lines={[
+          copy?.lab_hero_intro ??
+            "Tools, experiments, generators and weird little projects. Everything we've been tinkering with lately.",
+          copy?.lab_hero_cta ??
+            'What you waiting for — pull the lever to see what comes out.',
+        ]}
+      />
+
       {/* Planet + white bg layered with content */}
       <section className="relative">
-        {/* Background - animates FIRST */}
-        <motion.div variants={sectionBgNoIntroVariants} className="absolute inset-0 z-0">
+        {/* Background - animates SECOND after intro establishes height */}
+        <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
@@ -97,30 +73,17 @@ export default function LabClient({ items }: LabClientProps) {
           />
         </motion.div>
 
-        {/* Content layer - animates SECOND */}
+        {/* Content layer - cloud-jar carousel, animates after bg */}
         <motion.div
-          variants={sectionContentNoIntroVariants}
+          variants={sectionContentVariants}
           className="relative z-10 px-6 pb-8"
-          style={{ paddingTop: 200 }}
+          style={{ paddingTop: 60 }}
         >
           <div className="max-w-6xl mx-auto">
-            <RalphOMatic
-              items={machineItems}
-              state={state}
-              onLeverPull={handleLeverPull}
-              onItemSelect={handleItemSelect}
-              settledItemId={settledItemId}
-            />
+            <LabGrid items={items} onSubscribe={() => setSubscribeOpen(true)} />
           </div>
         </motion.div>
       </section>
-
-      <motion.div variants={sectionContentNoIntroVariants}>
-        <LabGrid
-          items={items}
-          onSubscribe={() => setSubscribeOpen(true)}
-        />
-      </motion.div>
 
       <SubscribeModal
         isOpen={subscribeOpen}

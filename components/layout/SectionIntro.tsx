@@ -9,7 +9,7 @@ const TITLE_IMAGES: Record<string, { src: string; w: number; h: number; maxWidth
   magazine: { src: '/imgs/text_fun_glossy_mag.svg', w: 1150, h: 264 },
   events: { src: '/imgs/text_lets_meet_up.svg', w: 1070, h: 226 },
   shop: { src: '/imgs/text_buy_ralph_stuff.svg', w: 952, h: 211 },
-  lab: { src: '/imgs/title_lab.png', w: 202, h: 116 },
+  lab: { src: '/imgs/text-come-up-to-the-lab.svg', w: 623, h: 105, maxWidth: 520 },
   play: { src: '/imgs/text_play_with_ralph.svg', w: 418, h: 100, maxWidth: 418 },
 }
 

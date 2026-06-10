@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { initSentryClient } from '@/lib/sentry-client-init'
+import Button from '@/components/ui/Button'
 
 const STORAGE_KEY = 'ralph-cookie-consent'
 type StoredConsent = 'cookies_all' | 'cookies_necessary'
@@ -113,23 +114,18 @@ export default function CookieBanner() {
           </a>
           .
         </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            type="button"
+        <div className="flex flex-col sm:flex-row sm:justify-end gap-4">
+          <Button
+            label="Necessary only"
             onClick={() => choose('cookies_necessary')}
             disabled={busy}
-            className="flex-1 px-4 py-2.5 rounded-md border-2 border-black bg-white text-black text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
-          >
-            Necessary only
-          </button>
-          <button
-            type="button"
+          />
+          <Button
+            label="Accept all"
             onClick={() => choose('cookies_all')}
             disabled={busy}
-            className="flex-1 px-4 py-2.5 rounded-md border-2 border-black bg-ralph-pink text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            Accept all
-          </button>
+            filled
+          />
         </div>
       </div>
     </div>

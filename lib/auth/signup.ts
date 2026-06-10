@@ -130,6 +130,25 @@ export async function signupWithPassword(args: {
       granted: true,
       source: 'signup_form',
     })
+    // Fire-and-forget Mailchimp subscription. Failures (timeout, bad
+    // credentials, Mailchimp 5xx) must NOT block signup — the consent
+    // row is the binding record and a sweep job / webhook can resync.
+    void (async () => {
+      try {
+        const { subscribeToAudience } = await import('@/lib/mailchimp')
+        const result = await subscribeToAudience({
+          email,
+          name: args.name ?? null,
+          status: 'subscribed',
+          tags: ['signup_form'],
+        })
+        if (!result.ok && !('skipped' in result)) {
+          console.warn('[signup] mailchimp subscribe failed:', result.error)
+        }
+      } catch (err) {
+        console.error('[signup] mailchimp subscribe threw:', err)
+      }
+    })()
   }
 
   await sendVerificationEmail({ userId, email, name: args.name ?? null, appUrl: args.appUrl, now: args.now })

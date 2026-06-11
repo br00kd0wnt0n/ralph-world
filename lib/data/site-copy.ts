@@ -193,16 +193,6 @@ export async function getTvPreviewSettings(): Promise<{
         inArray(homepageConfig.key, ['tv_preview_enabled', 'tv_preview_seconds'])
       )
 
-    // TEMP instrumentation (remove once the gate read is confirmed) — logs
-    // exactly what the deployed driver returns for these keys, so we can
-    // see the real value + type in Railway logs.
-    console.warn(
-      '[tv-preview] rows:',
-      JSON.stringify(
-        rows.map((r) => ({ key: r.key, value: r.value, type: typeof r.value }))
-      )
-    )
-
     let enabled = defaults.enabled
     let seconds = defaults.seconds
     for (const row of rows) {

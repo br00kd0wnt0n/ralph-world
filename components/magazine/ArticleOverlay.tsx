@@ -83,6 +83,8 @@ export default function ArticleOverlay({
     caption?: string
     imageUrl?: string
     imageFit?: string
+    wrapSide?: string
+    carouselImages?: string[]
     videoUrl?: string
     quote?: string
     attribution?: string
@@ -113,7 +115,13 @@ export default function ArticleOverlay({
   if (gateReason) {
     let wordCount = 0
     for (let i = 0; i < blocks.length; i++) {
-      if (blocks[i].type === 'ArticleText' && blocks[i].text) {
+      // Count body copy from text blocks AND the portrait-wrap block (both
+      // carry rich-text bodies) toward the paywall preview cut-point.
+      if (
+        (blocks[i].type === 'ArticleText' ||
+          blocks[i].type === 'ArticleImageTextWrap') &&
+        blocks[i].text
+      ) {
         // Strip HTML tags before counting so rich-text content counts correctly
         const plain = blocks[i].text!.replace(/<[^>]*>/g, ' ')
         wordCount += plain.split(/\s+/).filter(Boolean).length

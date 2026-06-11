@@ -15,6 +15,29 @@ function verifyBearer(authHeader: string | null, secret: string): boolean {
   }
 }
 
+// Allowlist — the CMS only ever revalidates these. Constrains the blast
+// radius if REVALIDATE_SECRET leaks (no arbitrary-path cache poisoning / DoS).
+const ALLOWED_TAGS = new Set(['site-copy'])
+const ALLOWED_PATH_PREFIXES = [
+  '/',
+  '/magazine',
+  '/events',
+  '/tv',
+  '/shop',
+  '/lab',
+  '/site-copy',
+  '/homepage',
+  '/issues',
+  '/case-studies',
+]
+const MAX_ITEMS = 50
+
+function pathAllowed(p: string): boolean {
+  if (typeof p !== 'string' || p.length > 256 || !p.startsWith('/')) return false
+  if (p === '/') return true
+  return ALLOWED_PATH_PREFIXES.some((prefix) => prefix !== '/' && (p === prefix || p.startsWith(prefix + '/')))
+}
+
 /**
  * On-demand revalidation triggered by the CMS after content changes.
  * Secured with REVALIDATE_SECRET shared between ralph-world and ralph-cms.
@@ -50,9 +73,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
   }
 
+  // Constrain to the allowlist + cap count before doing any work.
+  paths = paths.filter(pathAllowed).slice(0, MAX_ITEMS)
+  tags = tags.filter((t) => ALLOWED_TAGS.has(t)).slice(0, MAX_ITEMS)
+
   if (paths.length === 0 && tags.length === 0) {
     return NextResponse.json(
-      { error: 'No paths or tags provided' },
+      { error: 'No allowed paths or tags provided' },
       { status: 400 }
     )
   }

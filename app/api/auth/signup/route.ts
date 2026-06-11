@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { signupWithPassword } from '@/lib/auth/signup'
+import { rateLimited, clientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -14,6 +15,12 @@ export const runtime = 'nodejs'
  * land in logs.
  */
 export async function POST(request: NextRequest) {
+  if (rateLimited(`signup:${clientIp(request.headers)}`, 5, 15 * 60_000)) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited', message: 'Too many attempts. Please try again in a few minutes.' },
+      { status: 429 }
+    )
+  }
   let body: unknown
   try {
     body = await request.json()

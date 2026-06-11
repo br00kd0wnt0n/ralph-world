@@ -189,17 +189,20 @@ DO $$
 DECLARE
   bad_priv text;
 BEGIN
-  -- ralph_world must NOT have UPDATE or DELETE on append-only tables.
+  -- ralph_world must NOT have UPDATE or DELETE on the truly append-only
+  -- tables. stripe_events is deliberately EXCLUDED here — step 6 grants it
+  -- UPDATE (status flips), so listing it would make this assertion abort a
+  -- fresh apply (the contradiction the security sweep flagged).
   SELECT string_agg(table_name || '.' || privilege_type, ', ')
     INTO bad_priv
     FROM information_schema.table_privileges
    WHERE grantee = 'ralph_world'
      AND table_schema = 'public'
-     AND table_name IN ('audit_log', 'consent_log', 'webhook_log', 'stripe_events')
+     AND table_name IN ('audit_log', 'consent_log', 'webhook_log')
      AND privilege_type IN ('UPDATE', 'DELETE');
   IF bad_priv IS NOT NULL THEN
     RAISE EXCEPTION 'ralph_world has UPDATE/DELETE on append-only tables: %', bad_priv;
   END IF;
-  RAISE NOTICE 'OK — audit_log / consent_log / webhook_log / stripe_events are append-only for ralph_world';
+  RAISE NOTICE 'OK — audit_log / consent_log / webhook_log are append-only for ralph_world';
 END
 $$;

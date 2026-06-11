@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { logConsent, type ConsentType } from '@/lib/consent'
+import { rateLimited, clientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -31,6 +32,11 @@ const VALID_TYPES: ConsentType[] = [
 ]
 
 export async function POST(req: NextRequest) {
+  // Anonymous + append-only (consent_log has no DELETE path) — cap per IP so
+  // it can't be used to flood the table. Legit use is 1-2 clicks per session.
+  if (rateLimited(`consent:${clientIp(req.headers)}`, 30, 15 * 60_000)) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
   let body: { consentType?: string; granted?: boolean }
   try {
     body = await req.json()

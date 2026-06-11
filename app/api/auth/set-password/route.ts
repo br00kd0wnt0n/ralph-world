@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { consumePasswordResetToken } from '@/lib/auth/password-reset'
-import { hashPassword } from '@/lib/auth/passwords'
+import { hashPassword, validatePassword } from '@/lib/auth/passwords'
 import { logAction } from '@/lib/audit'
 import { getDb } from '@/lib/db'
 import { users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
+import { rateLimited, clientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -16,6 +17,12 @@ export const runtime = 'nodejs'
  * On success redirects to /login?reset=ok.
  */
 export async function POST(request: NextRequest) {
+  if (rateLimited(`set-password:${clientIp(request.headers)}`, 10, 15 * 60_000)) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited' },
+      { status: 429 }
+    )
+  }
   let email: string | undefined
   let token: string | undefined
   let password: string | undefined
@@ -33,8 +40,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'missing_fields' }, { status: 400 })
   }
 
-  if (password.length < 8) {
-    return NextResponse.json({ ok: false, error: 'password_too_short' }, { status: 400 })
+  // Use the same policy as signup so a reset can't set a weaker password
+  // than the signup floor (was hardcoded < 8; signup requires 10).
+  const pwCheck = validatePassword(password)
+  if (!pwCheck.ok) {
+    return NextResponse.json(
+      { ok: false, error: 'password_too_short', message: pwCheck.reason },
+      { status: 400 }
+    )
   }
 
   const result = await consumePasswordResetToken({ email, token })

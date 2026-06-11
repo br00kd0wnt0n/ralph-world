@@ -21,13 +21,18 @@ export function verifyShopifyHmac(args: {
   if (!hmacHeader) {
     return { ok: false, reason: 'missing X-Shopify-Hmac-Sha256 header' }
   }
-  const computed = createHmac('sha256', secret).update(body, 'utf8').digest('base64')
-  const expected = Buffer.from(computed, 'utf8')
-  const provided = Buffer.from(hmacHeader, 'utf8')
-  if (expected.length !== provided.length) {
-    return { ok: false, reason: 'signature length mismatch' }
+  // Decode both sides to the raw 32-byte SHA-256 digest and timingSafeEqual
+  // those (mirrors the Stripe/Resend verifiers). Comparing base64 *text* as
+  // UTF-8 bytes — as the old code did — both leaks length via the early
+  // return and mishandles malformed headers. HMAC-SHA256 is always 32 bytes,
+  // so a length mismatch just means the signature is wrong; report it the
+  // same way as a content mismatch so nothing is leaked.
+  const computed = createHmac('sha256', secret).update(body, 'utf8').digest() // 32-byte Buffer
+  const provided = Buffer.from(hmacHeader, 'base64')
+  if (provided.length !== computed.length) {
+    return { ok: false, reason: 'signature did not verify' }
   }
-  if (timingSafeEqual(expected, provided)) {
+  if (timingSafeEqual(computed, provided)) {
     return { ok: true }
   }
   return { ok: false, reason: 'signature did not verify' }

@@ -1,25 +1,22 @@
 import { NextResponse } from 'next/server'
-import postgres from 'postgres'
+import { sql } from 'drizzle-orm'
+import { getDb } from '@/lib/db'
 
+export const runtime = 'nodejs'
+
+/**
+ * Liveness + DB reachability. Uses the shared pooled client (getDb) rather
+ * than opening a fresh postgres() connection per request — an unauthenticated
+ * flood of /api/health could otherwise exhaust Postgres max_connections.
+ */
 export async function GET() {
-  const url = process.env.DATABASE_URL
-
-  if (!url) {
-    return NextResponse.json(
-      { status: 'error', db: 'not configured' },
-      { status: 503 }
-    )
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ status: 'error', db: 'not configured' }, { status: 503 })
   }
-
   try {
-    const sql = postgres(url, { max: 1 })
-    await sql`SELECT 1`
-    await sql.end()
+    await getDb().execute(sql`SELECT 1`)
     return NextResponse.json({ status: 'ok', db: 'connected' })
   } catch {
-    return NextResponse.json(
-      { status: 'error', db: 'unreachable' },
-      { status: 503 }
-    )
+    return NextResponse.json({ status: 'error', db: 'unreachable' }, { status: 503 })
   }
 }

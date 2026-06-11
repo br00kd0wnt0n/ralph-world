@@ -4,6 +4,7 @@ import { sendTemplate } from '@/lib/email/send'
 import { getDb } from '@/lib/db'
 import { users, profiles } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
+import { rateLimited, clientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -24,6 +25,12 @@ function publicBaseUrl(): string {
  * to prevent user enumeration.
  */
 export async function POST(request: NextRequest) {
+  // Rate limit to stop reset-email bombing (per IP). Returns the same
+  // enumeration-safe 200 shape would be ideal, but a 429 here doesn't leak
+  // account existence (it's IP-scoped, not email-scoped).
+  if (rateLimited(`reset:${clientIp(request.headers)}`, 5, 15 * 60_000)) {
+    return NextResponse.json({ ok: true }, { status: 200 })
+  }
   let email: string | undefined
   try {
     const body = await request.json()

@@ -122,10 +122,7 @@ export default function BlockRenderer({ blocks }: { blocks: ContentBlock[] }) {
 
           case 'ArticleQuote':
             return (
-              <blockquote
-                key={i}
-                className="border-l-4 border-ralph-orange pl-6 py-2"
-              >
+              <blockquote key={i} className="py-4 text-center">
                 <p className="text-xl md:text-2xl font-bold text-gray-800 italic leading-snug">
                   &ldquo;{block.quote}&rdquo;
                 </p>

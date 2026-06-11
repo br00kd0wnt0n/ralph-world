@@ -113,7 +113,7 @@ export const DEFAULT_COPY = {
   subscribe_paid_body: 'Quarterly mag + TV channel + everything else',
   subscribe_paid_cta: 'Join for £3 per month',
   subscribe_paid_smallprint:
-    '* Payment taken once per quarter — not monthly. Includes VAT and postage.',
+    '* Billed monthly at £3. Includes VAT and postage. Cancel anytime from your account.',
 
   // Footer
   footer_tagline: 'The Entertainment People',

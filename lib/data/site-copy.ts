@@ -192,18 +192,45 @@ export async function getTvPreviewSettings(): Promise<{
       .where(
         inArray(homepageConfig.key, ['tv_preview_enabled', 'tv_preview_seconds'])
       )
+
+    // TEMP instrumentation (remove once the gate read is confirmed) — logs
+    // exactly what the deployed driver returns for these keys, so we can
+    // see the real value + type in Railway logs.
+    console.warn(
+      '[tv-preview] rows:',
+      JSON.stringify(
+        rows.map((r) => ({ key: r.key, value: r.value, type: typeof r.value }))
+      )
+    )
+
     let enabled = defaults.enabled
     let seconds = defaults.seconds
     for (const row of rows) {
-      if (typeof row.value !== 'string') continue
-      if (row.key === 'tv_preview_enabled') enabled = row.value !== 'false'
+      const v = row.value
+      if (row.key === 'tv_preview_enabled') {
+        // Robust to every encoding the jsonb column might round-trip as:
+        // boolean false, string 'false', or quote-wrapped '"false"'.
+        // Gate is ON unless the value explicitly reads false.
+        enabled = !valueReadsFalse(v)
+      }
       if (row.key === 'tv_preview_seconds') {
-        const n = Number(row.value)
+        const s = typeof v === 'string' ? v.replace(/^"+|"+$/g, '') : v
+        const n = Number(s)
         if (Number.isFinite(n) && n >= 0) seconds = Math.floor(n)
       }
     }
     return { enabled, seconds }
-  } catch {
+  } catch (err) {
+    console.warn('[tv-preview] read failed, using defaults:', err)
     return defaults
   }
+}
+
+/** True iff a jsonb value reads as boolean/​string false in any encoding. */
+function valueReadsFalse(v: unknown): boolean {
+  if (v === false) return true
+  if (typeof v === 'string') {
+    return v.replace(/^"+|"+$/g, '').trim().toLowerCase() === 'false'
+  }
+  return false
 }

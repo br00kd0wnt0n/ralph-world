@@ -9,7 +9,7 @@ import BlockRenderer from './BlockRenderer'
 import type { ArticleFull } from '@/lib/data/magazine'
 import { resolveTheme } from '@/lib/article-themes'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
-import { canAccess, isPremiumContent, type AccessTier, type UserTier } from '@/lib/entitlements'
+import { isPremiumContent, type AccessTier } from '@/lib/entitlements'
 
 interface ArticleOverlayProps {
   article: ArticleFull | null
@@ -102,38 +102,15 @@ export default function ArticleOverlay({
   //   'guest'   — not signed in → "Sign up to read"
   //   'upgrade' — signed in but not paid → "Upgrade to paid"
   //   null      — full access
-  const userEntitlement = user ? { tier: (tier ?? 'free') as UserTier } : null
   const articleAccessTier = (article.accessTier ?? 'everyone') as AccessTier
-  const canRead = canAccess(userEntitlement, { accessTier: articleAccessTier })
   const isPremium = isPremiumContent(articleAccessTier)
-  const gateReason: 'guest' | 'upgrade' | null = !canRead
-    ? (!user ? 'guest' : 'upgrade')
-    : null
-
-  // Compute the soft preview cut-point (~200 words) for gated readers.
-  let gateIndex = blocks.length
-  if (gateReason) {
-    let wordCount = 0
-    for (let i = 0; i < blocks.length; i++) {
-      // Count body copy from text blocks AND the portrait-wrap block (both
-      // carry rich-text bodies) toward the paywall preview cut-point.
-      if (
-        (blocks[i].type === 'ArticleText' ||
-          blocks[i].type === 'ArticleImageTextWrap') &&
-        blocks[i].text
-      ) {
-        // Strip HTML tags before counting so rich-text content counts correctly
-        const plain = blocks[i].text!.replace(/<[^>]*>/g, ' ')
-        wordCount += plain.split(/\s+/).filter(Boolean).length
-      }
-      if (wordCount > 200) {
-        gateIndex = i + 1
-        break
-      }
-    }
-  }
-
-  const visibleBlocks = gateReason ? blocks.slice(0, gateIndex) : blocks
+  // Gating is decided AND enforced server-side in GET /api/articles/[slug] —
+  // the full body of a gated article is never sent to the client. We trust
+  // the flags the API stamped on the article; `blocks` is already the
+  // preview when gated, so there is nothing to slice here.
+  const gateReason: 'guest' | 'upgrade' | null = article.gateReason ?? null
+  const gated = article.gated === true
+  const visibleBlocks = blocks
 
   const theme = resolveTheme(article.backgroundCanvasColour)
 
@@ -341,7 +318,7 @@ export default function ArticleOverlay({
         </div>
 
         {/* Guest upsell strip — shown at end of fully accessible articles for non-logged-in readers */}
-        {!user && !gateReason && (
+        {!user && !gated && (
           <div className="mt-10 mb-2 rounded-2xl border border-ralph-pink/30 bg-white px-6 py-8 text-center shadow-sm">
             <p className="text-xs font-bold uppercase tracking-widest text-ralph-pink mb-3">
               Free to read
@@ -370,7 +347,7 @@ export default function ArticleOverlay({
         )}
 
         {/* Access gate */}
-        {gateReason && gateIndex < blocks.length && (
+        {gated && gateReason && (
           <div className="relative mt-8">
             <div className="absolute inset-x-0 -top-24 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
             <div className="text-center py-12 px-6 rounded-2xl bg-white shadow-lg border border-ralph-pink/20">

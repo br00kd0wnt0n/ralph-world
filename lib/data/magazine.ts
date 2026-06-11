@@ -27,7 +27,35 @@ export interface ArticleFull extends ArticleSummary {
   backgroundFrameValue: string | null
   titleImageUrl: string | null
   contentBlocks: unknown
+  /** Set by GET /api/articles/[slug] — true when the body was withheld. */
+  gated?: boolean
+  /** CTA driver: 'guest' (sign up) | 'upgrade' (go paid) | null. */
+  gateReason?: 'guest' | 'upgrade' | null
 }
+
+// Summary column set for listing/grid/cover — deliberately EXCLUDES
+// contentBlocks so paid/premium article bodies never reach the client via
+// the magazine page's RSC payload. Full (gated) content is served only by
+// GET /api/articles/[slug], which enforces the access tier server-side.
+const ARTICLE_SUMMARY_COLUMNS = {
+  id: articles.id,
+  slug: articles.slug,
+  title: articles.title,
+  subtitle: articles.subtitle,
+  intro: articles.intro,
+  leadMediaUrl: articles.leadMediaUrl,
+  leadMediaType: articles.leadMediaType,
+  cardImageUrl: articles.cardImageUrl,
+  articleType: articles.articleType,
+  contentTags: articles.contentTags,
+  isCoverStory: articles.isCoverStory,
+  issueNumber: articles.issueNumber,
+  accessTier: articles.accessTier,
+  publishedAt: articles.publishedAt,
+  bylineAuthor: articles.bylineAuthor,
+  bylinePhotographer: articles.bylinePhotographer,
+  backgroundCanvasColour: articles.backgroundCanvasColour,
+} as const
 
 export async function getPublishedArticles(category?: string) {
   try {
@@ -39,7 +67,7 @@ export async function getPublishedArticles(category?: string) {
     }
 
     return await db
-      .select()
+      .select(ARTICLE_SUMMARY_COLUMNS)
       .from(articles)
       .where(and(...conditions))
       .orderBy(desc(articles.publishedAt))
@@ -64,4 +92,30 @@ export async function getArticleBySlug(slug: string): Promise<ArticleFull | null
 
 export function getCoverStory(articleList: ArticleSummary[]): ArticleSummary | null {
   return articleList.find((a) => a.isCoverStory) ?? articleList[0] ?? null
+}
+
+interface BlockLike {
+  type?: string
+  text?: string
+}
+
+/**
+ * Server-side paywall truncation (security: paid content must never be sent
+ * in full to unentitled callers). Returns the leading blocks up to and
+ * including the one that pushes the running word count past ~200 — the same
+ * preview cut-point the overlay used to compute client-side. Counts body
+ * copy from text + portrait-wrap blocks. Applied in the article API route
+ * BEFORE the response leaves the server, so the full body is never exposed.
+ */
+export function previewArticleBlocks<T extends BlockLike>(blocks: T[]): T[] {
+  let wordCount = 0
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i]
+    if ((b.type === 'ArticleText' || b.type === 'ArticleImageTextWrap') && b.text) {
+      const plain = b.text.replace(/<[^>]*>/g, ' ')
+      wordCount += plain.split(/\s+/).filter(Boolean).length
+    }
+    if (wordCount > 200) return blocks.slice(0, i + 1)
+  }
+  return blocks
 }

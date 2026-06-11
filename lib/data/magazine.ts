@@ -10,6 +10,7 @@ export interface ArticleSummary {
   intro: string | null
   leadMediaUrl: string | null
   leadMediaType: string | null
+  cardImageUrl: string | null
   articleType: string | null
   contentTags: string[] | null
   isCoverStory: boolean | null

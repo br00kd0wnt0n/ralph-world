@@ -98,6 +98,7 @@ const PLACEHOLDER_ARTICLES: ArticleSummary[] = Array.from({ length: 6 }, (_, i) 
   intro: 'Brief description of the article content.',
   leadMediaUrl: '/imgs/article_lead.png',
   leadMediaType: null,
+  cardImageUrl: null,
   articleType: null,
   contentTags: ['Tag'],
   isCoverStory: false,
@@ -257,7 +258,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                     {/* Image fills entire cell */}
                     <div className="absolute inset-0">
                       <img
-                        src={article.leadMediaUrl || '/imgs/article_lead.png'}
+                        src={article.cardImageUrl || article.leadMediaUrl || '/imgs/article_lead.png'}
                         alt={article.title ?? ''}
                         draggable={false}
                         className="w-full h-full object-cover select-none"

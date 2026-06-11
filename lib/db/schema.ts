@@ -109,6 +109,9 @@ export const articles = pgTable('articles', {
   backgroundFrameValue: text('background_frame_value'),
   leadMediaUrl: text('lead_media_url'),
   leadMediaType: text('lead_media_type'),
+  // Dedicated square thumbnail for the magazine grid card; falls back to
+  // leadMediaUrl when empty (lead images often have text that crops badly).
+  cardImageUrl: text('card_image_url'),
   titleImageUrl: text('title_image_url'),
   articleType: text('article_type'), // Editorial | Pictorial | List
   contentTags: text('content_tags').array(),

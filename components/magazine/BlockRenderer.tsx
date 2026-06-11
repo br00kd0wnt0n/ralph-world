@@ -176,8 +176,19 @@ export default function BlockRenderer({ blocks }: { blocks: ContentBlock[] }) {
                   pagination={{ clickable: true }}
                   spaceBetween={16}
                   slidesPerView="auto"
-                  centeredSlides
+                  initialSlide={0}
+                  // No centeredSlides — the first image pins to the left edge
+                  // so the carousel opens on the far-left image (not centred,
+                  // which with async-loading auto-width images could land on
+                  // the last slide). Nav arrows + dots inherit the article
+                  // theme colour via currentColor.
                   className="ralph-carousel"
+                  style={
+                    {
+                      '--swiper-navigation-color': 'currentColor',
+                      '--swiper-pagination-color': 'currentColor',
+                    } as React.CSSProperties
+                  }
                 >
                   {images.map((src, idx) => (
                     <SwiperSlide

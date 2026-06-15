@@ -76,7 +76,7 @@ export default function LanguageModal() {
       </button>
 
       {isOpen && (
-        <PinkDropdown width={237} right={-57} triggerRef={ref} panelRef={panelRef}>
+        <PinkDropdown width={237} right={-57} triggerRef={ref} panelRef={panelRef} onClose={() => setIsOpen(false)}>
           <motion.div
             variants={stackVariants}
             className="flex flex-col items-end w-full"

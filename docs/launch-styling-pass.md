@@ -150,3 +150,54 @@ Restyled to match the legal sheet aesthetic.
 ### New assets used
 `join-ralph-painter.svg`, `join-raph-astronaut.svg`, `join-ralph-eyes.svg`,
 `join-ralph-wave.svg`.
+
+---
+
+## 5. Chrome pass — Nav, Cart drawer, Header dropdowns (2026-06-15)
+
+### Header / Nav (`components/layout/Nav.tsx`)
+- **"Subscribe to Ralph"** button: now solid **white bg + black text**, still goes
+  **pink on hover** (`bg-white hover:bg-ralph-pink`); active (`/join-ralph`) stays
+  pink. Keeps its white border (a white pill that outlines on pink hover).
+- Header bars (desktop + mobile): horizontal padding flattened to **`px-6`** (24px)
+  at all breakpoints, replacing the responsive `px-4 min-[420px]:px-6 md:px-16`
+  (which scaled to 64px). Now aligns flush with the absolutely-positioned
+  logo/basket anchored at `left/right: 24`.
+- Desktop logo nav container bottom padding **32px → 54px**.
+
+### Cart drawer (`components/layout/CartDrawer.tsx`)
+- **Z-index**: overlay `z-[300]`, panel `z-[310]` — above footer, nav, and the
+  cookie banner, so the drawer always sits on top.
+- **Slide animation**: panel slides in/out from the right + backdrop fades, via
+  Framer Motion `AnimatePresence` (was a hard mount/unmount, so the close
+  animation now plays).
+- **Solid white** drawer (`bg-white text-black`); white-legible borders/tokens.
+- **Close button** uses `closecircle_btn.svg` / `closecircle_btn_over.svg`
+  (hover swap).
+- **Type**: "Your basket", per-line totals, and the subtotal all in Gooper Trial
+  600 / 22px (shared `gooperTitle`); product names Gooper 600 / 18px; body is
+  default Roboto, black.
+- **Line items**: 1:1 96px thumbnails; removed the Shopify variant subtitle;
+  rows **bottom-aligned** (`items-end`); 16px gap between name and counter.
+- **Checkout** = full-width **shadow button with a pink outline** (pink rim +
+  pink offset shadow, white bg, black Gooper text, `btn-press`).
+- **Dividers**: squiggle divide lines (stretched via `background-size: 100% 100%`):
+  header line uses `divide_line_02.svg` (8px), between-product lines use
+  `divide_line_01.svg` (4px).
+- **Overlay colour**: `#000000B2`.
+
+### Header dropdowns (`components/layout/PinkDropdown.tsx` + Theme/Language)
+- Added a **full-screen underlay** to the shared `PinkDropdown` (z-90, below the
+  panel at z-100, above the nav) that dims everything and closes on click — like
+  the drawer's backdrop. New optional `onClose` prop wired from `ThemeToggle` and
+  `LanguageModal`.
+- Underlay colour `#000000B2` (matches the drawer).
+
+### Dependency fix
+- `npm install` — `isomorphic-dompurify` was declared in `package.json` (from an
+  earlier merge) but missing locally, breaking the magazine page build.
+
+### Assets
+- **New:** `closecircle_btn.svg`, `closecircle_btn_over.svg`.
+- **Reused:** `divide_line_01.svg`, `divide_line_02.svg` (also used by the
+  language dropdown).

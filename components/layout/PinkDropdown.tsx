@@ -18,6 +18,8 @@ interface PinkDropdownProps {
   // Optional ref forwarded onto the panel so callers can include the
   // portalled dropdown in their click-outside checks.
   panelRef?: RefObject<HTMLDivElement | null>
+  // Called when the backdrop underlay is clicked (closes the dropdown).
+  onClose?: () => void
   children: ReactNode
 }
 
@@ -52,6 +54,7 @@ export default function PinkDropdown({
   right,
   triggerRef,
   panelRef,
+  onClose,
   children,
 }: PinkDropdownProps) {
   const [mounted, setMounted] = useState(false)
@@ -86,7 +89,16 @@ export default function PinkDropdown({
   if (!mounted || !pos) return null
 
   return createPortal(
-    <motion.div
+    <>
+      {/* Full-screen underlay — dims everything and closes on click. */}
+      <motion.div
+        className="fixed inset-0 z-[90] bg-[#000000B2]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onMouseDown={onClose}
+        aria-hidden="true"
+      />
+      <motion.div
       ref={panelRef}
       initial="hidden"
       animate="visible"
@@ -133,7 +145,8 @@ export default function PinkDropdown({
           {children}
         </div>
       </div>
-    </motion.div>,
+      </motion.div>
+    </>,
     document.body,
   )
 }

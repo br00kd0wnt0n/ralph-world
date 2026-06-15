@@ -132,7 +132,7 @@ export default function Nav() {
     <>
       {/* ── Utility Bar (desktop) ── */}
       <div
-        className="hidden min-[1200px]:flex items-center justify-between px-4 min-[420px]:px-6 md:px-16 text-xs fixed top-0 left-0 right-0 z-50 pointer-events-none"
+        className="hidden min-[1200px]:flex items-center justify-between px-6 text-xs fixed top-0 left-0 right-0 z-50 pointer-events-none"
         style={{ height: 77 }}
       >
         {/* Stepped blur background - 11 strips of 7px each with decreasing blur.
@@ -245,8 +245,8 @@ export default function Nav() {
             <>
               <Link
                 href="/join-ralph"
-                className={`subscribe-btn text-header-btn border-2 border-white text-white px-4 flex items-center justify-center ${
-                  pathname === '/join-ralph' ? 'bg-ralph-pink' : 'bg-transparent hover:bg-ralph-pink'
+                className={`subscribe-btn text-header-btn border-2 border-white text-black px-4 flex items-center justify-center ${
+                  pathname === '/join-ralph' ? 'bg-ralph-pink' : 'bg-white hover:bg-ralph-pink'
                 }`}
                 style={{
                   borderRadius: 22,
@@ -319,7 +319,7 @@ export default function Nav() {
           className="hidden min-[1200px]:flex flex-col items-center"
           style={{
             paddingTop: navFixed ? 0 : 16,
-            paddingBottom: navFixed ? 0 : 32,
+            paddingBottom: navFixed ? 0 : 54,
             transition: 'padding 0.3s ease-out',
           }}
         >
@@ -402,7 +402,7 @@ export default function Nav() {
         <div className="min-[1200px]:hidden">
           {/* Mobile utility bar - fixed */}
           <div
-            className="pointer-events-auto fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 min-[420px]:px-6 md:px-16"
+            className="pointer-events-auto fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6"
             style={{
               height: 60,
               background: navFixed

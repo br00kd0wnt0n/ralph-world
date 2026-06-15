@@ -93,7 +93,7 @@ export default function ThemeToggle() {
       </button>
 
       {isOpen && (
-        <PinkDropdown width={360} right={-33} triggerRef={ref} panelRef={panelRef}>
+        <PinkDropdown width={360} right={-33} triggerRef={ref} panelRef={panelRef} onClose={() => setIsOpen(false)}>
           <motion.div variants={stackVariants} className="flex flex-col gap-2">
             {THEMES.filter((t) => !t.disabled).map((t) => {
               const swatchColors = SWATCH_COLORS[t.id] ?? ['#888', '#888', '#888']

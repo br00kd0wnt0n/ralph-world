@@ -59,10 +59,26 @@ export class ShopifyAdminError extends Error {
 export async function shopifyAdminFetch<T = unknown>(
   options: AdminFetchOptions
 ): Promise<T> {
-  const domain = process.env.SHOPIFY_STORE_DOMAIN
+  const rawDomain = process.env.SHOPIFY_STORE_DOMAIN
   const token = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN
-  if (!domain) throw new Error('SHOPIFY_STORE_DOMAIN is not set')
+  if (!rawDomain) throw new Error('SHOPIFY_STORE_DOMAIN is not set')
   if (!token) throw new Error('SHOPIFY_ADMIN_ACCESS_TOKEN is not set')
+
+  // Normalise: tolerate accidental https://, trailing slash, or surrounding
+  // whitespace — the literal concat below would otherwise produce
+  // `https://https://…//admin/api/…` and fail with a confusing DNS error.
+  // The Admin API ONLY answers on the *.myshopify.com hostname, so reject
+  // anything else outright with a clear message.
+  const domain = rawDomain
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/+$/, '')
+  if (!/\.myshopify\.com$/i.test(domain)) {
+    throw new Error(
+      `SHOPIFY_STORE_DOMAIN must be the *.myshopify.com hostname (got "${rawDomain}"). ` +
+        `Custom storefront domains (e.g. shop.ralph.world) do not serve the Admin API.`
+    )
+  }
 
   const version = process.env.SHOPIFY_ADMIN_API_VERSION || DEFAULT_API_VERSION
   const fetchImpl = options.fetchImpl ?? (globalThis.fetch as unknown as FetchLike)

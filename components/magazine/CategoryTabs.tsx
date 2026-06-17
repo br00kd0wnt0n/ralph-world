@@ -2,12 +2,19 @@
 
 import { usePathname } from 'next/navigation'
 
+// Mirror this list in ralph-cms/components/cms/ArticleEditor.tsx
+// (CONTENT_CATEGORIES) so editors and readers see the same set.
 const CATEGORIES = [
   { value: 'comedy', label: 'Comedy' },
   { value: 'music', label: 'Music' },
   { value: 'food', label: 'Food' },
   { value: 'film-tv', label: 'Film & TV' },
+  { value: 'fun', label: 'Fun' },
 ]
+
+// Each tab gets an equal slice of the container width. Computed so the row
+// still distributes evenly if categories are added/removed later.
+const TAB_WIDTH = `${100 / CATEGORIES.length}%`
 
 interface CategoryTabsProps {
   active: string
@@ -45,7 +52,7 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
               className={`relative text-intro transition-colors flex items-center justify-center text-black ${
                 !isActive ? 'hover:text-ralph-orange' : ''
               }`}
-              style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: '25%', textAlign: 'center' }}
+              style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: TAB_WIDTH, textAlign: 'center' }}
             >
               <span className="relative z-10">{cat.label}</span>
               {isActive && (

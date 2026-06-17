@@ -81,29 +81,21 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
             </p>
           )}
 
-          {/* Kicker / subtitle — Gooper Trial 600, 18px, line-height 100% */}
-          {article.subtitle && (
-            <p
-              className="text-intro text-black mb-1"
-              style={{ fontSize: 18, lineHeight: 1 }}
-            >
-              {article.subtitle}
-            </p>
-          )}
+          {/* Title first, then subtitle. Intro is intentionally NOT shown
+              here — it lives on the article child page only (kept in bold
+              there). The cover stays clean: title + kicker. */}
           <h3
-            className="text-intro text-black mb-4"
+            className="text-intro text-black mb-1"
             style={{ fontSize: 18, lineHeight: 1 }}
           >
             {article.title}
           </h3>
-
-          {/* Body copy — Roboto 600, 14px, line-height 100% */}
-          {article.intro && (
+          {article.subtitle && (
             <p
-              className="text-black mb-6 font-semibold"
-              style={{ fontSize: 14, lineHeight: 1 }}
+              className="text-intro text-black mb-6"
+              style={{ fontSize: 18, lineHeight: 1 }}
             >
-              {article.intro}
+              {article.subtitle}
             </p>
           )}
 

@@ -322,9 +322,9 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                           {article.title}
                         </h3>
 
-                        {article.intro && (
+                        {article.subtitle && (
                           <p className="text-[11px] text-white/70 line-clamp-2 leading-relaxed">
-                            {article.intro}
+                            {article.subtitle}
                           </p>
                         )}
                       </div>

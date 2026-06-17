@@ -53,10 +53,24 @@ writes an audit trail and every external service signs its webhooks.
      (`queued`) → POSTs Shopify Admin `/orders.json` (price £0, customer
      bound, line item = issue variant) → flips row to `shopify_order_created`
    - Audit log written at start + summary at end (with admin's user id)
-6. **Newsstand picks up the Shopify orders**, prints, and posts.
-7. **Shopify → us via webhook** `fulfillments/create`: HMAC verified, the
-   shipment row flips to `fulfilled` (with `shipped_at`), and the "your
-   magazine is on its way" Resend email fires to the subscriber.
+6. **Newsstand picks up the Shopify orders, prints the magazines, and
+   posts them** to subscribers.
+7. **Newsstand marks each order "fulfilled" in Shopify** — this is the
+   action that tells everyone downstream "it's gone." Whether Newsstand
+   does this at label-print, at parcel handover, or in an end-of-day batch
+   determines how close the email timing is to the physical dispatch.
+8. **Shopify → us via webhook** `fulfillments/create` (fired by step 7):
+   HMAC verified, the shipment row flips to `fulfilled` (with `shipped_at`
+   = the time the webhook arrived), and the "your magazine is on its way"
+   Resend email fires to the subscriber.
+
+> **Important:** the customer email is **triggered by Shopify**, not by
+> Newsstand directly. In normal operation Newsstand updates Shopify at
+> dispatch and the two are simultaneous. If Newsstand ever batches
+> fulfillment updates (e.g. end-of-day instead of at hand-over), the email
+> will lag the actual dispatch by the same amount. Worth checking with
+> Newsstand when they typically mark orders fulfilled so the message tone
+> ("on its way") stays accurate.
 
 ## Data model at a glance
 
@@ -83,6 +97,10 @@ Silent if not chosen.
 - **Monthly renewal:** Stripe sends the receipt — we don't double up.
 - **Payment failed:** notice; current state surfaced in `/account`.
 - **Magazine shipped:** "Issue N is on its way" — one per (subscriber, issue).
+  **Triggered by Shopify's `fulfillments/create` webhook**, which fires when
+  Newsstand marks the order fulfilled in Shopify (typically at dispatch).
+  So this email follows Newsstand-→-Shopify update timing, not the
+  physical parcel handover directly.
 - **Event RSVP:** confirmation with date + location.
 - **Cookie / privacy choices:** logged silently to `consent_log` (the binding
   legal record); no email.

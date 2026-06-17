@@ -11,26 +11,41 @@ test-mode setup).
 
 ---
 
-## 0. Five decisions to make before anyone tests anything
+## 0. Decisions made (2026-06-11)
 
-1. **Stripe mode — test or live?** If **live**, every subscription test is a
-   real card charge — you'll need to refund afterwards (Stripe → Customers →
-   refund). If **test**, use the test cards below; webhooks still fire and
-   the whole pipeline exercises end-to-end. **Recommendation: do this whole
-   plan in TEST mode first**, then a single live-mode sanity check with one
-   real card the day before cutover.
-2. **Mailchimp `DRY_RUN`** must be **`true`** throughout testing. Confirm via
+This plan is written for our actual config:
+
+1. **Stripe is in LIVE mode with live keys.** Every subscription = a real
+   £3 charge to a real card. There is **no test-card path** without
+   rotating the keys to test ones (don't — that'd require Railway env
+   changes + would break any real subs).
+2. **Mailchimp `DRY_RUN=true`** stays on through testing. Confirm via
    `curl -H "Authorization: Bearer $INTERNAL_API_TOKEN" https://ralph-world-production.up.railway.app/api/admin/mailchimp-backfill`
-   — it returns `envDryRun: true`. If not, set it before continuing.
-3. **Test issue or first real issue for the fulfilment dress rehearsal?**
-   Recommendation: create a throwaway `magazine_issues` row with a real
-   Shopify variant SKU pointing at a **single test product** in Shopify —
-   Newsstand fulfills it, we see a magazine arrive, then we delete the row.
-   The alternative (use Issue 04 directly) is fine but less reversible.
-4. **Brief Newsstand** that a fulfilment test is happening and they'll see
-   one or two real Shopify orders against the test variant. So nobody panics.
-5. **Two test email addresses** — one US, one UK. Plus-addressing
-   (`you+ralphtest@…`) is fine, both fans of and reach the same inbox.
+   → expect `envDryRun: true`.
+3. **No Shopify test variant exists.** The fulfilment rehearsal therefore
+   has to run against the real next issue (Issue 04) — which means our
+   test subscribers ARE the first real subscribers, and the magazines
+   that print + post are real ones going to real addresses. There is no
+   throwaway path. This is fine, just means we need to be deliberate.
+4. **Newsstand brief** — to be sent **after the UK team has signed off
+   on this plan**, not before.
+5. **Test subscribers** — 1 US (you), 1–2 UK colleagues. Real names,
+   real shipping addresses, real cards. The £3 charge stays — these
+   become genuine paying subscribers and the first issue ships to them.
+   No refunds, no awkward accounting.
+
+### What we lose in live mode (and how we'll handle it)
+
+- **No payment-failed simulation** — `4000…0341` and the `stripe trigger`
+  CLI only work in test mode. In live mode, we'd have to wait for a real
+  payment failure or manually cancel a payment method to provoke it. We'll
+  **monitor first-month renewals closely** instead and trust that the code
+  path was unit-tested in development.
+- **No "throwaway test subscribers"** — each is real. So minimize: 2–3 max.
+- **First real fulfilment is the launch event.** No safety dry-run with
+  fake people; the real run goes to real subscribers who paid real money.
+  Mitigated by §C1 (dry-run), the per-issue DB lock, the admin-only gate,
+  and the audit trail — all of which were independently audited.
 
 ---
 
@@ -62,24 +77,23 @@ landed — fix that before testing anything else.
   If it does, the OAuth client wasn't switched — flag it.
 - `/account` renders, shows free tier.
 
-### A4. Subscribe via Stripe Checkout (10 min)
+### A4. Subscribe via Stripe Checkout (10 min) — REAL CHARGE
 - On the `+sub1` account, click "Upgrade £3/month" → Stripe Checkout opens.
-- Use Stripe test card **`4242 4242 4242 4242`**, any future expiry, any
-  CVC, any UK postcode.
-- **Use a UK address** (e.g. office), even if you're in the US — so the
-  shipping data is realistic. (You can also use a US address; just know
-  Newsstand may refuse non-UK postcodes.)
+- **Use your real card.** This is a live £3 charge. Don't refund — keep
+  the subscription active; it becomes the first real subscriber and
+  validates the next-issue fulfilment.
+- **Use a UK shipping address** — a colleague's office address works. The
+  magazine WILL ship there when fulfilment runs.
 - Stripe redirects back to `/account`. Verify:
   - Pink "PAID" badge in the Subscription section
   - Next billing date shown ~one month out
   - "Manage subscription" button visible
-- Open Stripe Dashboard (test mode) → Customers → confirm the customer
-  exists with the email + shipping address.
+- Open Stripe Dashboard (live mode) → Customers → confirm the customer
+  exists with the email + shipping address. **Charge should show £3.00 GBP.**
 - DB check: `SELECT tier, stripe_customer_id, stripe_subscription_id, subscription_current_period_end FROM profiles WHERE id=<sub1 id>;` — all populated.
 - Welcome email arrives via Resend.
-- Shopify Admin (test or whichever store you point at) → Customers →
-  confirm the shipping address synced to the Shopify customer's default
-  address. (This proves the §A2 Shopify Admin env vars work.)
+- Shopify Admin → Customers → confirm the shipping address synced to the
+  Shopify customer's default address. (Proves §A2 Shopify Admin env works.)
 
 ### A5. Manage / cancel (5 min)
 - `/account` → "Manage subscription" opens the Stripe Customer Portal.
@@ -90,11 +104,16 @@ landed — fix that before testing anything else.
 - Reactivate from the portal. Webhook reverts; `/account` shows the
   normal state again.
 
-### A6. Failed payment scenario (5 min)
-- In Stripe (test mode), use card **`4000 0000 0000 0341`** for a new
-  subscription. The first charge succeeds; the next renewal will fail.
-- Force a renewal via Stripe CLI (or wait until next bill) → webhook fires
-  `invoice.payment_failed` → `/account` shows "payment failed" red badge.
+### A6. Failed payment scenario — SKIPPED in live mode
+`stripe trigger` and renewal-failure test cards only work in test mode.
+In live mode, we monitor real first-month renewals (which won't happen
+until ~30 days after the first subscription) and respond to actual
+failures via the Stripe Dashboard. The code path was exercised in
+development; trust + monitor.
+
+If you really want to exercise it pre-launch, the path is: cancel the
+card you used in §A4 with your bank, wait for the renewal in ~30 days,
+watch the webhook fire. Not practical for launch timing.
 
 ### A7. Article paywall — server-side gating (5 min)
 This is the security fix from the pre-launch sweep — confirm it holds.
@@ -167,44 +186,57 @@ Send them this section verbatim.
 
 ---
 
-## C. Fulfilment dress rehearsal — careful, real-money path
+## C. Fulfilment — first real run (no throwaway test path)
 
-Done by an **admin** in the CMS, ideally with the US user watching the
-ralph-world Railway logs in another tab.
+Because there's no Shopify test variant, **the first fulfilment IS the
+launch event**. Test subscribers from §A4/§B1 are the first real cohort.
+Done by an admin in the CMS, ideally with the US user watching Railway
+logs in another tab.
 
 ### C1. Dry-run preflight (1 min, zero risk)
-- CMS → Issues → [the test issue] → Fulfilment panel → **Dry run**.
-- Verify the eligible count matches the number of paid subscribers
-  you've created (US `+sub1` + UK colleague = 2).
-- No `magazine_shipments` rows are created on dry-run; no Shopify
-  orders; no emails.
+- CMS → Issues → [Issue 04 or whichever the launch issue is] →
+  Fulfilment panel → **Dry run**.
+- Verify the eligible count = the number of paid subscribers you've
+  created (you + UK colleagues = 2 or 3).
+- No `magazine_shipments` rows are created on dry-run; no Shopify orders;
+  no emails. This is the safest possible smoke test.
+- If the eligible count is wrong, **stop**. Common causes: SHOPIFY env
+  vars unset so signup auto-link failed → subscribers have no
+  `shopify_links` row → invisible to fulfilment. Fix and re-dry-run.
 
-### C2. Real fulfilment (5 min, real Shopify orders)
-- Newsstand briefed? (See §0.4.) If not, **stop here.**
+### C2. Real fulfilment — IRREVERSIBLE LINE (5 min)
+- **Newsstand briefed?** (See §0.4.) If not, **STOP HERE.**
+- **UK team aware?** (Their copies of Issue 04 will ship.)
 - Click "Fulfil Issue N" → confirmation modal → "Yes, fulfil now."
 - Railway logs: `[magazine-fulfilment]` lines appear.
-- Result panel shows: `N orders created, 0 failed`.
+- Result panel: `N orders created, 0 failed`.
 - DB: `SELECT user_id, status, shopify_order_id FROM magazine_shipments WHERE issue_id=<id>;` — N rows, all `shopify_order_created`.
-- Shopify Admin → Orders → N new orders against the test variant.
+- Shopify Admin → Orders → N new orders against the Issue 04 variant,
+  tagged `subscription, magazine-fulfilment`.
 - `audit_log` shows `magazine_fulfilment_batch_started` then
-  `magazine_fulfilment_batch_run` rows, both with the admin's
-  `actor_id`.
+  `magazine_fulfilment_batch_run` rows, both with the admin's `actor_id`.
+- If anything looks wrong post-run, **don't re-run** — the DB lock + the
+  UNIQUE(user, issue) index will refuse, which is correct behaviour.
+  Investigate the per-row `error` column on any `status='failed'` row
+  before retrying.
 
-### C3. Confirm the email path triggers correctly (waits for Newsstand)
-- When Newsstand marks the order fulfilled in Shopify (could be minutes
-  to days):
+### C3. Email path verification (waits for Newsstand action)
+- When Newsstand marks the orders fulfilled in Shopify (minutes to days
+  depending on their workflow — see `subscription-fulfilment-overview.md`
+  §6-7):
   - Shopify webhook fires `fulfillments/create`.
   - `magazine_shipments.status` flips to `fulfilled`, `shipped_at` set.
   - Resend sends the "your magazine is on its way" email.
-- US user receives the email (if they used a UK address, they won't get
-  a parcel but they get the email — proves the trigger).
-- UK user receives the parcel a few days later → tests end-to-end.
+- Each test subscriber receives the email.
+- Each test subscriber receives the parcel a few days later (UK addresses
+  only; the email itself fires regardless of geography).
 
-### C4. Clean-up (if using a throwaway test issue)
-- After verification, drop the test issue row + manually refund the
-  Stripe charges (test mode = no refund needed; live = use Stripe portal).
-- Delete the test paid subscriber profiles or leave them as `+test`
-  identifiers for ongoing smoke.
+### C4. After-launch
+- Test subscribers' subscriptions continue to renew monthly at £3.
+- They can cancel from `/account` if/when they're done testing — access
+  continues to period-end, then drops back to free tier.
+- No clean-up required — these are genuine subscriptions in the live
+  system, indistinguishable from any other subscriber post-cutover.
 
 ---
 
@@ -221,31 +253,25 @@ Have these open in browser tabs throughout testing:
 
 ---
 
-## E. Quick reference — test cards (Stripe test mode)
+## E. Test cards — not applicable (live mode)
 
-| Card | Outcome |
-|---|---|
-| `4242 4242 4242 4242` | Succeeds — happy path |
-| `4000 0000 0000 0341` | Succeeds, NEXT renewal fails — tests payment-failed flow |
-| `4000 0000 0000 9995` | Declined immediately |
-| `4000 0025 0000 3155` | Requires 3DS auth — tests SCA path |
-
-Any future expiry (e.g. 12/30), any CVC, any non-empty postcode.
+We're on live Stripe keys, so test cards don't work. Subscribe with a
+real card. The test-card reference is left in `stripe-setup.md` for any
+future test-mode rehearsal.
 
 ---
 
 ## F. Safety summary
 
-- ✅ Stripe test mode → no real money moves
-- ✅ Mailchimp `DRY_RUN=true` → no real audience writes
-- ⚠️ Magazine fulfilment is **always live** (no test mode in Shopify
-  Admin orders) — orders to Newsstand are real, will print + post real
-  copies. **§C2 is the line; everything above it is reversible without
-  briefing anyone.**
-- ✅ Account deletion truly deletes — make sure you test on throwaway
-  `+sub2` and not your real account
-- ✅ All sensitive actions write `audit_log` rows — you have full
-  forensics
+- ⚠️ Stripe LIVE — every subscribe = real £3 charge. Plan: 2–3 team
+  subscribers, no refunds, treat as first real cohort.
+- ✅ Mailchimp `DRY_RUN=true` → no real audience writes during testing.
+- ⚠️ Magazine fulfilment is real (Shopify orders → Newsstand → physical
+  print + post). **§C2 is the irreversible line.**
+- ✅ Account deletion truly deletes — test on throwaway `+sub2`, not your
+  real account.
+- ✅ All sensitive actions write `audit_log` rows — full forensics.
+- ✅ Cancellation runs to period-end; doesn't strand the user mid-issue.
 
 ---
 

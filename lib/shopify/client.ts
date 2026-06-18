@@ -75,7 +75,10 @@ export function toProductSummary(p: ShopifyProduct): ProductSummary {
     title: p.title,
     price: p.priceRange.minVariantPrice.amount,
     currency: p.priceRange.minVariantPrice.currencyCode,
-    imageUrl: p.featuredImage?.url ?? null,
+    imageUrl:
+      p.productShotMetafield?.reference?.image?.url ??
+      p.featuredImage?.url ??
+      null,
     available: p.availableForSale,
     productType: p.productType ?? '',
     tags: p.tags ?? [],

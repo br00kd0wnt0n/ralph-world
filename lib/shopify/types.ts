@@ -40,6 +40,12 @@ export interface ShopifyProduct {
   // metafield is unset, or when Storefront API access isn't granted on the
   // metafield definition.
   dateMetafield: { value: string; type: string } | null
+  // Custom "product_shot" image metafield (namespace: custom, key: product_shot).
+  // `reference.image` is the chosen listing photo; null when unset or when
+  // Storefront API access isn't granted on the metafield definition.
+  productShotMetafield: {
+    reference: { image: ShopifyImage | null } | null
+  } | null
 }
 
 export interface ShopifyCartLine {

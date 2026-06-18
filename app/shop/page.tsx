@@ -22,7 +22,8 @@ export default async function ShopPage() {
   // auto-categorisation) alongside the curated Magazines collection
   // (whose product order is set manually in Shopify Admin).
   const [products, magazinesOrdered, copy] = await Promise.all([
-    getAllProducts(50),
+    // Newest products first (by creation date).
+    getAllProducts(50, { sortKey: 'CREATED_AT', reverse: true }),
     getProductsByCollection('magazines', 50),
     getSiteCopy(),
   ])

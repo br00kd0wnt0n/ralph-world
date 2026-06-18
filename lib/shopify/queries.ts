@@ -34,6 +34,16 @@ export const PRODUCT_FRAGMENT = `
       value
       type
     }
+    # Custom "product_shot" image metafield (namespace: custom, key: product_shot).
+    # Used as the listing-card image in preference to featuredImage. Needs
+    # Storefront access enabled on the metafield definition, else reference is null.
+    productShotMetafield: metafield(namespace: "custom", key: "product_shot") {
+      reference {
+        ... on MediaImage {
+          image { url altText width height }
+        }
+      }
+    }
   }
 `
 

@@ -146,3 +146,13 @@ async function safeText(res: { text: () => Promise<string> }): Promise<string> {
     return ''
   }
 }
+
+/**
+ * Quick env-check used by ops/admin routes to refuse to run if the
+ * Shopify Admin integration isn't fully configured. Cheap, no network.
+ */
+export function isShopifyAdminConfigured(): boolean {
+  return Boolean(
+    process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_ADMIN_ACCESS_TOKEN
+  )
+}

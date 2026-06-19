@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { overlayContentVariants } from '@/lib/animation/magazine'
@@ -45,6 +45,22 @@ export default function ArticleOverlay({
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Pick a slightly-random off-angle position for the shop callout starburst
+  // each time a different article opens. Re-randomises per article id so it
+  // stays put while a reader scrolls the same overlay but shifts on next
+  // open. Kept inside reasonable header-band bounds: top 40–160px down from
+  // the inner content edge, ±20–70px in from one side, ±18° rotation.
+  const calloutPos = useMemo(() => {
+    if (!article?.shopCalloutUrl || !article?.shopCalloutLabel) return null
+    const rand = (min: number, max: number) => min + Math.random() * (max - min)
+    return {
+      side: Math.random() < 0.5 ? ('left' as const) : ('right' as const),
+      top: Math.round(rand(40, 160)),
+      horiz: Math.round(rand(20, 70)),
+      rotation: rand(-18, 18).toFixed(1),
+    }
+  }, [article?.id, article?.shopCalloutUrl, article?.shopCalloutLabel])
 
   useEffect(() => {
     if (isOpen) {
@@ -172,12 +188,36 @@ export default function ArticleOverlay({
             bumped to 100px on <768 so the article title clears the
             close button. */}
         <div
-          className="p-6 pt-[100px] min-[575px]:p-12 min-[575px]:pt-[100px] md:p-[72px] min-[992px]:p-[110px]"
+          className="relative p-6 pt-[100px] min-[575px]:p-12 min-[575px]:pt-[100px] md:p-[72px] min-[992px]:p-[110px]"
           style={{
             backgroundColor: theme.bg,
             color: theme.text,
           }}
         >
+          {/* Shop callout (desktop) — absolutely positioned near the
+              header with a slight randomised tilt + offset so it reads as
+              a hand-pinned sticker rather than a CMS slot. */}
+          {calloutPos && article.shopCalloutUrl && article.shopCalloutLabel && (
+            <div
+              className="hidden md:block absolute z-10 pointer-events-none"
+              style={{
+                top: calloutPos.top,
+                [calloutPos.side]: calloutPos.horiz,
+              }}
+            >
+              <div
+                className="pointer-events-auto"
+                style={{ transform: `rotate(${calloutPos.rotation}deg)` }}
+              >
+                <ShopCalloutBadge
+                  href={article.shopCalloutUrl}
+                  label={article.shopCalloutLabel}
+                  eyebrow={article.shopCalloutEyebrow}
+                  cta={article.shopCalloutCta}
+                />
+              </div>
+            </div>
+          )}
           <motion.div
             variants={overlayContentVariants}
             initial="hidden"
@@ -312,10 +352,12 @@ export default function ArticleOverlay({
             />
           )}
 
-          {/* Shop callout badge (starburst) — sits between intro and body
-              when the editor set both a URL and a label. */}
+          {/* Shop callout (mobile only) — absolute placement up in the
+              header would collide with the title on narrow screens, so on
+              <md viewports we keep the badge inline & centred between
+              intro and body. */}
           {article.shopCalloutUrl && article.shopCalloutLabel && (
-            <div className="flex justify-center mb-8">
+            <div className="md:hidden flex justify-center mb-8">
               <ShopCalloutBadge
                 href={article.shopCalloutUrl}
                 label={article.shopCalloutLabel}

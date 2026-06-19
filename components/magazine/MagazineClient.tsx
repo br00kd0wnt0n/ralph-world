@@ -182,6 +182,8 @@ export default function MagazineClient({
               sortOrder: null,
               shopCalloutUrl: null,
               shopCalloutLabel: null,
+              shopCalloutEyebrow: null,
+              shopCalloutCta: null,
             }}
             onRead={openArticle}
             onSubscribe={() => setSubscribeOpen(true)}

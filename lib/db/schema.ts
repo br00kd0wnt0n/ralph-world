@@ -131,6 +131,8 @@ export const articles = pgTable('articles', {
   // the shop product (or any URL). Label overrides the default text.
   shopCalloutUrl: text('shop_callout_url'),
   shopCalloutLabel: text('shop_callout_label'),
+  shopCalloutEyebrow: text('shop_callout_eyebrow'),
+  shopCalloutCta: text('shop_callout_cta'),
   publishedAt: timestamp('published_at', { mode: 'date' }),
 })
 

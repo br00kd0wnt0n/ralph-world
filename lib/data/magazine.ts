@@ -23,6 +23,8 @@ export interface ArticleSummary {
   sortOrder: number | null
   shopCalloutUrl: string | null
   shopCalloutLabel: string | null
+  shopCalloutEyebrow: string | null
+  shopCalloutCta: string | null
 }
 
 export interface ArticleFull extends ArticleSummary {
@@ -61,6 +63,8 @@ const ARTICLE_SUMMARY_COLUMNS = {
   sortOrder: articles.sortOrder,
   shopCalloutUrl: articles.shopCalloutUrl,
   shopCalloutLabel: articles.shopCalloutLabel,
+  shopCalloutEyebrow: articles.shopCalloutEyebrow,
+  shopCalloutCta: articles.shopCalloutCta,
 } as const
 
 export async function getPublishedArticles(category?: string) {

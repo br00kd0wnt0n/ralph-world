@@ -111,6 +111,8 @@ const PLACEHOLDER_ARTICLES: ArticleSummary[] = Array.from({ length: 6 }, (_, i) 
   sortOrder: null,
   shopCalloutUrl: null,
   shopCalloutLabel: null,
+  shopCalloutEyebrow: null,
+  shopCalloutCta: null,
 }))
 
 export default function ArticleGrid({ articles, onArticleClick }: ArticleGridProps) {

@@ -301,11 +301,13 @@ export default function ArticleOverlay({
           )}
 
           {/* Intro — rendered as sanitised rich HTML so editors can bold,
-              link, align, etc. directly in the CMS. */}
+              link, align, etc. Base weight is normal so <strong> stands out;
+              the field used to be semibold-all-the-time before bold became
+              editor-controllable. */}
           {article.intro && (
             <div
-              className="font-semibold text-black mb-8 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:underline"
-              style={{ fontFamily: "'Gooper Trial', serif", fontSize: 16, lineHeight: '31px' }}
+              className="text-black mb-8 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:underline [&_strong]:font-black [&_b]:font-black"
+              style={{ fontFamily: "'Gooper Trial', serif", fontSize: 16, lineHeight: '31px', fontWeight: 500 }}
               dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.intro) }}
             />
           )}
@@ -317,6 +319,8 @@ export default function ArticleOverlay({
               <ShopCalloutBadge
                 href={article.shopCalloutUrl}
                 label={article.shopCalloutLabel}
+                eyebrow={article.shopCalloutEyebrow}
+                cta={article.shopCalloutCta}
               />
             </div>
           )}

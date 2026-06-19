@@ -114,6 +114,20 @@ body {
   letter-spacing: 0;
 }
 
+/* Tiptap rich-text intro on article overlays. Only Gooper Trial 600 is
+   loaded, so <strong>/<b> would render visually identical to surrounding
+   text. Force synthesis + a tiny text-stroke so editor-bolded passages
+   reliably read as bold. */
+.article-intro {
+  font-synthesis: weight;
+}
+.article-intro strong,
+.article-intro b {
+  font-weight: 900;
+  -webkit-text-stroke: 0.6px currentColor;
+  text-stroke: 0.6px currentColor;
+}
+
 /* Bold body — Roboto 700, 18px/28px */
 @utility text-body-bold {
   font-family: var(--font-body), Arial, sans-serif;

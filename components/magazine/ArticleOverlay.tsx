@@ -341,13 +341,14 @@ export default function ArticleOverlay({
           )}
 
           {/* Intro — rendered as sanitised rich HTML so editors can bold,
-              link, align, etc. Base weight is normal so <strong> stands out;
-              the field used to be semibold-all-the-time before bold became
-              editor-controllable. */}
+              link, align, etc. Only one weight of Gooper Trial (600) is
+              loaded, so we synthesise the bold visually via text-stroke +
+              browser font-synthesis so <strong>/<b> reliably stand out
+              regardless of the available font weights. */}
           {article.intro && (
             <div
-              className="text-black mb-8 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:underline [&_strong]:font-black [&_b]:font-black"
-              style={{ fontFamily: "'Gooper Trial', serif", fontSize: 16, lineHeight: '31px', fontWeight: 500 }}
+              className="article-intro text-black mb-8 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:underline"
+              style={{ fontFamily: "'Gooper Trial', serif", fontSize: 16, lineHeight: '31px' }}
               dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.intro) }}
             />
           )}

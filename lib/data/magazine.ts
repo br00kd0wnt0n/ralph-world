@@ -1,6 +1,6 @@
 import { getDb } from '@/lib/db'
 import { articles } from '@/lib/db/schema'
-import { asc, eq, desc, and, arrayContains, sql } from 'drizzle-orm'
+import { eq, desc, and, arrayContains, sql } from 'drizzle-orm'
 
 export interface ArticleSummary {
   id: string
@@ -78,7 +78,7 @@ export async function getPublishedArticles(category?: string) {
       .select(ARTICLE_SUMMARY_COLUMNS)
       .from(articles)
       .where(and(...conditions))
-      .orderBy(asc(sql`${articles.sortOrder} NULLS LAST`), desc(articles.publishedAt))
+      .orderBy(sql`${articles.sortOrder} ASC NULLS LAST`, desc(articles.publishedAt))
   } catch {
     return []
   }

@@ -244,77 +244,12 @@ export default function ArticleOverlay({
         {/* Divider after title */}
         <div className="w-[420px] h-[2px] bg-black mx-auto" style={{ marginBottom: '1.5rem' }} />
 
-        {/* Badge pills / categories */}
-        <div className="flex flex-wrap justify-center gap-2" style={{ marginBottom: '1.5rem' }}>
-          {article.contentTags?.map((tag) => (
-            <span
-              key={tag}
-              className="flex items-center justify-center bg-black text-white uppercase"
-              style={{
-                height: 34,
-                paddingLeft: '2rem',
-                paddingRight: '2rem',
-                fontFamily: "'Gooper Trial', serif",
-                fontWeight: 600,
-                fontSize: 14,
-                lineHeight: 1,
-                letterSpacing: 0,
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        {/* Bylines */}
+        {/* Bylines — tags + share moved to the bottom of the article */}
         <div className="text-center text-sm text-gray-500" style={{ marginBottom: '1.5rem' }}>
           {article.bylineAuthor && <p>Words by: {article.bylineAuthor}</p>}
           {article.bylinePhotographer && (
             <p>Pictures by: {article.bylinePhotographer}</p>
           )}
-        </div>
-
-        {/* Divider after bylines */}
-        <div className="w-[420px] h-[2px] bg-black mx-auto" style={{ marginBottom: '1.5rem' }} />
-
-        {/* Share buttons */}
-        <div className="flex justify-center gap-4" style={{ marginBottom: '1.5rem' }}>
-          {['Facebook', 'X', 'Link'].map((label) => (
-            <div key={label} style={{ position: 'relative', display: 'inline-block' }}>
-              {/* Shadow */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 4,
-                  left: 4,
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: 'black',
-                  pointerEvents: 'none',
-                }}
-              />
-              {/* Button */}
-              <button
-                className="btn-press flex items-center justify-center"
-                style={{
-                  position: 'relative',
-                  height: 38,
-                  paddingLeft: 16,
-                  paddingRight: 16,
-                  backgroundColor: '#EBEBEB',
-                  border: '2px solid black',
-                  fontFamily: "'Gooper Trial', serif",
-                  fontWeight: 600,
-                  fontSize: 16,
-                  lineHeight: 1,
-                  letterSpacing: 0,
-                }}
-                aria-label={`Share on ${label}`}
-              >
-                {label}
-              </button>
-            </div>
-          ))}
         </div>
 
         {/* Lead image - 1024px max */}
@@ -374,6 +309,73 @@ export default function ArticleOverlay({
             style={{ fontWeight: 500, fontSize: 15, lineHeight: '31px' }}
           >
             <BlockRenderer blocks={visibleBlocks} />
+          </div>
+        </div>
+
+        {/* Article footer — tag pills + share buttons. Moved here from the
+            header so the reader hits the article copy first, then the
+            social actions once they've finished reading. */}
+        <div className="mt-12">
+          <div className="w-[420px] max-w-full h-[2px] bg-black mx-auto" style={{ marginBottom: '1.5rem' }} />
+
+          {article.contentTags && article.contentTags.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-2" style={{ marginBottom: '1.5rem' }}>
+              {article.contentTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="flex items-center justify-center bg-black text-white uppercase"
+                  style={{
+                    height: 34,
+                    paddingLeft: '2rem',
+                    paddingRight: '2rem',
+                    fontFamily: "'Gooper Trial', serif",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    lineHeight: 1,
+                    letterSpacing: 0,
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="flex justify-center gap-4" style={{ marginBottom: '0.5rem' }}>
+            {['Facebook', 'X', 'Link'].map((label) => (
+              <div key={label} style={{ position: 'relative', display: 'inline-block' }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 4,
+                    left: 4,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'black',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <button
+                  className="btn-press flex items-center justify-center"
+                  style={{
+                    position: 'relative',
+                    height: 38,
+                    paddingLeft: 16,
+                    paddingRight: 16,
+                    backgroundColor: '#EBEBEB',
+                    border: '2px solid black',
+                    fontFamily: "'Gooper Trial', serif",
+                    fontWeight: 600,
+                    fontSize: 16,
+                    lineHeight: 1,
+                    letterSpacing: 0,
+                  }}
+                  aria-label={`Share on ${label}`}
+                >
+                  {label}
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 

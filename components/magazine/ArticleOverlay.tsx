@@ -6,10 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { overlayContentVariants } from '@/lib/animation/magazine'
 import { useAuth } from '@/context/AuthContext'
 import BlockRenderer from './BlockRenderer'
+import ShopCalloutBadge from './ShopCalloutBadge'
 import type { ArticleFull } from '@/lib/data/magazine'
 import { resolveTheme } from '@/lib/article-themes'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { isPremiumContent, type AccessTier } from '@/lib/entitlements'
+import { sanitizeArticleHtml } from '@/lib/sanitize'
 
 interface ArticleOverlayProps {
   article: ArticleFull | null
@@ -298,14 +300,25 @@ export default function ArticleOverlay({
             </p>
           )}
 
-          {/* Intro */}
+          {/* Intro — rendered as sanitised rich HTML so editors can bold,
+              link, align, etc. directly in the CMS. */}
           {article.intro && (
-            <p
-              className="font-semibold text-black mb-8"
+            <div
+              className="font-semibold text-black mb-8 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:underline"
               style={{ fontFamily: "'Gooper Trial', serif", fontSize: 16, lineHeight: '31px' }}
-            >
-              {article.intro}
-            </p>
+              dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.intro) }}
+            />
+          )}
+
+          {/* Shop callout badge (starburst) — sits between intro and body
+              when the editor set both a URL and a label. */}
+          {article.shopCalloutUrl && article.shopCalloutLabel && (
+            <div className="flex justify-center mb-8">
+              <ShopCalloutBadge
+                href={article.shopCalloutUrl}
+                label={article.shopCalloutLabel}
+              />
+            </div>
           )}
 
           {/* Content blocks */}

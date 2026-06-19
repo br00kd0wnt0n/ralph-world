@@ -121,6 +121,16 @@ export const articles = pgTable('articles', {
   // Existing rows migrated free→everyone, paid→paid_subscribers (see scripts/migrate-phase-1-access-tier.sql).
   accessTier: text('access_tier').default('everyone'),
   contentBlocks: jsonb('content_blocks'), // ContentBlock[]
+  // Manual sort order for the magazine grid + category-filtered views.
+  // NULL = no explicit position; falls back to publishedAt DESC. Articles
+  // with explicit sort_order come BEFORE unordered ones. Set via
+  // drag-to-reorder in the CMS articles list.
+  sortOrder: integer('sort_order'),
+  // Optional "AS SEEN IN RALPH" shop callout — when URL is set, the
+  // frontend renders a starburst badge near the lead image linking to
+  // the shop product (or any URL). Label overrides the default text.
+  shopCalloutUrl: text('shop_callout_url'),
+  shopCalloutLabel: text('shop_callout_label'),
   publishedAt: timestamp('published_at', { mode: 'date' }),
 })
 

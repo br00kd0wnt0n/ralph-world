@@ -29,8 +29,25 @@ const CONFIG = {
     'h3',
     'blockquote',
   ],
-  ALLOWED_ATTR: ['href', 'target', 'rel'],
+  // `style` is allow-listed so Tiptap's TextAlign extension survives, but the
+  // hook below narrows its value to just `text-align: left|center|right`.
+  ALLOWED_ATTR: ['href', 'target', 'rel', 'style'],
 }
+
+// Restrict style attributes to a single safe declaration. Without this, the
+// `style` allow-list above would let an editor paste in arbitrary CSS
+// (background-image: url(…), position tricks, etc.).
+DOMPurify.addHook('uponSanitizeAttribute', (_node, data) => {
+  if (data.attrName !== 'style') return
+  const match = data.attrValue.match(/text-align\s*:\s*(left|right|center)/i)
+  if (match) {
+    data.attrValue = `text-align: ${match[1].toLowerCase()}`
+    data.keepAttr = true
+  } else {
+    data.attrValue = ''
+    data.keepAttr = false
+  }
+})
 
 export function sanitizeArticleHtml(html: string): string {
   if (!html) return ''

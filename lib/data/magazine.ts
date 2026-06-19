@@ -1,6 +1,6 @@
 import { getDb } from '@/lib/db'
 import { articles } from '@/lib/db/schema'
-import { eq, desc, and, arrayContains } from 'drizzle-orm'
+import { asc, eq, desc, and, arrayContains, sql } from 'drizzle-orm'
 
 export interface ArticleSummary {
   id: string
@@ -20,6 +20,9 @@ export interface ArticleSummary {
   bylineAuthor: string | null
   bylinePhotographer: string | null
   backgroundCanvasColour: string | null
+  sortOrder: number | null
+  shopCalloutUrl: string | null
+  shopCalloutLabel: string | null
 }
 
 export interface ArticleFull extends ArticleSummary {
@@ -55,6 +58,9 @@ const ARTICLE_SUMMARY_COLUMNS = {
   bylineAuthor: articles.bylineAuthor,
   bylinePhotographer: articles.bylinePhotographer,
   backgroundCanvasColour: articles.backgroundCanvasColour,
+  sortOrder: articles.sortOrder,
+  shopCalloutUrl: articles.shopCalloutUrl,
+  shopCalloutLabel: articles.shopCalloutLabel,
 } as const
 
 export async function getPublishedArticles(category?: string) {
@@ -66,11 +72,13 @@ export async function getPublishedArticles(category?: string) {
       conditions.push(arrayContains(articles.contentTags, [category]))
     }
 
+    // Manually-positioned articles first (sort_order ASC, NULLS LAST), then
+    // unpositioned by latest publish date. Editors drag-to-reorder in the CMS.
     return await db
       .select(ARTICLE_SUMMARY_COLUMNS)
       .from(articles)
       .where(and(...conditions))
-      .orderBy(desc(articles.publishedAt))
+      .orderBy(asc(sql`${articles.sortOrder} NULLS LAST`), desc(articles.publishedAt))
   } catch {
     return []
   }

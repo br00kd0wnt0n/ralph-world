@@ -3,6 +3,7 @@ import { getSiteCopy } from '@/lib/data/site-copy'
 import Hero from '@/components/home/Hero'
 import PlanetSection from '@/components/home/PlanetSection'
 import FooterPlanet from '@/components/home/FooterPlanet'
+import CanvasStage from '@/components/anim/CanvasStage'
 import type { ModuleCardData } from '@/components/home/PlanetSection'
 
 export const revalidate = 60
@@ -118,6 +119,9 @@ export default async function Home() {
         line3={copy.home_hero_line_3}
         themeKey={copy.home_hero_theme}
       />
+
+      {/* TEMP: canvas sprite stage — alien squad + satellite */}
+      <CanvasStage />
 
       {sections.map((section) => (
         <PlanetSection

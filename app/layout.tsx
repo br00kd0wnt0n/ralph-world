@@ -9,7 +9,8 @@ import { getSiteCopy } from '@/lib/data/site-copy'
 import { BackgroundLayer } from '@/context/ThemeContext'
 import Starfield from '@/components/layout/Starfield'
 import ForegroundLayer from '@/components/layout/ForegroundLayer'
-import MidgroundLayer from '@/components/layout/MidgroundLayer'
+import MidgroundCanvas from '@/components/anim/MidgroundCanvas'
+import ForegroundCanvas from '@/components/anim/ForegroundCanvas'
 import PlanetPreloader from '@/components/layout/PlanetPreloader'
 import PageTransitionWrapper from '@/components/layout/PageTransitionWrapper'
 import CookieBanner from '@/components/legal/CookieBanner'
@@ -76,7 +77,7 @@ export default async function RootLayout({
         <Providers>
           <PlanetPreloader />
           <Starfield />
-          <MidgroundLayer />
+          <MidgroundCanvas />
           <Nav />
           <BackgroundLayer />
           <main className="flex-1 flex flex-col relative z-10">
@@ -86,6 +87,7 @@ export default async function RootLayout({
           </main>
           <Footer variant="dark" copy={copy} />
           <ForegroundLayer />
+          <ForegroundCanvas />
           <CartDrawer />
           <CookieBanner />
         </Providers>

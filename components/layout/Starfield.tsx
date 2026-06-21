@@ -114,7 +114,9 @@ export default function Starfield() {
   const { theme } = useTheme()
   const pathname = usePathname()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const isEventsPage = pathname === '/events'
+  // All subpages (everything except the homepage) use the events-style star
+  // motion: horizontal drift, no vertical scroll-parallax.
+  const isSubpage = pathname !== '/'
 
   useEffect(() => {
     if (theme !== 'cosy-dynamics') return
@@ -169,12 +171,12 @@ export default function Starfield() {
         const alpha = Math.max(0.02, Math.min(1, p.baseOpacity + twinkle))
 
         // Scroll parallax (disabled on events page)
-        const parallaxY = isEventsPage ? 0 : scrollY * p.scrollFactor
+        const parallaxY = isSubpage ? 0 : scrollY * p.scrollFactor
         let yPos = (p.y * h - parallaxY) % h
         if (yPos < 0) yPos += h
 
         // Horizontal movement on events page
-        if (isEventsPage) {
+        if (isSubpage) {
           p.x += p.horizontalSpeed
           if (p.x > 1) p.x -= 1
           if (p.x < 0) p.x += 1
@@ -255,7 +257,7 @@ export default function Starfield() {
       window.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(animationId)
     }
-  }, [theme, isEventsPage])
+  }, [theme, isSubpage])
 
   if (theme !== 'cosy-dynamics') return null
 

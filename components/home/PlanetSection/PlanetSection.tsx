@@ -87,6 +87,7 @@ export default function PlanetSection({
   const [planetCenterY, setPlanetCenterY] = useState(0)
   const [planetHeight, setPlanetHeight] = useState(0)
   const [isTouch, setIsTouch] = useState(false)
+  const [transitionsOn, setTransitionsOn] = useState(false)
   const [swiperIndex, setSwiperIndex] = useState(0)
   const swiperRef = useRef<SwiperClass | null>(null)
   const mouseYRef = useRef(0)
@@ -101,6 +102,16 @@ export default function PlanetSection({
     ) {
       setIsTouch(true)
     }
+  }, [])
+
+  // Enable the panel clip-path transition only after the first painted frame,
+  // so panels render hidden on load instead of animating open (avoids a flash
+  // of narrow panels before/while the section is measured).
+  useEffect(() => {
+    const id = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setTransitionsOn(true)),
+    )
+    return () => cancelAnimationFrame(id)
   }, [])
 
   useEffect(() => {
@@ -324,7 +335,9 @@ export default function PlanetSection({
           backgroundColor: accentColor,
           borderRadius: 12,
           clipPath: getClipPath(),
-          transition: 'clip-path 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+          transition: transitionsOn
+            ? 'clip-path 0.6s cubic-bezier(0.22, 1, 0.36, 1)'
+            : 'none',
           pointerEvents: panelState === 'open' ? 'auto' : 'none',
           padding: PANEL_PADDING,
         }}
@@ -599,7 +612,9 @@ export default function PlanetSection({
           block vertically on the planet's middle instead of anchoring
           its bottom edge there. */}
       <motion.div
-        className={`absolute z-[5] flex flex-col ${planetOnRight ? 'items-end' : 'items-start'}`}
+        onMouseEnter={activate}
+        onClick={() => isTouch && setIsActive((a) => !a)}
+        className={`absolute z-[5] flex flex-col cursor-pointer ${planetOnRight ? 'items-end' : 'items-start'}`}
         style={{
           ...(isPlanetOnly
             ? { top: planetCenterY }
@@ -652,19 +667,23 @@ export default function PlanetSection({
           viewport edge by ~50px (the section's px-6 24px padding is
           neutralised + 50px of overlap). */}
       <div
-        className={`relative z-10 flex ${planetOnRight ? 'justify-end' : 'justify-start'}`}
-        style={{ pointerEvents: panelState === 'open' ? 'none' : 'auto' }}
+        className={`relative z-10 flex pointer-events-none ${planetOnRight ? 'justify-end' : 'justify-start'}`}
       >
         <motion.div
           onMouseEnter={activate}
           style={(() => {
+            // Only the planet itself is interactive (container is click-through
+            // so the title block beneath still receives hover). Off when open
+            // so it doesn't cover the panel buttons.
+            const pe: 'none' | 'auto' = panelState === 'open' ? 'none' : 'auto'
+            const base = { pointerEvents: pe } as React.CSSProperties
             // Push planet past the section edge so it doesn't dominate
             // the centre horizontally. Tighter on the smallest phones.
-            if (sectionWidth === 0 || sectionWidth >= 575) return undefined
+            if (sectionWidth === 0 || sectionWidth >= 575) return base
             const offset = sectionWidth < 400 ? -104 : -74
             return planetOnRight
-              ? { marginRight: offset }
-              : { marginLeft: offset }
+              ? { ...base, marginRight: offset }
+              : { ...base, marginLeft: offset }
           })()}
           animate={{
             x: isExiting ? planetShift + planetExitOffset : planetShift,

@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { registerTicker } from '@/lib/anim/sequencer'
 import { ANIMATIONS } from '@/lib/anim/animations'
+import { createSaucerShow } from '@/lib/anim/saucerShow'
 
 // Set true while tuning to shortcut the long start/hidden delays.
 const DEBUG = false
@@ -11,8 +13,8 @@ const DEBUG = false
 const ENTER_MS = 900 // rise-up-from-below the screen on (re)appear
 const DRIFT_MS = 4500 // sway around before charging
 const CHARGE_MS = 1500 // exhaust fires for this long BEFORE liftoff
-const START_MIN = 60_000 // delay before the FIRST appearance: 1 min …
-const START_MAX = 300_000 // … to 5 min
+const START_MIN = 30_000 // delay before the FIRST appearance: 30s …
+const START_MAX = 60_000 // … to 1 min
 const HIDDEN_MIN = 180_000 // gap between subsequent appearances: 3 min …
 const HIDDEN_MAX = 300_000 // … to 5 min
 const DRIFT_AMP = 60 // px sideways sway
@@ -24,11 +26,11 @@ const EXHAUST_X_OFFSET = 20 // nudge the plume right of the alien centre
 const ROT_MIN = -0.1 // radians — modest left tilt
 const ROT_MAX = 0.18 // radians — a touch more right tilt so they don't all lean the same way
 
-// Satellite: one craft crossing left → right at intervals, at varying heights.
-const SAT_SCALE = 0.45
-const SAT_SPEED = 0.18 // px/ms
-const SAT_GAP_MIN = 4000
-const SAT_GAP_MAX = 9000
+// Eyed-alien: settled on the footer planet ("THE ENTERTAINMENT PEOPLE").
+// Anchored to #footer-planet in document space, so it scrolls with the page.
+const EYED_SCALE = 0.5
+const EYED_OFFSET_X = -240 // px from the planet centre (negative = left)
+const EYED_OFFSET_Y = -130 // px from the planet top (negative = up / standing on it)
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min)
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
@@ -69,8 +71,12 @@ interface Member {
  */
 export default function CanvasStage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Portal target only exists after mount (no document during SSR).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   useEffect(() => {
+    if (!mounted) return
     const canvasEl = canvasRef.current
     if (!canvasEl) return
     const context = canvasEl.getContext('2d')
@@ -80,17 +86,19 @@ export default function CanvasStage() {
 
     const ALIEN = ANIMATIONS['bouncing-alien']
     const EXHAUST = ANIMATIONS['exhaust']
-    const SAT = ANIMATIONS['satellite']
+    const EYED = ANIMATIONS['eyed-alien']
 
     const alienImg = new Image()
     alienImg.src = ALIEN.src
     const exhaustImg = new Image()
     exhaustImg.src = EXHAUST.src
-    const satImg = new Image()
-    satImg.src = SAT.src
+    const eyedImg = new Image()
+    eyedImg.src = EYED.src
 
     let vw = window.innerWidth
     let vh = window.innerHeight
+
+    const saucerShow = createSaucerShow(ctx, () => ({ vw, vh }))
 
     function resize() {
       vw = window.innerWidth
@@ -101,6 +109,23 @@ export default function CanvasStage() {
       cv.style.width = `${vw}px`
       cv.style.height = `${vh}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      computeEyedAnchor()
+    }
+
+    // Eyed-alien sits on the footer planet. We anchor to #footer-planet in
+    // document space (worldY is absolute; independent of scroll) and recompute
+    // on layout changes.
+    const eyed = { ready: false, x: 0, worldY: 0, frame: 0, acc: 0 }
+    function computeEyedAnchor() {
+      const el = document.getElementById('footer-planet')
+      if (!el) {
+        eyed.ready = false
+        return
+      }
+      const rect = el.getBoundingClientRect()
+      eyed.x = rect.left + rect.width / 2 + EYED_OFFSET_X
+      eyed.worldY = rect.top + window.scrollY + EYED_OFFSET_Y
+      eyed.ready = true
     }
     resize()
 
@@ -147,15 +172,6 @@ export default function CanvasStage() {
       members: makeMembers(),
     }
     placeBelow()
-
-    const sat = {
-      active: false,
-      x: 0,
-      worldY: vh * 0.3, // document-space; drawn at worldY - scrollY so it scrolls away
-      frame: 0,
-      acc: 0,
-      nextAt: 1500,
-    }
 
     function respawnSquad(elapsed: number) {
       squad.members = makeMembers()
@@ -246,42 +262,27 @@ export default function CanvasStage() {
       }
     }
 
-    function updateSat(dt: number, elapsed: number) {
-      const w = SAT.frameW * SAT_SCALE
-      if (!sat.active) {
-        if (elapsed >= sat.nextAt) {
-          sat.active = true
-          sat.x = -w
-          // anchor to the document at a random height within the current view,
-          // so scrolling moves it out of frame
-          sat.worldY = window.scrollY + rand(vh * 0.08, vh * 0.68)
-          sat.frame = 0
-          sat.acc = 0
-        }
-        return
-      }
-      sat.acc += dt
-      const ms = 1000 / (SAT.fps ?? 16)
-      while (sat.acc >= ms) {
-        sat.acc -= ms
-        sat.frame = (sat.frame + 1) % SAT.count
-      }
-      sat.x += SAT_SPEED * dt
-      if (sat.x > vw + w) {
-        sat.active = false
-        sat.nextAt = elapsed + rand(SAT_GAP_MIN, SAT_GAP_MAX)
+    function updateEyed(dt: number) {
+      if (!eyed.ready) return
+      eyed.acc += dt
+      const ms = 1000 / (EYED.fps ?? 10)
+      while (eyed.acc >= ms) {
+        eyed.acc -= ms
+        eyed.frame = (eyed.frame + 1) % EYED.count
       }
     }
 
     function draw() {
       ctx.clearRect(0, 0, vw, vh)
 
-      // Satellite
-      if (sat.active && satImg.complete && satImg.naturalWidth > 0) {
-        const w = SAT.frameW * SAT_SCALE
-        const h = SAT.frameH * SAT_SCALE
-        const screenY = sat.worldY - window.scrollY
-        ctx.drawImage(satImg, sat.frame * SAT.frameW, 0, SAT.frameW, SAT.frameH, sat.x, screenY, w, h)
+      // Eyed-alien settled on the footer planet
+      if (eyed.ready && eyedImg.complete && eyedImg.naturalWidth > 0) {
+        const w = EYED.frameW * EYED_SCALE
+        const h = EYED.frameH * EYED_SCALE
+        const screenY = eyed.worldY - window.scrollY
+        if (screenY < vh && screenY + h > 0) {
+          ctx.drawImage(eyedImg, eyed.frame * EYED.frameW, 0, EYED.frameW, EYED.frameH, eyed.x - w / 2, screenY, w, h)
+        }
       }
 
       // Alien squad
@@ -312,26 +313,44 @@ export default function CanvasStage() {
           ctx.restore()
         }
       }
+
+      // Saucers / bullets / explosions on top
+      saucerShow.draw()
     }
 
     const stopTicker = registerTicker((dt, elapsed) => {
       updateSquad(dt, elapsed)
-      updateSat(dt, elapsed)
+      updateEyed(dt)
+      saucerShow.update(dt, elapsed)
       draw()
     })
 
+    // Footer planet position settles after its image loads / layout shifts.
     window.addEventListener('resize', resize)
+    window.addEventListener('load', computeEyedAnchor)
+    eyedImg.addEventListener('load', computeEyedAnchor)
+    const t1 = window.setTimeout(computeEyedAnchor, 500)
+    const t2 = window.setTimeout(computeEyedAnchor, 1500)
     return () => {
       stopTicker()
       window.removeEventListener('resize', resize)
+      window.removeEventListener('load', computeEyedAnchor)
+      eyedImg.removeEventListener('load', computeEyedAnchor)
+      clearTimeout(t1)
+      clearTimeout(t2)
     }
-  }, [])
+  }, [mounted])
 
-  return (
+  // Portalled to <body> so it escapes <main>'s stacking context and can paint
+  // over the footer. z-40: above footer (z-10) + foreground (z-20), below the
+  // nav / cart / cookie chrome (z-50+), so decorative sprites never cover UI.
+  if (!mounted) return null
+  return createPortal(
     <canvas
       ref={canvasRef}
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-40"
-    />
+    />,
+    document.body,
   )
 }

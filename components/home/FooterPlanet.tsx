@@ -17,7 +17,7 @@ export default function FooterPlanet({ tagline = 'The Entertainment People' }: F
         aria-hidden="true"
       />
 
-      <div style={{ transform: 'translateY(1px)' }}>
+      <div id="footer-planet" style={{ transform: 'translateY(1px)' }}>
         <img
           src="/imgs/footer_planet.png"
           alt=""

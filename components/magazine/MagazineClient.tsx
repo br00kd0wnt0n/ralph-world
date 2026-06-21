@@ -8,6 +8,7 @@ import CategoryTabs from './CategoryTabs'
 import ArticleGrid from './ArticleGrid'
 import ArticleOverlay from './ArticleOverlay'
 import SubscribeModal from '@/components/layout/SubscribeModal'
+import SpriteAnimation from '@/components/anim/SpriteAnimation'
 import {
   sectionContainerVariants,
   sectionBgVariants,
@@ -146,10 +147,18 @@ export default function MagazineClient({
           />
         </motion.div>
 
+        {/* Spinning coin on the right of the planet */}
+        <SpriteAnimation
+          name="got-coin"
+          width={174}
+          className="absolute z-[5] right-[8%] top-[-100px] pointer-events-none select-none"
+          style={{ transform: 'rotate(16deg)', transformOrigin: 'bottom center' }}
+        />
+
         {/* Content layer - animates LAST */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 pb-8 min-h-[50vh] pt-[120px] min-[768px]:pt-[160px] min-[992px]:pt-[200px]"
+          className="relative z-10 pb-8 min-h-[50vh] pt-[90px] min-[768px]:pt-[130px] min-[992px]:pt-[170px]"
         >
           {/* Cover Story title */}
           <h2 className="max-w-5xl mx-auto px-6 mb-6">

@@ -1,20 +1,31 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 
 // Foreground parallax items — faster than content, in front of planets/panels
 // image items displayed at half intrinsic size
+// the spaceship was replaced by an animated saucer on ForegroundCanvas.
 const FOREGROUND_ITEMS = [
   { x: 23, baseY: 3100, image: '/imgs/item_front_alienrocket.png', w: 264 / 2, h: 586 / 2, speed: 1.3 },
   { x: 18, baseY: 1425, image: '/imgs/item_front_saucer.png', w: 337 / 2, h: 503 / 2, speed: 1.35 },
-  { x: 50, baseY: 2700, image: '/imgs/item_front_spaceship.png', w: 526 / 2, h: 396 / 2, speed: 1.4 },
 ]
 
 export default function ForegroundLayer() {
   const { theme } = useTheme()
+  const pathname = usePathname()
   const containerRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number>(0)
+
+  // Hide the alien rocket on the homepage for now.
+  const items = useMemo(
+    () =>
+      pathname === '/'
+        ? FOREGROUND_ITEMS.filter((it) => !it.image.includes('item_front_alienrocket'))
+        : FOREGROUND_ITEMS,
+    [pathname],
+  )
 
   useEffect(() => {
     if (theme !== 'cosy-dynamics') return
@@ -31,7 +42,7 @@ export default function ForegroundLayer() {
       const children = container.children
       for (let i = 0; i < children.length; i++) {
         const el = children[i] as HTMLElement
-        const speed = FOREGROUND_ITEMS[i].speed
+        const speed = items[i].speed
         el.style.transform = `translateY(${-sy * speed}px)`
       }
       ticking = false
@@ -50,7 +61,7 @@ export default function ForegroundLayer() {
       window.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(rafRef.current)
     }
-  }, [theme])
+  }, [theme, items])
 
   if (theme !== 'cosy-dynamics') return null
 
@@ -60,9 +71,9 @@ export default function ForegroundLayer() {
       className="fixed inset-0 pointer-events-none z-20 overflow-hidden hidden md:block"
       aria-hidden="true"
     >
-      {FOREGROUND_ITEMS.map((item, i) => (
+      {items.map((item, i) => (
         <img
-          key={i}
+          key={item.image}
           src={item.image}
           alt=""
           className="absolute"

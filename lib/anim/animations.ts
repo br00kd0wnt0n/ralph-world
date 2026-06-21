@@ -37,6 +37,48 @@ export const ANIMATIONS = {
     count: 28,
     fps: 16,
   },
+  saucer: {
+    src: '/animations/saucer.png',
+    frameW: 374,
+    frameH: 246,
+    count: 36,
+    fps: 24,
+  },
+  'got-coin': {
+    src: '/animations/got-coin.png',
+    frameW: 416,
+    frameH: 496,
+    count: 9,
+    fps: 12,
+  },
+  'eyed-alien': {
+    src: '/animations/eyed-alien.png',
+    frameW: 180,
+    frameH: 328,
+    count: 8,
+    fps: 10,
+  },
+  chaser: {
+    src: '/animations/chaser.png',
+    frameW: 402,
+    frameH: 212,
+    count: 2,
+    fps: 6,
+  },
+  bullet: {
+    src: '/animations/bullet.png',
+    frameW: 40,
+    frameH: 80,
+    count: 5,
+    fps: 16,
+  },
+  explosion: {
+    src: '/animations/explosion.png',
+    frameW: 144,
+    frameH: 144,
+    count: 5,
+    fps: 18,
+  },
 } satisfies Record<string, SpriteSheet>
 
 export type AnimationName = keyof typeof ANIMATIONS

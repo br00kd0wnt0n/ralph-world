@@ -128,3 +128,73 @@ in production.**
   layout/compositing; redraw cost scales with draw calls).
 - Sheets keep art as one decode + GPU `drawImage`; SVG kept for the static /
   simple cases elsewhere in the app.
+
+---
+
+## Three canvases (depth layers)
+
+The system now spans **three** full-viewport canvases, all driven by the one
+shared sequencer (still a single rAF). Each sits at a different z so sprites
+land at the right depth relative to page content:
+
+| Canvas | z | Mounted | Renders |
+| ------ | - | ------- | ------- |
+| `MidgroundCanvas` | `z-[1]` (behind content) | `layout.tsx` (global) | moon + planet (static parallax), satellite + chaser (flyers) |
+| `ForegroundCanvas` | `z-20` (in front of content) | `layout.tsx` (global) | scroll-anchored animated saucer |
+| `CanvasStage` | `z-40` (above footer, portalled to `<body>`) | homepage | alien squad, eyed-alien (footer planet), saucer dogfight |
+
+All three are `cosy-dynamics` + desktop only (matching the old parallax layers),
+except `CanvasStage`, which runs on the homepage regardless of theme.
+
+### MidgroundCanvas (`components/anim/MidgroundCanvas.tsx`)
+Replaced the DOM `MidgroundLayer` (now deleted). Parallax via
+`worldY − scrollY × parallax`. Three item kinds:
+- **STATIC_ITEMS** — plain images pinned at a doc position (moon, planet).
+- **FLYERS** — animated sheets that cross the screen at random intervals:
+  - `satellite` — fast (0.3 px/ms), slow continuous z-tumble (`spin`), random
+    start orientation, infrequent (25–55s gaps).
+  - `chaser` — replaces the old `item_mid_spaceship`; level flight (upright),
+    horizontal flip (`flipX`), gentle `wobble` tilt, random per-crossing speed.
+- Flyer config knobs: `speed`/`speedMax`, `dir`, `flipX`, `fps`, `spin`,
+  `wobble`, `parallax`, gap + band + first-appearance ranges.
+
+### ForegroundCanvas (`components/anim/ForegroundCanvas.tsx`)
+Scroll-anchored **animated** props (a sheet pinned at a doc position that plays
+in place and parallaxes). Replaced the static `item_front_spaceship.png` with a
+spinning `saucer`. (`item_front_alienrocket.png` is hidden on the homepage via a
+pathname filter in `ForegroundLayer`.)
+
+### Saucer show (`lib/anim/saucerShow.ts`)
+A self-contained factory the top `CanvasStage` drives (`update`/`draw`):
+- **Solo** (~65%): enter from a random side/bottom → hover + bob → (70%) a 360
+  spin with `easeOutBack` → fly off. Slow idle spin throughout.
+- **Fight** (~35%): a 2nd saucer enters ~1.4s later; both roam (random
+  waypoints) and fire **bullets** on a cooldown; after 5–9s one is hit → the
+  **explosion** sheet plays where it was and the survivor leaves.
+- Per-saucer `scale` (distinct sizes in a fight) and velocity-based **z-tilt**
+  banking. Hit timing is scripted (timer), not literal bullet collision.
+- Pacing: first show ~4–9s after load, then ~18–40s gaps.
+
+---
+
+## Related homepage / page tweaks (same change set)
+
+- **Starfield** — `isSubpage = pathname !== '/'`: all subpages use the
+  events-style star motion (horizontal drift, no vertical scroll-parallax); the
+  homepage keeps scroll-parallax. Re-runs on navigation.
+- **PlanetSection** — the planet's `z-10` flex container was full-width and
+  intercepted hover over the title; made it `pointer-events-none` with the
+  planet wrapper interactive, so hovering the **title/subtext** also opens the
+  panel. Also: the panel `clip-path` transition is gated until after the first
+  painted frame (`transitionsOn`) to stop the flash of narrow panels on load.
+- **FooterPlanet** — got an `id="footer-planet"` anchor so `CanvasStage` can pin
+  the eyed-alien to it (document space).
+- **Magazine** — a spinning `got-coin` (`SpriteAnimation`) on the planet edge at
+  an angle; content top-padding trimmed 30px.
+- **ScrollIndicator** — `scroll-arrow.svg` with a gentle up/down bob (Framer
+  Motion) + pink Roboto "SCROLL".
+
+### New assets / sheets
+`saucer`, `got-coin`, `eyed-alien`, `chaser`, `bullet`, `explosion` sprite
+sheets (built from `public/animations/<name>/` via `scripts/build-sprite-sheet.mjs`),
+plus `public/imgs/scroll-arrow.svg`.

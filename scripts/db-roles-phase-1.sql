@@ -83,7 +83,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   email_subscriptions,
   shopify_links,
   email_events,
-  magazine_shipments
+  magazine_shipments,
+  magazine_fulfilment_runs
 TO ralph_world;
 
 -- ── 5. ralph_world — read-only on CMS-owned content ───────────────────

@@ -60,6 +60,15 @@ export async function createMagazineOrder(
   const customerId = bareNumericId(input.shopifyCustomerId)
   const variantId = bareNumericId(input.shopifyVariantId)
 
+  // Title sent explicitly so the order POST works even when our access
+  // token only has write_orders (no read_products). Without title/name
+  // here, Shopify tries to auto-fill them from the variant lookup; if
+  // the lookup is refused for scope reasons it bounces with
+  // "Line items is invalid: Name can't be blank, Title can't be blank".
+  // variant_id is still sent so inventory + SKU stay linked for the
+  // fulfilment partner.
+  const lineItemTitle = `Ralph Magazine — Issue ${input.issueNumber}`
+
   const body = {
     order: {
       customer: { id: Number(customerId) },
@@ -70,6 +79,8 @@ export async function createMagazineOrder(
           // Price 0 — the subscriber has already paid via Stripe; this
           // order exists purely to drive Shopify's fulfilment pipeline.
           price: '0.00',
+          title: lineItemTitle,
+          name: lineItemTitle,
         },
       ],
       // Mark as paid so Shopify doesn't try to charge the customer.

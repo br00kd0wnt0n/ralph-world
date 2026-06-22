@@ -4,15 +4,17 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 
+// Fixed (deterministic) scramble so the row isn't in numerical order while
+// staying SSR-safe (a runtime shuffle would cause a hydration mismatch).
 const CHARACTERS = [
-  '/imgs/event_character_01.png',
-  '/imgs/event_character_02.png',
-  '/imgs/event_character_03.png',
-  '/imgs/event_character_04.png',
   '/imgs/event_character_05.png',
-  '/imgs/event_character_06.png',
-  '/imgs/event_character_07.png',
+  '/imgs/event_character_02.png',
   '/imgs/event_character_08.png',
+  '/imgs/event_character_01.png',
+  '/imgs/event_character_06.png',
+  '/imgs/event_character_03.png',
+  '/imgs/event_character_07.png',
+  '/imgs/event_character_04.png',
 ]
 
 const ARM_COLORS = [
@@ -21,15 +23,6 @@ const ARM_COLORS = [
   '/imgs/orange_arm.svg',
   '/imgs/pink_arm.svg',
 ]
-
-interface CharacterState {
-  x: number
-  direction: 1 | -1
-  speed: number
-  baseY: number
-  bobOffset: number
-  bobSpeed: number
-}
 
 interface Event {
   id?: string
@@ -63,8 +56,6 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   const { user } = useAuth()
   const eventCount = events.length
   const containerRef = useRef<HTMLDivElement>(null)
-  const statesRef = useRef<CharacterState[]>([])
-  const rafRef = useRef<number>(0)
   const [activeArm, setActiveArm] = useState<number | null>(null)
   // Per-event RSVP status, keyed by event id
   const [rsvpStatus, setRsvpStatus] = useState<Record<string, RsvpStatus>>({})
@@ -118,72 +109,44 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
     }
   }, [expandedArm])
 
+  // Background characters: fixed, evenly spread across x (no horizontal
+  // motion); only a gentle up/down bob, recomputed on resize.
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-
-    // Get the inner wrappers (not the scaled images)
     const wrappers = container.querySelectorAll('[data-character-wrapper]')
-    const containerWidth = container.offsetWidth
-
-    // Initialize character states with random positions and speeds
-    statesRef.current = CHARACTERS.map((_, i) => ({
-      x: (containerWidth / CHARACTERS.length) * i + Math.random() * 100 - 50,
-      direction: Math.random() > 0.5 ? 1 : -1,
-      speed: 0.15 + Math.random() * 0.2, // 0.15-0.35 px per frame (half speed)
-      baseY: 100, // Push characters down 100px (clipped by overflow-hidden)
-      bobOffset: Math.random() * Math.PI * 2, // Random start phase for bobbing
-      bobSpeed: 0.08 + Math.random() * 0.06, // Fast bob speed
+    const n = wrappers.length
+    const BASE_Y = 100 // pushed down, clipped by overflow-hidden
+    const CHAR_W = 220 // displayed character width (matches the img width below)
+    const OVERHANG = 90 // first/last sit slightly off-screen so the row reads edge-to-edge
+    // per-character (deterministic) bob phase/speed + facing
+    const params = Array.from(wrappers).map((_, i) => ({
+      phase: (i / n) * Math.PI * 2,
+      speed: 0.0016 + (i % 4) * 0.0004, // rad/ms
+      scaleX: i % 2 === 0 ? 1 : -1,
     }))
 
-    let lastTime = 0
-    const targetFps = 30
-    const frameInterval = 1000 / targetFps
-
+    let raf = 0
     const animate = (time: number) => {
-      if (time - lastTime < frameInterval) {
-        rafRef.current = requestAnimationFrame(animate)
-        return
-      }
-      lastTime = time
-
-      const states = statesRef.current
+      // Read the live width first (it can be 0 on the first frame before
+      // layout settles), then write transforms — read-before-write avoids
+      // layout thrash and keeps the spread based on the real container width.
       const width = container.offsetWidth
-
+      // spread fixed positions evenly from just off the left edge to just off
+      // the right edge; only the vertical bob animates per frame.
+      const span = width + OVERHANG * 2 - CHAR_W
       wrappers.forEach((wrapper, i) => {
         const el = wrapper as HTMLElement
-        const state = states[i]
-
-        // Move character horizontally
-        state.x += state.speed * state.direction
-
-        // Update bob offset for smooth up/down motion
-        state.bobOffset += state.bobSpeed
-        const bobY = Math.sin(state.bobOffset) * 6 // 6px up/down bob
-
-        // Wrap around edges (characters are ~60px wide at half size)
-        const charWidth = 80
-        if (state.direction === 1 && state.x > width + charWidth) {
-          // Exited right, appear on left
-          state.x = -charWidth
-        } else if (state.direction === -1 && state.x < -charWidth) {
-          // Exited left, appear on right
-          state.x = width + charWidth
-        }
-
-        // Apply transform - flip character based on direction, add bobbing
-        const scaleX = state.direction === -1 ? -1 : 1
-        const totalY = state.baseY + bobY
-        el.style.transform = `translateX(${state.x}px) translateY(${totalY}px) scaleX(${scaleX})`
+        const p = params[i]
+        const x = n > 1 ? -OVERHANG + (span / (n - 1)) * i : (width - CHAR_W) / 2
+        const bobY = Math.sin(time * p.speed + p.phase) * 6
+        el.style.transform = `translateX(${x}px) translateY(${BASE_Y + bobY}px) scaleX(${p.scaleX})`
       })
-
-      rafRef.current = requestAnimationFrame(animate)
+      raf = requestAnimationFrame(animate)
     }
-
-    rafRef.current = requestAnimationFrame(animate)
-
+    raf = requestAnimationFrame(animate)
     return () => {
-      cancelAnimationFrame(rafRef.current)
+      cancelAnimationFrame(raf)
     }
   }, [])
 
@@ -860,10 +823,10 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
               alt=""
               className="pointer-events-none"
               style={{
-                height: 'auto',
+                // auto width (aspect preserved); height varied per character.
+                // Deterministic per index (400–520px) to stay SSR-safe.
                 width: 'auto',
-                transform: 'scale(0.5)',
-                transformOrigin: 'bottom left',
+                height: 400 + ((i * 37) % 121),
               }}
             />
           </div>

@@ -9,6 +9,7 @@ import {
   magazineFulfilmentRuns,
 } from '@/lib/db/schema'
 import { createMagazineOrder } from '@/lib/shopify/orders'
+import { ShopifyAdminError } from '@/lib/shopify/admin-client'
 import { logAction } from '@/lib/audit'
 
 /** A fulfilment run lock is considered stale (abandoned) after this long. */
@@ -285,11 +286,25 @@ export async function fulfilIssue(
 
       result.ordersCreated += 1
     } catch (err) {
-      const message =
+      // Build a message that includes the Shopify response body when
+      // available — a bare "422" tells us nothing; the body explains
+      // *why* (variant out of stock, customer has no shipping address,
+      // invalid variant id, etc.). Logged to console as well for the
+      // Railway tail in case the DB column is later truncated.
+      const baseMessage =
         err instanceof Error ? err.message : 'Shopify order create failed'
+      const body = err instanceof ShopifyAdminError ? err.body : ''
+      const message = body
+        ? `${baseMessage} — ${body}`
+        : baseMessage
+      console.error('[magazine-fulfilment] order create failed', {
+        userId: sub.userId,
+        shipmentId,
+        message,
+      })
       await db
         .update(magazineShipments)
-        .set({ status: 'failed', error: message.slice(0, 500) })
+        .set({ status: 'failed', error: message.slice(0, 1000) })
         .where(eq(magazineShipments.id, shipmentId))
 
       result.failed += 1

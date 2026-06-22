@@ -42,7 +42,7 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
           mt-auto so the characters/hands block anchors to the bottom of
           the section (just above the footer) instead of leaving a gap. */}
       <section
-        className="relative flex flex-col mb-[300px] min-[992px]:mb-0"
+        className="relative flex flex-col mb-[80px] min-[992px]:mb-0"
         style={{ minHeight: 'calc(100svh - 200px)' }}
       >
         {/* Background - animates SECOND */}
@@ -71,16 +71,19 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
               aria-hidden="true"
             />
           </div>
-          <div
-            className="absolute bg-white"
-            style={{ top: 270, left: 0, right: 0, bottom: 0 }}
-          />
+          {/* White content bg. Stops at the bottom planet (bottom-[270px]) on
+              < 992 so it doesn't show through the flipped planet's transparent
+              area — mirrors the clean top:270 cut at the top planet. Fills to
+              the bottom on >= 992 where there is no bottom planet. */}
+          <div className="absolute bg-white left-0 right-0 top-[270px] bottom-[270px] min-[992px]:bottom-0" />
 
           {/* Bottom planet — only < 992, flipped vertically so combined
-              with the top planet it reads as a full planet. */}
+              with the top planet it reads as a full planet. Sits inside the
+              section's bottom (part of the layout) so the content centres
+              evenly between the two planets. */}
           <div
             className="absolute left-0 right-0 min-[992px]:hidden overflow-hidden"
-            style={{ bottom: 0, height: 270, transform: 'translateY(99%)' }}
+            style={{ bottom: 0, height: 270 }}
             aria-hidden="true"
           >
             <div
@@ -110,13 +113,14 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
           </div>
         </motion.div>
 
-        {/* Content layer - animates LAST. mt-auto pushes the characters
-            block to the bottom of the section so on tall viewports it
-            sits flush with the footer (white bg fills the gap above). */}
+        {/* Content layer - animates LAST.
+            < 992: my-auto centres the characters block vertically so it sits
+                   evenly between the top + bottom planets.
+            >= 992: mt-auto anchors it to the section bottom (flush with the
+                    footer; white bg fills the gap above). */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 w-full mt-auto"
-          style={{ paddingTop: 0 }}
+          className="relative z-10 w-full my-auto min-[992px]:mb-0"
         >
           <MinglingCharacters
             events={activeEvents}

@@ -74,15 +74,49 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   // < 992 swaps the layout: characters hidden, arms enter from the
   // left/right edges alternately and rotate horizontally.
   const [isMobile, setIsMobile] = useState(false)
+  const [isTablet, setIsTablet] = useState(false) // 576–991
+  const [isWide, setIsWide] = useState(false) // 768–991
+  // Gates positioned rendering until the viewport is measured, so arms/cards
+  // mount straight into the correct (mobile/desktop) spot instead of flashing
+  // from the SSR desktop layout and animating across.
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     const mq = window.matchMedia('(max-width: 991px)')
-    const update = () => setIsMobile(mq.matches)
+    const tabletMq = window.matchMedia('(min-width: 576px) and (max-width: 991px)')
+    const wideMq = window.matchMedia('(min-width: 768px) and (max-width: 991px)')
+    const update = () => {
+      setIsMobile(mq.matches)
+      setIsTablet(tabletMq.matches)
+      setIsWide(wideMq.matches)
+    }
     update()
+    setMounted(true)
     mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
+    tabletMq.addEventListener('change', update)
+    wideMq.addEventListener('change', update)
+    return () => {
+      mq.removeEventListener('change', update)
+      tabletMq.removeEventListener('change', update)
+      wideMq.removeEventListener('change', update)
+    }
   }, [])
+
+  // Lock background scroll while an event is open (the expanded overlay).
+  // Lock both <html> and <body> since the scroller can be either.
+  useEffect(() => {
+    if (expandedArm === null) return
+    const docEl = document.documentElement
+    const prevHtml = docEl.style.overflow
+    const prevBody = document.body.style.overflow
+    docEl.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    return () => {
+      docEl.style.overflow = prevHtml
+      document.body.style.overflow = prevBody
+    }
+  }, [expandedArm])
 
   useEffect(() => {
     const container = containerRef.current
@@ -351,7 +385,7 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   // them all so the layout no longer fights a fixed 500px height.
   // Top padding clears the 270px top planet decoration so the cards
   // appear centred between top planet and section bottom.
-  const MOBILE_CARD_W = 260
+  const MOBILE_CARD_W = isWide ? 460 : isTablet ? 360 : 260 // 768–991: 460, 576–767: 360, else 260
   const MOBILE_CARD_H = 290
   const MOBILE_CARD_GAP = 36
   const MOBILE_PAD_TOP = 100
@@ -367,15 +401,16 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
 
   return (
     <div
-      className="relative"
+      className="relative transition-opacity duration-500"
       style={{
         height: isMobile ? mobileContainerHeight : 500,
         width: '100%',
+        opacity: mounted ? 1 : 0,
       }}
       aria-hidden="true"
     >
       {/* Panels layer - outside clipped area so they can overflow */}
-      {arms.map((arm, i) => {
+      {mounted && arms.map((arm, i) => {
         const { left, bunchDirection } = getArmPosition(i)
         const isActive = activeArm === i
         const isThisExpanded = expandedArm === i
@@ -520,6 +555,7 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
                   {/* Left col — copy + CTA */}
                   <div className="flex-1 flex flex-col min-w-0">
                     <h3
+                      className="max-w-[calc(100%_-_40px)] min-[576px]:max-w-none"
                       style={{
                         fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
                         fontWeight: 600,
@@ -709,7 +745,7 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
             : { overflowX: 'visible', overflowY: 'clip' }
         }
       >
-        {arms.map((arm, i) => {
+        {mounted && arms.map((arm, i) => {
           const isThisExpanded = expandedArm === i
           const isHidden = isExpanded && !isThisExpanded
 
@@ -717,15 +753,22 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
             // Arms decorate behind each card. Card on the right of the
             // viewport pairs with an arm from the left, and vice versa.
             const fromLeft = i % 2 === 0
-            const armBreadth = 110 // visual thickness of the rotated arm
-            const MOBILE_ARM_LEN = 280
-            const sideOffset = isHidden ? -MOBILE_ARM_LEN - 20 : -90
+            const armBreadth = isWide ? 132 : 110 // visual thickness of the rotated arm
+            const MOBILE_ARM_LEN = isWide ? 336 : 280 // 20% bigger on 768–991
+            // Anchor the arm so its tip sits exactly 20px into the (centred)
+            // card edge — vw-independent since card + arm are both relative to
+            // 50%. Hidden state slides it a further 320px off toward the edge.
+            const armBase = MOBILE_CARD_W / 2 - 20 + MOBILE_ARM_LEN
+            // On mobile the expanded card pops to a centred overlay, so slide
+            // out ALL arms (incl. the active event's) whenever one is expanded.
+            const mobileHidden = isExpanded
+            const sideOffset = `calc(50% - ${mobileHidden ? armBase + 320 : armBase}px)`
 
             return (
               <div
                 key={`arm-${i}`}
                 className={`group absolute z-[5] transition-all duration-500 ease-out ${
-                  isHidden ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'
+                  mobileHidden ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'
                 }`}
                 style={{
                   top: mobileCardCenter(i),
@@ -733,7 +776,7 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
                   width: MOBILE_ARM_LEN,
                   height: armBreadth,
                   transform: 'translateY(-50%)',
-                  opacity: isHidden ? 0 : 1,
+                  opacity: mobileHidden ? 0 : 1,
                 }}
                 onClick={() => handleShowMore(i)}
               >

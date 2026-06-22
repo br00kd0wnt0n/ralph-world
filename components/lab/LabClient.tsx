@@ -76,7 +76,7 @@ export default function LabClient({ items, copy }: LabClientProps) {
         {/* Content layer - cloud-jar carousel, animates after bg */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 px-6 pb-8"
+          className="relative z-10 px-0 min-[768px]:px-6 pb-8"
           style={{ paddingTop: 60 }}
         >
           <div className="max-w-6xl mx-auto">

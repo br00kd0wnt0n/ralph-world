@@ -46,7 +46,7 @@ export default async function Home() {
       id: 'magazine',
       label: 'Magazine',
       tagline: 'Our fun, glossy mag',
-      accentColor: '#EE6626',
+      accentColor: 'var(--color-ralph-orange)',
       planetPosition: 'lower-left',
       moduleCard: {
         heading: 'Magazine',

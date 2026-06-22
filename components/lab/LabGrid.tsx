@@ -69,7 +69,7 @@ function badgeClasses(badge: string) {
 function BellJar({ item }: { item: LabItem }) {
   return (
     // Jar intrinsic ratio 201.4 × 234.3
-    <div className="relative w-[201px] mx-auto" style={{ aspectRatio: '201.4 / 234.3' }}>
+    <div className="relative w-[201px] max-[575px]:w-[174px] mx-auto" style={{ aspectRatio: '201.4 / 234.3' }}>
       {/* Jar illustration (white glass + outline + base) underneath */}
       <img
         src="/imgs/bell-jar.svg"
@@ -183,9 +183,17 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
   const userEntitlement = tier && tier !== 'guest' ? { tier: tier as UserTier } : null
 
   return (
-    <section className="px-6 py-16 flex flex-col items-center">
-      {/* ── Cloud stage: conveyor belt + bell-jar carousel ── */}
-      <div ref={cloudRef} className="relative w-full" style={{ maxWidth: 612, aspectRatio: '612 / 419' }}>
+    <section className="px-0 min-[768px]:px-6 py-16 flex flex-col items-center overflow-x-clip">
+      {/* ── Cloud stage: conveyor belt + bell-jar carousel ──
+          < 768: a SET 612px width (bleeds off the screen sides, clipped by the
+          section's overflow-x-clip) so the cloud/jars don't scale with the
+          viewport and the fixed-size jars stay in position.
+          >= 768: fluid up to 612. */}
+      <div
+        ref={cloudRef}
+        className="relative w-[612px] min-[768px]:w-full"
+        style={{ maxWidth: 612, aspectRatio: '612 / 419' }}
+      >
         <img
           src="/imgs/labs-cloud.svg"
           alt=""
@@ -198,8 +206,8 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
           src="/imgs/conveyor-belt.svg"
           alt=""
           aria-hidden="true"
-          className="absolute left-1/2 -translate-x-1/2 z-0 max-w-full pointer-events-none select-none"
-          style={{ width: 584, bottom: '7%' }}
+          className="absolute left-1/2 -translate-x-1/2 z-0 max-w-full pointer-events-none select-none bottom-[7%] max-[575px]:bottom-[calc(7%_+_30px)]"
+          style={{ width: 584 }}
         />
 
         {/* Cloud-shaped mask (612×419, matches the cloud) clipping the jars to
@@ -217,14 +225,19 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
             WebkitMaskPosition: 'center',
           }}
         >
-          {/* Jars — centered carousel with side-peek */}
-          <div className="absolute left-0 right-0" style={{ top: '14%', bottom: '24%', transform: 'translateY(40px)' }}>
+          {/* Jars — centered carousel with side-peek. Sit a little lower on
+              mobile (translate-y) than desktop. */}
+          <div
+            className="absolute left-0 right-0 translate-y-[40px] min-[576px]:max-[767px]:translate-y-[39px] max-[575px]:translate-y-[39px]"
+            style={{ top: '14%', bottom: '24%' }}
+          >
             <Swiper
               onSwiper={(s) => { swiperRef.current = s }}
               onSlideChange={(s) => setActiveIndex(s.realIndex)}
               loop={showNav}
               centeredSlides
-              slidesPerView={2.2}
+              slidesPerView={1}
+              breakpoints={{ 768: { slidesPerView: 2.2 } }}
               speed={400}
               className="w-full h-full"
             >
@@ -242,7 +255,7 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
             <button
               onClick={() => swiperRef.current?.slidePrev()}
               className="absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center bg-black text-white hover:bg-black/80"
-              style={{ width: 30, height: 30, left: 1 }}
+              style={{ width: 30, height: 30, left: 'max(24px, calc(50% - 50vw + 24px))' }}
               aria-label="Previous"
             >
               <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
@@ -252,7 +265,7 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
             <button
               onClick={() => swiperRef.current?.slideNext()}
               className="absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center bg-black text-white hover:bg-black/80"
-              style={{ width: 30, height: 30, right: 1 }}
+              style={{ width: 30, height: 30, right: 'max(24px, calc(50% - 50vw + 24px))' }}
               aria-label="Next"
             >
               <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
@@ -267,7 +280,7 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
       {/* Every entry shares one CSS grid cell, so the block's height stays
           fixed to the tallest entry — no resize jolt between slides. Only the
           active entry is opaque; the rest crossfade out. */}
-      <div className="mt-6 max-w-sm grid text-center">
+      <div className="mt-6 max-w-sm grid text-center px-6">
         {items.map((item, i) => {
           const itemAccessTier = (item.accessTier ?? 'everyone') as AccessTier
           const isLocked = !canAccess(userEntitlement, { accessTier: itemAccessTier })
@@ -361,7 +374,7 @@ export default function LabGrid({ items, onSubscribe }: LabGridProps) {
       {mounted &&
         createPortal(
           <div
-            className="fixed inset-0 pointer-events-none select-none"
+            className="fixed inset-0 pointer-events-none select-none hidden min-[768px]:block"
             style={{ zIndex: 30 }}
             aria-hidden="true"
           >

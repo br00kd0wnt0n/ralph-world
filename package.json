@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "email:dev": "email dev --port 3500"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",

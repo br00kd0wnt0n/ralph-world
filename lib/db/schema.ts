@@ -290,7 +290,7 @@ export const shopifyLinks = pgTable('shopify_links', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   shopifyCustomerId: text('shopify_customer_id').notNull().unique(),
-  linkMethod: text('link_method').notNull(), // 'auto_signup_create' | 'auto_email_match_at_signup' | 'auto_checkout' | 'manual_verification' | 'admin'
+  linkMethod: text('link_method').notNull(), // 'auto_signup_create' | 'auto_email_match_at_signup' | 'auto_checkout' | 'manual_verification' | 'admin' | 'subscriber_import'
   linkedAt: timestamp('linked_at', { mode: 'date' }).defaultNow().notNull(),
 })
 

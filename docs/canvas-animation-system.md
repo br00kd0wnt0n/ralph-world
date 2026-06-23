@@ -102,6 +102,13 @@ One craft crossing **left → right** at random intervals (`SAT_GAP_*`) at a
 drawn at `worldY − scrollY`), so it scrolls out of view rather than sticking to
 the viewport.
 
+### Eyed-alien
+Sits on the footer planet (anchored to `#footer-planet` in document space). It
+does **not** cycle its frames in sequence — `updateEyed` holds the current frame
+for a randomised spell (`rand(175, 800)` ms) then jumps to a random **different**
+frame, so its eyes glance around at random. Sheet rebuilt to **6 frames** (the
+source folder has `eye-eye_0..4, 6` — no frame 5).
+
 ### DEBUG
 `const DEBUG = true` at the top of `CanvasStage.tsx` shortcuts the long
 start/hidden delays (start ~1–2.5s, gap ~3–6s) for tuning. **Leave it `false`
@@ -189,8 +196,12 @@ A self-contained factory the top `CanvasStage` drives (`update`/`draw`):
   painted frame (`transitionsOn`) to stop the flash of narrow panels on load.
 - **FooterPlanet** — got an `id="footer-planet"` anchor so `CanvasStage` can pin
   the eyed-alien to it (document space).
-- **Magazine** — a spinning `got-coin` (`SpriteAnimation`) on the planet edge at
-  an angle; content top-padding trimmed 30px.
+- **Magazine** — a spinning `got-coin` (`SpriteAnimation`) on the planet's top
+  curve at a 16° angle. Anchored to the section **centre** with a fixed offset so
+  it stays on the curve regardless of viewport width: `translateX(200px)` at
+  ≥768, `100px` below 768, and hidden entirely `< 576`. Content top-padding steps
+  by breakpoint (90 / 130 / 170px at `<576` / `576–767` / `≥768`). Sheet rebuilt
+  to 9 frames (source folder frames `got-coin_0..8`, cell 398×454).
 - **ScrollIndicator** — `scroll-arrow.svg` with a gentle up/down bob (Framer
   Motion) + pink Roboto "SCROLL".
 

@@ -46,16 +46,16 @@ export const ANIMATIONS = {
   },
   'got-coin': {
     src: '/animations/got-coin.png',
-    frameW: 416,
-    frameH: 496,
+    frameW: 398,
+    frameH: 454,
     count: 9,
     fps: 12,
   },
   'eyed-alien': {
     src: '/animations/eyed-alien.png',
-    frameW: 180,
-    frameH: 328,
-    count: 8,
+    frameW: 179,
+    frameH: 327,
+    count: 6,
     fps: 10,
   },
   chaser: {

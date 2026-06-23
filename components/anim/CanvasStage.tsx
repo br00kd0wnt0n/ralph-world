@@ -115,7 +115,7 @@ export default function CanvasStage() {
     // Eyed-alien sits on the footer planet. We anchor to #footer-planet in
     // document space (worldY is absolute; independent of scroll) and recompute
     // on layout changes.
-    const eyed = { ready: false, x: 0, worldY: 0, frame: 0, acc: 0 }
+    const eyed = { ready: false, x: 0, worldY: 0, frame: 0, acc: 0, holdMs: 0 }
     function computeEyedAnchor() {
       const el = document.getElementById('footer-planet')
       if (!el) {
@@ -264,11 +264,18 @@ export default function CanvasStage() {
 
     function updateEyed(dt: number) {
       if (!eyed.ready) return
+      // Hold each frame for a randomised spell, then jump to a random
+      // (different) frame — the eyes glance around at random instead of
+      // cycling in sequence.
       eyed.acc += dt
-      const ms = 1000 / (EYED.fps ?? 10)
-      while (eyed.acc >= ms) {
-        eyed.acc -= ms
-        eyed.frame = (eyed.frame + 1) % EYED.count
+      if (eyed.acc >= eyed.holdMs) {
+        eyed.acc = 0
+        eyed.holdMs = rand(175, 800) // ms to hold this frame
+        if (EYED.count > 1) {
+          let next = Math.floor(Math.random() * (EYED.count - 1))
+          if (next >= eyed.frame) next += 1 // skip current → always changes
+          eyed.frame = next
+        }
       }
     }
 

@@ -147,18 +147,20 @@ export default function MagazineClient({
           />
         </motion.div>
 
-        {/* Spinning coin on the right of the planet */}
+        {/* Spinning coin on the planet's top curve. Anchored to the centre
+            with a fixed +200px offset so it stays put on the curve regardless
+            of viewport width (the planet apex is centred). */}
         <SpriteAnimation
           name="got-coin"
           width={174}
-          className="absolute z-[5] right-[8%] top-[-100px] pointer-events-none select-none"
-          style={{ transform: 'rotate(16deg)', transformOrigin: 'bottom center' }}
+          className="absolute z-[5] left-1/2 top-[-100px] pointer-events-none select-none hidden min-[576px]:block translate-x-[100px] min-[768px]:translate-x-[200px] rotate-[16deg]"
+          style={{ transformOrigin: 'bottom center' }}
         />
 
         {/* Content layer - animates LAST */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 pb-8 min-h-[50vh] pt-[90px] min-[768px]:pt-[130px] min-[992px]:pt-[170px]"
+          className="relative z-10 pb-8 min-h-[50vh] pt-[90px] min-[576px]:pt-[130px] min-[768px]:pt-[170px]"
         >
           {/* Cover Story title */}
           <h2 className="max-w-5xl mx-auto px-6 mb-6">

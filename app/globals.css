@@ -308,7 +308,7 @@ main > [data-transitioning] {
 /* Planet section background min-width — 1000px on narrow viewports,
    1380px from 992 up. Applied alongside inline background-* styles. */
 .planet-bg-cover {
-  min-width: 1000px;
+  min-width: 1080px;
 }
 @media (min-width: 992px) {
   .planet-bg-cover {

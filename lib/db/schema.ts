@@ -191,10 +191,14 @@ export const labItems = pgTable('lab_items', {
   slug: text('slug').unique().notNull(),
   status: text('status').default('draft'),
   title: text('title'),
-  description: text('description'),
+  subtitle: text('subtitle'),
+  description: text('description'), // Rich-text intro (HTML from Tiptap).
+  postedBy: text('posted_by'),
   externalUrl: text('external_url'),
-  thumbnailUrl: text('thumbnail_url'),
-  badge: text('badge'),
+  thumbnailUrl: text('thumbnail_url'), // Lead image — full-width on the public tile.
+  badge: text('badge'), // Deprecated — superseded by tags. Kept for legacy rows.
+  tags: jsonb('tags'), // Array<{ label: string, color: TagColor }>, max 5.
+  contentBlocks: jsonb('content_blocks'), // ContentBlock[] — same shape as articles.
   // Per arch doc §4: 'everyone' | 'members' | 'paid_subscribers'.
   accessTier: text('access_tier').default('everyone'),
   sortOrder: integer('sort_order'),

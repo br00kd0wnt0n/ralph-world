@@ -8,7 +8,7 @@ export const revalidate = 60
 export const metadata: Metadata = {
   title: 'Lab',
   description:
-    'Pull the lever on the RalphOMatic — experiments, tools, and oddities from the Ralph lab.',
+    'Experiments, tools, generators and oddities from the Ralph lab.',
   openGraph: {
     title: 'Ralph Lab',
     description:

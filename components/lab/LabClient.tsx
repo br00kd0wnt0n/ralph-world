@@ -35,7 +35,7 @@ export default function LabClient({ items, copy }: LabClientProps) {
           copy?.lab_hero_intro ??
             "Tools, experiments, generators and weird little projects. Everything we've been tinkering with lately.",
           copy?.lab_hero_cta ??
-            'What you waiting for — pull the lever to see what comes out.',
+            'Have a poke around — every tile below is a real experiment.',
         ]}
       />
 

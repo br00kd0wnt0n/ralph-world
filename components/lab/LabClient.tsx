@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import LabGrid from './LabGrid'
+import LabOverlay from './LabOverlay'
 import SectionIntro from '@/components/layout/SectionIntro'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import {
@@ -20,6 +21,19 @@ interface LabClientProps {
 
 export default function LabClient({ items, copy }: LabClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
+  const [openItem, setOpenItem] = useState<LabItem | null>(null)
+  const [overlayOpen, setOverlayOpen] = useState(false)
+
+  function handleItemClick(item: LabItem) {
+    setOpenItem(item)
+    setOverlayOpen(true)
+  }
+  function closeOverlay() {
+    setOverlayOpen(false)
+    // Keep `openItem` populated through the exit animation so the modal
+    // still has content to render while fading out; clear once unmounted.
+    setTimeout(() => setOpenItem(null), 250)
+  }
 
   return (
     <motion.div
@@ -80,10 +94,20 @@ export default function LabClient({ items, copy }: LabClientProps) {
           style={{ paddingTop: 60 }}
         >
           <div className="max-w-6xl mx-auto">
-            <LabGrid items={items} onSubscribe={() => setSubscribeOpen(true)} />
+            <LabGrid items={items} onItemClick={handleItemClick} />
           </div>
         </motion.div>
       </section>
+
+      <LabOverlay
+        item={openItem}
+        isOpen={overlayOpen}
+        onClose={closeOverlay}
+        onSubscribe={() => {
+          closeOverlay()
+          setSubscribeOpen(true)
+        }}
+      />
 
       <SubscribeModal
         isOpen={subscribeOpen}

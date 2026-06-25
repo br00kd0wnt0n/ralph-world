@@ -76,7 +76,7 @@ export const DEFAULT_COPY = {
   lab_hero_heading: 'LAB',
   lab_hero_intro:
     "Tools, experiments, generators and weird little projects. Everything we've been tinkering with lately.",
-  lab_hero_cta: 'What you waiting for — pull the lever to see what comes out.',
+  lab_hero_cta: 'Have a poke around — every tile below is a real experiment.',
 
   // Play with Ralph (agency page)
   play_hero_heading: 'PLAY WITH RALPH',

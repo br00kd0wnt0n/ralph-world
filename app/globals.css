@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/* Restore the click affordance on buttons — Tailwind v4's preflight no longer
+   forces cursor:pointer on <button>/[role=button] (browser default is the
+   arrow). Links already get pointer from the browser. Disabled stays default. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}
+
 /* ── Mid-screen breakpoint (1200px - 1440px) ── */
 @variant mid (@media (min-width: 1200px) and (max-width: 1440px));
 

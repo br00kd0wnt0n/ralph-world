@@ -121,7 +121,11 @@ function ShadowButton({
   )
 }
 
-export default function JoinRalphClient() {
+export default function JoinRalphClient({
+  magCoverUrl = null,
+}: {
+  magCoverUrl?: string | null
+}) {
   const router = useRouter()
   const params = useSearchParams()
 
@@ -263,7 +267,7 @@ export default function JoinRalphClient() {
                 transition={slideTransition}
                 className="pb-6"
               >
-                {step === 1 && <Slide1 onSelectTier={handleSelectTier} />}
+                {step === 1 && <Slide1 onSelectTier={handleSelectTier} magCoverUrl={magCoverUrl} />}
                 {step === 2 && (
                   <Slide2
                     email={email}
@@ -309,20 +313,30 @@ export default function JoinRalphClient() {
 // Slide 1 — JOIN RALPH hero + tier copy
 // ────────────────────────────────────────────────────────────────────────────
 
-function Slide1({ onSelectTier }: { onSelectTier: (t: Tier) => void }) {
+function Slide1({
+  onSelectTier,
+  magCoverUrl,
+}: {
+  onSelectTier: (t: Tier) => void
+  magCoverUrl?: string | null
+}) {
   return (
     <div className="grid md:grid-cols-[1fr_1fr] gap-8 md:gap-16 items-start">
       {/* Left: JOIN RALPH title + magazine cover decoration + astronaut */}
       <div className="relative">
-        {/* Mag cover placeholder */}
-        <div className="absolute -left-2 top-20 hidden md:block pointer-events-none">
-          <div
-            className="w-36 h-52 bg-ralph-yellow/40 border border-black rounded flex items-center justify-center text-[10px] text-gray-500"
-            style={{ transform: 'rotate(-8deg)' }}
-          >
-            mag cover
+        {/* Latest shop magazine cover */}
+        {magCoverUrl && (
+          <div className="absolute -left-2 top-20 hidden md:block pointer-events-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={magCoverUrl}
+              alt=""
+              aria-hidden="true"
+              className="w-36 h-52 object-cover border border-black rounded select-none"
+              style={{ transform: 'rotate(-8deg)' }}
+            />
           </div>
-        </div>
+        )}
 
         <img
           src="/imgs/text-join-ralph.svg"
@@ -342,16 +356,6 @@ function Slide1({ onSelectTier }: { onSelectTier: (t: Tier) => void }) {
 
       {/* Right: tiers */}
       <div className="flex flex-col gap-10 relative pt-4">
-        {/* Mag cover placeholder */}
-        <div className="absolute -right-6 -top-4 hidden md:block pointer-events-none">
-          <div
-            className="w-28 h-40 bg-ralph-pink/40 border border-black rounded flex items-center justify-center text-[10px] text-gray-500"
-            style={{ transform: 'rotate(6deg)' }}
-          >
-            mag cover
-          </div>
-        </div>
-
         {/* Free tier */}
         <div className="relative z-10 max-w-md">
           <h3

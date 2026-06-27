@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
 import Button from '@/components/ui/Button'
 import type { ArticleSummary } from '@/lib/data/magazine'
@@ -31,12 +32,27 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
             className="bg-gray-200 relative"
             style={{ aspectRatio: 1.6290322581, borderRadius: 12 }}
           >
-            <img
-              src={article.leadMediaUrl || '/imgs/article_lead.png'}
-              alt={article.title ?? ''}
-              className="w-full h-full object-cover"
-              style={{ borderRadius: 12 }}
-            />
+            {(() => {
+              const coverSrc = article.leadMediaUrl || '/imgs/article_lead.png'
+              return coverSrc.startsWith('/') ? (
+                <Image
+                  src={coverSrc}
+                  alt={article.title ?? ''}
+                  fill
+                  sizes="(min-width: 768px) 45vw, 100vw"
+                  className="object-cover"
+                  style={{ borderRadius: 12 }}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={coverSrc}
+                  alt={article.title ?? ''}
+                  className="w-full h-full object-cover"
+                  style={{ borderRadius: 12 }}
+                />
+              )
+            })()}
 
             {/* Corner ribbon: SVG band at top-left, label rotated along its diagonal */}
             {ribbonTag && (

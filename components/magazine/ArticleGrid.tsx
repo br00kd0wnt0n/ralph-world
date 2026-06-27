@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -262,12 +263,28 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                   >
                     {/* Image fills entire cell */}
                     <div className="absolute inset-0">
-                      <img
-                        src={article.cardImageUrl || article.leadMediaUrl || '/imgs/article_lead.png'}
-                        alt={article.title ?? ''}
-                        draggable={false}
-                        className="w-full h-full object-cover select-none"
-                      />
+                      {(() => {
+                        const cardSrc =
+                          article.cardImageUrl || article.leadMediaUrl || '/imgs/article_lead.png'
+                        return cardSrc.startsWith('/') ? (
+                          <Image
+                            src={cardSrc}
+                            alt={article.title ?? ''}
+                            fill
+                            draggable={false}
+                            sizes="(min-width: 1024px) 33vw, 50vw"
+                            className="object-cover select-none"
+                          />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={cardSrc}
+                            alt={article.title ?? ''}
+                            draggable={false}
+                            className="w-full h-full object-cover select-none"
+                          />
+                        )
+                      })()}
                     </div>
 
                     {/* Access tier badge — always visible, top-left */}

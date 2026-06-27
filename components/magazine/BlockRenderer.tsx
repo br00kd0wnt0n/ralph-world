@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css'
@@ -266,7 +267,7 @@ export default function BlockRenderer({ blocks }: { blocks: ContentBlock[] }) {
           case 'RalphSignoff':
             return (
               <div key={i} className="flex flex-col items-center py-6">
-                <img
+                <Image
                   src="/ralph-logo.png"
                   alt="ralph"
                   width={48}

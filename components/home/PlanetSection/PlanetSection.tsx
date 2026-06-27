@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import { motion } from 'framer-motion'
@@ -708,11 +709,27 @@ export default function PlanetSection({
             className="cursor-pointer group"
             aria-label={`Open ${label}`}
           >
-            <img
-              src={planetImageUrl || PLANET_IMAGES[id] || '/imgs/planet_tv.png'}
-              alt={`${label} planet`}
-              className="w-[220px] md:w-[350px] min-[992px]:w-[411px] h-auto object-contain transition-transform group-hover:scale-[1.03]"
-            />
+            {(() => {
+              const planetSrc =
+                planetImageUrl || PLANET_IMAGES[id] || '/imgs/planet_tv.png'
+              const planetClass =
+                'w-[220px] md:w-[350px] min-[992px]:w-[411px] h-auto object-contain transition-transform group-hover:scale-[1.03]'
+              // Local assets go through next/image (AVIF + resized to display
+              // size); CMS/remote URLs stay as a plain <img> (no host config).
+              return planetSrc.startsWith('/') ? (
+                <Image
+                  src={planetSrc}
+                  alt={`${label} planet`}
+                  width={822}
+                  height={860}
+                  sizes="(min-width: 992px) 411px, (min-width: 768px) 350px, 220px"
+                  className={planetClass}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={planetSrc} alt={`${label} planet`} className={planetClass} />
+              )
+            })()}
           </button>
         </motion.div>
       </div>

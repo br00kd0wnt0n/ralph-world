@@ -40,6 +40,10 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  images: {
+    // Prefer AVIF (falls back to WebP, then the original) for next/image.
+    formats: ['image/avif', 'image/webp'],
+  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },

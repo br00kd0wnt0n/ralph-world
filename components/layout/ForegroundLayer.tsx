@@ -65,10 +65,16 @@ export default function ForegroundLayer() {
 
   if (theme !== 'cosy-dynamics') return null
 
+  // Homepage keeps these in front of content (z-20); subpages drop them below
+  // the content (z-[5], still above the starfield/midground).
+  const isHome = pathname === '/'
+
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 pointer-events-none z-20 overflow-hidden hidden md:block"
+      className={`fixed inset-0 pointer-events-none overflow-hidden hidden md:block ${
+        isHome ? 'z-20' : 'z-[5]'
+      }`}
       aria-hidden="true"
     >
       {items.map((item, i) => (

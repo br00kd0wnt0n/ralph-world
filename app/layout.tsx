@@ -13,6 +13,9 @@ import MidgroundCanvas from '@/components/anim/MidgroundCanvas'
 import ForegroundCanvas from '@/components/anim/ForegroundCanvas'
 import PlanetPreloader from '@/components/layout/PlanetPreloader'
 import PageTransitionWrapper from '@/components/layout/PageTransitionWrapper'
+import PageShift from '@/components/layout/PageShift'
+import MenuFade from '@/components/layout/MenuFade'
+import MobileMenu from '@/components/layout/MobileMenu'
 import CookieBanner from '@/components/legal/CookieBanner'
 
 const playfair = Playfair_Display({
@@ -77,18 +80,25 @@ export default async function RootLayout({
         <Providers>
           <PlanetPreloader />
           <Starfield />
-          <MidgroundCanvas />
-          <Nav />
+          <MenuFade>
+            <MidgroundCanvas />
+            <Nav />
+          </MenuFade>
           <BackgroundLayer />
-          <main className="flex-1 flex flex-col relative z-10">
-            <PageTransitionWrapper>
-              {children}
-            </PageTransitionWrapper>
-          </main>
-          <Footer variant="dark" copy={copy} />
-          <ForegroundLayer />
-          <ForegroundCanvas />
+          <PageShift>
+            <main className="flex-1 flex flex-col relative z-10">
+              <PageTransitionWrapper>
+                {children}
+              </PageTransitionWrapper>
+            </main>
+            <Footer variant="dark" copy={copy} />
+          </PageShift>
+          <MenuFade>
+            <ForegroundLayer />
+            <ForegroundCanvas />
+          </MenuFade>
           <CartDrawer />
+          <MobileMenu />
           <CookieBanner />
         </Providers>
       </body>

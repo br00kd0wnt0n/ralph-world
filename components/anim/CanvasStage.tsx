@@ -26,12 +26,6 @@ const EXHAUST_X_OFFSET = 20 // nudge the plume right of the alien centre
 const ROT_MIN = -0.1 // radians — modest left tilt
 const ROT_MAX = 0.18 // radians — a touch more right tilt so they don't all lean the same way
 
-// Eyed-alien: settled on the footer planet ("THE ENTERTAINMENT PEOPLE").
-// Anchored to #footer-planet in document space, so it scrolls with the page.
-const EYED_SCALE = 0.5
-const EYED_OFFSET_X = -240 // px from the planet centre (negative = left)
-const EYED_OFFSET_Y = -130 // px from the planet top (negative = up / standing on it)
-
 const rand = (min: number, max: number) => min + Math.random() * (max - min)
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
 const startDelay = () => (DEBUG ? rand(1000, 2500) : rand(START_MIN, START_MAX))
@@ -86,14 +80,11 @@ export default function CanvasStage() {
 
     const ALIEN = ANIMATIONS['bouncing-alien']
     const EXHAUST = ANIMATIONS['exhaust']
-    const EYED = ANIMATIONS['eyed-alien']
 
     const alienImg = new Image()
     alienImg.src = ALIEN.src
     const exhaustImg = new Image()
     exhaustImg.src = EXHAUST.src
-    const eyedImg = new Image()
-    eyedImg.src = EYED.src
 
     let vw = window.innerWidth
     let vh = window.innerHeight
@@ -109,24 +100,8 @@ export default function CanvasStage() {
       cv.style.width = `${vw}px`
       cv.style.height = `${vh}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      computeEyedAnchor()
     }
 
-    // Eyed-alien sits on the footer planet. We anchor to #footer-planet in
-    // document space (worldY is absolute; independent of scroll) and recompute
-    // on layout changes.
-    const eyed = { ready: false, x: 0, worldY: 0, frame: 0, acc: 0, holdMs: 0 }
-    function computeEyedAnchor() {
-      const el = document.getElementById('footer-planet')
-      if (!el) {
-        eyed.ready = false
-        return
-      }
-      const rect = el.getBoundingClientRect()
-      eyed.x = rect.left + rect.width / 2 + EYED_OFFSET_X
-      eyed.worldY = rect.top + window.scrollY + EYED_OFFSET_Y
-      eyed.ready = true
-    }
     resize()
 
     // Random 3–7 aliens, clustered close, slightly different sizes.
@@ -262,35 +237,8 @@ export default function CanvasStage() {
       }
     }
 
-    function updateEyed(dt: number) {
-      if (!eyed.ready) return
-      // Hold each frame for a randomised spell, then jump to a random
-      // (different) frame — the eyes glance around at random instead of
-      // cycling in sequence.
-      eyed.acc += dt
-      if (eyed.acc >= eyed.holdMs) {
-        eyed.acc = 0
-        eyed.holdMs = rand(175, 800) // ms to hold this frame
-        if (EYED.count > 1) {
-          let next = Math.floor(Math.random() * (EYED.count - 1))
-          if (next >= eyed.frame) next += 1 // skip current → always changes
-          eyed.frame = next
-        }
-      }
-    }
-
     function draw() {
       ctx.clearRect(0, 0, vw, vh)
-
-      // Eyed-alien settled on the footer planet
-      if (eyed.ready && eyedImg.complete && eyedImg.naturalWidth > 0) {
-        const w = EYED.frameW * EYED_SCALE
-        const h = EYED.frameH * EYED_SCALE
-        const screenY = eyed.worldY - window.scrollY
-        if (screenY < vh && screenY + h > 0) {
-          ctx.drawImage(eyedImg, eyed.frame * EYED.frameW, 0, EYED.frameW, EYED.frameH, eyed.x - w / 2, screenY, w, h)
-        }
-      }
 
       // Alien squad
       if (squad.phase !== 'hidden' && alienImg.complete && alienImg.naturalWidth > 0) {
@@ -327,24 +275,14 @@ export default function CanvasStage() {
 
     const stopTicker = registerTicker((dt, elapsed) => {
       updateSquad(dt, elapsed)
-      updateEyed(dt)
       saucerShow.update(dt, elapsed)
       draw()
     })
 
-    // Footer planet position settles after its image loads / layout shifts.
     window.addEventListener('resize', resize)
-    window.addEventListener('load', computeEyedAnchor)
-    eyedImg.addEventListener('load', computeEyedAnchor)
-    const t1 = window.setTimeout(computeEyedAnchor, 500)
-    const t2 = window.setTimeout(computeEyedAnchor, 1500)
     return () => {
       stopTicker()
       window.removeEventListener('resize', resize)
-      window.removeEventListener('load', computeEyedAnchor)
-      eyedImg.removeEventListener('load', computeEyedAnchor)
-      clearTimeout(t1)
-      clearTimeout(t2)
     }
   }, [mounted])
 

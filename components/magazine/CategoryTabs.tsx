@@ -33,7 +33,7 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
   }
 
   return (
-    <div className="w-full mx-auto px-6" style={{ maxWidth: 502 }}>
+    <div className="w-full mx-auto px-6" style={{ maxWidth: 540 }}>
       {/* Top separator */}
       <img
         src="/imgs/dashed_separator_top.svg"

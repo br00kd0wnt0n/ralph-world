@@ -6,9 +6,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
+import { useMenu } from '@/context/MenuContext'
 import ThemeToggle from './ThemeToggle'
 import LanguageModal from './LanguageModal'
-import MobileMenu from './MobileMenu'
 import SubscribeModal from './SubscribeModal'
 
 const NAV_ITEMS = [
@@ -54,7 +54,7 @@ export default function Nav() {
   const pathname = usePathname()
   const { user, tier } = useAuth()
   const { itemCount, openCart } = useCart()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const { setOpen: setMobileOpen } = useMenu()
   const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(navState.progress)
   const [navFixed, setNavFixed] = useState(navState.fixed)
@@ -420,7 +420,7 @@ export default function Nav() {
                 className="text-primary"
                 aria-label="Open menu"
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <line x1="3" y1="12" x2="21" y2="12" />
                   <line x1="3" y1="18" x2="21" y2="18" />
@@ -583,11 +583,8 @@ export default function Nav() {
         </div>
       </nav>
 
-      <MobileMenu
-        isOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        onSubscribe={() => setSubscribeOpen(true)}
-      />
+      {/* MobileMenu is rendered at the layout level (outside MenuFade) so it
+          isn't faded out along with the nav when it opens. */}
 
       <SubscribeModal
         isOpen={subscribeOpen}

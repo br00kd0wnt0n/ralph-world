@@ -2,29 +2,16 @@
 
 import { Fragment, useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useAuth } from '@/context/AuthContext'
-import { safeGet, safeSet } from '@/lib/safe-storage'
+import { useLanguage, LANGUAGES } from '@/lib/useLanguage'
 import PinkDropdown, { panelItemVariants, stackVariants } from './PinkDropdown'
 
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'ja', label: '日本語' },
-  { code: 'hi', label: 'हिंदी' },
-]
-
 export default function LanguageModal() {
-  const { user } = useAuth()
+  const { language, setLanguage } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
-  const [language, setLanguageState] = useState('en')
   const ref = useRef<HTMLDivElement>(null)
   // PinkDropdown is portalled to document.body — include its panel in the
   // click-outside check so clicks inside the menu don't close it.
   const panelRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const stored = safeGet('ralph-language')
-    if (stored) setLanguageState(stored)
-  }, [])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -37,19 +24,9 @@ export default function LanguageModal() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  async function setLanguage(code: string) {
-    setLanguageState(code)
-    safeSet('ralph-language', code)
+  function chooseLanguage(code: string) {
+    setLanguage(code)
     setIsOpen(false)
-
-    if (user) {
-      // Server action to update profile language preference
-      await fetch('/api/profile/language', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language: code }),
-      })
-    }
   }
 
   return (
@@ -85,7 +62,7 @@ export default function LanguageModal() {
               <Fragment key={lang.code}>
                 <motion.button
                   variants={panelItemVariants}
-                  onClick={() => setLanguage(lang.code)}
+                  onClick={() => chooseLanguage(lang.code)}
                   className="text-intro relative flex w-full items-center justify-end text-black"
                   style={{ fontSize: 16, paddingTop: '1rem', paddingBottom: '1rem', paddingRight: 40 }}
                 >

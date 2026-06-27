@@ -1,5 +1,7 @@
 'use client'
 
+import SpriteAnimation from '@/components/anim/SpriteAnimation'
+
 interface FooterPlanetProps {
   tagline?: string
 }
@@ -23,6 +25,14 @@ export default function FooterPlanet({ tagline = 'The Entertainment People' }: F
           alt=""
           style={{ width: (2898 / 2) * 0.75, height: (484 / 2) * 0.75 }}
           className="max-w-none"
+        />
+        {/* Eyed-alien standing on the planet's top, 150px left of centre.
+            Part of #footer-planet so it moves with the planet. */}
+        <SpriteAnimation
+          name="eyed-alien"
+          width={90}
+          className="absolute z-[1] pointer-events-none select-none"
+          style={{ left: '50%', top: 0, transform: 'translate(calc(-50% - 150px), calc(-100% + 65px))' }}
         />
         <div
           className="absolute inset-0 flex flex-col items-center justify-end"

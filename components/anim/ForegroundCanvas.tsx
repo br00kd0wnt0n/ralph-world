@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 import { registerTicker } from '@/lib/anim/sequencer'
 import { ANIMATIONS, type AnimationName } from '@/lib/anim/animations'
@@ -27,6 +28,8 @@ const ITEMS: AnchoredItem[] = [
 
 export default function ForegroundCanvas() {
   const { theme } = useTheme()
+  const pathname = usePathname()
+  const isHome = pathname === '/'
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -109,7 +112,11 @@ export default function ForegroundCanvas() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-20 hidden md:block"
+      // Homepage keeps it in front of content (z-20); subpages drop it below
+      // the content (z-[5]).
+      className={`pointer-events-none fixed inset-0 hidden md:block ${
+        isHome ? 'z-20' : 'z-[5]'
+      }`}
     />
   )
 }

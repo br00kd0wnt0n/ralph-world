@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
+import { useMenu } from '@/context/MenuContext'
 
 // ── Particle config ──
 const PARTICLE_COUNT = 350
@@ -112,18 +113,21 @@ function createShootingStar(w: number, h: number): ShootingStar {
 
 export default function Starfield() {
   const { theme } = useTheme()
+  const { open } = useMenu()
   const pathname = usePathname()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   // All subpages (everything except the homepage) use the events-style star
-  // motion: horizontal drift, no vertical scroll-parallax.
+  // motion: horizontal drift, no vertical scroll-parallax. When the menu is
+  // open we force that same left→right drift on every route, so it feels like
+  // we've travelled through space into the menu.
   const isSubpage = pathname !== '/'
+  const horizontal = open || isSubpage
 
   useEffect(() => {
-    if (theme !== 'cosy-dynamics') return
-
-    // Hide on mobile
-    const mql = window.matchMedia('(max-width: 767px)')
-    if (mql.matches) return
+    // While the menu is open the field runs everywhere (incl. mobile) so it
+    // shows behind the menu; otherwise it stays theme-gated + hidden on mobile.
+    if (!open && theme !== 'cosy-dynamics') return
+    if (!open && window.matchMedia('(max-width: 767px)').matches) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -170,13 +174,13 @@ export default function Starfield() {
         const twinkle = Math.sin(time * p.twinkleSpeed + p.phase) * 0.3
         const alpha = Math.max(0.02, Math.min(1, p.baseOpacity + twinkle))
 
-        // Scroll parallax (disabled on events page)
-        const parallaxY = isSubpage ? 0 : scrollY * p.scrollFactor
+        // Scroll parallax (disabled in horizontal/subpage + menu mode)
+        const parallaxY = horizontal ? 0 : scrollY * p.scrollFactor
         let yPos = (p.y * h - parallaxY) % h
         if (yPos < 0) yPos += h
 
-        // Horizontal movement on events page
-        if (isSubpage) {
+        // Horizontal left→right drift (subpages + menu open)
+        if (horizontal) {
           p.x += p.horizontalSpeed
           if (p.x > 1) p.x -= 1
           if (p.x < 0) p.x += 1
@@ -257,14 +261,16 @@ export default function Starfield() {
       window.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(animationId)
     }
-  }, [theme, isSubpage])
+  }, [theme, horizontal, open])
 
-  if (theme !== 'cosy-dynamics') return null
+  // Render the canvas whenever the field can run: normal theme-gated mode, or
+  // any time the menu is open (which forces it on, mobile included).
+  if (!open && theme !== 'cosy-dynamics') return null
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 hidden md:block"
+      className={`fixed inset-0 pointer-events-none z-0 ${open ? '' : 'hidden md:block'}`}
       aria-hidden="true"
     />
   )

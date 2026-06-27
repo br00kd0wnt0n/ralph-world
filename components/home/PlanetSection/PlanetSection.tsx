@@ -334,12 +334,19 @@ export default function PlanetSection({
               : planetCenterY + planetHeight / 2 - 50 - PANEL_HEIGHT,
           backgroundColor: accentColor,
           borderRadius: 12,
+          // padding is included in width so the clip-path (which insets by the
+          // full width when hidden) fully covers it — otherwise the padding
+          // strip peeks at 0 visible width.
+          boxSizing: 'border-box',
           clipPath: getClipPath(),
           transition: transitionsOn
             ? 'clip-path 0.6s cubic-bezier(0.22, 1, 0.36, 1)'
             : 'none',
           pointerEvents: panelState === 'open' ? 'auto' : 'none',
           padding: PANEL_PADDING,
+          // Stay fully hidden until measured + transition-ready, so no partial
+          // panel flashes before the section is sized on load.
+          visibility: transitionsOn && sectionWidth > 0 ? 'visible' : 'hidden',
         }}
         initial={false}
         animate={{

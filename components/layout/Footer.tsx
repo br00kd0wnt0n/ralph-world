@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperType } from 'swiper'
@@ -9,6 +9,7 @@ import Link from 'next/link'
 import Globe from './Globe'
 import Button from '@/components/ui/Button'
 import CookiePreferencesLink from '@/components/legal/CookiePreferencesLink'
+import { useMenu } from '@/context/MenuContext'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 const ENQUIRY_OPTIONS = [
@@ -91,6 +92,21 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
+
+  // Open the panel when the mobile menu requests it (Find us / Contact us).
+  // Wait for the menu to close + the page to slide back, then scroll the
+  // footer into view and expand to the matching slide.
+  const { footerRequest } = useMenu()
+  useEffect(() => {
+    if (!footerRequest) return
+    const slide = footerRequest.slide === 'find' ? 0 : 1
+    const t = setTimeout(() => {
+      swiperRef.current?.slideTo(slide, 0)
+      setPanelOpen(true)
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+    }, 540)
+    return () => clearTimeout(t)
+  }, [footerRequest])
 
   // Swiper is always mounted (the panel just collapses via height), so
   // both triggers slide to their slide and open the panel. When the

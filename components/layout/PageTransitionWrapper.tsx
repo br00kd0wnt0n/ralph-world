@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react'
 import { LayoutRouterContext } from 'next/dist/shared/lib/app-router-context.shared-runtime'
+import { useMenu } from '@/context/MenuContext'
 
 // Context to let children know if we're exiting
 interface TransitionContextValue {
@@ -35,33 +36,28 @@ function FrozenRouter({ children }: { children: ReactNode }) {
   )
 }
 
-const pageVariants: Variants = {
-  initial: {
-    opacity: 0,
-  },
-  animate: {
-    opacity: 1,
-    transition: {
-      duration: 0.4,
-      ease: [0.22, 1, 0.36, 1],
-    },
-  },
-  exit: {
-    opacity: 0,
-    transition: {
-      duration: 0.35,
-      ease: [0.4, 0, 1, 1],
-    },
-  },
-}
-
 interface PageTransitionWrapperProps {
   children: ReactNode
 }
 
 export default function PageTransitionWrapper({ children }: PageTransitionWrapperProps) {
   const pathname = usePathname()
+  const { instantNav, setInstantNav } = useMenu()
   const [isExiting, setIsExiting] = useState(false)
+
+  // When navigating from the slide-in menu, skip the fade so the new page is
+  // ready before the panel slides it in. In-site links keep the fade.
+  const pageVariants: Variants = {
+    initial: { opacity: instantNav ? 1 : 0 },
+    animate: {
+      opacity: 1,
+      transition: { duration: instantNav ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] },
+    },
+    exit: {
+      opacity: instantNav ? 1 : 0,
+      transition: { duration: instantNav ? 0 : 0.35, ease: [0.4, 0, 1, 1] },
+    },
+  }
   const [minHeight, setMinHeight] = useState<number | undefined>(undefined)
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -99,6 +95,11 @@ export default function PageTransitionWrapper({ children }: PageTransitionWrappe
                 captureHeight()
                 setIsExiting(true)
               }
+            }}
+            onAnimationComplete={(definition) => {
+              // One-shot: clear the instant flag after the (instant) enter so
+              // the next in-site navigation gets the normal fade again.
+              if (definition === 'animate' && instantNav) setInstantNav(false)
             }}
           >
             <FrozenRouter>{children}</FrozenRouter>

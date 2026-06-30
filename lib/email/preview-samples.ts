@@ -47,4 +47,19 @@ export const PREVIEW_SAMPLES: SampleProps = {
     recipientName: 'Joshua King',
     resetUrl: 'https://ralph.world/reset-password?token=preview-token',
   },
+  'contact-jp-notification': {
+    name: '田中 太郎',
+    company: '株式会社サンプル',
+    email: 'tanaka@example.co.jp',
+    message:
+      '新しいキャンペーンの企画段階で、クリエイティブパートナーを探しています。一度カジュアルに話せると嬉しいです。',
+    needsLabels: ['ブランディング・クリエイティブ戦略', 'キャンペーン・プロモーション企画'],
+    projectSizeLabels: ['中規模プロジェクト（100〜500万円）'],
+    submittedAt: '2026年6月19日 14:32 (JST)',
+  },
+  'contact-jp-confirmation': {
+    name: '田中 太郎',
+    needsLabels: ['ブランディング・クリエイティブ戦略', 'キャンペーン・プロモーション企画'],
+    projectSizeLabels: ['中規模プロジェクト（100〜500万円）'],
+  },
 }

@@ -409,3 +409,26 @@ export const magazineFulfilmentRuns = pgTable('magazine_fulfilment_runs', {
   finishedAt: timestamp('finished_at', { mode: 'date' }),
   actorId: uuid('actor_id'),
 })
+
+/**
+ * Contact submissions from the /jp/contact form. One row per submit.
+ * `needs` and `project_size` are JSONB arrays of short stable identifiers
+ * (e.g. "branding_strategy") — display labels live in the page + email
+ * templates so we can rewrite copy without losing history. `notified_at`
+ * records when Yuki's notification email was sent (null = failed,
+ * surface in admin/log).
+ */
+export const contactSubmissions = pgTable('contact_submissions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  submittedAt: timestamp('submitted_at', { mode: 'date' }).defaultNow().notNull(),
+  locale: text('locale').notNull(), // 'ja' for /jp/contact, future-proofed for other locales.
+  needs: jsonb('needs').notNull(), // string[]
+  projectSize: jsonb('project_size').notNull(), // string[]
+  name: text('name').notNull(),
+  company: text('company'),
+  email: text('email').notNull(),
+  message: text('message'),
+  ip: text('ip'),
+  userAgent: text('user_agent'),
+  notifiedAt: timestamp('notified_at', { mode: 'date' }),
+})

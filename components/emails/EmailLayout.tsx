@@ -16,6 +16,8 @@ interface EmailLayoutProps {
   preview: string
   /** Body content — pre-styled blocks (Text, Section, etc.) from the template. */
   children: ReactNode
+  /** Localises the footer copy. Defaults to 'en'. */
+  locale?: 'en' | 'ja'
 }
 
 /**
@@ -31,11 +33,14 @@ interface EmailLayoutProps {
  * falling back to ralph.world post-DNS-cutover). Falling back keeps the
  * header working in test/dev where the env var isn't set.
  */
-export function EmailLayout({ preview, children }: EmailLayoutProps) {
+export function EmailLayout({ preview, children, locale = 'en' }: EmailLayoutProps) {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://ralph.world'
   const wordmarkSrc = `${appUrl}/ralph-wordmark.png`
   const year = new Date().getFullYear()
+  const isJa = locale === 'ja'
+  const signOff = isJa ? '— Ralph Creative Tokyo' : '— The Ralph Team'
+  const supportEmail = isJa ? 'tokyo@ralphandco.com' : 'hello@ralph.world'
   return (
     <Html>
       <Head />
@@ -56,13 +61,13 @@ export function EmailLayout({ preview, children }: EmailLayoutProps) {
           <Section style={card}>{children}</Section>
 
           <Section style={footerWrap}>
-            <Text style={footerSig}>— The Ralph Team</Text>
+            <Text style={footerSig}>{signOff}</Text>
             <Text style={footerMeta}>
-              Questions? Drop us a line at{' '}
-              <Link href="mailto:hello@ralph.world" style={footerLink}>
-                hello@ralph.world
+              {isJa ? 'ご質問は ' : 'Questions? Drop us a line at '}
+              <Link href={`mailto:${supportEmail}`} style={footerLink}>
+                {supportEmail}
               </Link>
-              .
+              {isJa ? ' までお気軽にどうぞ。' : '.'}
             </Text>
             <Text style={footerLegal}>
               © {year} Ralph.World · {appUrl.replace(/^https?:\/\//, '')}

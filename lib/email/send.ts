@@ -36,6 +36,8 @@ import { PaymentFailed } from '@/components/emails/PaymentFailed'
 import { EventRsvp } from '@/components/emails/EventRsvp'
 import { MagazineShipped } from '@/components/emails/MagazineShipped'
 import { PasswordReset } from '@/components/emails/PasswordReset'
+import { ContactJpNotification } from '@/components/emails/ContactJpNotification'
+import { ContactJpConfirmation } from '@/components/emails/ContactJpConfirmation'
 
 export type TemplateId =
   | 'email-verification'
@@ -45,6 +47,8 @@ export type TemplateId =
   | 'event-rsvp'
   | 'magazine-shipped'
   | 'password-reset'
+  | 'contact-jp-notification'
+  | 'contact-jp-confirmation'
 
 interface TemplateEntry<P> {
   subject: (props: P) => string
@@ -129,6 +133,41 @@ const TEMPLATES = {
     render: (props: { resetUrl: string; recipientName?: string | null }) =>
       PasswordReset(props),
   } as TemplateEntry<{ resetUrl: string; recipientName?: string | null }>,
+
+  'contact-jp-notification': {
+    subject: (props: { name: string }) => `新しいご相談 — ${props.name}様`,
+    render: (props: {
+      name: string
+      company?: string | null
+      email: string
+      message?: string | null
+      needsLabels: string[]
+      projectSizeLabels: string[]
+      submittedAt: string
+    }) => ContactJpNotification(props),
+  } as TemplateEntry<{
+    name: string
+    company?: string | null
+    email: string
+    message?: string | null
+    needsLabels: string[]
+    projectSizeLabels: string[]
+    submittedAt: string
+  }>,
+
+  'contact-jp-confirmation': {
+    subject: (props: { name: string }) =>
+      `${props.name}様、ご相談ありがとうございます — Ralph Creative Tokyo`,
+    render: (props: {
+      name: string
+      needsLabels: string[]
+      projectSizeLabels: string[]
+    }) => ContactJpConfirmation(props),
+  } as TemplateEntry<{
+    name: string
+    needsLabels: string[]
+    projectSizeLabels: string[]
+  }>,
 } as const
 
 // ── Idempotency ─────────────────────────────────────────────────────────

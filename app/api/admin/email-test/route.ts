@@ -43,6 +43,8 @@ const KNOWN_TEMPLATES: readonly TemplateId[] = [
   'event-rsvp',
   'magazine-shipped',
   'password-reset',
+  'contact-jp-notification',
+  'contact-jp-confirmation',
 ]
 
 function authorized(req: NextRequest): boolean {

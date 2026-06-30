@@ -23,7 +23,14 @@ export const dynamic = 'force-dynamic'
  *      operator can chase failures from the DB log later.
  */
 
-const TOKYO_NOTIFY_EMAIL = 'yuki.koizumi@ralphandco.com'
+// Internal notification recipients. Yuki is the primary owner — we stamp
+// notified_at after her send succeeds. Chris is cc'd via a second send so
+// both addresses show up cleanly in their own inbox + the email_events
+// log records one row per recipient (helpful for chasing delivery).
+const TOKYO_NOTIFY_EMAILS = [
+  'yuki.koizumi@ralphandco.com',
+  'chris@ralph.world',
+] as const
 
 // Display-label maps. Keys here are the only ones accepted from the
 // client; any unknown key is dropped. Editors can rewrite the display
@@ -173,27 +180,41 @@ export async function POST(req: NextRequest) {
     timeStyle: 'short',
   }).format(submittedAt)
 
-  try {
-    await sendTemplate({
-      userId: `contact-${submissionId}`,
-      to: TOKYO_NOTIFY_EMAIL,
-      templateId: 'contact-jp-notification',
-      props: {
-        name,
-        company,
-        email,
-        message,
-        needsLabels,
-        projectSizeLabels,
-        submittedAt: `${submittedAtJa} (JST)`,
-      },
-    })
-    await db
-      .update(contactSubmissions)
-      .set({ notifiedAt: new Date() })
-      .where(eq(contactSubmissions.id, submissionId))
-  } catch (err) {
-    console.error('[contact/jp] notification email failed', { submissionId, err })
+  // Fire one notification per recipient. The first send (Yuki) stamps
+  // notified_at on success — subsequent recipients are best-effort and
+  // their failures are logged but don't affect that flag.
+  const notificationProps = {
+    name,
+    company,
+    email,
+    message,
+    needsLabels,
+    projectSizeLabels,
+    submittedAt: `${submittedAtJa} (JST)`,
+  }
+  for (const [idx, recipient] of TOKYO_NOTIFY_EMAILS.entries()) {
+    try {
+      await sendTemplate({
+        // Vary the userId per recipient so the idempotency layer in
+        // sendTemplate doesn't dedupe the second send.
+        userId: `contact-${submissionId}-${idx}`,
+        to: recipient,
+        templateId: 'contact-jp-notification',
+        props: notificationProps,
+      })
+      if (idx === 0) {
+        await db
+          .update(contactSubmissions)
+          .set({ notifiedAt: new Date() })
+          .where(eq(contactSubmissions.id, submissionId))
+      }
+    } catch (err) {
+      console.error('[contact/jp] notification email failed', {
+        submissionId,
+        recipient,
+        err,
+      })
+    }
   }
 
   try {

@@ -217,16 +217,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  try {
-    await sendTemplate({
-      userId: `contact-${submissionId}`,
-      to: email,
-      templateId: 'contact-jp-confirmation',
-      props: { name, needsLabels, projectSizeLabels },
-    })
-  } catch (err) {
-    console.error('[contact/jp] confirmation email failed', { submissionId, err })
-  }
-
   return NextResponse.json({ ok: true })
 }

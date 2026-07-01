@@ -114,11 +114,8 @@ export default function JpContactClient() {
             ご連絡いただきありがとうございます
           </h1>
           <hr style={dividerStyle} />
-          <p className="text-black/80 text-base leading-relaxed mb-3" style={bodyStyle}>
-            ご相談内容を受け付けました。確認メールを{email} 宛にお送りしています。
-          </p>
           <p className="text-black/80 text-base leading-relaxed" style={bodyStyle}>
-            通常2営業日以内に担当よりご連絡いたします。まずはカジュアルに話しましょう。
+            ご相談内容を受け付けました。通常2営業日以内に担当よりご連絡いたします。まずはカジュアルに話しましょう。
           </p>
         </div>
       </main>

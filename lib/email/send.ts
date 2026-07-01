@@ -37,7 +37,6 @@ import { EventRsvp } from '@/components/emails/EventRsvp'
 import { MagazineShipped } from '@/components/emails/MagazineShipped'
 import { PasswordReset } from '@/components/emails/PasswordReset'
 import { ContactJpNotification } from '@/components/emails/ContactJpNotification'
-import { ContactJpConfirmation } from '@/components/emails/ContactJpConfirmation'
 
 export type TemplateId =
   | 'email-verification'
@@ -48,7 +47,6 @@ export type TemplateId =
   | 'magazine-shipped'
   | 'password-reset'
   | 'contact-jp-notification'
-  | 'contact-jp-confirmation'
 
 interface TemplateEntry<P> {
   subject: (props: P) => string
@@ -153,20 +151,6 @@ const TEMPLATES = {
     needsLabels: string[]
     projectSizeLabels: string[]
     submittedAt: string
-  }>,
-
-  'contact-jp-confirmation': {
-    subject: (props: { name: string }) =>
-      `${props.name}様、ご相談ありがとうございます — Ralph Creative Tokyo`,
-    render: (props: {
-      name: string
-      needsLabels: string[]
-      projectSizeLabels: string[]
-    }) => ContactJpConfirmation(props),
-  } as TemplateEntry<{
-    name: string
-    needsLabels: string[]
-    projectSizeLabels: string[]
   }>,
 } as const
 

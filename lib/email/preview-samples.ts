@@ -57,9 +57,4 @@ export const PREVIEW_SAMPLES: SampleProps = {
     projectSizeLabels: ['中規模プロジェクト（100〜500万円）'],
     submittedAt: '2026年6月19日 14:32 (JST)',
   },
-  'contact-jp-confirmation': {
-    name: '田中 太郎',
-    needsLabels: ['ブランディング・クリエイティブ戦略', 'キャンペーン・プロモーション企画'],
-    projectSizeLabels: ['中規模プロジェクト（100〜500万円）'],
-  },
 }

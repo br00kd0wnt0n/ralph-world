@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { ScheduleItem } from '@/lib/broadcaster/types'
+import { londonWallToLocalWall, viewerTimezoneLabel } from '@/lib/tv/time'
 
 interface TeletextShowInfoProps {
   current?: ScheduleItem
@@ -17,11 +18,29 @@ function parseHHMM(s: string): number | null {
 
 export default function TeletextShowInfo({ current }: TeletextShowInfoProps) {
   const [now, setNow] = useState(() => new Date())
+  // Local-TZ-converted display times. Null on SSR + first client render
+  // (which show the raw London strings) so hydration matches; the effect
+  // populates them on mount. The progress calc still runs on London
+  // wall-clock minutes so the bar tracks the schedule directly.
+  const [localStart, setLocalStart] = useState<string | null>(null)
+  const [localEnd, setLocalEnd] = useState<string | null>(null)
+  const [tzLabel, setTzLabel] = useState<string>('')
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    if (!current) {
+      setLocalStart(null)
+      setLocalEnd(null)
+      return
+    }
+    setLocalStart(londonWallToLocalWall(current.startTime, new Date()))
+    setLocalEnd(londonWallToLocalWall(current.endTime, new Date()))
+    setTzLabel(viewerTimezoneLabel())
+  }, [current])
 
   const timeStr = now.toLocaleTimeString('en-GB', {
     hour: '2-digit',
@@ -31,6 +50,9 @@ export default function TeletextShowInfo({ current }: TeletextShowInfoProps) {
   const startMin = current ? parseHHMM(current.startTime) : null
   const endMin = current ? parseHHMM(current.endTime) : null
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60
+
+  const displayStart = localStart ?? current?.startTime ?? '--:--'
+  const displayEnd = localEnd ?? current?.endTime ?? '--:--'
 
   let progress = 0
   if (startMin !== null && endMin !== null && endMin > startMin) {
@@ -52,8 +74,15 @@ export default function TeletextShowInfo({ current }: TeletextShowInfoProps) {
 
       {current ? (
         <div className="flex-1 min-h-0">
-          <div className="text-white/80 text-xs md:text-sm mb-1 tabular-nums">
-            {current.startTime}-{current.endTime}
+          <div className="text-white/80 text-xs md:text-sm mb-1 tabular-nums flex items-center gap-2">
+            <span>
+              {displayStart}-{displayEnd}
+            </span>
+            {tzLabel && (
+              <span className="text-white/50 text-[10px] md:text-[11px]">
+                {tzLabel}
+              </span>
+            )}
           </div>
           <h3 className="text-white text-xl md:text-3xl font-bold uppercase tracking-wide mb-3">
             {current.showName}
@@ -90,8 +119,8 @@ export default function TeletextShowInfo({ current }: TeletextShowInfoProps) {
 
         {/* Start / end labels under bar */}
         <div className="flex justify-between text-[10px] md:text-xs text-white/70 mt-1 font-mono tabular-nums">
-          <span>{current?.startTime ?? '--:--'}</span>
-          <span>{current?.endTime ?? '--:--'}</span>
+          <span>{displayStart}</span>
+          <span>{displayEnd}</span>
         </div>
       </div>
     </div>

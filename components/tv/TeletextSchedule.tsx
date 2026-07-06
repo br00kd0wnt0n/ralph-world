@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { teletextHeaderVariants } from '@/lib/animation/tv'
 import type { ScheduleItem } from '@/lib/broadcaster/types'
+import { londonWallToLocalWall, viewerTimezoneLabel } from '@/lib/tv/time'
 
 interface TeletextScheduleProps {
   schedule: ScheduleItem[]
@@ -15,11 +16,36 @@ export default function TeletextSchedule({
   currentIndex = 0,
 }: TeletextScheduleProps) {
   const [now, setNow] = useState(() => new Date())
+  // TZ-converted times. Null pre-mount so hydration matches the SSR
+  // output (which renders raw London strings). After mount, each entry
+  // gets its start/end mapped into the viewer's wall-clock.
+  const [localised, setLocalised] = useState<
+    Array<{ start: string; end: string }> | null
+  >(null)
+  const [tzLabel, setTzLabel] = useState('')
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    const ref = new Date()
+    setLocalised(
+      schedule.map((s) => ({
+        start: londonWallToLocalWall(s.startTime, ref),
+        end: londonWallToLocalWall(s.endTime, ref),
+      }))
+    )
+    setTzLabel(viewerTimezoneLabel())
+  }, [schedule])
+
+  // Fallback pairs (raw London) used on SSR / first render.
+  const rawPairs = useMemo(
+    () => schedule.map((s) => ({ start: s.startTime, end: s.endTime })),
+    [schedule]
+  )
+  const pairs = localised ?? rawPairs
 
   const timeStr = now.toLocaleTimeString('en-GB', {
     hour: '2-digit',
@@ -68,12 +94,19 @@ export default function TeletextSchedule({
           {/* ON NOW */}
           {current && (
             <div>
-              <div className="text-white/80 text-[10px] md:text-xs mb-1 tracking-wider">
-                ON NOW:
+              <div className="text-white/80 text-[10px] md:text-xs mb-1 tracking-wider flex items-center gap-2">
+                <span>ON NOW:</span>
+                {tzLabel && (
+                  <span className="text-white/50 normal-case tracking-normal">
+                    Times shown in {tzLabel}
+                  </span>
+                )}
               </div>
               <div className="text-ralph-pink text-xs md:text-sm flex gap-3 pb-1 border-b-2 border-ralph-purple">
                 <span className="shrink-0 tabular-nums">
-                  {current.startTime}-{current.endTime}
+                  {pairs[currentIndex]?.start ?? current.startTime}
+                  -
+                  {pairs[currentIndex]?.end ?? current.endTime}
                 </span>
                 <span className="uppercase tracking-wide font-bold">
                   {current.showName}
@@ -89,17 +122,21 @@ export default function TeletextSchedule({
                 UP NEXT:
               </div>
               <div className="space-y-1">
-                {upcoming.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex gap-3 text-[11px] md:text-sm text-white"
-                  >
-                    <span className="shrink-0 tabular-nums">
-                      {item.startTime}-{item.endTime}
-                    </span>
-                    <span className="uppercase tracking-wide">{item.showName}</span>
-                  </div>
-                ))}
+                {upcoming.map((item, i) => {
+                  const scheduleIdx = currentIndex + 1 + i
+                  const pair = pairs[scheduleIdx]
+                  return (
+                    <div
+                      key={i}
+                      className="flex gap-3 text-[11px] md:text-sm text-white"
+                    >
+                      <span className="shrink-0 tabular-nums">
+                        {pair?.start ?? item.startTime}-{pair?.end ?? item.endTime}
+                      </span>
+                      <span className="uppercase tracking-wide">{item.showName}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

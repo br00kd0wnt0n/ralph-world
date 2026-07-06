@@ -77,6 +77,51 @@ interface RawPlaylistResponse {
   items: RawPlaylistItem[]
 }
 
+// The broadcaster stores playStart as an "HH:MM" wall-clock time in
+// LONDON. Railway runs its containers in UTC, so a naive
+// `date.setHours(9, 0)` interprets it as UTC 09:00 — an hour off in
+// summer (BST), zero in winter. This helper resolves the London wall
+// clock to a real UTC millisecond so pointer maths line up with what the
+// live stream is actually playing. Iterative approach (same trick as
+// londonWallToLocalWall in lib/tv/time.ts): guess UTC ms, format back
+// in London, adjust, repeat. Converges in 1–2 steps.
+function londonHHMMTodayToUtcMs(hhmm: string, referenceMs: number): number {
+  const [h, m] = hhmm.split(':').map((n) => parseInt(n || '0', 10))
+  const targetH = h || 0
+  const targetM = m || 0
+
+  // Today's calendar date in London (may differ from server's UTC day).
+  const dateParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(referenceMs))
+  const y = Number(dateParts.find((p) => p.type === 'year')!.value)
+  const mo = Number(dateParts.find((p) => p.type === 'month')!.value)
+  const d = Number(dateParts.find((p) => p.type === 'day')!.value)
+
+  let guessMs = Date.UTC(y, mo - 1, d, targetH, targetM)
+  const targetTotal = targetH * 60 + targetM
+  for (let i = 0; i < 3; i++) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/London',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(new Date(guessMs))
+    const gotH = Number(parts.find((p) => p.type === 'hour')!.value)
+    const gotM = Number(parts.find((p) => p.type === 'minute')!.value)
+    const gotTotal = gotH * 60 + gotM
+    let diff = targetTotal - gotTotal
+    if (diff > 12 * 60) diff -= 24 * 60
+    if (diff < -12 * 60) diff += 24 * 60
+    if (diff === 0) break
+    guessMs += diff * 60_000
+  }
+  return guessMs
+}
+
 // Ports backend/src/feed.js:computePointer — given loop mode, play start,
 // and durations, returns which item is playing right now and how far into it.
 function computePointer(
@@ -88,10 +133,8 @@ function computePointer(
   const total = durationsSec.reduce((a, b) => a + (b || 0), 0)
   if (!total) return { index: 0, offsetSec: 0 }
 
-  const [hh, mm] = playStart.split(':').map((n) => parseInt(n || '0', 10))
-  const start = new Date(now)
-  start.setHours(hh || 0, mm || 0, 0, 0)
-  let delta = Math.floor((now.getTime() - start.getTime()) / 1000)
+  const startMs = londonHHMMTodayToUtcMs(playStart, now.getTime())
+  let delta = Math.floor((now.getTime() - startMs) / 1000)
 
   if (mode === 'playthru') {
     if (delta < 0) return { index: 0, offsetSec: 0 }
@@ -115,10 +158,16 @@ function computePointer(
   return { index: durationsSec.length - 1, offsetSec: 0 }
 }
 
-function formatHHMM(d: Date): string {
-  const h = String(d.getHours()).padStart(2, '0')
-  const m = String(d.getMinutes()).padStart(2, '0')
-  return `${h}:${m}`
+// Format a UTC millisecond epoch as HH:MM in London wall clock. Consumer
+// (client) reinterprets these as London and shifts to the viewer's TZ,
+// so we MUST output London-relative here.
+function formatHHMMInLondon(ms: number): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(new Date(ms))
 }
 
 // Strip common video extensions so "Dexter.mp4" → "Dexter".
@@ -149,7 +198,16 @@ export async function getSchedule(
 
     if (!playlistRes.ok) return []
     const data = (await playlistRes.json()) as RawPlaylistResponse
-    const items = data.items ?? []
+    const allItems = data.items ?? []
+    if (allItems.length === 0) return []
+
+    // Filter zero-duration items — usually assets whose duration isn't
+    // known yet (still transcoding, missing metadata, or upload glitch).
+    // They can't be "on now" (they'd elapse instantly) and rendering
+    // "16:00-16:00" in the schedule reads as broken. Broadcaster still
+    // owns them in the playlist; we just hide them until they have a
+    // real duration.
+    const items = allItems.filter((it) => (it.durationSec || 0) > 0)
     if (items.length === 0) return []
 
     const assetById = new Map(assets.map((a) => [a.id, a]))
@@ -161,18 +219,15 @@ export async function getSchedule(
       now
     )
 
-    // Anchor wall-clock times to the start of the CURRENT loop iteration,
+    // Anchor wall-clock times to the CURRENT loop iteration in London,
     // then roll forward. For 'playthru', anchor to playStart.
-    const [hh, mm] = data.playStart.split(':').map((n) => parseInt(n || '0', 10))
-    const loopStart = new Date(now)
-    loopStart.setHours(hh || 0, mm || 0, 0, 0)
-
+    const loopStartMs = londonHHMMTodayToUtcMs(data.playStart, now.getTime())
     const total = durations.reduce((a, b) => a + b, 0)
-    let iterStart = loopStart
+    let iterStartMs = loopStartMs
     if (data.playbackMode === 'loop' && total > 0) {
-      const deltaSec = Math.floor((now.getTime() - loopStart.getTime()) / 1000)
+      const deltaSec = Math.floor((now.getTime() - loopStartMs) / 1000)
       const iterations = Math.floor(deltaSec / total)
-      iterStart = new Date(loopStart.getTime() + iterations * total * 1000)
+      iterStartMs = loopStartMs + iterations * total * 1000
     }
 
     // Start times for item 0 of the current iteration, accumulating from there.
@@ -188,16 +243,15 @@ export async function getSchedule(
       // Cumulative duration from start of THIS iteration to start of item i.
       let cum = 0
       for (let k = 0; k < i; k++) cum += durations[k]
-      const startMs =
-        iterStart.getTime() + iteration * total * 1000 + cum * 1000
+      const startMs = iterStartMs + iteration * total * 1000 + cum * 1000
       const endMs = startMs + durations[i] * 1000
 
       const asset = assetById.get(items[i].assetId)
       const name = asset?.title ?? 'Untitled'
 
       result.push({
-        startTime: formatHHMM(new Date(startMs)),
-        endTime: formatHHMM(new Date(endMs)),
+        startTime: formatHHMMInLondon(startMs),
+        endTime: formatHHMMInLondon(endMs),
         showName: name,
         description: asset?.description ?? undefined,
         assetId: items[i].assetId,

@@ -27,8 +27,13 @@ export const PREVIEW_SAMPLES: SampleProps = {
   },
   'subscription-cancelled': {
     recipientName: 'Joshua King',
-    accessUntil: 'Tuesday, 22 July 2026',
+    endedOn: '5 July 2026',
     resubscribeUrl: 'https://ralph.world/subscribe',
+  },
+  'subscription-cancel-scheduled': {
+    recipientName: 'Joshua King',
+    accessUntil: '5 August 2026',
+    reactivateUrl: 'https://ralph.world/account',
   },
   'event-rsvp': {
     recipientName: 'Joshua King',

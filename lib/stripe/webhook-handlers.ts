@@ -254,6 +254,44 @@ export async function handleSubscriptionUpdated(
     source: 'webhook',
   })
 
+  // Cancellation-scheduled email — fires on the transition where the
+  // user just clicked "cancel" in the portal. Stripe reports the change
+  // in `previous_attributes`: a change to cancel_at_period_end (legacy
+  // flag) or cancel_at (new field, API 2026-05-27+). We only email on
+  // the false→true transition, not on subsequent updates while already
+  // scheduled (e.g. feedback edits) — otherwise a user who
+  // cancel/uncancel/cancel/uncancels through the portal would get a
+  // burst of near-identical emails. sendTemplate's idempotency layer
+  // also helps: same props hash = same key = suppressed re-send.
+  const prevAttrs = event.data.previous_attributes as
+    | { cancel_at_period_end?: unknown; cancel_at?: unknown }
+    | undefined
+  const transitionedToScheduledCancel =
+    cancelAtPeriodEnd === true &&
+    (prevAttrs?.cancel_at_period_end === false || prevAttrs?.cancel_at === null)
+  if (transitionedToScheduledCancel && periodEnd) {
+    try {
+      const contact = await fetchUserContact(userId)
+      if (contact) {
+        const accessUntil = periodEnd.toLocaleDateString('en-GB', {
+          day: 'numeric', month: 'long', year: 'numeric',
+        })
+        await sendTemplate({
+          userId,
+          to: contact.email,
+          templateId: 'subscription-cancel-scheduled',
+          props: {
+            recipientName: contact.displayName,
+            accessUntil,
+            reactivateUrl: appUrl('/account'),
+          },
+        })
+      }
+    } catch (err) {
+      console.error('[stripe-webhook] cancel-scheduled email failed:', err)
+    }
+  }
+
   return { ok: true, userId, effects: { tier, subscriptionStatus } }
 }
 
@@ -293,18 +331,20 @@ export async function handleSubscriptionDeleted(
         (sub as unknown as { items?: { data?: Array<{ current_period_end?: number }> } })
           .items?.data?.[0]?.current_period_end ??
         null
-      const accessUntil = periodEndSeconds
+      const endedOn = periodEndSeconds
         ? new Date(periodEndSeconds * 1000).toLocaleDateString('en-GB', {
             day: 'numeric', month: 'long', year: 'numeric',
           })
-        : 'the end of your current period'
+        : new Date().toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'long', year: 'numeric',
+          })
       await sendTemplate({
         userId,
         to: contact.email,
         templateId: 'subscription-cancelled',
         props: {
           recipientName: contact.displayName,
-          accessUntil,
+          endedOn,
           resubscribeUrl: appUrl('/account'),
         },
       })

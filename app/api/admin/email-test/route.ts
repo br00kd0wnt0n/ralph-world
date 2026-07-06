@@ -39,6 +39,7 @@ const KNOWN_TEMPLATES: readonly TemplateId[] = [
   'email-verification',
   'subscription-receipt',
   'subscription-cancelled',
+  'subscription-cancel-scheduled',
   'payment-failed',
   'event-rsvp',
   'magazine-shipped',

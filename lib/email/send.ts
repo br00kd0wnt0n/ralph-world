@@ -32,6 +32,7 @@ import type { ReactElement } from 'react'
 import { EmailVerification } from '@/components/emails/EmailVerification'
 import { SubscriptionReceipt } from '@/components/emails/SubscriptionReceipt'
 import { SubscriptionCancelled } from '@/components/emails/SubscriptionCancelled'
+import { SubscriptionCancelScheduled } from '@/components/emails/SubscriptionCancelScheduled'
 import { PaymentFailed } from '@/components/emails/PaymentFailed'
 import { EventRsvp } from '@/components/emails/EventRsvp'
 import { MagazineShipped } from '@/components/emails/MagazineShipped'
@@ -42,6 +43,7 @@ export type TemplateId =
   | 'email-verification'
   | 'subscription-receipt'
   | 'subscription-cancelled'
+  | 'subscription-cancel-scheduled'
   | 'payment-failed'
   | 'event-rsvp'
   | 'magazine-shipped'
@@ -76,16 +78,29 @@ const TEMPLATES = {
   }>,
 
   'subscription-cancelled': {
-    subject: () => 'Your Ralph subscription has been cancelled',
+    subject: () => 'Your Ralph subscription has ended',
     render: (props: {
       recipientName?: string | null
-      accessUntil: string
+      endedOn: string
       resubscribeUrl: string
     }) => SubscriptionCancelled(props),
   } as TemplateEntry<{
     recipientName?: string | null
-    accessUntil: string
+    endedOn: string
     resubscribeUrl: string
+  }>,
+
+  'subscription-cancel-scheduled': {
+    subject: () => 'Cancellation scheduled — Ralph.world',
+    render: (props: {
+      recipientName?: string | null
+      accessUntil: string
+      reactivateUrl: string
+    }) => SubscriptionCancelScheduled(props),
+  } as TemplateEntry<{
+    recipientName?: string | null
+    accessUntil: string
+    reactivateUrl: string
   }>,
 
   'payment-failed': {

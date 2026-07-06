@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
+import HomepageTvTeaser from '@/components/home/HomepageTvTeaser'
 import { motion } from 'framer-motion'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperClass } from 'swiper/types'
@@ -428,11 +429,7 @@ export default function PlanetSection({
                   overflow: 'hidden',
                 }}
               >
-                <img
-                  src="/imgs/tv_preview.png"
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+                <HomepageTvTeaser />
               </div>
               <p className={`text-intro ${textColor} mt-3`}>
                 {moduleCard.items[0]?.title ?? 'On now'}

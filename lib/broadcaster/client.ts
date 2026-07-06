@@ -198,20 +198,17 @@ export async function getSchedule(
 
     if (!playlistRes.ok) return []
     const data = (await playlistRes.json()) as RawPlaylistResponse
-    const allItems = data.items ?? []
-    if (allItems.length === 0) return []
-
-    // Filter zero-duration items — usually assets whose duration isn't
-    // known yet (still transcoding, missing metadata, or upload glitch).
-    // They can't be "on now" (they'd elapse instantly) and rendering
-    // "16:00-16:00" in the schedule reads as broken. Broadcaster still
-    // owns them in the playlist; we just hide them until they have a
-    // real duration.
-    const items = allItems.filter((it) => (it.durationSec || 0) > 0)
+    const items = data.items ?? []
     if (items.length === 0) return []
 
     const assetById = new Map(assets.map((a) => [a.id, a]))
     const durations = items.map((it) => it.durationSec || 0)
+
+    // Pointer maths and iteration timing MUST run against every item in
+    // the playlist — the live stream really plays stingers/idents, and
+    // if we skip them here the current-time pointer drifts against
+    // what's actually on air. We filter for display only, at the very
+    // end.
     const { index: currentIdx } = computePointer(
       data.playbackMode,
       data.playStart,
@@ -230,7 +227,15 @@ export async function getSchedule(
       iterStartMs = loopStartMs + iterations * total * 1000
     }
 
-    // Start times for item 0 of the current iteration, accumulating from there.
+    // Skip stingers / idents / bumpers from the schedule display. Under
+    // 60s of duration the item renders as e.g. \"16:00-16:00\" in HH:MM
+    // and clutters the overlay. Anything the audience actually watches
+    // as a "show" is well over a minute.
+    const STINGER_MAX_SECS = 60
+
+    // Start times for item 0 of the current iteration, accumulating from
+    // there. We walk the FULL playlist (including stingers) to keep
+    // wall-clock times exact, then filter stingers out of the result.
     const result: ScheduleItem[] = []
     const n = items.length
     // Return up to 20 items ahead (or wrap once around the loop) so the
@@ -245,6 +250,8 @@ export async function getSchedule(
       for (let k = 0; k < i; k++) cum += durations[k]
       const startMs = iterStartMs + iteration * total * 1000 + cum * 1000
       const endMs = startMs + durations[i] * 1000
+
+      if ((durations[i] ?? 0) < STINGER_MAX_SECS) continue
 
       const asset = assetById.get(items[i].assetId)
       const name = asset?.title ?? 'Untitled'

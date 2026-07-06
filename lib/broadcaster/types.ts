@@ -21,6 +21,10 @@ export interface BroadcasterAsset {
   file_name: string
   duration_sec: number
   thumbnail_url: string | null
+  /** Editor-authored show blurb from the broadcaster admin. Null when
+   *  the editor hasn't set one — consumers should hide the description
+   *  slot in that case rather than showing an empty string. */
+  description: string | null
   // Camel-case aliases for backward compatibility with code that expects them.
   title: string
   duration: number

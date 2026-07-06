@@ -199,6 +199,7 @@ export async function getSchedule(
         startTime: formatHHMM(new Date(startMs)),
         endTime: formatHHMM(new Date(endMs)),
         showName: name,
+        description: asset?.description ?? undefined,
         assetId: items[i].assetId,
         thumbnailUrl: asset?.thumbnailUrl ?? null,
       })
@@ -215,6 +216,7 @@ interface RawAsset {
   file_name?: string
   duration_sec?: number
   thumbnail_url?: string | null
+  description?: string | null
 }
 
 function normalizeAsset(raw: RawAsset): BroadcasterAsset {
@@ -224,6 +226,10 @@ function normalizeAsset(raw: RawAsset): BroadcasterAsset {
     file_name: raw.file_name ?? '',
     duration_sec: raw.duration_sec ?? 0,
     thumbnail_url: raw.thumbnail_url ?? null,
+    description:
+      typeof raw.description === 'string' && raw.description.trim().length > 0
+        ? raw.description
+        : null,
     title,
     duration: raw.duration_sec ?? 0,
     thumbnailUrl: raw.thumbnail_url ?? null,

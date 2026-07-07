@@ -17,33 +17,45 @@ export const metadata: Metadata = {
   },
 }
 
+// Each /shop tab is backed by a curated Shopify collection (handle set in
+// Admin); product order within a collection is respected. Auto-categorisation
+// of the full catalogue is kept only as a fallback for any tab whose collection
+// is missing/empty/unreachable.
+const TAB_COLLECTIONS = {
+  magazine: 'magazines',
+  merch: 'merch',
+  random: 'random-sh-t',
+} as const
+
 export default async function ShopPage() {
-  // Fetch the whole catalogue (used for the merch/random tabs via
-  // auto-categorisation) alongside the curated Magazines collection
-  // (whose product order is set manually in Shopify Admin).
-  const [products, magazinesOrdered, copy] = await Promise.all([
-    // Newest products first (by creation date).
+  const [products, magazineCol, merchCol, randomCol, copy] = await Promise.all([
+    // Newest products first (by creation date) — feeds the fallback buckets.
     getAllProducts(50, { sortKey: 'CREATED_AT', reverse: true }),
-    getProductsByCollection('magazines', 50),
+    getProductsByCollection(TAB_COLLECTIONS.magazine, 50),
+    getProductsByCollection(TAB_COLLECTIONS.merch, 50),
+    getProductsByCollection(TAB_COLLECTIONS.random, 50),
     getSiteCopy(),
   ])
 
+  // Auto-categorised fallback buckets.
   const collections = groupProducts(products)
 
-  // If the Shopify "Magazines" collection (handle: `magazines`) is
-  // populated, use its order verbatim for the Magazine tab — overrides
-  // auto-categorisation. Falls back to the categorised bucket when the
-  // collection is missing/empty so the tab keeps working.
-  if (magazinesOrdered.length > 0) {
-    const orderedHandles = new Set(magazinesOrdered.map((p) => p.handle))
-    collections.magazine = magazinesOrdered
-    // Prevent the same product appearing in merch/random as well.
-    collections.merch = collections.merch.filter(
-      (p) => !orderedHandles.has(p.handle),
-    )
-    collections.random = collections.random.filter(
-      (p) => !orderedHandles.has(p.handle),
-    )
+  // Prefer the curated collection for each tab; fall back to the categorised
+  // bucket when a collection is empty/unreachable.
+  const curated = { magazine: magazineCol, merch: merchCol, random: randomCol }
+  const claimed = new Set<string>()
+  for (const tab of ['magazine', 'merch', 'random'] as const) {
+    if (curated[tab].length > 0) {
+      collections[tab] = curated[tab]
+      curated[tab].forEach((p) => claimed.add(p.handle))
+    }
+  }
+  // Keep products claimed by a curated collection out of any tab still using
+  // its auto-categorised fallback, so nothing appears twice.
+  for (const tab of ['magazine', 'merch', 'random'] as const) {
+    if (curated[tab].length === 0) {
+      collections[tab] = collections[tab].filter((p) => !claimed.has(p.handle))
+    }
   }
 
   return (

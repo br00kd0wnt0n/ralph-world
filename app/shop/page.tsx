@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 // of the full catalogue is kept only as a fallback for any tab whose collection
 // is missing/empty/unreachable.
 const TAB_COLLECTIONS = {
-  magazine: 'magazines',
+  magazine: 'frontpage',
   merch: 'merch',
   random: 'random-sh-t',
 } as const

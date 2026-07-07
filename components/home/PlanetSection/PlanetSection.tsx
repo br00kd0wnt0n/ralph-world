@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import HomepageTvTeaser from '@/components/home/HomepageTvTeaser'
+import HomepageTvSubtitle from '@/components/home/HomepageTvSubtitle'
 import { motion } from 'framer-motion'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperClass } from 'swiper/types'
@@ -434,12 +435,11 @@ export default function PlanetSection({
               <p className={`text-intro ${textColor} mt-3`}>
                 {moduleCard.items[0]?.title ?? 'On now'}
               </p>
-              <p
+              <HomepageTvSubtitle
+                raw={moduleCard.items[0]?.subtitle}
                 className={`${textMuted} text-body-sm mt-1`}
                 style={{ lineHeight: '18px' }}
-              >
-                {moduleCard.items[0]?.subtitle ?? 'Switch on, tune in, and see what we are playing right now.'}
-              </p>
+              />
             </motion.div>
           )}
 

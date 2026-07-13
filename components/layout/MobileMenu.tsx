@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { useMenu } from '@/context/MenuContext'
-import { useLanguage, LANGUAGES } from '@/lib/useLanguage'
+// import { useLanguage, LANGUAGES } from '@/lib/useLanguage' // hidden for launch
 
 const WORLDS = [
   { label: 'Ralph TV', href: '/tv' },
@@ -54,11 +54,7 @@ const GOOPER: React.CSSProperties = {
 export default function MobileMenu() {
   const { user } = useAuth()
   const { open: isOpen, setOpen, openFooterPanel, setInstantNav } = useMenu()
-  const { language, setLanguage } = useLanguage()
-  const [langOpen, setLangOpen] = useState(false)
   const onClose = () => setOpen(false)
-  const currentLanguage =
-    LANGUAGES.find((l) => l.code === language)?.label ?? 'English'
 
   // Close the menu only once the route actually changes, so the navigation
   // commits while the page is still off-screen and the new page slides in
@@ -201,71 +197,8 @@ export default function MobileMenu() {
                 </Link>
               </>
             )}
-            {/* Language — same icon as the nav; opens an inline list that
-                works like the nav dropdown (pick + persist, tick on current).
-                Button + reveal are grouped in one nav child so the parent's
-                gap doesn't jolt the layout when the list mounts; the reveal's
-                own spacing lives inside its animated height. */}
-            <div className="flex flex-col items-start">
-              <button
-                type="button"
-                onClick={() => setLangOpen((v) => !v)}
-                className={`${linkClass} flex items-center gap-2`}
-                style={GOOPER}
-                aria-expanded={langOpen}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    display: 'inline-block',
-                    height: 30,
-                    width: 38, // 56:44 aspect of icon_language.svg at h=30
-                    backgroundColor: 'currentColor', // pink (white on hover) via the button's text colour
-                    WebkitMaskImage: 'url(/imgs/icon_language.svg)',
-                    maskImage: 'url(/imgs/icon_language.svg)',
-                    WebkitMaskRepeat: 'no-repeat',
-                    maskRepeat: 'no-repeat',
-                    WebkitMaskSize: 'contain',
-                    maskSize: 'contain',
-                    WebkitMaskPosition: 'center',
-                    maskPosition: 'center',
-                  }}
-                />
-                {currentLanguage}
-              </button>
-              <AnimatePresence initial={false}>
-                {langOpen && (
-                  <motion.div
-                    key="lang-list"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className="overflow-hidden w-full"
-                  >
-                    <div className="flex flex-col items-start gap-2 pl-10 pt-3">
-                      {LANGUAGES.map((lang) => (
-                        <button
-                          key={lang.code}
-                          type="button"
-                          onClick={() => {
-                            setLanguage(lang.code)
-                            setLangOpen(false)
-                          }}
-                          className="flex items-center gap-2 text-ralph-pink hover:text-white transition-colors text-[18px] min-[576px]:text-[20px]"
-                          style={GOOPER}
-                        >
-                          {lang.label}
-                          {language === lang.code && (
-                            <img src="/imgs/icon_tick.svg" alt="" aria-hidden="true" width={18} height={16} />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Language switcher hidden for launch — restore this block plus
+                the useLanguage state/import above when i18n ships. */}
 
             {/* Worlds */}
             <h2 className={headerClass} style={headerStyle}>

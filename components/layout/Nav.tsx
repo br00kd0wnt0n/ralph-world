@@ -7,8 +7,8 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import { useMenu } from '@/context/MenuContext'
-import ThemeToggle from './ThemeToggle'
-import LanguageModal from './LanguageModal'
+// import ThemeToggle from './ThemeToggle' // hidden for launch — restore when themes ship
+// import LanguageModal from './LanguageModal' // hidden for launch — restore when i18n ships
 import SubscribeModal from './SubscribeModal'
 
 const NAV_ITEMS = [
@@ -279,8 +279,8 @@ export default function Nav() {
           >
             Work with us
           </Link>
-          <ThemeToggle />
-          {user ? (
+          {/* <ThemeToggle /> hidden for launch — restore when themes ship */}
+          {user && (
             <Link
               href="/account"
               className="relative flex h-8 w-8 items-center justify-center rounded-full bg-ralph-pink text-white text-sm font-bold"
@@ -290,9 +290,8 @@ export default function Nav() {
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
               )}
             </Link>
-          ) : (
-            <LanguageModal />
           )}
+          {/* <LanguageModal /> hidden for launch — restore when i18n ships */}
           <button
             onClick={openCart}
             className="basket-btn relative flex items-center justify-center transition-colors hover:opacity-80"

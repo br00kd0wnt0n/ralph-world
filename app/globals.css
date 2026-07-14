@@ -316,12 +316,18 @@ main > [data-transitioning] {
   animation: wave 2s ease-in-out infinite;
 }
 
-/* Planet section background min-width — 1000px on narrow viewports,
-   1380px from 992 up. Applied alongside inline background-* styles. */
+/* Planet section background min-width — 1080px on narrow viewports, an
+   intermediate 1230px across 992–1199, and 1380px from 1200 up. Applied
+   alongside inline background-* styles. */
 .planet-bg-cover {
   min-width: 1080px;
 }
 @media (min-width: 992px) {
+  .planet-bg-cover {
+    min-width: 1230px;
+  }
+}
+@media (min-width: 1200px) {
   .planet-bg-cover {
     min-width: 1380px;
   }

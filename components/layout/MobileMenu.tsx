@@ -103,38 +103,49 @@ export default function MobileMenu() {
 
   return (
     <AnimatePresence>
+      {/* Floating space objects (planet, moon, saucer, satellite) on their OWN
+          layer at z-30 — BELOW the CanvasStage (z-40 saucer / alien squad) so
+          those sprites fly in front of the planets; the menu content sits above
+          at z-[80]. Slides in with the panel. */}
       {isOpen && (
         <motion.div
-          key="mobile-menu"
+          key="menu-decor"
+          className="fixed inset-0 z-30 overflow-hidden pointer-events-none select-none"
+          aria-hidden="true"
+          initial={{ x: '-100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '-100%' }}
+          transition={{ type: 'tween', ease: [0.22, 1, 0.36, 1], duration: 0.5 }}
+        >
+          {DECOR.map((d) => (
+            <motion.img
+              key={d.src}
+              src={d.src}
+              alt=""
+              className="absolute"
+              style={{ ...d.style, width: d.w, height: 'auto' }}
+              initial={{ x: -d.enter, opacity: 0 }}
+              animate={{ x: 0, opacity: 1, y: [0, -d.float, 0], rotate: [0, d.rot, 0] }}
+              exit={{ x: -d.enter, opacity: 0, transition: { duration: 0.3, ease: 'easeIn' } }}
+              transition={{
+                x: { duration: d.slideDur, ease: [0.22, 1, 0.36, 1] },
+                opacity: { duration: Math.min(0.4, d.slideDur) },
+                y: { duration: d.dur, repeat: Infinity, ease: 'easeInOut' },
+                rotate: { duration: d.dur, repeat: Infinity, ease: 'easeInOut' },
+              }}
+            />
+          ))}
+        </motion.div>
+      )}
+      {isOpen && (
+        <motion.div
+          key="menu-content"
           className="fixed inset-0 z-[80] flex flex-col overflow-hidden"
           initial={{ x: '-100%' }}
           animate={{ x: 0 }}
           exit={{ x: '-100%' }}
           transition={{ type: 'tween', ease: [0.22, 1, 0.36, 1], duration: 0.5 }}
         >
-          {/* Floating space objects — behind the links, transparent menu so the
-              drifting starfield (z-0) shows through. */}
-          <div className="pointer-events-none absolute inset-0 select-none" aria-hidden="true">
-            {DECOR.map((d) => (
-              <motion.img
-                key={d.src}
-                src={d.src}
-                alt=""
-                className="absolute"
-                style={{ ...d.style, width: d.w, height: 'auto' }}
-                initial={{ x: -d.enter, opacity: 0 }}
-                animate={{ x: 0, opacity: 1, y: [0, -d.float, 0], rotate: [0, d.rot, 0] }}
-                exit={{ x: -d.enter, opacity: 0, transition: { duration: 0.3, ease: 'easeIn' } }}
-                transition={{
-                  x: { duration: d.slideDur, ease: [0.22, 1, 0.36, 1] },
-                  opacity: { duration: Math.min(0.4, d.slideDur) },
-                  y: { duration: d.dur, repeat: Infinity, ease: 'easeInOut' },
-                  rotate: { duration: d.dur, repeat: Infinity, ease: 'easeInOut' },
-                }}
-              />
-            ))}
-          </div>
-
           {/* Top bar — logo left. */}
           <div className="relative z-10 flex items-center px-6 py-4 shrink-0">
             <Link href="/" onClick={() => handleNav('/')} aria-label="ralph world">

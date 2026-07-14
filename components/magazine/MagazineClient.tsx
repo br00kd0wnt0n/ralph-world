@@ -160,7 +160,7 @@ export default function MagazineClient({
         {/* Content layer - animates LAST */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 pb-8 min-h-[50vh] pt-[90px] min-[576px]:pt-[130px] min-[768px]:pt-[170px]"
+          className="relative z-10 pb-8 min-h-[50vh] pt-[90px] min-[576px]:pt-[130px] min-[768px]:pt-[140px] min-[992px]:pt-[170px] min-[1200px]:pt-[140px]"
         >
           {/* Cover Story title */}
           <h2 className="max-w-5xl mx-auto px-6 mb-6">

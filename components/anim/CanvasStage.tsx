@@ -10,58 +10,48 @@ import { createSaucerShow } from '@/lib/anim/saucerShow'
 const DEBUG = false
 
 // Squad timing / feel
-const ENTER_MS = 900 // rise-up-from-below the screen on (re)appear
-const DRIFT_MS = 4500 // sway around before charging
-const CHARGE_MS = 1500 // exhaust fires for this long BEFORE liftoff
 const START_MIN = 30_000 // delay before the FIRST appearance: 30s …
 const START_MAX = 60_000 // … to 1 min
 const HIDDEN_MIN = 180_000 // gap between subsequent appearances: 3 min …
 const HIDDEN_MAX = 300_000 // … to 5 min
-const DRIFT_AMP = 60 // px sideways sway
-const DRIFT_W = 0.004 // sway angular speed (rad/ms) — higher = more frantic darting
-const ACCEL = 0.005 // blast acceleration (px/ms²)
-const EXHAUST_TOP_RATIO = 0.88 // exhaust top sits this far down the alien (just above its base)
-const EXHAUST_W_RATIO = 0.72 // exhaust width relative to alien width
-const EXHAUST_X_OFFSET = 20 // nudge the plume right of the alien centre
+const RISE_MIN = 0.5 // propel speed (px/ms) — ~100px per propel …
+const RISE_MAX = 0.9 // … up to ~200px, each alien slightly different
+const GLIDE = 0.08 // slight downward sink between propels (jellyfish relax)
+const SWAY_AMP = 16 // px gentle horizontal sway as they rise
+const SWAY_W = 0.0016 // sway angular speed (rad/ms)
 const ROT_MIN = -0.1 // radians — modest left tilt
 const ROT_MAX = 0.18 // radians — a touch more right tilt so they don't all lean the same way
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min)
-const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
 const startDelay = () => (DEBUG ? rand(1000, 2500) : rand(START_MIN, START_MAX))
 const hiddenDelay = () => (DEBUG ? rand(3000, 6000) : rand(HIDDEN_MIN, HIDDEN_MAX))
 
-type Phase = 'enter' | 'drift' | 'charge' | 'blast' | 'hidden'
+type Phase = 'rising' | 'hidden'
 interface Member {
   // per-member config (regenerated each appearance)
   dx: number
-  dy: number
   scale: number
   seed: number
-  driftW: number
-  driftAmp: number
-  igniteDelay: number
-  exhaustDelay: number
+  speed: number // base upward speed (px/ms)
+  swayAmp: number
+  swayW: number
+  pulseSeed: number // desync the jellyfish propulsion pulse
   rot: number
   // runtime
-  enterFromY: number
   ax: number
   ay: number
-  vy: number
   aFrame: number
   aAcc: number
   aFps: number
-  eFrame: number
-  eAcc: number
-  eOn: boolean
 }
 
 /**
  * Full-viewport canvas overlay (fixed, pointer-events:none, DPR-aware) hosting
  * every canvas actor on one shared rAF:
- *  - alien squad (random 2–4): rise from below → drift sideways → charge
- *    (exhaust fires ~1.5s) → blast up off the top → hide (1–5 min) → repeat
- *  - satellite: crosses left → right at random intervals and heights
+ *  - alien squad (random 3–7): drift up from below the screen as a loose group,
+ *    each pulsing upward in time with its animation (like a jellyfish), off the
+ *    top → hide (3–5 min) → repeat
+ *  - saucer show: see lib/anim/saucerShow
  */
 export default function CanvasStage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -79,12 +69,9 @@ export default function CanvasStage() {
     const ctx = context
 
     const ALIEN = ANIMATIONS['bouncing-alien']
-    const EXHAUST = ANIMATIONS['exhaust']
 
     const alienImg = new Image()
     alienImg.src = ALIEN.src
-    const exhaustImg = new Image()
-    exhaustImg.src = EXHAUST.src
 
     let vw = window.innerWidth
     let vh = window.innerHeight
@@ -104,37 +91,30 @@ export default function CanvasStage() {
 
     resize()
 
-    // Random 3–7 aliens, clustered close, slightly different sizes.
+    // Random 3–7 aliens, clustered loosely, slightly different sizes/speeds.
     function makeMembers(): Member[] {
       const n = 3 + Math.floor(Math.random() * 5) // 3 … 7
       return Array.from({ length: n }, (_, i) => ({
-        dx: (i - (n - 1) / 2) * rand(120, 165) + rand(-20, 20),
-        dy: rand(-30, 120),
+        dx: (i - (n - 1) / 2) * rand(90, 150) + rand(-20, 20),
         scale: rand(0.4, 0.58),
         seed: rand(0, Math.PI * 2),
-        driftW: DRIFT_W * rand(0.6, 1.5), // each sways at its own speed
-        driftAmp: DRIFT_AMP * rand(0.75, 1.2),
-        igniteDelay: i * rand(80, 160),
-        exhaustDelay: rand(0, 1000), // stagger each plume's ignition
+        speed: rand(RISE_MIN, RISE_MAX), // each rises at its own pace
+        swayAmp: SWAY_AMP * rand(0.6, 1.3),
+        swayW: SWAY_W * rand(0.7, 1.4),
+        pulseSeed: rand(0, Math.PI * 2),
         rot: rand(ROT_MIN, ROT_MAX),
-        enterFromY: 0,
         ax: 0,
         ay: 0,
-        vy: 0,
         aFrame: Math.floor(rand(0, ALIEN.count)),
         aAcc: 0,
         aFps: rand(12, 15),
-        eFrame: 0,
-        eAcc: 0,
-        eOn: false,
       }))
     }
 
     function placeBelow() {
       squad.members.forEach((m) => {
         m.ax = squad.gx + m.dx
-        m.enterFromY = vh + rand(40, 160) // staggered, just below the bottom edge
-        m.ay = m.enterFromY
+        m.ay = vh + rand(40, 260) // staggered, just below the bottom edge
       })
     }
 
@@ -143,7 +123,6 @@ export default function CanvasStage() {
       phaseStart: 0,
       hiddenMs: startDelay(), // wait before the first appearance
       gx: vw / 2,
-      gy: vh * 0.55,
       members: makeMembers(),
     }
     placeBelow()
@@ -151,13 +130,13 @@ export default function CanvasStage() {
     function respawnSquad(elapsed: number) {
       squad.members = makeMembers()
       squad.gx = rand(160, Math.max(vw - 160, 180))
-      squad.gy = rand(vh * 0.45, vh * 0.62) // lower section
       placeBelow()
-      squad.phase = 'enter'
+      squad.phase = 'rising'
       squad.phaseStart = elapsed
     }
 
     function updateSquad(dt: number, elapsed: number) {
+      // advance each alien's sprite animation
       for (const m of squad.members) {
         m.aAcc += dt
         const aMs = 1000 / m.aFps
@@ -165,66 +144,21 @@ export default function CanvasStage() {
           m.aAcc -= aMs
           m.aFrame = (m.aFrame + 1) % ALIEN.count
         }
-        // each alien's exhaust ignites at a slightly different time during charge
-        m.eOn =
-          squad.phase === 'blast' ||
-          (squad.phase === 'charge' && elapsed - squad.phaseStart > m.exhaustDelay)
-        if (m.eOn) {
-          m.eAcc += dt
-          const eMs = 1000 / (EXHAUST.fps ?? 18)
-          while (m.eAcc >= eMs) {
-            m.eAcc -= eMs
-            m.eFrame = (m.eFrame + 1) % EXHAUST.count
-          }
-        }
       }
 
-      if (squad.phase === 'enter') {
-        const p = Math.min((elapsed - squad.phaseStart) / ENTER_MS, 1)
-        const e = easeOutCubic(p)
-        for (const m of squad.members) {
-          // same sway as drift so x is continuous into the next phase (no jump)
-          m.ax = squad.gx + m.dx + Math.sin(elapsed * m.driftW + m.seed) * m.driftAmp
-          m.ay = m.enterFromY + (squad.gy + m.dy - m.enterFromY) * e
-        }
-        if (p >= 1) {
-          squad.phase = 'drift'
-          squad.phaseStart = elapsed
-        }
-      } else if (squad.phase === 'drift') {
-        for (const m of squad.members) {
-          m.ax = squad.gx + m.dx + Math.sin(elapsed * m.driftW + m.seed) * m.driftAmp
-          m.ay = squad.gy + m.dy
-        }
-        if (elapsed - squad.phaseStart > DRIFT_MS) {
-          squad.phase = 'charge'
-          squad.phaseStart = elapsed
-          squad.members.forEach((m) => {
-            m.eFrame = 0
-            m.eAcc = 0
-          })
-        }
-      } else if (squad.phase === 'charge') {
-        // keep swaying, with a small rumble, while the exhaust builds
-        for (const m of squad.members) {
-          m.ax = squad.gx + m.dx + Math.sin(elapsed * m.driftW + m.seed) * m.driftAmp
-          m.ay = squad.gy + m.dy + Math.sin(elapsed * 0.05 + m.seed) * 2.5
-        }
-        if (elapsed - squad.phaseStart > CHARGE_MS) {
-          squad.phase = 'blast'
-          squad.phaseStart = elapsed
-          squad.members.forEach((m) => {
-            m.vy = 0
-          })
-        }
-      } else if (squad.phase === 'blast') {
-        const bt = elapsed - squad.phaseStart
+      if (squad.phase === 'rising') {
         let allOff = true
         for (const m of squad.members) {
-          if (bt > m.igniteDelay) {
-            m.vy += ACCEL * dt
-            m.ay -= m.vy * dt
-          }
+          // Propulsion synced to the sprite's animation cycle: a burst of
+          // upward thrust each cycle, then a slight sink before the next —
+          // like a jellyfish. thrust goes negative during the glide (GLIDE)
+          // so they drop a touch between propels.
+          const aMs = 1000 / m.aFps
+          const ph = (m.aFrame + Math.min(m.aAcc / aMs, 1)) / ALIEN.count
+          const burst = Math.max(0, Math.sin(ph * Math.PI * 2 + m.pulseSeed))
+          const thrust = burst * burst - GLIDE
+          m.ay -= m.speed * thrust * dt
+          m.ax = squad.gx + m.dx + Math.sin(elapsed * m.swayW + m.seed) * m.swayAmp
           if (m.ay + ALIEN.frameH * m.scale > -40) allOff = false
         }
         if (allOff) {
@@ -249,17 +183,6 @@ export default function CanvasStage() {
           ctx.save()
           ctx.translate(m.ax, m.ay + ah / 2) // rotate about the alien's centre
           ctx.rotate(m.rot)
-
-          if (m.eOn && exhaustImg.complete && exhaustImg.naturalWidth > 0) {
-            const ew = aw * EXHAUST_W_RATIO
-            const eh = ew * (EXHAUST.frameH / EXHAUST.frameW)
-            ctx.drawImage(
-              exhaustImg,
-              m.eFrame * EXHAUST.frameW, 0, EXHAUST.frameW, EXHAUST.frameH,
-              -ew / 2 + EXHAUST_X_OFFSET, ah * (EXHAUST_TOP_RATIO - 0.5), ew, eh,
-            )
-          }
-
           ctx.drawImage(
             alienImg,
             m.aFrame * ALIEN.frameW, 0, ALIEN.frameW, ALIEN.frameH,

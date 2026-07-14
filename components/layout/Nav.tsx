@@ -146,7 +146,7 @@ export default function Nav() {
         >
           {Array.from({ length: 11 }, (_, i) => {
             const blurAmount = 12 - (i * 1.2) // 12px to ~0px
-            const opacity = 0.5 - (i * 0.045) // 0.5 to ~0
+            const opacity = 0.5 // flat 0.5 across all strips
             return (
               <div
                 key={i}
@@ -245,21 +245,27 @@ export default function Nav() {
             <>
               <Link
                 href="/join-ralph"
-                className={`subscribe-btn text-header-btn border-2 border-white text-black px-4 flex items-center justify-center ${
-                  pathname === '/join-ralph' ? 'bg-ralph-pink' : 'bg-white hover:bg-ralph-pink'
+                className={`subscribe-btn text-header-btn border-2 px-4 flex items-center justify-center ${
+                  pathname === '/join-ralph'
+                    ? 'bg-ralph-pink text-black border-[#6D003D]'
+                    : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D]'
                 }`}
                 style={{
                   borderRadius: 22,
                   '--subscribe-margin': `${buttonMargin}px`,
                   marginLeft: buttonMargin,
-                  transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s',
+                  transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s, color 0.15s, border-color 0.15s',
                 } as React.CSSProperties}
               >
                 Subscribe to Ralph
               </Link>
               <Link
                 href="/login"
-                className="text-header-btn border-2 border-white text-white px-4 ml-6 mid:ml-4 transition-colors flex items-center justify-center bg-transparent hover:bg-ralph-pink"
+                className={`text-header-btn border-2 px-4 ml-6 mid:ml-4 transition-colors flex items-center justify-center ${
+                  pathname === '/login'
+                    ? 'bg-ralph-pink text-black border-[#6D003D]'
+                    : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D]'
+                }`}
                 style={{ borderRadius: 22 }}
               >
                 Log in
@@ -272,8 +278,10 @@ export default function Nav() {
         <div className="flex items-center gap-6 mid:gap-4 pointer-events-auto">
           <Link
             href="/work-with-us"
-            className={`text-header-btn border-2 border-white text-white px-4 transition-colors flex items-center justify-center ${
-              pathname === '/work-with-us' ? 'bg-ralph-pink' : 'bg-transparent hover:bg-ralph-pink'
+            className={`text-header-btn border-2 px-4 transition-colors flex items-center justify-center ${
+              pathname === '/work-with-us'
+                ? 'bg-ralph-pink text-black border-[#6D003D]'
+                : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D]'
             }`}
             style={{ borderRadius: 22 }}
           >
@@ -381,7 +389,7 @@ export default function Nav() {
                       className="absolute pointer-events-none -translate-x-1/2 z-0"
                       style={{
                         left: '50%',
-                        top: '50%',
+                        top: 'calc(50% + 15px)',
                         width: item.underline.w,
                         height: item.underline.h,
                         maxWidth: navFixed ? '130%' : 'none',
@@ -565,7 +573,7 @@ export default function Nav() {
                         className="absolute pointer-events-none -translate-x-1/2 z-0"
                         style={{
                           left: '50%',
-                          top: '50%',
+                          top: 'calc(50% + 15px)',
                           width: item.underline.w,
                           height: item.underline.h,
                           maxWidth: navFixed ? '130%' : 'none',

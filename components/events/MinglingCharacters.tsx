@@ -237,6 +237,7 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   useEffect(() => {
     function onPopState() {
       setExpandedArm(null)
+      setActiveArm(null)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
@@ -338,6 +339,8 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
     if (isExpanded) {
       History.prototype.pushState.call(window.history, null, '', '/events')
       setExpandedArm(null)
+      // Return straight to the normal page state, not the brief panel.
+      setActiveArm(null)
     } else {
       setActiveArm(null)
     }

@@ -49,10 +49,10 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
             <button
               key={cat.value}
               onClick={() => handleClick(cat.value)}
-              className={`relative text-intro transition-colors flex items-center justify-center text-black ${
+              className={`relative transition-colors flex items-center justify-center text-black text-[14px] min-[576px]:text-[18px] ${
                 !isActive ? 'hover:text-ralph-orange' : ''
               }`}
-              style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: TAB_WIDTH, textAlign: 'center' }}
+              style={{ fontFamily: 'var(--font-intro, "Gooper Trial"), serif', lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: TAB_WIDTH, textAlign: 'center' }}
             >
               <span className="relative z-10">{cat.label}</span>
               {isActive && (
@@ -60,11 +60,9 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
                   src="/imgs/underline_magazine.svg"
                   alt=""
                   aria-hidden="true"
-                  className="absolute pointer-events-none left-1/2 -translate-x-1/2"
+                  className="absolute pointer-events-none left-1/2 -translate-x-1/2 w-[68px] min-[576px]:w-[114px] h-auto"
                   style={{
                     top: '50%',
-                    width: 114,
-                    height: 8,
                     maxWidth: 'none',
                   }}
                 />

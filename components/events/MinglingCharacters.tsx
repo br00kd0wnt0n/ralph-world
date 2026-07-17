@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 
@@ -17,12 +18,48 @@ const CHARACTERS = [
   '/imgs/event_character_04.png',
 ]
 
-const ARM_COLORS = [
-  '/imgs/blue_arm.svg',
-  '/imgs/green_arm.svg',
-  '/imgs/orange_arm.svg',
-  '/imgs/pink_arm.svg',
-]
+// Event accent → matching arm art. Only four accent colours are supported;
+// the panel background is taken from the arm theme so the arm always matches
+// the panel exactly. `bg` = each arm SVG's actual fill colour.
+//   green_arm  #4CAF50 · blue_arm  #00C4B4 (teal)
+//   pink_arm   #7B3FE4 (purple/pink) · orange_arm #EE6626
+const ARM_THEMES = {
+  green: { bg: '#4CAF50', arm: '/imgs/green_arm.svg' },
+  blue: { bg: '#00C4B4', arm: '/imgs/blue_arm.svg' },
+  purple: { bg: '#7B3FE4', arm: '/imgs/pink_arm.svg' },
+  orange: { bg: '#EE6626', arm: '/imgs/orange_arm.svg' },
+} as const
+type ArmColour = keyof typeof ARM_THEMES
+const ARM_CYCLE: ArmColour[] = ['green', 'blue', 'purple', 'orange']
+
+// Resolve a sent accent (hex or name) to one of the four arm colours; null if
+// unrecognised (caller falls back to the cycle). Accepts the arm hexes, the
+// event-accent-palette hexes, and colour names.
+function resolveArmColour(accent?: string | null): ArmColour | null {
+  if (!accent) return null
+  const a = accent.trim().toLowerCase()
+  const byHex: Record<string, ArmColour> = {
+    '#4caf50': 'green',
+    '#44b758': 'green',
+    '#00c4b4': 'blue',
+    '#5fbcbf': 'blue',
+    '#7b3fe4': 'purple',
+    '#ea128b': 'purple',
+    '#ff2098': 'purple', // pink → purple/pink arm
+    '#ee6626': 'orange',
+    '#f26524': 'orange',
+    '#ff6b35': 'orange',
+  }
+  const byName: Record<string, ArmColour> = {
+    green: 'green',
+    blue: 'blue',
+    teal: 'blue',
+    purple: 'purple',
+    pink: 'purple',
+    orange: 'orange',
+  }
+  return byHex[a] ?? byName[a] ?? null
+}
 
 interface Event {
   id?: string
@@ -95,9 +132,11 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   }, [])
 
   // Lock background scroll while an event is open (the expanded overlay).
+  // Only < 992 (isMobile), where the expanded card is a centred fixed overlay;
+  // on desktop (>= 992) the page should stay scrollable when an event is open.
   // Lock both <html> and <body> since the scroller can be either.
   useEffect(() => {
-    if (expandedArm === null) return
+    if (expandedArm === null || !isMobile) return
     const docEl = document.documentElement
     const prevHtml = docEl.style.overflow
     const prevBody = document.body.style.overflow
@@ -107,7 +146,7 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
       docEl.style.overflow = prevHtml
       document.body.style.overflow = prevBody
     }
-  }, [expandedArm])
+  }, [expandedArm, isMobile])
 
   // Background characters: fixed, evenly spread across x (no horizontal
   // motion); only a gentle up/down bob, recomputed on resize.
@@ -191,8 +230,12 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   // Generate arm data
   const arms = Array.from({ length: eventCount }, (_, i) => {
     const event = events[i]
+    // Arm art matches the panel accent; fall back to a cycle if none/unknown.
+    const armColour =
+      resolveArmColour(event?.accentColour) ?? ARM_CYCLE[i % ARM_CYCLE.length]
+    const armTheme = ARM_THEMES[armColour]
     return {
-      src: ARM_COLORS[i % ARM_COLORS.length],
+      src: armTheme.arm,
       // Default position evenly: first arm at ~15%, last arm at ~85%
       defaultLeft: eventCount === 1 ? 50 : 15 + (70 / (eventCount - 1)) * i,
       height: 500 + (i * 17) % 50, // 500-550px, deterministic variation
@@ -207,7 +250,8 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
       location: event?.locationName || '',
       locationAddress: event?.locationAddress || '',
       locationPostcode: event?.locationPostcode || '',
-      accentColour: event?.accentColour || null,
+      // Panel colour comes from the arm theme so the panel always matches the arm.
+      accentColour: armTheme.bg,
       thumbnailUrl: event?.thumbnailUrl || null,
       externalTicketUrl: event?.externalTicketUrl || null,
       rsvpEnabled: event?.rsvpEnabled ?? false,
@@ -356,6 +400,9 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   const MOBILE_CARD_GAP = 36
   const MOBILE_PAD_TOP = 100
   const MOBILE_PAD_BOTTOM = 100
+  // Expanded (full-screen) card sits this far from the top so the arm can reach
+  // down from off-screen and grip the top edge of the card.
+  const MOBILE_EXPANDED_TOP = 100
   const mobileContainerHeight =
     MOBILE_PAD_TOP +
     MOBILE_PAD_BOTTOM +
@@ -398,14 +445,14 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
         // Panel dimensions.
         const panelWidth = isMobile
           ? isThisExpanded
-            ? 'min(calc(100vw - 32px), 520px)'
+            ? '100%' // fill the inset wrapper (near full-screen)
             : MOBILE_CARD_W
           : isThisExpanded
             ? 760
             : 388
         const panelHeight = isMobile
           ? isThisExpanded
-            ? 520
+            ? '100%' // fill the inset wrapper; content scrolls inside
             : MOBILE_CARD_H
           : isThisExpanded
             ? 420
@@ -414,10 +461,14 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
         const wrapperStyle: React.CSSProperties = isMobile
           ? isThisExpanded
             ? {
+                // Portalled above the header. Sits 100px from the top so the
+                // colour-matched arm can reach down from off-screen and "hold"
+                // it; tiny 12px inset on the other edges.
                 position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
+                top: MOBILE_EXPANDED_TOP,
+                left: 12,
+                right: 12,
+                bottom: 48,
               }
             : {
                 top: mobileCardTop(i),
@@ -434,15 +485,15 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
                   : 'translateX(-20%)',
             }
 
-        return (
+        const panelWrapper = (
           <div
             key={`panel-${i}`}
-            className="absolute z-[15] transition-all duration-500 ease-out pointer-events-none"
+            className={`absolute ${isMobile && isThisExpanded ? 'z-[90]' : 'z-[15]'} ${isMobile ? '' : 'transition-all duration-500 ease-out'} pointer-events-none`}
             style={wrapperStyle}
           >
             {/* Panel */}
             <div
-              className={`transition-all duration-500 ease-out ${
+              className={`${isMobile ? '' : 'transition-all duration-500 ease-out'} ${
                 isPanelOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0'
               } ${isMobile && !isThisExpanded ? 'cursor-pointer' : ''}`}
               onClick={
@@ -469,10 +520,17 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
               {/* Close button — top-right when expanded, otherwise mirrors panel side.
                   Hidden on mobile mini state (the whole panel is the tap target). */}
               <div
-                className={`absolute top-4 z-10 ${isThisExpanded || panelOnRight ? 'right-4' : 'left-4'} ${
+                className={`absolute z-10 ${
                   isMobile && !isThisExpanded ? 'hidden' : ''
                 }`}
-                style={{ position: 'absolute' }}
+                style={{
+                  position: 'absolute',
+                  top: -16,
+                  // Desktop: nudge outside the corner (-16). Mobile: sit inside (16).
+                  [isThisExpanded || panelOnRight ? 'right' : 'left']: isMobile
+                    ? 16
+                    : -16,
+                }}
               >
                 {/* Shadow */}
                 <div
@@ -517,7 +575,7 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
               {/* Event content — mini (single col) vs expanded (stacks
                   vertically on narrow screens, 2 col on >=576). */}
               {isThisExpanded ? (
-                <div className="flex flex-col min-[576px]:flex-row h-full text-black gap-4 min-[576px]:gap-8 p-6 min-[576px]:p-8 min-[576px]:pr-12 overflow-y-auto">
+                <div className="flex flex-col-reverse min-[576px]:flex-row h-full text-black gap-4 min-[576px]:gap-8 p-6 pt-[60px] min-[576px]:p-8 min-[576px]:pr-12 overflow-y-auto">
                   {/* Left col — copy + CTA */}
                   <div className="flex-1 flex flex-col min-w-0">
                     <h3
@@ -577,10 +635,10 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
                       </address>
                     )}
 
-                    <div className="mt-auto">
+                    <div className="min-[576px]:mt-auto">
                       {arm.externalTicketUrl ? (
                         // Eventbrite / external ticketing — open in new tab for all users
-                        <Button href={arm.externalTicketUrl} label="Get tickets" />
+                        <Button href={arm.externalTicketUrl} label="Get tickets" newTab />
                       ) : arm.rsvpEnabled ? (
                         // Free event with RSVP — requires sign-in
                         (() => {
@@ -616,14 +674,15 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
                     </div>
                   </div>
 
-                  {/* Right col — poster */}
-                  <div className="flex-1 flex items-center justify-center">
+                  {/* Right col — poster. On mobile add 36px side padding so the
+                      poster's inset from the panel edge is 60px (36 + p-6's 24). */}
+                  <div className="flex-1 flex items-center justify-end px-[36px] min-[576px]:px-0">
                     {arm.thumbnailUrl ? (
                       <img
                         src={arm.thumbnailUrl}
                         alt={arm.title}
                         className="max-w-full max-h-full object-contain"
-                        style={{ borderRadius: 8 }}
+                        style={{ borderRadius: 8, border: '6px solid white' }}
                       />
                     ) : (
                       <div
@@ -698,6 +757,48 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
             </div>
           </div>
         )
+
+        // Mobile expanded: portal to <body> so it escapes the page's stacking
+        // contexts (main / PageShift, both z-10) and can sit above the nav +
+        // footer, with a full-screen underlay that blocks clicks behind it.
+        if (isMobile && isThisExpanded) {
+          return createPortal(
+            <>
+              <div
+                className="fixed inset-0 z-[89] bg-black/60"
+                onClick={handleClose}
+              />
+              {/* Arm reaching down from off-screen to "hold" the card by its
+                  top edge. Rotated 180° so the hand points down; drops in with
+                  a slight overshoot. Its hand overlaps the card's top edge
+                  (card starts at MOBILE_EXPANDED_TOP). */}
+              <div
+                aria-hidden="true"
+                className="fixed left-1/2 z-[91] pointer-events-none"
+                style={{
+                  // 2× the arm size while keeping the hand at the card's top
+                  // edge: the extra length extends up off-screen (negative top).
+                  top: -(MOBILE_EXPANDED_TOP + 44),
+                  height: (MOBILE_EXPANDED_TOP + 44) * 2,
+                  animation:
+                    'event-arm-hold 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                }}
+              >
+                <img
+                  src={arm.src}
+                  alt=""
+                  draggable={false}
+                  className="select-none block"
+                  style={{ height: '100%', width: 'auto' }}
+                />
+              </div>
+              {panelWrapper}
+            </>,
+            document.body,
+            `panel-${i}`,
+          )
+        }
+        return panelWrapper
       })}
 
       {/* Arms container.
@@ -766,12 +867,15 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
           const { left } = getArmPosition(i)
           // When ANY arm is expanded, non-expanded arms slide down out of
           // view. The expanded arm centers horizontally (left: 50%).
-          const effectiveLeft = isThisExpanded ? 50 : left
+          const isThisActive = activeArm === i
+          const effectiveLeft = isThisExpanded ? 50 : isThisActive ? 48 : left
           const verticalOffset = isExpanded
             ? isThisExpanded
               ? 50              // active arm drops 50px to nest under the expanded panel
               : arm.height + 100 // others slide all the way off-screen
-            : 0
+            : isThisActive
+              ? 25             // selected (brief panel): drop a little so it obscures the panel less
+              : 0
 
           return (
             <div

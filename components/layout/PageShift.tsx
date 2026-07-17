@@ -13,16 +13,18 @@ export default function PageShift({ children }: { children: ReactNode }) {
   const { open } = useMenu()
   return (
     <div
-      // z-10 here (not just on <main>) because will-change below makes this a
-      // stacking context; without it the whole page would sit at z-auto and the
-      // midground/foreground parallax layers (z-1 / z-5) would paint on top.
+      // `relative z-10` gives this its own stacking context so the whole page
+      // sits above the midground/foreground parallax layers (z-1 / z-5).
       className="relative z-10 flex-1 flex flex-col"
       style={{
         transform: open ? 'translateX(100%)' : 'none',
         opacity: open ? 0 : 1,
         transition:
           'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease-out',
-        willChange: 'transform, opacity',
+        // Only hint will-change while the menu is open — when set permanently it
+        // creates a containing block for position:fixed descendants (e.g. the
+        // events expanded panel), pinning them to this box instead of the viewport.
+        willChange: open ? 'transform, opacity' : undefined,
         // Feather the leading (left) edge while sliding so subpages' white
         // backgrounds don't show a hard white line against the starfield.
         maskImage: open

@@ -7,6 +7,7 @@ import { overlayContentVariants } from '@/lib/animation/magazine'
 import { useAuth } from '@/context/AuthContext'
 import BlockRenderer from './BlockRenderer'
 import ShopCalloutBadge from './ShopCalloutBadge'
+import Button from '@/components/ui/Button'
 import type { ArticleFull } from '@/lib/data/magazine'
 import { resolveTheme } from '@/lib/article-themes'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
@@ -242,7 +243,7 @@ export default function ArticleOverlay({
         </h1>
 
         {/* Divider after title */}
-        <div className="w-[420px] h-[2px] bg-black mx-auto" style={{ marginBottom: '1.5rem' }} />
+        <div className="w-full max-w-[420px] h-[2px] bg-black mx-auto" style={{ marginBottom: '1.5rem' }} />
 
         {/* Bylines — tags + share moved to the bottom of the article */}
         <div className="text-center text-sm text-gray-500" style={{ marginBottom: '1.5rem' }}>
@@ -392,12 +393,7 @@ export default function ArticleOverlay({
               Create a free account to follow your favourite writers, save articles, and get access to the full magazine experience.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                onClick={onSubscribe}
-                className="rounded-full bg-ralph-pink px-7 py-2.5 text-white font-medium text-sm hover:bg-ralph-pink/90 transition-colors"
-              >
-                Sign up free
-              </button>
+              <Button label="Sign up free" href="/join-ralph" filled />
               <a
                 href="/login"
                 className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"

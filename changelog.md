@@ -4,6 +4,40 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-17 — Events page: mobile expanded card polish
+
+Frontend polish of the events "arm" info cards, all in
+`components/events/MinglingCharacters.tsx` (plus one keyframe in
+`app/globals.css`). No data/API changes.
+
+### Mobile expanded card ("Show me more")
+- **Card position** — expanded card now sits `100px` from the top
+  (`MOBILE_EXPANDED_TOP`) and `48px` from the bottom, with a 12px inset
+  on the sides.
+- **Arm "holds" the card** — a colour-matched arm (`arm.src`) drops in
+  from off-screen above the card, rotated 180° so the hand grips the
+  card's top edge (~44px overlap). Renders in the portal at `z-[91]`
+  (above the card's `z-90`). Enters via the new `event-arm-hold`
+  keyframe (slide down from the top with a slight overshoot). Sized 2×.
+- **Content order reversed on mobile** — `flex-col-reverse` so the poster
+  image stacks first (top); copy + CTA below. Stays side-by-side row
+  (copy left / poster right) on ≥576.
+- **Panel padding** — `pt-[60px]` on mobile so content clears the arm's
+  grip.
+
+### Poster image
+- **8px border radius + 6px solid white border.**
+- **Right-aligned** (`justify-end`) on both desktop and mobile.
+- Mobile side padding of 36px on the poster column so its inset from the
+  panel edge totals 60px (36 + the panel's 24px `p-6`).
+
+### Close button
+- Repositioned: `top: -16` on both; horizontal `-16` on desktop (nudged
+  outside the corner) / `16` on mobile (sits inside), following the
+  active panel side (right when expanded/right-aligned, else left).
+
+---
+
 ## 2026-06-05 (afternoon) — Cancellation state + DB permission fixes
 
 ### Cancellation state on /account

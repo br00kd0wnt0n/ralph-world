@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { formatPrice } from '@/lib/shopify/format'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
@@ -200,7 +201,7 @@ export default function ProductDetail({
                 disabled
                 className="w-full rounded-full bg-gray-300 text-gray-500 py-4 font-medium cursor-not-allowed"
               >
-                Buy now for £{price.amount}
+                Buy now for £{formatPrice(price.amount)}
               </button>
               <p className="text-xs text-black text-center">
                 Shop is in demo mode. Checkout goes live once Shopify is connected.
@@ -208,7 +209,7 @@ export default function ProductDetail({
             </div>
           ) : isAvailable ? (
             <Button
-              label={isLoading ? 'Adding…' : `Buy now for £${price.amount}`}
+              label={isLoading ? 'Adding…' : `Buy now for £${formatPrice(price.amount)}`}
               onClick={firstVariant && !isLoading ? handleBuy : undefined}
               minWidth={230}
             />

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { formatPrice } from '@/lib/shopify/format'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import type { ShopifyProduct } from '@/lib/shopify/types'
@@ -157,7 +158,7 @@ export default function ProductOverlay({
                   <div className="flex justify-between">
                     <dt className="text-gray-500 uppercase text-xs tracking-wide">Price</dt>
                     <dd className="text-black font-bold">
-                      £{price.amount}
+                      £{formatPrice(price.amount)}
                     </dd>
                   </div>
                 </dl>

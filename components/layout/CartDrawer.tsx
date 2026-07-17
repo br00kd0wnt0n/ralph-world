@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, useEffect } from 'react'
+import { formatPrice } from '@/lib/shopify/format'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
@@ -150,7 +151,7 @@ export default function CartDrawer() {
                           +
                         </button>
                         <span className="ml-auto text-black" style={gooperTitle}>
-                          £{line.cost.totalAmount.amount}
+                          £{formatPrice(line.cost.totalAmount.amount)}
                         </span>
                         <button
                           onClick={() => removeItem(line.id)}
@@ -186,7 +187,7 @@ export default function CartDrawer() {
             <div className="flex items-center justify-between mb-4">
               <span className="text-black" style={gooperTitle}>Subtotal</span>
               <span className="text-black" style={gooperTitle}>
-                £{subtotal.amount}
+                £{formatPrice(subtotal.amount)}
               </span>
             </div>
           )}

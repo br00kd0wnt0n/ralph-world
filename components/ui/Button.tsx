@@ -20,6 +20,8 @@ interface ButtonProps {
   // submit control.
   type?: 'button' | 'submit'
   disabled?: boolean
+  // If true (and `href` is set), open the link in a new tab.
+  newTab?: boolean
 }
 
 const RALPH_PINK = '#EA128B'
@@ -66,6 +68,7 @@ export default function Button({
   filled = false,
   type = 'button',
   disabled = false,
+  newTab = false,
 }: ButtonProps) {
   const mergedStyles: React.CSSProperties = {
     ...btnStyles,
@@ -84,7 +87,13 @@ export default function Button({
       <div style={mergedShadowStyles} />
       {/* Button — moves on hover/active */}
       {href && !disabled ? (
-        <Link href={href} className="btn-press" style={mergedStyles}>
+        <Link
+          href={href}
+          className="btn-press"
+          style={mergedStyles}
+          target={newTab ? '_blank' : undefined}
+          rel={newTab ? 'noopener noreferrer' : undefined}
+        >
           {label}
         </Link>
       ) : (

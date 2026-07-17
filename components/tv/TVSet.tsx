@@ -409,7 +409,7 @@ export default function TVSet({
                   stacked in a column, each row = [toggle image] [label].
                   Position is %-based so it scales with the panel. */}
               <div
-                className="absolute flex flex-col gap-3"
+                className="absolute flex flex-col gap-1 min-[768px]:gap-3"
                 style={{ left: '7%', top: '20%' }}
               >
                 <button
@@ -419,7 +419,7 @@ export default function TVSet({
                     playSfx(next === 'show-info' ? 'on' : 'off')
                     setOverlay(next)
                   }}
-                  className="flex items-center gap-2 group"
+                  className="flex items-center gap-1 group"
                 >
                   <img
                     src={
@@ -453,7 +453,7 @@ export default function TVSet({
                     playSfx(next === 'schedule' ? 'on' : 'off')
                     setOverlay(next)
                   }}
-                  className="flex items-center gap-2 group"
+                  className="flex items-center gap-1 group"
                 >
                   <img
                     src={
@@ -486,7 +486,7 @@ export default function TVSet({
                     playSfx(isFullscreen ? 'off' : 'on')
                     handleFullscreen()
                   }}
-                  className="flex items-center gap-2 group"
+                  className="flex items-center gap-1 group"
                 >
                   <img
                     src={

@@ -47,8 +47,8 @@ export default function RalphTVClient({
           relative to the screen). 200px is approximate footer height —
           tweak as needed. */}
       <section
-        className="relative"
-        style={{ marginTop: 32, minHeight: 'calc(100svh - 200px)' }}
+        className="relative min-h-[calc(100svh_-_350px)] min-[768px]:min-h-[calc(100svh_-_200px)]"
+        style={{ marginTop: 32 }}
       >
         {/* Background - animates FIRST */}
         <motion.div variants={sectionBgNoIntroVariants} className="absolute inset-0 z-0">

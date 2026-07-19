@@ -43,6 +43,9 @@ interface ShopClientProps {
   soldoutHeading?: string
   soldoutBody?: string
   copy?: Partial<SiteCopy>
+  /** Set by the /shop/[handle] server route — opens that product immediately
+      (no client fetch / no listing flash on a direct hit). */
+  initialProduct?: ShopifyProduct | null
 }
 
 export default function ShopClient({
@@ -52,6 +55,7 @@ export default function ShopClient({
   soldoutHeading,
   soldoutBody,
   copy,
+  initialProduct,
 }: ShopClientProps) {
   const [activeCollection, setActiveCollection] = useState<ShopCategory>(
     CATEGORIES[0].handle
@@ -60,7 +64,9 @@ export default function ShopClient({
   // selectedProduct drives the inline view swap — when non-null, the
   // category tabs + product grid fade out and the product detail fades
   // into the same space (no overlay).
-  const [selectedProduct, setSelectedProduct] = useState<ShopifyProduct | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<ShopifyProduct | null>(
+    initialProduct ?? null,
+  )
   const [subscribeOpen, setSubscribeOpen] = useState(false)
 
   const products = collections[activeCollection] ?? []
@@ -86,10 +92,10 @@ export default function ShopClient({
     setSelectedProduct(null)
   }
 
-  // On mount, check the URL for ?product=handle (set by /shop/[handle]
-  // redirect). If present, fetch the product, show the detail, then
-  // replace the URL with the slug form.
+  // Legacy fallback: open a product from ?product= (old links / OAuth return).
+  // The /shop/[handle] route now passes initialProduct directly (no fetch).
   useEffect(() => {
+    if (initialProduct) return
     const params = new URLSearchParams(window.location.search)
     const handle = params.get('product')
     if (!handle) return

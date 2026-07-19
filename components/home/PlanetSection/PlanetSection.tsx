@@ -535,6 +535,27 @@ export default function PlanetSection({
                           <path d="M2 1L8 7L2 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
+                      {/* Pips — bottom-centre, on a subtle pill so they read
+                          over any thumbnail. Active pip elongates in pink. */}
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-black/40 px-2 py-1">
+                        {moduleCard.items.map((item, i) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              swiperRef.current?.slideToLoop(i)
+                            }}
+                            aria-label={`Go to slide ${i + 1}`}
+                            aria-current={i === swiperIndex ? 'true' : undefined}
+                            className={`h-1.5 rounded-full transition-all ${
+                              i === swiperIndex
+                                ? 'w-4 bg-ralph-pink'
+                                : 'w-1.5 bg-white/60 hover:bg-white'
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </>
                   )}
                 </div>

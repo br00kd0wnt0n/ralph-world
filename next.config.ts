@@ -40,6 +40,10 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Tree-shake large barrel-import packages so only the used exports ship.
+    optimizePackageImports: ['framer-motion', 'swiper'],
+  },
   images: {
     // Prefer AVIF (falls back to WebP, then the original) for next/image.
     formats: ['image/avif', 'image/webp'],

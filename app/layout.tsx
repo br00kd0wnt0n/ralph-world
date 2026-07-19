@@ -17,6 +17,7 @@ import PageShift from '@/components/layout/PageShift'
 import MenuFade from '@/components/layout/MenuFade'
 import MobileMenu from '@/components/layout/MobileMenu'
 import CookieBanner from '@/components/legal/CookieBanner'
+import { JsonLd } from '@/components/seo/JsonLd'
 
 const playfair = Playfair_Display({
   variable: '--font-display',
@@ -100,6 +101,24 @@ export default async function RootLayout({
         >
           Skip to content
         </a>
+        {/* Site-wide structured data (Organization + WebSite). */}
+        <JsonLd
+          data={[
+            {
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Ralph',
+              url: SITE_URL,
+              logo: `${SITE_URL}/icon-512.png`,
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Ralph World',
+              url: SITE_URL,
+            },
+          ]}
+        />
         <Providers>
           <PlanetPreloader />
           <Starfield />

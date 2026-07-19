@@ -96,6 +96,15 @@ body {
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
 }
 
+/* Images are never draggable and never part of a text selection — so dragging
+   the cursor to select copy doesn't also grab logos, title art, planets, the
+   mingling characters, etc. (covers <img> + next/image site-wide). */
+img {
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* ── Text styles ── */
 
 /* Regular paragraph — Roboto 600, 16px/24px */

@@ -142,7 +142,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
   }
 
   return (
-    <section className="bg-white px-6 py-0" style={{ marginTop: 20 }}>
+    <section className="bg-white px-6 pt-0 pb-12" style={{ marginTop: 20 }}>
       <div className="relative mx-auto" style={{ maxWidth: 1168 }}>
         {/* Black grid background — lowest */}
         <div

@@ -108,6 +108,11 @@ criterion + level / SEO purpose / Core Web Vital).
     basket (copied from desktop).
   - Cart drawer: Checkout is now a pink shadow button (pink fill, black
     text/frame/shadow).
+- **Home planet carousels** (commit ac04afc): Magazine/Shop panel carousels
+  get centred pagination pips (clickable, active pip elongates in pink, in
+  sync with the chevron nav).
+- **SEO polish** (commit 385eda8): per-page Twitter cards (og: fallback),
+  `lang="en-GB"`, canonicals on `/tv` `/lab` `/join-ralph`.
 
 ---
 

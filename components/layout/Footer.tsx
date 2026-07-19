@@ -111,6 +111,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
+  const [sent, setSent] = useState(false)
 
   // Open the panel when the mobile menu requests it (Find us / Contact us).
   // Wait for the menu to close + the page to slide back, then scroll the
@@ -151,10 +152,14 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // Hook up to /api/contact (or wherever) when ready.
+    // TODO: wire to /api/contact. For now confirm locally so the aria-live
+    // region has something to announce (a11y-first; backend to follow).
     console.log('[contact form]', { enquiry, name, email, message })
-    // Optionally close + reset:
-    // setEnquiry(''); setName(''); setEmail(''); setMessage(''); setPanelOpen(false)
+    setSent(true)
+    setEnquiry('')
+    setName('')
+    setEmail('')
+    setMessage('')
   }
 
   if (variant === 'light') {
@@ -444,7 +449,11 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                   onSubmit={handleSubmit}
                   className="max-w-2xl mx-auto flex flex-col gap-4 pb-[10px]"
                 >
+                  <label htmlFor="contact-enquiry" className="sr-only">
+                    Enquiry type
+                  </label>
                   <select
+                    id="contact-enquiry"
                     required
                     value={enquiry}
                     onChange={(e) => setEnquiry(e.target.value)}
@@ -461,7 +470,11 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     ))}
                   </select>
 
+                  <label htmlFor="contact-name" className="sr-only">
+                    Name
+                  </label>
                   <input
+                    id="contact-name"
                     type="text"
                     required
                     value={name}
@@ -471,7 +484,11 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     style={{ borderColor: '#EA128B' }}
                   />
 
+                  <label htmlFor="contact-email" className="sr-only">
+                    Email
+                  </label>
                   <input
+                    id="contact-email"
                     type="email"
                     required
                     value={email}
@@ -481,7 +498,11 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     style={{ borderColor: '#EA128B' }}
                   />
 
+                  <label htmlFor="contact-message" className="sr-only">
+                    Message
+                  </label>
                   <textarea
+                    id="contact-message"
                     required
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -494,6 +515,11 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                   <div className="mt-2 flex items-center gap-4">
                     <Button label="Submit" type="submit" pink minWidth={230} />
                   </div>
+
+                  {/* Feedback for screen readers + everyone (WCAG 4.1.3). */}
+                  <p role="status" aria-live="polite" className="text-white text-sm min-h-[1.25rem]">
+                    {sent ? 'Thanks — your message has been received.' : ''}
+                  </p>
                 </form>
               </SwiperSlide>
             </Swiper>

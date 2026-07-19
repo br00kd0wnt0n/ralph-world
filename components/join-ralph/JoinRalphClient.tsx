@@ -506,10 +506,15 @@ function Slide2({
           </div>
 
           <form onSubmit={onSubmit} className="space-y-3">
+            <label htmlFor="join-email" className="sr-only">
+              Email
+            </label>
             <input
+              id="join-email"
               type="email"
               autoComplete="email"
               required
+              aria-required="true"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -636,20 +641,30 @@ function Slide3({
 
             {/* Name fields */}
             <div className="space-y-3">
+              <label htmlFor="join-first-name" className="sr-only">
+                First name
+              </label>
               <input
+                id="join-first-name"
                 type="text"
                 autoComplete="given-name"
                 required
+                aria-required="true"
                 placeholder="First name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 className={fieldClass}
                 style={fieldStyle}
               />
+              <label htmlFor="join-last-name" className="sr-only">
+                Last name
+              </label>
               <input
+                id="join-last-name"
                 type="text"
                 autoComplete="family-name"
                 required
+                aria-required="true"
                 placeholder="Last name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -660,19 +675,25 @@ function Slide3({
 
             {/* Password — double gap above to separate from the name fields */}
             <div className="mt-6 space-y-2">
+              <label htmlFor="join-password" className="sr-only">
+                Password
+              </label>
               <input
+                id="join-password"
                 type="password"
                 name="password"
                 autoComplete="new-password"
                 required
+                aria-required="true"
                 minLength={10}
                 placeholder="Password"
+                aria-describedby="join-password-hint"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={fieldClass}
                 style={fieldStyle}
               />
-              <p className="text-xs text-black/60">Minimum 10 characters.</p>
+              <p id="join-password-hint" className="text-xs text-black/60">Minimum 10 characters.</p>
             </div>
 
             {/* Marketing opt-in — GDPR requires this to be an unchecked,

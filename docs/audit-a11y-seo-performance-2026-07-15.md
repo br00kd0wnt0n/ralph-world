@@ -1,6 +1,7 @@
 # Ralph World — Accessibility, SEO & Performance Audit
 *2026-07-15 — pre-launch review*
 *2026-07-18 — verified against current source; corrections applied inline (search "**[verified 07-18]**").*
+*2026-07-19 — Phases 1 & 2 implemented (see Progress log); every point tagged with the standard it fixes (see Standards key).*
 
 ## Context
 Pre-launch review of the whole site to get **accessibility (WCAG 2.1 AA)**, **SEO**, and **load-speed/performance** to an excellent state. This is an inventory of every gap found across all views, each with severity, the file(s) involved, and the recommended fix.
@@ -10,6 +11,21 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
 **Severity:** 🔴 High (launch-blocking / real user impact or major ranking loss) · 🟡 Medium · ⚪ Low (polish).
 **Effort:** S (<1h) · M (a few hours) · L (day+).
 **Status:** ✅ Done · ⏳ In progress · ☐ Not started. Completed items keep their original text with a ✅ prefix so the record stays intact.
+
+### Standards key — what each point fixes
+Every point is tagged with the standard it satisfies:
+
+- **`[WCAG x.x.x Level]`** — the specific [WCAG 2.1](https://www.w3.org/TR/WCAG21/) success criterion + conformance level (**A** = must-have baseline, **AA** = our target, **AAA** = extra). Common ones here:
+  - `1.1.1 Non-text Content (A)` — images need meaningful `alt` (or empty `alt` if decorative).
+  - `1.3.1 Info & Relationships (A)` — structure (headings, labels, landmarks) is coded, not just visual.
+  - `1.4.3 Contrast Minimum (AA)` — text ≥ 4.5:1 (≥ 3:1 for large text).
+  - `2.1.1 Keyboard (A)` / `2.4.3 Focus Order (A)` — everything works by keyboard, in a sensible order.
+  - `2.2.2 Pause/Stop/Hide (A)` & `2.3.3 Animation from Interactions (AAA)` — motion can be stopped / respects reduce-motion.
+  - `2.4.1 Bypass Blocks (A)` — skip link + landmarks to jump past repeated nav.
+  - `2.4.6 Headings & Labels (AA)` / `2.4.7 Focus Visible (AA)`.
+  - `3.1.1 Language of Page (A)` · `3.3.2 Labels or Instructions (A)` · `4.1.2 Name, Role, Value (A)` · `4.1.3 Status Messages (AA)`.
+- **`[SEO: …]`** — the SEO job: *indexation* (titles/descriptions per URL), *crawl* (discovery via sitemap/robots), *canonical* (dedupe URL variants), *rich results* (JSON-LD), *i18n* (hreflang/lang), *social* (OG/Twitter cards).
+- **`[Perf: …]`** — the load-speed job, usually a Core Web Vital: *LCP* (largest paint), *CLS* (layout shift), *TBT/INP* (main-thread/interactivity), or plain *weight* (bytes) / *CPU-battery*.
 
 ---
 
@@ -27,83 +43,84 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
 
 ## 0. Top priorities (do these first — high impact)
 
-| # | Area | Item | Sev | Effort |
-|---|------|------|-----|--------|
-| 1 | Perf | ✅ `ralph-logo.png` is **420 KB / 800×800** shipped as the favicon — *done 07-19: proper favicon set + manifest* | 🔴 | S |
-| 2 | Perf | ⏳ No `images.remotePatterns` → **all Shopify + TV images unoptimized** — *done 07-19 for Shopify (4 imgs → next/image); TV/broadcaster thumbnails deferred (host unconfirmed)* | 🔴 | S |
-| 3 | A11y | ✅ **No `prefers-reduced-motion`** anywhere (heavy canvas/parallax/framer) — *done 07-19: CSS blanket + per-canvas gates + useParallax + MotionConfig + page transitions (see §2a)* | 🔴 | M |
-| 4 | Perf | ✅ `CanvasStage` has **no mobile gating** — continuous full-viewport rAF paint on phones — *done 07-19: cosy-dynamics + `min-width:768px` gate + `hidden md:block`* | 🔴 | S |
-| 5 | A11y | ✅ **MobileMenu**: no focus trap, no Escape, no initial focus — *done 07-19: focus trap + Escape + dialog role* | 🔴 | M |
-| 6 | SEO | Dynamic routes (article/event/product) are **redirect stubs with no metadata** | 🔴 | M |
-| 7 | SEO | **No JSON-LD** structured data (Organization, Article, Product, Event) | 🔴 | M |
-| 8 | SEO | ✅ `sitemap.ts` is static, omits all content, lists a **dead `/play` URL** — *done 07-19: async, pulls articles/events/products, `/play` removed* | 🔴 | S |
-| 9 | A11y | **Placeholder-only form labels** (Footer contact, Join Ralph) | 🔴 | M |
-| 10 | A11y | ✅ **No skip-to-content link** — *done 07-19: skip link + `<main id="main-content">`* | 🟡 | S |
+| # | Area | Item | Fixes | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 1 | Perf | ✅ `ralph-logo.png` is **420 KB / 800×800** shipped as the favicon — *done 07-19: proper favicon set + manifest* | `[Perf: weight]` | 🔴 | S |
+| 2 | Perf | ⏳ No `images.remotePatterns` → **all Shopify + TV images unoptimized** — *done 07-19 for Shopify (4 imgs → next/image); TV/broadcaster thumbnails deferred (host unconfirmed)* | `[Perf: LCP/CLS/weight]` | 🔴 | S |
+| 3 | A11y | ✅ **No `prefers-reduced-motion`** anywhere (heavy canvas/parallax/framer) — *done 07-19: CSS blanket + per-canvas gates + useParallax + MotionConfig + page transitions (see §2a)* | `[WCAG 2.2.2 A / 2.3.3 AAA]` | 🔴 | M |
+| 4 | Perf | ✅ `CanvasStage` has **no mobile gating** — continuous full-viewport rAF paint on phones — *done 07-19: cosy-dynamics + `min-width:768px` gate + `hidden md:block`* | `[Perf: mobile CPU/battery]` | 🔴 | S |
+| 5 | A11y | ✅ **MobileMenu**: no focus trap, no Escape, no initial focus — *done 07-19: focus trap + Escape + dialog role* | `[WCAG 2.4.3 A / 4.1.2 A]` | 🔴 | M |
+| 6 | SEO | Dynamic routes (article/event/product) are **redirect stubs with no metadata** | `[SEO: indexation]` | 🔴 | M |
+| 7 | SEO | **No JSON-LD** structured data (Organization, Article, Product, Event) | `[SEO: rich results]` | 🔴 | M |
+| 8 | SEO | ✅ `sitemap.ts` is static, omits all content, lists a **dead `/play` URL** — *done 07-19: async, pulls articles/events/products, `/play` removed* | `[SEO: crawl]` | 🔴 | S |
+| 9 | A11y | **Placeholder-only form labels** (Footer contact, Join Ralph) | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.3 AA]` | 🔴 | M |
+| 10 | A11y | ✅ **No skip-to-content link** — *done 07-19: skip link + `<main id="main-content">`* | `[WCAG 2.4.1 A]` | 🟡 | S |
 
 ---
 
 ## 1. SEO
 
 ### 1a. Per-route metadata
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🔴 | Magazine article route is a bare `redirect()` → `/magazine?read=slug`; no `generateMetadata`, so every article shares the site default title/desc/OG | `app/magazine/[slug]/page.tsx` | Add `generateMetadata` (per-article title, description, canonical, OG image). Render real content at the slug URL instead of redirecting, OR keep redirect but emit metadata + canonical first. |
-| 🔴 | Same pattern — no per-event metadata | `app/events/[slug]/page.tsx` | `generateMetadata` per event (name, date, location → also Event JSON-LD, §1d). |
-| 🔴 | Same pattern — no per-product metadata | `app/shop/[handle]/page.tsx` | `generateMetadata` per product (title, price, image → Product JSON-LD). |
-| 🟡 | ✅ Home page exports no `metadata` (uses layout default only) — *done 07-19: title (`absolute`)/description/canonical/OG added* | `app/page.tsx` | Add home-specific title/description/canonical/OG. |
-| 🟡 | ✅ `/work-with-us` still titled "Play with Ralph" / "the agency arm" — *done 07-19: retitled "Work with Us" + copy + canonical* | `app/work-with-us/page.tsx` | Update title + description copy. |
-| ⚪ | ✅ `/login`, `/account`, `/reset-password` have no `robots:{index:false}` — *done 07-19: metadata on login/account; new server `layout.tsx` for the client reset-password page* | those pages | Add noindex to auth pages (account/login already robots-disallowed; add reset-password). |
-| ⚪ | ⏳ No `alternates.canonical` on **any** route. **[verified 07-18]** Original text said "except `/jp/contact`" — that route sets `alternates.languages`, not canonical. *07-19: canonicals added to `/`, `/work-with-us`, `/contact`, `/jp/contact`; remaining routes (incl. dynamic content) still open — see §1e.* | all routes | Add canonical per route (esp. the dynamic content — see §1e). |
-| ⚪ | Per-page `twitter` never overridden; article/section Twitter cards show generic site title | section pages | Set `twitter.title/description` where OG is set (or a shared helper). |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🔴 | Magazine article route is a bare `redirect()` → `/magazine?read=slug`; no `generateMetadata`, so every article shares the site default title/desc/OG | `[SEO: indexation]` | `app/magazine/[slug]/page.tsx` | Add `generateMetadata` (per-article title, description, canonical, OG image). Render real content at the slug URL instead of redirecting, OR keep redirect but emit metadata + canonical first. |
+| 🔴 | Same pattern — no per-event metadata | `[SEO: indexation]` | `app/events/[slug]/page.tsx` | `generateMetadata` per event (name, date, location → also Event JSON-LD, §1d). |
+| 🔴 | Same pattern — no per-product metadata | `[SEO: indexation]` | `app/shop/[handle]/page.tsx` | `generateMetadata` per product (title, price, image → Product JSON-LD). |
+| 🟡 | ✅ Home page exports no `metadata` (uses layout default only) — *done 07-19: title (`absolute`)/description/canonical/OG added* | `[SEO: indexation]` | `app/page.tsx` | Add home-specific title/description/canonical/OG. |
+| 🟡 | ✅ `/work-with-us` still titled "Play with Ralph" / "the agency arm" — *done 07-19: retitled "Work with Us" + copy + canonical* | `[SEO: indexation]` | `app/work-with-us/page.tsx` | Update title + description copy. |
+| ⚪ | ✅ `/login`, `/account`, `/reset-password` have no `robots:{index:false}` — *done 07-19: metadata on login/account; new server `layout.tsx` for the client reset-password page* | `[SEO: crawl control]` | those pages | Add noindex to auth pages (account/login already robots-disallowed; add reset-password). |
+| ⚪ | ⏳ No `alternates.canonical` on **any** route. **[verified 07-18]** Original text said "except `/jp/contact`" — that route sets `alternates.languages`, not canonical. *07-19: canonicals added to `/`, `/work-with-us`, `/contact`, `/jp/contact`; remaining routes (incl. dynamic content) still open — see §1e.* | `[SEO: canonical]` | all routes | Add canonical per route (esp. the dynamic content — see §1e). |
+| ⚪ | Per-page `twitter` never overridden; article/section Twitter cards show generic site title | `[SEO: social]` | section pages | Set `twitter.title/description` where OG is set (or a shared helper). |
 
 ### 1b. Global metadata — `app/layout.tsx` (mostly good)
-| Sev | Item | Fix |
-|-----|------|-----|
-| ⚪ | `lang="en"` but OG locale `en_GB`; `/jp` served under `lang="en"` | Align locale; set `lang="ja"` on the JP surface (already done on jp/contact content). |
-| ⚪ | ✅ Icons all point at one 800px PNG; no `.ico`, sized, or maskable icons; no `manifest.webmanifest`, no `theme-color` — *done 07-19: `app/{favicon.ico,icon.png,apple-icon.png}` + `public/manifest.webmanifest` (192/512/maskable) + `theme-color` via `viewport` export* | Add proper favicon set (`app/icon.png`/`apple-icon.png`), a web manifest, and `themeColor` (ties to Perf #1). |
+| Sev | Item | Fixes | Fix |
+|-----|------|-------|-----|
+| ⚪ | `lang="en"` but OG locale `en_GB`; `/jp` served under `lang="en"` | `[WCAG 3.1.1 A / SEO: i18n]` | Align locale; set `lang="ja"` on the JP surface (already done on jp/contact content). |
+| ⚪ | ✅ Icons all point at one 800px PNG; no `.ico`, sized, or maskable icons; no `manifest.webmanifest`, no `theme-color` — *done 07-19: `app/{favicon.ico,icon.png,apple-icon.png}` + `public/manifest.webmanifest` (192/512/maskable) + `theme-color` via `viewport` export* | `[Perf: weight / PWA install]` | Add proper favicon set (`app/icon.png`/`apple-icon.png`), a web manifest, and `themeColor` (ties to Perf #1). |
 
 ### 1h. i18n / hreflang & 404
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🟡 | ✅ hreflang is one-directional: only `/jp/contact` declared `languages` — *done 07-19: `/contact` ↔ `/jp/contact` now a consistent cluster (`en`→`/contact`, `ja-JP`→`/jp/contact` on both); fixed jp's `en` from `/` → `/contact`* | `app/contact/page.tsx`, `app/jp/contact/page.tsx` | Add reciprocal `alternates.languages` on the paired English pages (at least `/contact`↔`/jp/contact`). |
-| 🟡 | ✅ No custom `not-found.tsx` — 404s render Next's generic default — *done 07-19: branded `app/not-found.tsx` (noindex, home/magazine CTAs, transparent over the black body + starfield)* | `app/not-found.tsx` | Add a branded `app/not-found.tsx` with helpful links + `robots noindex`. |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🟡 | ✅ hreflang is one-directional: only `/jp/contact` declared `languages` — *done 07-19: `/contact` ↔ `/jp/contact` now a consistent cluster (`en`→`/contact`, `ja-JP`→`/jp/contact` on both); fixed jp's `en` from `/` → `/contact`* | `[SEO: i18n]` | `app/contact/page.tsx`, `app/jp/contact/page.tsx` | Add reciprocal `alternates.languages` on the paired English pages (at least `/contact`↔`/jp/contact`). |
+| 🟡 | ✅ No custom `not-found.tsx` — 404s render Next's generic default — *done 07-19: branded `app/not-found.tsx` (noindex, home/magazine CTAs, transparent over the black body + starfield)* | `[SEO: crawl (soft-404) + UX]` | `app/not-found.tsx` | Add a branded `app/not-found.tsx` with helpful links + `robots noindex`. |
 
 ### 1c. Sitemap & robots
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🔴 | ✅ Static list; no articles/events/products emitted — *done 07-19: async, pulls article slugs + active-event slugs + product handles in parallel* | `app/sitemap.ts` | Make sitemap async; pull published article slugs, event slugs, product handles from `lib/data/*` / Shopify. |
-| 🔴 | ✅ Lists `/play` (route deleted → dead URL) — *done 07-19: removed; `/work-with-us` added* | `app/sitemap.ts` | Remove; add `/work-with-us`. |
-| 🟡 | ✅ Lists `/subscribe` (a redirect stub) — *done 07-19: dropped* | `app/sitemap.ts` | Drop or replace. |
-| 🟡 | ✅ Omits `/join-ralph`, `/work-with-us`, `/legal/*`, `/jp/contact` — *done 07-19: all added* | `app/sitemap.ts` | Add real indexable pages. |
-| ⚪ | ✅ Every entry `lastModified: new Date()` — *done 07-19: articles use `publishedAt`, events use `eventDate`; products fall back to now (no `updatedAt` exposed)* | `app/sitemap.ts` | Use real `updatedAt` where available. |
-| ⚪ | ✅ robots disallows `/account`,`/login` but not `/reset-password` — *done 07-19: added* | `app/robots.ts` | Add reset-password (and any auth stubs). |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🔴 | ✅ Static list; no articles/events/products emitted — *done 07-19: async, pulls article slugs + active-event slugs + product handles in parallel* | `[SEO: crawl]` | `app/sitemap.ts` | Make sitemap async; pull published article slugs, event slugs, product handles from `lib/data/*` / Shopify. |
+| 🔴 | ✅ Lists `/play` (route deleted → dead URL) — *done 07-19: removed; `/work-with-us` added* | `[SEO: crawl]` | `app/sitemap.ts` | Remove; add `/work-with-us`. |
+| 🟡 | ✅ Lists `/subscribe` (a redirect stub) — *done 07-19: dropped* | `[SEO: crawl]` | `app/sitemap.ts` | Drop or replace. |
+| 🟡 | ✅ Omits `/join-ralph`, `/work-with-us`, `/legal/*`, `/jp/contact` — *done 07-19: all added* | `[SEO: crawl]` | `app/sitemap.ts` | Add real indexable pages. |
+| ⚪ | ✅ Every entry `lastModified: new Date()` — *done 07-19: articles use `publishedAt`, events use `eventDate`; products fall back to now (no `updatedAt` exposed)* | `[SEO: crawl freshness]` | `app/sitemap.ts` | Use real `updatedAt` where available. |
+| ⚪ | ✅ robots disallows `/account`,`/login` but not `/reset-password` — *done 07-19: added* | `[SEO: crawl control]` | `app/robots.ts` | Add reset-password (and any auth stubs). |
 
 ### 1d. Structured data (JSON-LD) — none exists
-| Sev | Item | Fix |
-|-----|------|-----|
-| 🔴 | No schema.org anywhere | Add: **Organization + WebSite** (root layout), **Article** (magazine article), **Product** + offers (shop), **Event** (events), **BreadcrumbList** (section→item). Emit via a small `<script type="application/ld+json">` component. |
+| Sev | Item | Fixes | Fix |
+|-----|------|-------|-----|
+| 🔴 | No schema.org anywhere | `[SEO: rich results]` | Add: **Organization + WebSite** (root layout), **Article** (magazine article), **Product** + offers (shop), **Event** (events), **BreadcrumbList** (section→item). Emit via a small `<script type="application/ld+json">` component. |
 
 ### 1e. Canonical / duplicate content
-| Sev | Item | Fix |
-|-----|------|-----|
-| 🔴 | Canonical content lives on query-string URLs (`/magazine?read=`, `/shop?product=`, `/events?show=`); pretty `[slug]` routes only redirect and set no canonical; content not in sitemap | Decide one canonical URL form (recommend the pretty `/magazine/[slug]` etc. rendering real content), set `alternates.canonical`, and put those in the sitemap. This resolves §1a + §1c together. |
+| Sev | Item | Fixes | Fix |
+|-----|------|-------|-----|
+| 🔴 | Canonical content lives on query-string URLs (`/magazine?read=`, `/shop?product=`, `/events?show=`); pretty `[slug]` routes only redirect and set no canonical; content not in sitemap | `[SEO: canonical]` | Decide one canonical URL form (recommend the pretty `/magazine/[slug]` etc. rendering real content), set `alternates.canonical`, and put those in the sitemap. This resolves §1a + §1c together. |
 
 ### 1f. OpenGraph images
-| Sev | Item | Fix |
-|-----|------|-----|
-| 🟡 | Single generic OG card for the whole site (`app/opengraph-image.tsx`); no per-article/product/event image, no `twitter-image` | Add dynamic per-route `opengraph-image.tsx` for magazine/shop/events (use the lead image or a generated card). |
+| Sev | Item | Fixes | Fix |
+|-----|------|-------|-----|
+| 🟡 | Single generic OG card for the whole site (`app/opengraph-image.tsx`); no per-article/product/event image, no `twitter-image` | `[SEO: social]` | Add dynamic per-route `opengraph-image.tsx` for magazine/shop/events (use the lead image or a generated card). |
 
 ### 1g. Headings (also A11y §5)
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🔴 | ✅ `/tv` renders **no heading at all** (no h1) — *done 07-19: renders the `heading` prop (fallback "Ralph TV") as an `sr-only` h1* | `components/tv/RalphTVClient.tsx` | Render an `<h1>` (visually-hidden if design has no title). |
-| 🟡 | ✅ `/join-ralph` has no h1 (starts at h2) — *done 07-19: `sr-only` h1 "Join Ralph"* | `components/join-ralph/JoinRalphClient.tsx` | Add an h1 (visually-hidden ok). |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🔴 | ✅ `/tv` renders **no heading at all** (no h1) — *done 07-19: renders the `heading` prop (fallback "Ralph TV") as an `sr-only` h1* | `[WCAG 1.3.1 A / 2.4.6 AA · SEO]` | `components/tv/RalphTVClient.tsx` | Render an `<h1>` (visually-hidden if design has no title). |
+| 🟡 | ✅ `/join-ralph` has no h1 (starts at h2) — *done 07-19: `sr-only` h1 "Join Ralph"* | `[WCAG 1.3.1 A / 2.4.6 AA · SEO]` | `components/join-ralph/JoinRalphClient.tsx` | Add an h1 (visually-hidden ok). |
 
 ---
 
 ## 2. Accessibility (WCAG 2.1 AA)
 
 ### 2a. Motion / reduced-motion 🔴 (biggest single gap) — ✅ DONE 07-19
+**Fixes `[WCAG 2.2.2 Pause/Stop/Hide (A)` — auto-moving content must be stoppable — `and 2.3.3 Animation from Interactions (AAA)]`.**
 - No `prefers-reduced-motion` handling site-wide. `lib/animation/page-transitions.ts:148` defines `reducedMotionVariants` but it's **never used**.
 - **Fix (M) — shipped in five layers:**
   - ✅ CSS `@media (prefers-reduced-motion: reduce)` blanket rule in `globals.css` → neutralises all CSS animation/transition + smooth scroll.
@@ -114,42 +131,44 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
   - *Note: `reducedMotionVariants` in page-transitions.ts is still unused/dead — the explicit `useReducedMotion` path + MotionConfig supersede it; safe to delete later.*
 
 ### 2b. Focus & keyboard
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🔴 | ✅ MobileMenu: no focus trap, no Escape, focus not moved in — *done 07-19: `useFocusTrap` on the menu panel + Escape-to-close + `role="dialog"`/`aria-modal`/`aria-label`; focus restores to the burger on close* | `components/layout/MobileMenu.tsx` | Reuse `hooks/useFocusTrap.ts` (already used by 5 other overlays); add Escape-to-close + `role="dialog"`/`aria-modal`. |
-| 🟡 | No skip-to-content link; also `<main>` has **no `id`** to target | `app/layout.tsx:89` (main has no id) | Add a visually-hidden "Skip to content" link as the first focusable element → give `<main id="main">` and link to `#main`. |
-| 🟡 | ✅ `ProductOverlay` has Escape but no focus trap and no dialog semantics — *done 07-19: `useFocusTrap` + `role="dialog"`/`aria-modal`/`aria-label`* | `components/shop/ProductOverlay.tsx` | Add `useFocusTrap` + `role="dialog"`/`aria-modal`. |
-| 🔴 | ✅ Event info overlay is entirely inaccessible. **[verified 07-18]** Was 🟡 "verify focus/Escape" — but the `MinglingCharacters` root carried `aria-hidden="true"`, so event content was invisible to screen readers. *done 07-19: removed root `aria-hidden` (kept it on the decorative crowd + duplicate mobile arm); arms (desktop) + cards (mobile) are now labelled `role="button"` triggers (Enter/Space); expanded panel is a `role="dialog"` `aria-modal` with `useFocusTrap` + Escape.* | `components/events/MinglingCharacters.tsx` | Take the interactive arms/panels out from under `aria-hidden` (keep it only on the decorative mingling crowd), then add focus trap + Escape + `role="dialog"`/`aria-modal` on the expanded panel. |
-| ⚪ | LanguageModal/ThemeToggle close on outside-click only (currently hidden for launch) | `LanguageModal.tsx`, `ThemeToggle.tsx` | Add Escape + trap when restored. |
-| ⚪ | Verify pink `:focus-visible` outline is visible on pink/white button states | `globals.css:277-280` | Consider a contrasting/offset outline. |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🔴 | ✅ MobileMenu: no focus trap, no Escape, focus not moved in — *done 07-19: `useFocusTrap` on the menu panel + Escape-to-close + `role="dialog"`/`aria-modal`/`aria-label`; focus restores to the burger on close* | `[WCAG 2.4.3 A / 2.1.2 A / 4.1.2 A]` | `components/layout/MobileMenu.tsx` | Reuse `hooks/useFocusTrap.ts` (already used by 5 other overlays); add Escape-to-close + `role="dialog"`/`aria-modal`. |
+| 🟡 | No skip-to-content link; also `<main>` has **no `id`** to target | `[WCAG 2.4.1 A]` | `app/layout.tsx:89` (main has no id) | Add a visually-hidden "Skip to content" link as the first focusable element → give `<main id="main">` and link to `#main`. |
+| 🟡 | ✅ `ProductOverlay` has Escape but no focus trap and no dialog semantics — *done 07-19: `useFocusTrap` + `role="dialog"`/`aria-modal`/`aria-label`* | `[WCAG 2.4.3 A / 4.1.2 A]` | `components/shop/ProductOverlay.tsx` | Add `useFocusTrap` + `role="dialog"`/`aria-modal`. |
+| 🔴 | ✅ Event info overlay is entirely inaccessible. **[verified 07-18]** Was 🟡 "verify focus/Escape" — but the `MinglingCharacters` root carried `aria-hidden="true"`, so event content was invisible to screen readers. *done 07-19: removed root `aria-hidden` (kept it on the decorative crowd + duplicate mobile arm); arms (desktop) + cards (mobile) are now labelled `role="button"` triggers (Enter/Space); expanded panel is a `role="dialog"` `aria-modal` with `useFocusTrap` + Escape.* | `[WCAG 1.3.1 A / 2.1.1 A / 4.1.2 A]` | `components/events/MinglingCharacters.tsx` | Take the interactive arms/panels out from under `aria-hidden` (keep it only on the decorative mingling crowd), then add focus trap + Escape + `role="dialog"`/`aria-modal` on the expanded panel. |
+| ⚪ | LanguageModal/ThemeToggle close on outside-click only (currently hidden for launch) | `[WCAG 2.1.2 A / 2.4.3 A]` | `LanguageModal.tsx`, `ThemeToggle.tsx` | Add Escape + trap when restored. |
+| ⚪ | Verify pink `:focus-visible` outline is visible on pink/white button states | `[WCAG 2.4.7 AA]` | `globals.css:277-280` | Consider a contrasting/offset outline. |
 
 ### 2c. Forms
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🔴 | Contact form: placeholder-only labels, `<select>` "label" is a disabled option, no `aria-live` feedback (submit only `console.log`s) | `components/layout/Footer.tsx:424-469` | Add real `<label>`s (visually-hidden ok), `role="alert"` errors + `role="status"` success. Model on `LoginForm.tsx`. |
-| 🔴 | Join Ralph: email/first/last/password placeholder-only, no labels | `components/join-ralph/JoinRalphClient.tsx:507-667` | Add labels/`aria-label`. (Marketing checkbox already correct.) |
-| 🟡 | No visible/AT "required" indicator on those forms | same | Add required markers + `aria-required`. |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🔴 | Contact form: placeholder-only labels, `<select>` "label" is a disabled option, no `aria-live` feedback (submit only `console.log`s) | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.2 A / 4.1.3 AA]` | `components/layout/Footer.tsx:424-469` | Add real `<label>`s (visually-hidden ok), `role="alert"` errors + `role="status"` success. Model on `LoginForm.tsx`. |
+| 🔴 | Join Ralph: email/first/last/password placeholder-only, no labels | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.2 A]` | `components/join-ralph/JoinRalphClient.tsx:507-667` | Add labels/`aria-label`. (Marketing checkbox already correct.) |
+| 🟡 | No visible/AT "required" indicator on those forms | `[WCAG 3.3.2 A]` | same | Add required markers + `aria-required`. |
 
 ### 2d. Images / alt (mostly good — targeted fixes)
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🟡 | ⏳ Cart/gallery product thumbnails fall back to empty alt | `CartDrawer.tsx` (`altText ?? ''`), `ProductOverlay.tsx:142` (hardcoded `alt=""`) | Fall back to product title, not `''`. **[verified 07-18]** ProductOverlay's *main* image already falls back to `product.title`; only the thumbnail strip is `alt=""`. *07-19: CartDrawer now falls back to product title; ProductOverlay thumbnail strip still `alt=""` (decorative — main image is labelled).* |
-| 🟡 | Article body images default `alt=""` | `components/magazine/BlockRenderer.tsx` — 2-col (108,127) + carousel (206) hardcode `alt=""`; 1-col + text-wrap use `caption ?? ''` | Require/author alt in CMS; don't silently blank editorial images. **[verified 07-18]** Part code (hardcoded `''`), part data (empty only when caption absent). |
-| 🟡 | SubscribeModal placeholder art `<div>`s ("satellite/alien/mag cover") | `SubscribeModal.tsx:94-161` | When real art lands, set alt / `aria-hidden`. |
-| ⚪ | ✅ Globe inner `alt="Globe"` redundant (button already labelled) — *done 07-19: both frame sets now `alt="" aria-hidden`* | `Globe.tsx` | `alt=""`. |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🟡 | ⏳ Cart/gallery product thumbnails fall back to empty alt | `[WCAG 1.1.1 A]` | `CartDrawer.tsx` (`altText ?? ''`), `ProductOverlay.tsx:142` (hardcoded `alt=""`) | Fall back to product title, not `''`. **[verified 07-18]** ProductOverlay's *main* image already falls back to `product.title`; only the thumbnail strip is `alt=""`. *07-19: CartDrawer now falls back to product title; ProductOverlay thumbnail strip still `alt=""` (decorative — main image is labelled).* |
+| 🟡 | Article body images default `alt=""` | `[WCAG 1.1.1 A]` | `components/magazine/BlockRenderer.tsx` — 2-col (108,127) + carousel (206) hardcode `alt=""`; 1-col + text-wrap use `caption ?? ''` | Require/author alt in CMS; don't silently blank editorial images. **[verified 07-18]** Part code (hardcoded `''`), part data (empty only when caption absent). |
+| 🟡 | SubscribeModal placeholder art `<div>`s ("satellite/alien/mag cover") | `[WCAG 1.1.1 A]` | `SubscribeModal.tsx:94-161` | When real art lands, set alt / `aria-hidden`. |
+| ⚪ | ✅ Globe inner `alt="Globe"` redundant (button already labelled) — *done 07-19: both frame sets now `alt="" aria-hidden`* | `[WCAG 1.1.1 A]` | `Globe.tsx` | `alt=""`. |
 
 ### 2e. Landmarks / headings / state
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🟡 | ✅ No `aria-current` on active nav links (color/underline only) — *done 07-19: added to both desktop nav rows + MobileMenu Worlds links* | `Nav.tsx`, `MobileMenu.tsx` | Add `aria-current="page"` (LegalNav already does). |
-| 🟡 | ✅/n/a Mobile home starts at h3, no h1/h2 — **[verified 07-19]** `MobileHome.tsx` is **dead code** (imported nowhere); mobile home is the same Hero+PlanetSection as desktop, now covered by the home h1. | `components/home/MobileHome.tsx` | Ensure one h1 per rendered page; fix order. |
-| 🟡 | ✅ Desktop home jumps h1→h3 (section titles are h3, title art outside headings) — *done 07-19: added `sr-only` h1 in `app/page.tsx`; section title art wrapped in `<h2>` (+ fallback h3→h2)* | `PlanetSection.tsx`, `app/page.tsx` | Normalise heading levels. |
-| 🟡 | ✅ No `<header>`/`role="banner"` around the nav — *done 07-19: utility bar + nav wrapped in `<header>`* | `Nav.tsx` | Wrap top nav in `<header>`. |
-| 🟡 | ✅ `PlanetSection` uses `div role="link" tabIndex=0` as a link — *done 07-19: removed fake-link attrs (kept `onClick` as mouse enhancement); real nav is the CTA `<Button>` (≥768) + an sr-only `<Link>` in the planet-only view. Fixes the invalid nested-interactive too.* | `PlanetSection.tsx` | Prefer a real `<Link>`. |
-| ⚪ | ✅ `TVStatic` canvas missing `aria-hidden` — *done 07-19* | `components/tv/TVStatic.tsx` | Add `aria-hidden`. |
-| ⚪ | ✅ TV countdown uses `aria-live="polite"` on a per-second counter — *done 07-19: visible badge now `aria-hidden`; a sibling `role=status` live region announces only at 60s/30s/10s milestones* | `components/tv/TVSet.tsx` | Throttle announcements / use `aria-live` on a coarser element. |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🟡 | ✅ No `aria-current` on active nav links (color/underline only) — *done 07-19: added to both desktop nav rows + MobileMenu Worlds links* | `[WCAG 4.1.2 A]` | `Nav.tsx`, `MobileMenu.tsx` | Add `aria-current="page"` (LegalNav already does). |
+| 🟡 | ✅/n/a Mobile home starts at h3, no h1/h2 — **[verified 07-19]** `MobileHome.tsx` is **dead code** (imported nowhere); mobile home is the same Hero+PlanetSection as desktop, now covered by the home h1. | `[WCAG 1.3.1 A / 2.4.6 AA]` | `components/home/MobileHome.tsx` | Ensure one h1 per rendered page; fix order. |
+| 🟡 | ✅ Desktop home jumps h1→h3 (section titles are h3, title art outside headings) — *done 07-19: added `sr-only` h1 in `app/page.tsx`; section title art wrapped in `<h2>` (+ fallback h3→h2)* | `[WCAG 1.3.1 A / 2.4.6 AA]` | `PlanetSection.tsx`, `app/page.tsx` | Normalise heading levels. |
+| 🟡 | ✅ No `<header>`/`role="banner"` around the nav — *done 07-19: utility bar + nav wrapped in `<header>`* | `[WCAG 1.3.1 A]` (landmark) | `Nav.tsx` | Wrap top nav in `<header>`. |
+| 🟡 | ✅ `PlanetSection` uses `div role="link" tabIndex=0` as a link — *done 07-19: removed fake-link attrs (kept `onClick` as mouse enhancement); real nav is the CTA `<Button>` (≥768) + an sr-only `<Link>` in the planet-only view. Fixes the invalid nested-interactive too.* | `[WCAG 4.1.2 A / 2.1.1 A]` | `PlanetSection.tsx` | Prefer a real `<Link>`. |
+| ⚪ | ✅ `TVStatic` canvas missing `aria-hidden` — *done 07-19* | `[WCAG 1.1.1 A]` | `components/tv/TVStatic.tsx` | Add `aria-hidden`. |
+| ⚪ | ✅ TV countdown uses `aria-live="polite"` on a per-second counter — *done 07-19: visible badge now `aria-hidden`; a sibling `role=status` live region announces only at 60s/30s/10s milestones* | `[WCAG 4.1.3 AA]` | `components/tv/TVSet.tsx` | Throttle announcements / use `aria-live` on a coarser element. |
 
 ### 2f. Colour contrast (verify with a tool — flagged risk areas)
+*All rows fix **`[WCAG 1.4.3 Contrast Minimum (AA)]`** — normal text ≥ 4.5:1, large text ≥ 3:1.*
+
 | Sev | Risk | Where |
 |-----|------|-------|
 | 🔴 | White on ralph-pink `#EA128B` (~3.9:1) fails AA for normal text | filled pink buttons/badges (`Button.tsx:74`, login CTAs, account avatar) |
@@ -163,54 +182,55 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
 ## 3. Performance / load speed
 
 ### 3a. Images
-| Sev | Item | File / asset | Fix |
-|-----|------|------|-----|
-| 🔴 | ✅ Favicon is a **420 KB / 800×800** PNG — *done 07-19: favicon set + manifest; tab now ~15 KB* | `public/ralph-logo.png` (used `app/layout.tsx:41-44`) | Generate a small favicon set (32/180/512 + maskable) via `app/icon.png`/`apple-icon.png` or a tiny `.ico`. |
-| 🔴 | ⏳ No `images.remotePatterns` → Shopify + broadcaster images all raw `<img>`, fully unoptimized — **[verified 07-18]** the shop/TV component files contain only 4 remote imgs (all Shopify); broadcaster thumbnails actually render in homepage/lab/events/play cards. *done 07-19: added `cdn.shopify.com` + `picsum.photos` remotePatterns; converted ProductCard / ProductOverlay (main + thumb) / ProductDetail → `next/image`. **Open:** broadcaster thumbnails — host is backend-authored (likely presigned object-store); confirm the runtime host (or leave `unoptimized`) before converting.* | `next.config.ts`; `components/shop/*`; broadcaster-thumbnail cards | Add `remotePatterns` (Shopify CDN + broadcaster host), then move those to `next/image` (AVIF/WebP + resize + lazy). |
-| 🟡 | `article_lead.png` **288 KB / 502×310** | `public/imgs/article_lead.png` | Re-encode WebP/AVIF (prior test: →~7 KB) or serve via optimizer. |
-| 🟡 | **Five** `planet_*.png` (822px, 116–172 KB) often rendered smaller. **[verified 07-18]** Was "six" — the sixth conflated `planet_creative.png` (next row). | `public/imgs/planet_{events,lab,mag,shop,tv}.png` | Already partly `next/image`; finish + they'll resize/AVIF. |
-| 🟡 | `planet_creative.png` is 1500×1486 | `public/imgs/planet_creative.png` | Resize to display size. |
-| 🟡 | Remaining local raster raw `<img>` (hero text, footer planet, event chars). **[verified 07-18]** Removed "wordmark" — `Nav.tsx` already uses `next/image` for the wordmark (its raw `<img>` is the basket icon). | `Hero.tsx`, `FooterPlanet.tsx`, `MinglingCharacters.tsx` | Move to `next/image` where layout allows (local-guarded pattern already used in `PlanetSection`). |
-| 🟡 | Oversized sprite sheets decode huge in memory: `saucer.png` 13464×246 (~13 MB RGBA), `satellite.png` 10528×282 (~12 MB) | `public/animations/` | Consider fewer frames / smaller cells / on-demand. |
-| ⚪ | Duplicate assets: both packed sheet **and** per-frame folders shipped (`satelite/` 1016K, `saucer/` 584K, `got-coin/` 404K) | `public/animations/*/` | Remove the unused per-frame folders from the deployed bundle. |
+| Sev | Item | Fixes | File / asset | Fix |
+|-----|------|-------|------|-----|
+| 🔴 | ✅ Favicon is a **420 KB / 800×800** PNG — *done 07-19: favicon set + manifest; tab now ~15 KB* | `[Perf: weight]` | `public/ralph-logo.png` (used `app/layout.tsx:41-44`) | Generate a small favicon set (32/180/512 + maskable) via `app/icon.png`/`apple-icon.png` or a tiny `.ico`. |
+| 🔴 | ⏳ No `images.remotePatterns` → Shopify + broadcaster images all raw `<img>`, fully unoptimized — **[verified 07-18]** the shop/TV component files contain only 4 remote imgs (all Shopify); broadcaster thumbnails actually render in homepage/lab/events/play cards. *done 07-19: added `cdn.shopify.com` + `picsum.photos` remotePatterns; converted ProductCard / ProductOverlay (main + thumb) / ProductDetail → `next/image`. **Open:** broadcaster thumbnails — host is backend-authored (likely presigned object-store); confirm the runtime host (or leave `unoptimized`) before converting.* | `[Perf: LCP/CLS/weight]` | `next.config.ts`; `components/shop/*`; broadcaster-thumbnail cards | Add `remotePatterns` (Shopify CDN + broadcaster host), then move those to `next/image` (AVIF/WebP + resize + lazy). |
+| 🟡 | `article_lead.png` **288 KB / 502×310** | `[Perf: weight]` | `public/imgs/article_lead.png` | Re-encode WebP/AVIF (prior test: →~7 KB) or serve via optimizer. |
+| 🟡 | **Five** `planet_*.png` (822px, 116–172 KB) often rendered smaller. **[verified 07-18]** Was "six" — the sixth conflated `planet_creative.png` (next row). | `[Perf: weight/CLS]` | `public/imgs/planet_{events,lab,mag,shop,tv}.png` | Already partly `next/image`; finish + they'll resize/AVIF. |
+| 🟡 | `planet_creative.png` is 1500×1486 | `[Perf: weight]` | `public/imgs/planet_creative.png` | Resize to display size. |
+| 🟡 | Remaining local raster raw `<img>` (hero text, footer planet, event chars). **[verified 07-18]** Removed "wordmark" — `Nav.tsx` already uses `next/image` for the wordmark (its raw `<img>` is the basket icon). | `[Perf: LCP/CLS]` | `Hero.tsx`, `FooterPlanet.tsx`, `MinglingCharacters.tsx` | Move to `next/image` where layout allows (local-guarded pattern already used in `PlanetSection`). |
+| 🟡 | Oversized sprite sheets decode huge in memory: `saucer.png` 13464×246 (~13 MB RGBA), `satellite.png` 10528×282 (~12 MB) | `[Perf: memory/CPU]` | `public/animations/` | Consider fewer frames / smaller cells / on-demand. |
+| ⚪ | Duplicate assets: both packed sheet **and** per-frame folders shipped (`satelite/` 1016K, `saucer/` 584K, `got-coin/` 404K) | `[Perf: deploy weight]` | `public/animations/*/` | Remove the unused per-frame folders from the deployed bundle. |
 
 ### 3b. Animations / runtime
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🔴 | ✅ `CanvasStage` has **no mobile gating** — full-viewport (`fixed inset-0`) paint on phones. **[verified 07-18]** It does NOT run its own rAF — it registers with the shared sequencer (`registerTicker`), so it *does* pause on hidden tab; the cost is the unthrottled per-frame full-viewport clear/redraw on mobile. *done 07-19: `cosy-dynamics` + `matchMedia('(min-width:768px)')` gate (effect early-returns → no ticker) + `hidden md:block` on the canvas.* | `components/anim/CanvasStage.tsx` | Add `matchMedia('(min-width:768px)')` + theme gate like the other canvases; consider not registering the ticker while hidden. |
-| 🔴 | ✅ `Starfield` runs its **own** rAF (not the sequencer) → no hidden-tab pause. **[verified 07-18]** Confirmed — this is the one canvas that genuinely opts out of the shared sequencer's visibility pause (cf. CanvasStage, which is on it). *done 07-19: added a `visibilitychange` guard that cancels the rAF when `document.hidden` and resumes on focus (+ reduced-motion gate from §2a).* | `components/layout/Starfield.tsx` | Move onto `lib/anim/sequencer.ts` (gets visibility pause) or add its own `visibilitychange` guard. |
-| 🟡 | Canvas actors run regardless of on-screen/scroll; LCP work during initial homepage render | canvases | Defer start / pause when scrolled away; respect reduced-motion (§2a). |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🔴 | ✅ `CanvasStage` has **no mobile gating** — full-viewport (`fixed inset-0`) paint on phones. **[verified 07-18]** It does NOT run its own rAF — it registers with the shared sequencer (`registerTicker`), so it *does* pause on hidden tab; the cost is the unthrottled per-frame full-viewport clear/redraw on mobile. *done 07-19: `cosy-dynamics` + `matchMedia('(min-width:768px)')` gate (effect early-returns → no ticker) + `hidden md:block` on the canvas.* | `[Perf: mobile CPU/battery]` | `components/anim/CanvasStage.tsx` | Add `matchMedia('(min-width:768px)')` + theme gate like the other canvases; consider not registering the ticker while hidden. |
+| 🔴 | ✅ `Starfield` runs its **own** rAF (not the sequencer) → no hidden-tab pause. **[verified 07-18]** Confirmed — this is the one canvas that genuinely opts out of the shared sequencer's visibility pause (cf. CanvasStage, which is on it). *done 07-19: added a `visibilitychange` guard that cancels the rAF when `document.hidden` and resumes on focus (+ reduced-motion gate from §2a).* | `[Perf: CPU/battery]` | `components/layout/Starfield.tsx` | Move onto `lib/anim/sequencer.ts` (gets visibility pause) or add its own `visibilitychange` guard. |
+| 🟡 | Canvas actors run regardless of on-screen/scroll; LCP work during initial homepage render | `[Perf: LCP/TBT]` | canvases | Defer start / pause when scrolled away; respect reduced-motion (§2a). |
 
 ### 3c. Fonts
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🟡 | ✅ Gooper Trial (`@font-face`) not preloaded though used above the fold — *done 07-19: `<link rel=preload as=font crossorigin>` for the woff2 in `<head>`* | `app/layout.tsx`, `app/globals.css` | `<link rel="preload" as="font" ... crossorigin>` for the woff2. |
-| 🟡 | Roboto ships 4 weights (400/600/700/800) | `app/layout.tsx:26-30` | Drop any unused weight. |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🟡 | ✅ Gooper Trial (`@font-face`) not preloaded though used above the fold — *done 07-19: `<link rel=preload as=font crossorigin>` for the woff2 in `<head>`* | `[Perf: LCP (FOUT)]` | `app/layout.tsx`, `app/globals.css` | `<link rel="preload" as="font" ... crossorigin>` for the woff2. |
+| 🟡 | Roboto ships 4 weights (400/600/700/800) | `[Perf: weight]` | `app/layout.tsx:26-30` | Drop any unused weight. |
 
 ### 3d. Bundle / client JS
-| Sev | Item | Fix |
-|-----|------|-----|
-| 🟡 | `Footer.tsx` (client, imports **swiper**) is in the root layout → swiper+framer ship on every page | Lazy-load the swiper panel (`next/dynamic`), or split the contact/offices panel out. |
-| 🟡 | framer-motion in 31 files, swiper static-imported in 4 | Add `experimental.optimizePackageImports: ['framer-motion','swiper']`; dynamic-import swiper carousels. |
-| ⚪ | `hls.js` dep with no import found; `@stripe/stripe-js` never `loadStripe`d | Confirm dead → remove from deps. |
+| Sev | Item | Fixes | Fix |
+|-----|------|-------|-----|
+| 🟡 | `Footer.tsx` (client, imports **swiper**) is in the root layout → swiper+framer ship on every page | `[Perf: TBT/INP + weight]` | Lazy-load the swiper panel (`next/dynamic`), or split the contact/offices panel out. |
+| 🟡 | framer-motion in 31 files, swiper static-imported in 4 | `[Perf: TBT/INP + weight]` | Add `experimental.optimizePackageImports: ['framer-motion','swiper']`; dynamic-import swiper carousels. |
+| ⚪ | `hls.js` dep with no import found; `@stripe/stripe-js` never `loadStripe`d | `[Perf: weight]` | Confirm dead → remove from deps. |
 
 ### 3f. Core Web Vitals (CLS / LCP)
-| Sev | Item | File | Fix |
-|-----|------|------|-----|
-| 🟡 | **CLS**: raw `<img>` without width/height reserve no space (planets, hero text, footer planet, product/TV images) → layout shift as they load | see §3a raw-img list | Moving them to `next/image` (with width/height or `fill`) reserves space and fixes CLS in one go. |
-| 🟡 | **LCP**: the likely LCP element (home hero text-image / first planet) is a raw `<img>` with no `priority`/preload | `components/home/Hero.tsx:50`, `PlanetSection.tsx` | Give the above-the-fold LCP image `priority` (next/image) or a `<link rel=preload>`; ensure fonts (Gooper, §3c) don't delay it. |
+| Sev | Item | Fixes | File | Fix |
+|-----|------|-------|------|-----|
+| 🟡 | **CLS**: raw `<img>` without width/height reserve no space (planets, hero text, footer planet, product/TV images) → layout shift as they load | `[Perf: CLS]` | see §3a raw-img list | Moving them to `next/image` (with width/height or `fill`) reserves space and fixes CLS in one go. |
+| 🟡 | **LCP**: the likely LCP element (home hero text-image / first planet) is a raw `<img>` with no `priority`/preload | `[Perf: LCP]` | `components/home/Hero.tsx:50`, `PlanetSection.tsx` | Give the above-the-fold LCP image `priority` (next/image) or a `<link rel=preload>`; ensure fonts (Gooper, §3c) don't delay it. |
 
 ### 3e. Data / config
-| Sev | Item | Fix |
-|-----|------|-----|
-| ⚪ | `getHomepageData` **[verified 07-18]** — the four core reads (magazine/events/lab/TV) already run in `Promise.all`; only `readPicks()` (before, feeds pick IDs) and `getShopItems()` (after) are sequential bookends. Low priority; could fold shop read into the parallel batch if pick handles are known earlier. | `lib/data/homepage.ts` |
-| ⚪ | No `experimental.optimizePackageImports`, no explicit `Cache-Control` on static assets | `next.config.ts` (Next defaults are decent; low priority) |
-| ⚪ | CSP uses `unsafe-inline`/`unsafe-eval` (documented launch-pragmatic) | hardening, not perf |
+| Sev | Item | Fixes | File |
+|-----|------|-------|------|
+| ⚪ | `getHomepageData` **[verified 07-18]** — the four core reads (magazine/events/lab/TV) already run in `Promise.all`; only `readPicks()` (before, feeds pick IDs) and `getShopItems()` (after) are sequential bookends. Low priority; could fold shop read into the parallel batch if pick handles are known earlier. | `[Perf: TTFB]` | `lib/data/homepage.ts` |
+| ⚪ | No `experimental.optimizePackageImports`, no explicit `Cache-Control` on static assets | `[Perf: weight/caching]` | `next.config.ts` (Next defaults are decent; low priority) |
+| ⚪ | CSP uses `unsafe-inline`/`unsafe-eval` (documented launch-pragmatic) | `[Security: hardening]` | hardening, not perf |
 
 ---
 
 ## 4. Per-view checklist
 Legend: ✅ ok · ⚠️ needs work.
+*Note: this matrix is the **original 07-15 snapshot** for at-a-glance scope. For current status use the ✅/⏳ markers in the sections above (e.g. `/tv` + home h1s, per-page metadata, event-overlay a11y are now done).*
 
 | View | H1 | Metadata | JSON-LD | Notable per-view fixes |
 |------|----|----------|---------|------------------------|

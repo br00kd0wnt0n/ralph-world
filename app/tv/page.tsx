@@ -13,10 +13,12 @@ export const metadata: Metadata = {
   title: 'Ralph TV',
   description:
     'Live and on-demand — Ralph TV streams culture, interviews, and nonsense around the clock.',
+  alternates: { canonical: '/tv' },
   openGraph: {
     title: 'Ralph TV',
     description:
       'Live and on-demand. Culture, interviews, and nonsense around the clock.',
+    url: '/tv',
   },
 }
 

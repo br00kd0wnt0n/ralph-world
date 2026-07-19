@@ -9,10 +9,12 @@ export const metadata: Metadata = {
   title: 'Lab',
   description:
     'Experiments, tools, generators and oddities from the Ralph lab.',
+  alternates: { canonical: '/lab' },
   openGraph: {
     title: 'Ralph Lab',
     description:
       'Experiments, tools, and oddities from the Ralph lab.',
+    url: '/lab',
   },
 }
 

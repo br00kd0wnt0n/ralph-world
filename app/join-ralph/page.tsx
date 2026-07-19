@@ -9,6 +9,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: 'Join Ralph',
   description: 'Join the Ralph community and get access to exclusive content.',
+  alternates: { canonical: '/join-ralph' },
 }
 
 export default async function JoinRalphPage() {

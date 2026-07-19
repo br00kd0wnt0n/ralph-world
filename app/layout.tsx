@@ -54,10 +54,10 @@ export const metadata: Metadata = {
       'Pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
   },
   twitter: {
+    // Only the card type is set globally. Title/description/image are left
+    // to each page's openGraph (Twitter falls back to og: tags) so article/
+    // product/event cards show their own titles, not the site default.
     card: 'summary_large_image',
-    title: 'Ralph — The Entertainment People',
-    description:
-      'Pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
   },
 }
 
@@ -77,7 +77,7 @@ export default async function RootLayout({
   const copy = await getSiteCopy()
   return (
     <html
-      lang="en"
+      lang="en-GB"
       data-theme="cosy-dynamics"
       className={`${playfair.variable} ${roboto.variable} h-full antialiased`}
     >

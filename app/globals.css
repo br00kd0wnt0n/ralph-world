@@ -344,6 +344,22 @@ main > [data-transitioning] {
   }
 }
 
+/* ── Reduced motion (WCAG 2.3.3) ──
+   When the user's OS requests reduced motion, neutralise all CSS animations
+   and transitions site-wide (the waving arms, the event-arm drop, hover/press
+   transitions, smooth scrolling). JS-driven motion (parallax + the decorative
+   canvases + framer page transitions) is gated separately in their components. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Legal pages (privacy / terms / cookies) — all titles use the Gooper
    title face. Done in CSS because the equivalent Tailwind arbitrary
    font-family class doesn't compile (commas/parens in the value). */

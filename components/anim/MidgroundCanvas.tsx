@@ -110,6 +110,8 @@ export default function MidgroundCanvas() {
   useEffect(() => {
     if (theme !== 'cosy-dynamics') return
     if (!window.matchMedia('(min-width: 768px)').matches) return
+    // Honour reduced-motion: skip the drifting flyers + parallax props.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const canvas = canvasRef.current
     if (!canvas) return
     const context = canvas.getContext('2d')

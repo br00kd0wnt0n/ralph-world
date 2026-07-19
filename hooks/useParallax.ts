@@ -11,6 +11,12 @@ export function useParallax(factor = 0.3, ref?: RefObject<HTMLElement | null>) {
   const [offset, setOffset] = useState(0)
 
   useEffect(() => {
+    // Honour reduced-motion: keep the offset flat so parallax elements don't
+    // drift on scroll.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setOffset(0)
+      return
+    }
     function onScroll() {
       if (ref?.current) {
         const rect = ref.current.getBoundingClientRect()

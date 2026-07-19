@@ -26,6 +26,7 @@ interface RalphTVClientProps {
 }
 
 export default function RalphTVClient({
+  heading,
   offlineLabel,
   offlineMessage,
   subscribeHeading,
@@ -41,6 +42,9 @@ export default function RalphTVClient({
       initial="initial"
       animate="animate"
     >
+      {/* Page h1 — the TV set is visual-only, so this is visually hidden but
+          gives the page its required top-level heading for SR/SEO. */}
+      <h1 className="sr-only">{heading ?? 'Ralph TV'}</h1>
       {/* Planet + white bg layered with content.
           min-height ensures the white background extends to the footer on
           tall viewports (and on mobile, where the TV set is short

@@ -127,6 +127,9 @@ export default async function Home() {
 
   return (
     <>
+      {/* Page h1 — the hero "title" is decorative art, so this visually-hidden
+          heading gives the home page its required single top-level heading. */}
+      <h1 className="sr-only">Ralph — pop culture for the fun of it</h1>
       <Hero
         heading={copy.home_hero_heading}
         line1={copy.home_hero_line_1}

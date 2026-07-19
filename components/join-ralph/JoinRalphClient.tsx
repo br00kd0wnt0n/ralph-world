@@ -211,6 +211,8 @@ export default function JoinRalphClient({
       initial="initial"
       animate="animate"
     >
+      {/* Page h1 — visually hidden; the signup flow's own step headings are h2. */}
+      <h1 className="sr-only">Join Ralph</h1>
       <section
         className="relative"
         style={{ minHeight: 'calc(100svh - 200px)' }}

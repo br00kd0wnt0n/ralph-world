@@ -35,6 +35,8 @@ export default function ForegroundCanvas() {
   useEffect(() => {
     if (theme !== 'cosy-dynamics') return
     if (!window.matchMedia('(min-width: 768px)').matches) return
+    // Honour reduced-motion: skip the decorative foreground flyers.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const canvas = canvasRef.current
     if (!canvas) return
     const context = canvas.getContext('2d')

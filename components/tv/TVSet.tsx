@@ -325,25 +325,38 @@ export default function TVSet({
               </div>
             )}
 
-            {/* Freeview countdown badge — top-left, guests only, pre-expiry */}
+            {/* Freeview countdown badge — top-left, guests only, pre-expiry.
+                Visible badge is aria-hidden (its per-second text would otherwise
+                spam SR users); a sibling live region announces at milestones. */}
             {previewEnabled && isGuest && isLive && !previewExpired && (
-              <div
-                className="absolute top-2 left-2 z-20 pointer-events-none select-none"
-                aria-live="polite"
-                aria-label={`Free view ends in ${formatCountdown(previewSecondsLeft)}`}
-              >
-                <div className="bg-black/75 backdrop-blur-sm rounded-md px-2.5 py-1.5 border border-white/10">
-                  <p className="text-white font-mono font-bold leading-none" style={{ fontSize: '0.65em' }}>
-                    Free view ends in{' '}
-                    <span className={previewSecondsLeft <= 60 ? 'text-ralph-pink' : 'text-white'}>
-                      {formatCountdown(previewSecondsLeft)}
-                    </span>
-                  </p>
-                  <p className="text-white/60 mt-0.5 leading-none" style={{ fontSize: '0.55em' }}>
-                    Subscribe to unlock →
-                  </p>
+              <>
+                <div
+                  className="absolute top-2 left-2 z-20 pointer-events-none select-none"
+                  aria-hidden="true"
+                >
+                  <div className="bg-black/75 backdrop-blur-sm rounded-md px-2.5 py-1.5 border border-white/10">
+                    <p className="text-white font-mono font-bold leading-none" style={{ fontSize: '0.65em' }}>
+                      Free view ends in{' '}
+                      <span className={previewSecondsLeft <= 60 ? 'text-ralph-pink' : 'text-white'}>
+                        {formatCountdown(previewSecondsLeft)}
+                      </span>
+                    </p>
+                    <p className="text-white/60 mt-0.5 leading-none" style={{ fontSize: '0.55em' }}>
+                      Subscribe to unlock →
+                    </p>
+                  </div>
                 </div>
-              </div>
+                {/* Coarse announcements only (1 min / 30s / 10s left). */}
+                <div className="sr-only" role="status" aria-live="polite">
+                  {previewSecondsLeft === 60
+                    ? 'One minute of free viewing left'
+                    : previewSecondsLeft === 30
+                      ? '30 seconds of free viewing left'
+                      : previewSecondsLeft === 10
+                        ? '10 seconds of free viewing left'
+                        : ''}
+                </div>
+              </>
             )}
 
             {/* Overlays render ON TOP of the player — don't replace it */}

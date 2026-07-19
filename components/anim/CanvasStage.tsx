@@ -67,6 +67,8 @@ export default function CanvasStage() {
     // the full-viewport per-frame paint isn't worth the battery/CPU.
     if (theme !== 'cosy-dynamics') return
     if (!window.matchMedia('(min-width: 768px)').matches) return
+    // Honour reduced-motion: skip the decorative squad/saucer animation.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const canvasEl = canvasRef.current
     if (!canvasEl) return
     const context = canvasEl.getContext('2d')

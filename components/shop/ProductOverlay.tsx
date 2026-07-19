@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { formatPrice } from '@/lib/shopify/format'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
@@ -50,6 +51,9 @@ export default function ProductOverlay({
     return () => window.removeEventListener('keydown', onEsc)
   }, [isOpen, onClose])
 
+  // Trap focus inside the overlay; restores focus to the trigger on close.
+  const overlayRef = useFocusTrap<HTMLDivElement>(isOpen)
+
   if (!product) return null
 
   const images = product.images.edges.map((e) => e.node)
@@ -72,6 +76,10 @@ export default function ProductOverlay({
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={overlayRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={product.title}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

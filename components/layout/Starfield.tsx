@@ -128,6 +128,8 @@ export default function Starfield() {
     // shows behind the menu; otherwise it stays theme-gated + hidden on mobile.
     if (!open && theme !== 'cosy-dynamics') return
     if (!open && window.matchMedia('(max-width: 767px)').matches) return
+    // Honour reduced-motion: skip the twinkle / shooting-stars / menu drift.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -251,14 +253,27 @@ export default function Starfield() {
       scrollY = window.scrollY
     }
 
+    // Pause the rAF loop while the tab is hidden so it isn't painting stars
+    // into a backgrounded tab (the shared sequencer does this for the other
+    // canvases; Starfield runs its own loop, so it guards itself).
+    function onVisibility() {
+      if (document.hidden) {
+        cancelAnimationFrame(animationId)
+      } else {
+        animationId = requestAnimationFrame(draw)
+      }
+    }
+
     resize()
     window.addEventListener('resize', resize)
     window.addEventListener('scroll', onScroll, { passive: true })
+    document.addEventListener('visibilitychange', onVisibility)
     animationId = requestAnimationFrame(draw)
 
     return () => {
       window.removeEventListener('resize', resize)
       window.removeEventListener('scroll', onScroll)
+      document.removeEventListener('visibilitychange', onVisibility)
       cancelAnimationFrame(animationId)
     }
   }, [theme, horizontal, open])

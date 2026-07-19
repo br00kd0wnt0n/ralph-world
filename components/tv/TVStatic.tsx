@@ -46,5 +46,5 @@ export default function TVStatic() {
     }
   }, [])
 
-  return <canvas ref={canvasRef} className="w-full h-full opacity-60" />
+  return <canvas ref={canvasRef} aria-hidden="true" className="w-full h-full opacity-60" />
 }

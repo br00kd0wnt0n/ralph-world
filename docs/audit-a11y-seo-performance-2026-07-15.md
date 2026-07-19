@@ -16,6 +16,8 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
 ## Progress log
 *Running tally of what's shipped, newest first. Full detail against each item inline below.*
 
+- **2026-07-19 (Phase 2)** — **Phase 2 COMPLETE (Reduced-motion & focus).** ✅ **Global reduced-motion** (#3): CSS blanket rule + per-canvas gates (CanvasStage/Midground/Foreground/Starfield) + `useParallax` flatten + `<MotionConfig reducedMotion="user">` + instant page transitions. ✅ **Starfield** hidden-tab pause (`visibilitychange`). ✅ **Events overlay** un-`aria-hidden`ed + arms/cards are labelled buttons + expanded panel is a focus-trapped `role="dialog"` with Escape. ✅ **MobileMenu** focus trap + Escape + dialog role. ✅ **ProductOverlay** focus trap + dialog role. ✅ **`<header>` banner** landmark around the nav. ✅ **h1s**: `/tv`, `/join-ralph`, home (+ section titles → `<h2>`); `MobileHome` confirmed dead code. ✅ **PlanetSection** fake `div role=link` → real links (CTA + sr-only planet-only link). ✅ **TVStatic** `aria-hidden` + **TV countdown** announces only at milestones.
+
 - **2026-07-19 (batch 2)** — **Phase 1 substantially complete.** ✅ **CanvasStage mobile+theme gate** (#4): `cosy-dynamics` + `matchMedia('(min-width:768px)')` gate + `hidden md:block` — no full-viewport paint on phones. ✅ **Skip link + `<main id>`** (#10): visually-hidden "Skip to content" link (first focusable) targets `#main-content`. ✅ **Home metadata** + canonical (`app/page.tsx`, `absolute` title). ✅ **`/work-with-us`** title/description de-staled ("Play with Ralph" → "Work with Us") + canonical. ✅ **noindex auth pages**: `/login`, `/account` (metadata) + `/reset-password` (new thin server `layout.tsx`, since the page is a client component). ✅ **Branded `not-found.tsx`** (404, noindex, home/magazine CTAs). ✅ **Reciprocal hreflang**: `/contact` ↔ `/jp/contact` now a consistent cluster (fixed jp's `en` from `/` → `/contact`). ✅ **`aria-current="page"`** on active nav links (both desktop nav rows + MobileMenu Worlds). ✅ **Gooper Trial preload** (`<link rel=preload>` in `<head>`). ✅ **Alt fixes**: cart thumbnail falls back to product title; Globe frames `alt=""` + `aria-hidden`. **Remaining Phase 1:** only the deferred broadcaster/TV thumbnails (see #2).
 
 - **2026-07-19** — ✅ **Sitemap rebuild** (Phase 1 #8): `app/sitemap.ts` now async — pulls published article slugs, active-event slugs, and Shopify product handles (all in parallel, error-guarded); dropped the dead `/play` and the `/subscribe` stub; added `/join-ralph`, `/work-with-us`, `/legal/*`, `/jp/contact`; real `lastModified` from `publishedAt`/`eventDate`. ✅ **robots.ts**: added `/reset-password` to disallow. ⏳ **`images.remotePatterns`** (Phase 1 #2): added `cdn.shopify.com` + `picsum.photos` (dev mock) and converted the 4 Shopify `<img>` (ProductCard / ProductOverlay ×2 / ProductDetail) → `next/image`. **Still open:** broadcaster/TV thumbnails (backend-authored presigned URLs on an unconfirmed host) — deliberately deferred until the runtime host is confirmed; those render in homepage/lab/events/play cards, not the shop/TV files.
@@ -29,9 +31,9 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
 |---|------|------|-----|--------|
 | 1 | Perf | ✅ `ralph-logo.png` is **420 KB / 800×800** shipped as the favicon — *done 07-19: proper favicon set + manifest* | 🔴 | S |
 | 2 | Perf | ⏳ No `images.remotePatterns` → **all Shopify + TV images unoptimized** — *done 07-19 for Shopify (4 imgs → next/image); TV/broadcaster thumbnails deferred (host unconfirmed)* | 🔴 | S |
-| 3 | A11y | **No `prefers-reduced-motion`** anywhere (heavy canvas/parallax/framer) | 🔴 | M |
+| 3 | A11y | ✅ **No `prefers-reduced-motion`** anywhere (heavy canvas/parallax/framer) — *done 07-19: CSS blanket + per-canvas gates + useParallax + MotionConfig + page transitions (see §2a)* | 🔴 | M |
 | 4 | Perf | ✅ `CanvasStage` has **no mobile gating** — continuous full-viewport rAF paint on phones — *done 07-19: cosy-dynamics + `min-width:768px` gate + `hidden md:block`* | 🔴 | S |
-| 5 | A11y | **MobileMenu**: no focus trap, no Escape, no initial focus | 🔴 | M |
+| 5 | A11y | ✅ **MobileMenu**: no focus trap, no Escape, no initial focus — *done 07-19: focus trap + Escape + dialog role* | 🔴 | M |
 | 6 | SEO | Dynamic routes (article/event/product) are **redirect stubs with no metadata** | 🔴 | M |
 | 7 | SEO | **No JSON-LD** structured data (Organization, Article, Product, Event) | 🔴 | M |
 | 8 | SEO | ✅ `sitemap.ts` is static, omits all content, lists a **dead `/play` URL** — *done 07-19: async, pulls articles/events/products, `/play` removed* | 🔴 | S |
@@ -94,27 +96,30 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
 ### 1g. Headings (also A11y §5)
 | Sev | Item | File | Fix |
 |-----|------|------|-----|
-| 🔴 | `/tv` renders **no heading at all** (no h1) | `components/tv/RalphTVClient.tsx` (accepts `heading` prop, never renders it) | Render an `<h1>` (visually-hidden if design has no title). |
-| 🟡 | `/join-ralph` has no h1 (starts at h2) | `components/join-ralph/JoinRalphClient.tsx` | Add an h1 (visually-hidden ok). |
+| 🔴 | ✅ `/tv` renders **no heading at all** (no h1) — *done 07-19: renders the `heading` prop (fallback "Ralph TV") as an `sr-only` h1* | `components/tv/RalphTVClient.tsx` | Render an `<h1>` (visually-hidden if design has no title). |
+| 🟡 | ✅ `/join-ralph` has no h1 (starts at h2) — *done 07-19: `sr-only` h1 "Join Ralph"* | `components/join-ralph/JoinRalphClient.tsx` | Add an h1 (visually-hidden ok). |
 
 ---
 
 ## 2. Accessibility (WCAG 2.1 AA)
 
-### 2a. Motion / reduced-motion 🔴 (biggest single gap)
+### 2a. Motion / reduced-motion 🔴 (biggest single gap) — ✅ DONE 07-19
 - No `prefers-reduced-motion` handling site-wide. `lib/animation/page-transitions.ts:148` defines `reducedMotionVariants` but it's **never used**.
-- **Fix (M):** honour reduced-motion in one place per system:
-  - CSS `@media (prefers-reduced-motion: reduce)` in `globals.css` to kill the wave/float/CSS animations.
-  - `useReducedMotion()` (framer-motion) in `PageTransitionWrapper` → swap to instant/opacity-only.
-  - Skip/most-static mode for the canvases (`Starfield`, `CanvasStage`, `Midground/ForegroundCanvas`) and parallax (`hooks/useParallax.ts`) and `MobileMenu` decor floats.
+- **Fix (M) — shipped in five layers:**
+  - ✅ CSS `@media (prefers-reduced-motion: reduce)` blanket rule in `globals.css` → neutralises all CSS animation/transition + smooth scroll.
+  - ✅ `PageTransitionWrapper` uses `useReducedMotion()` → page nav becomes an instant cut.
+  - ✅ Each canvas (`Starfield`, `CanvasStage`, `MidgroundCanvas`, `ForegroundCanvas`) early-returns on `matchMedia('(prefers-reduced-motion: reduce)')` → no rAF paint.
+  - ✅ `useParallax` returns flat `0` → no scroll drift.
+  - ✅ `<MotionConfig reducedMotion="user">` in `app/providers.tsx` → every framer-motion component (incl. MobileMenu decor floats + all 31 files) honours the OS setting in one place.
+  - *Note: `reducedMotionVariants` in page-transitions.ts is still unused/dead — the explicit `useReducedMotion` path + MotionConfig supersede it; safe to delete later.*
 
 ### 2b. Focus & keyboard
 | Sev | Item | File | Fix |
 |-----|------|------|-----|
-| 🔴 | MobileMenu: no focus trap, no Escape, focus not moved in | `components/layout/MobileMenu.tsx` | Reuse `hooks/useFocusTrap.ts` (already used by 5 other overlays); add Escape-to-close + `role="dialog"`/`aria-modal`. |
+| 🔴 | ✅ MobileMenu: no focus trap, no Escape, focus not moved in — *done 07-19: `useFocusTrap` on the menu panel + Escape-to-close + `role="dialog"`/`aria-modal`/`aria-label`; focus restores to the burger on close* | `components/layout/MobileMenu.tsx` | Reuse `hooks/useFocusTrap.ts` (already used by 5 other overlays); add Escape-to-close + `role="dialog"`/`aria-modal`. |
 | 🟡 | No skip-to-content link; also `<main>` has **no `id`** to target | `app/layout.tsx:89` (main has no id) | Add a visually-hidden "Skip to content" link as the first focusable element → give `<main id="main">` and link to `#main`. |
-| 🟡 | `ProductOverlay` has Escape but no focus trap and no dialog semantics | `components/shop/ProductOverlay.tsx:45` | Add `useFocusTrap` + `role="dialog"`/`aria-modal`. |
-| 🔴 | Event info overlay is entirely inaccessible. **[verified 07-18]** Was 🟡 "verify focus/Escape" — but the `MinglingCharacters` root carries `aria-hidden="true"` (line ~423), so event titles, dates, locations, and "Get tickets" links are invisible to screen readers, not just missing a trap. | `components/events/MinglingCharacters.tsx` | Take the interactive arms/panels out from under `aria-hidden` (keep it only on the decorative mingling crowd), then add focus trap + Escape + `role="dialog"`/`aria-modal` on the expanded panel. |
+| 🟡 | ✅ `ProductOverlay` has Escape but no focus trap and no dialog semantics — *done 07-19: `useFocusTrap` + `role="dialog"`/`aria-modal`/`aria-label`* | `components/shop/ProductOverlay.tsx` | Add `useFocusTrap` + `role="dialog"`/`aria-modal`. |
+| 🔴 | ✅ Event info overlay is entirely inaccessible. **[verified 07-18]** Was 🟡 "verify focus/Escape" — but the `MinglingCharacters` root carried `aria-hidden="true"`, so event content was invisible to screen readers. *done 07-19: removed root `aria-hidden` (kept it on the decorative crowd + duplicate mobile arm); arms (desktop) + cards (mobile) are now labelled `role="button"` triggers (Enter/Space); expanded panel is a `role="dialog"` `aria-modal` with `useFocusTrap` + Escape.* | `components/events/MinglingCharacters.tsx` | Take the interactive arms/panels out from under `aria-hidden` (keep it only on the decorative mingling crowd), then add focus trap + Escape + `role="dialog"`/`aria-modal` on the expanded panel. |
 | ⚪ | LanguageModal/ThemeToggle close on outside-click only (currently hidden for launch) | `LanguageModal.tsx`, `ThemeToggle.tsx` | Add Escape + trap when restored. |
 | ⚪ | Verify pink `:focus-visible` outline is visible on pink/white button states | `globals.css:277-280` | Consider a contrasting/offset outline. |
 
@@ -137,12 +142,12 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
 | Sev | Item | File | Fix |
 |-----|------|------|-----|
 | 🟡 | ✅ No `aria-current` on active nav links (color/underline only) — *done 07-19: added to both desktop nav rows + MobileMenu Worlds links* | `Nav.tsx`, `MobileMenu.tsx` | Add `aria-current="page"` (LegalNav already does). |
-| 🟡 | Mobile home starts at h3, no h1/h2 | `components/home/MobileHome.tsx` | Ensure one h1 per rendered page; fix order. |
-| 🟡 | Desktop home jumps h1→h3 (section titles are h3, title art outside headings) | `PlanetSection.tsx:387,394,647` | Normalise heading levels. |
-| 🟡 | No `<header>`/`role="banner"` around the nav | `Nav.tsx:134,323` | Wrap top nav in `<header>`. |
-| 🟡 | `PlanetSection` uses `div role="link" tabIndex=0` as a link | `PlanetSection.tsx:310-315` | Prefer a real `<Link>`. |
-| ⚪ | `TVStatic` canvas missing `aria-hidden` (only canvas that does) | `components/tv/TVStatic.tsx:49` | Add `aria-hidden`. |
-| ⚪ | TV countdown uses `aria-live="polite"` on a per-second counter — may over-announce | `components/tv/TVSet.tsx:332-333` | Throttle announcements / use `aria-live` on a coarser element. |
+| 🟡 | ✅/n/a Mobile home starts at h3, no h1/h2 — **[verified 07-19]** `MobileHome.tsx` is **dead code** (imported nowhere); mobile home is the same Hero+PlanetSection as desktop, now covered by the home h1. | `components/home/MobileHome.tsx` | Ensure one h1 per rendered page; fix order. |
+| 🟡 | ✅ Desktop home jumps h1→h3 (section titles are h3, title art outside headings) — *done 07-19: added `sr-only` h1 in `app/page.tsx`; section title art wrapped in `<h2>` (+ fallback h3→h2)* | `PlanetSection.tsx`, `app/page.tsx` | Normalise heading levels. |
+| 🟡 | ✅ No `<header>`/`role="banner"` around the nav — *done 07-19: utility bar + nav wrapped in `<header>`* | `Nav.tsx` | Wrap top nav in `<header>`. |
+| 🟡 | ✅ `PlanetSection` uses `div role="link" tabIndex=0` as a link — *done 07-19: removed fake-link attrs (kept `onClick` as mouse enhancement); real nav is the CTA `<Button>` (≥768) + an sr-only `<Link>` in the planet-only view. Fixes the invalid nested-interactive too.* | `PlanetSection.tsx` | Prefer a real `<Link>`. |
+| ⚪ | ✅ `TVStatic` canvas missing `aria-hidden` — *done 07-19* | `components/tv/TVStatic.tsx` | Add `aria-hidden`. |
+| ⚪ | ✅ TV countdown uses `aria-live="polite"` on a per-second counter — *done 07-19: visible badge now `aria-hidden`; a sibling `role=status` live region announces only at 60s/30s/10s milestones* | `components/tv/TVSet.tsx` | Throttle announcements / use `aria-live` on a coarser element. |
 
 ### 2f. Colour contrast (verify with a tool — flagged risk areas)
 | Sev | Risk | Where |
@@ -173,7 +178,7 @@ Findings came from a full read-only sweep of `app/` and `components/`, then spot
 | Sev | Item | File | Fix |
 |-----|------|------|-----|
 | 🔴 | ✅ `CanvasStage` has **no mobile gating** — full-viewport (`fixed inset-0`) paint on phones. **[verified 07-18]** It does NOT run its own rAF — it registers with the shared sequencer (`registerTicker`), so it *does* pause on hidden tab; the cost is the unthrottled per-frame full-viewport clear/redraw on mobile. *done 07-19: `cosy-dynamics` + `matchMedia('(min-width:768px)')` gate (effect early-returns → no ticker) + `hidden md:block` on the canvas.* | `components/anim/CanvasStage.tsx` | Add `matchMedia('(min-width:768px)')` + theme gate like the other canvases; consider not registering the ticker while hidden. |
-| 🔴 | `Starfield` runs its **own** rAF (not the sequencer) → no hidden-tab pause. **[verified 07-18]** Confirmed — this is the one canvas that genuinely opts out of the shared sequencer's visibility pause (cf. CanvasStage, which is on it). | `components/layout/Starfield.tsx:247-262` | Move onto `lib/anim/sequencer.ts` (gets visibility pause) or add its own `visibilitychange` guard. |
+| 🔴 | ✅ `Starfield` runs its **own** rAF (not the sequencer) → no hidden-tab pause. **[verified 07-18]** Confirmed — this is the one canvas that genuinely opts out of the shared sequencer's visibility pause (cf. CanvasStage, which is on it). *done 07-19: added a `visibilitychange` guard that cancels the rAF when `document.hidden` and resumes on focus (+ reduced-motion gate from §2a).* | `components/layout/Starfield.tsx` | Move onto `lib/anim/sequencer.ts` (gets visibility pause) or add its own `visibilitychange` guard. |
 | 🟡 | Canvas actors run regardless of on-screen/scroll; LCP work during initial homepage render | canvases | Defer start / pause when scrolled away; respect reduced-motion (§2a). |
 
 ### 3c. Fonts
@@ -229,7 +234,7 @@ Legend: ✅ ok · ⚠️ needs work.
 
 ## 5. Recommended phased rollout
 - **Phase 1 — Quick wins (S, ~½–1 day): ✅ COMPLETE (07-19)** — one item deferred. Shipped: ✅ favicon set + web manifest + `theme-color` (#1); ✅ CanvasStage mobile gate (#4); ✅ sitemap fix + remove `/play` (#8) + robots `/reset-password`; ✅ skip link + `<main id>` (#10); ✅ `/work-with-us` + home metadata (+ canonicals); ✅ noindex auth pages; ✅ branded `not-found.tsx`; ✅ reciprocal hreflang on `/contact`↔`/jp/contact`; ✅ `aria-current`; ✅ Gooper preload; ✅ cart/globe alt fixes. ⏳ **Deferred:** `remotePatterns`/next-image for **broadcaster/TV thumbnails** only (Shopify done; broadcaster host must be confirmed at runtime first — #2).
-- **Phase 2 — Reduced-motion & focus (M):** global `prefers-reduced-motion` (CSS + framer + canvases + Starfield onto sequencer) (#3), MobileMenu focus trap/Escape/dialog (#5), ProductOverlay/event overlay focus, `<header>` landmark, TV/join-ralph h1s.
+- **Phase 2 — Reduced-motion & focus (M): ✅ COMPLETE (07-19)** — global `prefers-reduced-motion` (CSS + framer MotionConfig + canvases + Starfield visibility guard + parallax) (#3), MobileMenu focus trap/Escape/dialog (#5), ProductOverlay + event-overlay focus/dialog, `<header>` landmark, TV/join-ralph/home h1s + heading order, PlanetSection real links, TVStatic aria-hidden + TV countdown throttle.
 - **Phase 3 — Forms & content SEO (M/L):** Footer + Join Ralph labels/aria-live (#9), dynamic metadata + canonical for article/event/product (#6), JSON-LD (#7), per-route OG images.
 - **Phase 4 — Perf deep cuts (M):** re-encode remaining large PNGs to WebP/AVIF, drop duplicate per-frame sprite folders, lazy-load swiper/Footer panel, `optimizePackageImports`, trim unused deps/font weights, contrast fixes after measurement.
 

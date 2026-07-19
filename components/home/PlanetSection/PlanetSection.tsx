@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import HomepageTvTeaser from '@/components/home/HomepageTvTeaser'
 import HomepageTvSubtitle from '@/components/home/HomepageTvSubtitle'
@@ -306,17 +307,20 @@ export default function PlanetSection({
       initial="hidden"
       animate={isExiting ? { opacity: 0 } : isVisible ? 'visible' : 'hidden'}
       transition={isExiting ? { duration: 0.25, ease: 'easeIn' } : undefined}
+      // Mouse-only convenience: clicking the planet navigates. Keyboard/SR
+      // users use the visible CTA Button (below), or the sr-only link in the
+      // planet-only view where that button is hidden. No role/tabIndex here —
+      // this section contains its own links, so it must not be a link itself.
       onClick={navigateToSection}
-      role="link"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          navigateToSection()
-        }
-      }}
       className="relative px-4 min-[420px]:px-6 md:px-16 py-4 md:py-6 max-w-7xl mx-auto cursor-pointer"
     >
+      {/* Planet-only (< 768) hides the CTA button, so provide a focusable link
+          for keyboard/SR users to reach the section. */}
+      {isPlanetOnly && moduleCard.href && (
+        <Link href={moduleCard.href} className="sr-only">
+          Explore {moduleCard.heading}
+        </Link>
+      )}
       {/* Panel — content-width, clip-path masks it, spring overshoot on open.
           Suppressed below 768px (planet-only view).
           Top alignment:
@@ -384,18 +388,21 @@ export default function PlanetSection({
           >
             <div className={!planetOnRight ? 'flex flex-col items-end' : ''}>
               {TITLE_SECONDARY_IMAGES[id] ? (
-                <img
-                  src={TITLE_SECONDARY_IMAGES[id].src}
-                  alt={moduleCard.heading}
-                  style={{ width: TITLE_SECONDARY_IMAGES[id].w, height: TITLE_SECONDARY_IMAGES[id].h }}
-                  className="mb-1"
-                />
+                // Title art wrapped in an h2 so each section has a real heading
+                // (its alt text) — keeps a clean h1 → h2 document outline.
+                <h2 className="mb-1">
+                  <img
+                    src={TITLE_SECONDARY_IMAGES[id].src}
+                    alt={moduleCard.heading}
+                    style={{ width: TITLE_SECONDARY_IMAGES[id].w, height: TITLE_SECONDARY_IMAGES[id].h }}
+                  />
+                </h2>
               ) : (
-                <h3
+                <h2
                   className={`text-2xl md:text-3xl font-bold ${textColor} mb-1 font-[family-name:var(--font-display)]`}
                 >
                   {moduleCard.heading}
-                </h3>
+                </h2>
               )}
               <p
                 className={`text-intro ${textColor} mb-2`}

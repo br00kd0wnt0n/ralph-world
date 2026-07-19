@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import {
   createContext,
@@ -44,18 +44,21 @@ export default function PageTransitionWrapper({ children }: PageTransitionWrappe
   const pathname = usePathname()
   const { instantNav, setInstantNav } = useMenu()
   const [isExiting, setIsExiting] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
 
-  // When navigating from the slide-in menu, skip the fade so the new page is
-  // ready before the panel slides it in. In-site links keep the fade.
+  // Skip the fade when navigating from the slide-in menu (so the new page is
+  // ready before the panel slides it in) OR when the user requests reduced
+  // motion — both become an instant cut. In-site links otherwise keep the fade.
+  const instant = instantNav || prefersReducedMotion
   const pageVariants: Variants = {
-    initial: { opacity: instantNav ? 1 : 0 },
+    initial: { opacity: instant ? 1 : 0 },
     animate: {
       opacity: 1,
-      transition: { duration: instantNav ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] },
+      transition: { duration: instant ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] },
     },
     exit: {
-      opacity: instantNav ? 1 : 0,
-      transition: { duration: instantNav ? 0 : 0.35, ease: [0.4, 0, 1, 1] },
+      opacity: instant ? 1 : 0,
+      transition: { duration: instant ? 0 : 0.35, ease: [0.4, 0, 1, 1] },
     },
   }
   const [minHeight, setMinHeight] = useState<number | undefined>(undefined)

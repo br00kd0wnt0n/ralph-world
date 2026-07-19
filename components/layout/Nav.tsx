@@ -130,6 +130,8 @@ export default function Nav() {
 
   return (
     <>
+      {/* Banner landmark wrapping the site header (utility bar + main nav). */}
+      <header>
       {/* ── Utility Bar (desktop) ── */}
       <div
         className="hidden min-[1200px]:flex items-center justify-between px-6 text-xs fixed top-0 left-0 right-0 z-50 pointer-events-none"
@@ -600,6 +602,7 @@ export default function Nav() {
           </div>
         </div>
       </nav>
+      </header>
 
       {/* MobileMenu is rendered at the layout level (outside MenuFade) so it
           isn't faded out along with the nav when it opens. */}

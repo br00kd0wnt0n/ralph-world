@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { useMenu } from '@/context/MenuContext'
 import { useLanguage, LANGUAGES } from '@/lib/useLanguage'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 const WORLDS = [
   { label: 'Ralph TV', href: '/tv' },
@@ -57,6 +58,18 @@ export default function MobileMenu() {
   const { language, setLanguage } = useLanguage()
   const [langOpen, setLangOpen] = useState(false)
   const onClose = () => setOpen(false)
+  // Trap focus inside the open menu; restores focus to the burger on close.
+  const menuRef = useFocusTrap<HTMLDivElement>(isOpen)
+
+  // Escape closes the menu.
+  useEffect(() => {
+    if (!isOpen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [isOpen, setOpen])
   const currentLanguage =
     LANGUAGES.find((l) => l.code === language)?.label ?? 'English'
 
@@ -144,6 +157,10 @@ export default function MobileMenu() {
       {isOpen && (
         <motion.div
           key="menu-content"
+          ref={menuRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu"
           className="fixed inset-0 z-[80] flex flex-col overflow-hidden"
           initial={{ x: '-100%' }}
           animate={{ x: 0 }}

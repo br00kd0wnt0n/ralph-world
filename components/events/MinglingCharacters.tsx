@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 // Fixed (deterministic) scramble so the row isn't in numerical order while
 // staying SSR-safe (a runtime shuffle would cause a hydration mismatch).
@@ -359,6 +360,26 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   const isAnyActive = activeArm !== null
   const isExpanded = expandedArm !== null
 
+  // Focus trap for the expanded event panel (acts as a modal dialog): moves
+  // focus in, wraps Tab, restores focus to the trigger on close.
+  const dialogRef = useFocusTrap<HTMLDivElement>(isExpanded)
+
+  const closeExpanded = useCallback(() => {
+    History.prototype.pushState.call(window.history, null, '', '/events')
+    setExpandedArm(null)
+    setActiveArm(null)
+  }, [])
+
+  // Escape closes the expanded panel (useFocusTrap handles Tab, not Escape).
+  useEffect(() => {
+    if (!isExpanded) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeExpanded()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [isExpanded, closeExpanded])
+
   const handleArmClick = (index: number) => {
     // Ignore arm clicks while expanded — other arms are off-screen and
     // shouldn't re-open the mini panel until the user closes the expanded.
@@ -381,10 +402,7 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent triggering arm click
     if (isExpanded) {
-      History.prototype.pushState.call(window.history, null, '', '/events')
-      setExpandedArm(null)
-      // Return straight to the normal page state, not the brief panel.
-      setActiveArm(null)
+      closeExpanded()
     } else {
       setActiveArm(null)
     }
@@ -420,7 +438,6 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
         width: '100%',
         opacity: mounted ? 1 : 0,
       }}
-      aria-hidden="true"
     >
       {/* Panels layer - outside clipped area so they can overflow */}
       {mounted && arms.map((arm, i) => {
@@ -491,14 +508,42 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
             className={`absolute ${isMobile && isThisExpanded ? 'z-[90]' : 'z-[15]'} ${isMobile ? '' : 'transition-all duration-500 ease-out'} pointer-events-none`}
             style={wrapperStyle}
           >
-            {/* Panel */}
+            {/* Panel. Expanded = modal dialog (focus-trapped, aria-modal).
+                Mobile mini = a button (whole card taps through to details). */}
             <div
+              ref={isThisExpanded ? dialogRef : undefined}
+              role={
+                isThisExpanded
+                  ? 'dialog'
+                  : isMobile && !isThisExpanded
+                    ? 'button'
+                    : undefined
+              }
+              aria-modal={isThisExpanded ? true : undefined}
+              aria-label={
+                isThisExpanded
+                  ? arm.title
+                  : isMobile && !isThisExpanded
+                    ? `${arm.title} — view details`
+                    : undefined
+              }
+              tabIndex={isMobile && !isThisExpanded ? 0 : undefined}
               className={`${isMobile ? '' : 'transition-all duration-500 ease-out'} ${
                 isPanelOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0'
               } ${isMobile && !isThisExpanded ? 'cursor-pointer' : ''}`}
               onClick={
                 isMobile && !isThisExpanded
                   ? () => handleShowMore(i)
+                  : undefined
+              }
+              onKeyDown={
+                isMobile && !isThisExpanded
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleShowMore(i)
+                      }
+                    }
                   : undefined
               }
               style={{
@@ -832,8 +877,11 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
             const sideOffset = `calc(50% - ${mobileHidden ? armBase + 320 : armBase}px)`
 
             return (
+              // Decorative on mobile — the card itself is the accessible tap
+              // target (role=button above), so hide this duplicate from AT.
               <div
                 key={`arm-${i}`}
+                aria-hidden="true"
                 className={`group absolute z-[5] transition-all duration-500 ease-out ${
                   mobileHidden ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'
                 }`}
@@ -878,8 +926,20 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
               : 0
 
           return (
+            // Desktop: the arm is the trigger that opens the event's mini panel,
+            // so expose it as a button for keyboard/SR users.
             <div
               key={`arm-${i}`}
+              role="button"
+              tabIndex={isExpanded ? -1 : 0}
+              aria-label={`${arm.title} — view details`}
+              onKeyDown={(e) => {
+                if (isExpanded) return
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleArmClick(i)
+                }
+              }}
               className={`group absolute z-20 transition-all duration-500 ease-out ${
                 isAnyActive ? '' : 'animate-wave'
               } ${isHidden ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
@@ -912,9 +972,11 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
       </div>
 
       {/* Character container - absolutely positioned at bottom.
-          Hidden < 992 — mobile arms enter from the sides instead. */}
+          Hidden < 992 — mobile arms enter from the sides instead.
+          Purely decorative crowd — hidden from assistive tech. */}
       <div
         ref={containerRef}
+        aria-hidden="true"
         className="absolute bottom-0 left-0 right-0 overflow-hidden z-10 hidden min-[992px]:block"
         style={{ height: 500 }}
       >

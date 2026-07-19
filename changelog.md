@@ -59,6 +59,28 @@ criterion + level / SEO purpose / Core Web Vital).
 - Deferred: swiper Footer lazy-load (needs panel extraction), re-spriting
   the oversized sheets (art change), Roboto weight trim (all four used).
 
+### Audit Phase 3 — forms & content SEO (commits 8375566, 0494ae8, 85e485b, 255b178, 7d0cf82, ce871d4)
+- **Forms accessibility**: Footer contact + Join Ralph now have real
+  (sr-only) `<label>`s, `aria-required`, and `aria-live` feedback
+  (WCAG 1.3.1/3.3.2/4.1.3). Contact submit stays local for now (a11y-only
+  scope; `/api/contact` still TODO).
+- **True content URLs (no query strings)**: `/shop/[handle]`,
+  `/events/[slug]`, `/magazine/[slug]` now server-render the section shell
+  with the item open (via `initial*` props) instead of redirecting to
+  `?product=`/`?show=`/`?read=`. In-app pushState UX + transitions preserved;
+  magazine now pushState's the pretty URL on open too. Legacy query params
+  kept read-only for old links / OAuth return. See
+  `docs/true-urls-plan-2026-07-19.md`.
+- **Per-item metadata + canonical** on all three routes (+ list-page
+  canonicals).
+- **JSON-LD**: `<JsonLd>` component; Organization + WebSite (layout) +
+  Product / Event / Article (per item). Paid article body never emitted
+  server-side (paywall preserved).
+- **Per-item OG images** via `openGraph.images` (the item's own image).
+- Fixes: reverted the events active-arm 48%/25px overrides so arms bunch in
+  space together again; "Something broke" Try-again button now has a black
+  shadow (commit 333ca00).
+
 ### UI polish
 - **Footer** contact/offices panel (commit e296e7b): mobile panel is now
   in normal flow (single page scroll, no nested scroll); opens scrolled so

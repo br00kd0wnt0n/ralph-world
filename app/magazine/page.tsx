@@ -9,10 +9,12 @@ export const metadata: Metadata = {
   title: 'Magazine',
   description:
     'Long reads, sharp takes, and proper pop-culture coverage from Ralph.',
+  alternates: { canonical: '/magazine' },
   openGraph: {
     title: 'Ralph Magazine',
     description:
       'Long reads, sharp takes, and proper pop-culture coverage.',
+    url: '/magazine',
   },
 }
 

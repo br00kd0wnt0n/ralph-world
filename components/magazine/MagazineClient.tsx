@@ -21,12 +21,15 @@ interface MagazineClientProps {
   articles: ArticleSummary[]
   coverStory: ArticleSummary | null
   copy?: Partial<SiteCopy>
+  /** Set by the /magazine/[slug] server route — opens that article overlay. */
+  initialArticleSlug?: string
 }
 
 export default function MagazineClient({
   articles,
   coverStory,
   copy,
+  initialArticleSlug,
 }: MagazineClientProps) {
   const [overlayArticle, setOverlayArticle] = useState<ArticleFull | null>(null)
   const [overlayOpen, setOverlayOpen] = useState(false)
@@ -64,7 +67,10 @@ export default function MagazineClient({
   // positive.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const slug = params.get('read')
+    // From the /magazine/[slug] server route, or legacy ?read= (old links /
+    // subscribe→OAuth→return). openArticle fetches /api/articles (tier-gated),
+    // so the paywall is unchanged.
+    const slug = initialArticleSlug ?? params.get('read')
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (slug) openArticle(slug)
   }, [])

@@ -26,7 +26,7 @@ export default async function ContactPage() {
         </p>
         <a
           href="mailto:hello@ralph.world"
-          className="inline-block rounded-full bg-ralph-pink px-8 py-3 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
+          className="inline-block rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
         >
           hello@ralph.world
         </a>

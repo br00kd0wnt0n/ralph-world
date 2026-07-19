@@ -37,7 +37,7 @@ export default function SubscribeGate({
             </button>
             <button
               onClick={onSubscribe}
-              className="w-full rounded-full bg-ralph-pink py-3 text-white text-sm font-medium hover:bg-ralph-pink/90 transition-colors"
+              className="w-full rounded-full bg-ralph-pink py-3 text-black text-sm font-medium hover:bg-ralph-pink/90 transition-colors"
             >
               Get magazine — £3/mo
             </button>

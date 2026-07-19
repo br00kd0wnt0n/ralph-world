@@ -113,7 +113,7 @@ function RequestForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full rounded-full bg-ralph-pink text-white py-3 text-sm font-medium hover:bg-ralph-pink/90 transition-colors disabled:opacity-50"
+          className="w-full rounded-full bg-ralph-pink text-black py-3 text-sm font-medium hover:bg-ralph-pink/90 transition-colors disabled:opacity-50"
         >
           {isPending ? 'Sending…' : 'Send reset link'}
         </button>
@@ -207,7 +207,7 @@ function ConfirmForm({ email, token }: { email: string; token: string }) {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full rounded-full bg-ralph-pink text-white py-3 text-sm font-medium hover:bg-ralph-pink/90 transition-colors disabled:opacity-50"
+          className="w-full rounded-full bg-ralph-pink text-black py-3 text-sm font-medium hover:bg-ralph-pink/90 transition-colors disabled:opacity-50"
         >
           {isPending ? 'Saving…' : 'Set new password'}
         </button>

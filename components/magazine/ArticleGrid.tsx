@@ -297,7 +297,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                     )}
                     {(article.accessTier as AccessTier) === 'paid_subscribers' && (
                       <div className="absolute top-2 left-2 z-10">
-                        <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-ralph-pink/90 text-white">
+                        <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-ralph-pink/90 text-black">
                           Subscribers
                         </span>
                       </div>

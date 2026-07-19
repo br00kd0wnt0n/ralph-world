@@ -74,7 +74,8 @@ export default function Button({
     ...btnStyles,
     ...(minWidth !== undefined ? { minWidth } : null),
     ...(pink ? { border: `2px solid ${RALPH_PINK}` } : null),
-    ...(filled ? { backgroundColor: RALPH_PINK, color: 'white' } : null),
+    // Black text on pink for AA contrast (white on #EA128B is ~3.9:1).
+    ...(filled ? { backgroundColor: RALPH_PINK, color: 'black' } : null),
     ...(disabled ? { opacity: 0.55, cursor: 'not-allowed' } : null),
   }
   const mergedShadowStyles: React.CSSProperties = {

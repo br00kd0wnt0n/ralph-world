@@ -293,7 +293,7 @@ export default function Nav() {
           {user ? (
             <Link
               href="/account"
-              className="relative flex h-8 w-8 items-center justify-center rounded-full bg-ralph-pink text-white text-sm font-bold"
+              className="relative flex h-8 w-8 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
             >
               {user.email?.[0]?.toUpperCase() ?? 'R'}
               {tier === 'paid' && (

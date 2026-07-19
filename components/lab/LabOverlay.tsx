@@ -223,7 +223,7 @@ export default function LabOverlay({
                     {isLocked ? (
                       <button
                         onClick={onSubscribe}
-                        className="inline-flex items-center justify-center rounded-full bg-ralph-pink text-white px-6 py-2.5 text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
+                        className="inline-flex items-center justify-center rounded-full bg-ralph-pink text-black px-6 py-2.5 text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
                       >
                         Subscribe to access →
                       </button>
@@ -232,7 +232,7 @@ export default function LabOverlay({
                         href={item.externalUrl!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-full bg-ralph-pink text-white px-6 py-2.5 text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
+                        className="inline-flex items-center justify-center rounded-full bg-ralph-pink text-black px-6 py-2.5 text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
                       >
                         Launch project →
                       </a>

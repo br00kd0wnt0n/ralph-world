@@ -30,7 +30,7 @@ export default function LegalNav() {
             aria-current={active ? 'page' : undefined}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               active
-                ? 'bg-ralph-pink text-white'
+                ? 'bg-ralph-pink text-black'
                 : 'text-black/70 hover:bg-black/5 hover:text-black'
             }`}
           >

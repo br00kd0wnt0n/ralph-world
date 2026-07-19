@@ -258,7 +258,7 @@ export default function JpContactClient() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-ralph-pink hover:opacity-90 disabled:opacity-50 transition-opacity text-white text-center py-6 text-lg font-semibold tracking-wide rounded-sm"
+            className="w-full bg-ralph-pink hover:opacity-90 disabled:opacity-50 transition-opacity text-black text-center py-6 text-lg font-semibold tracking-wide rounded-sm"
           >
             {submitting ? '送信中…' : '相談してみる →'}
           </button>
@@ -289,7 +289,7 @@ function OptionCell({
       aria-pressed={selected}
       className={`text-center px-4 py-5 border-2 transition-colors whitespace-pre-line leading-tight ${
         selected
-          ? 'bg-ralph-pink text-white border-ralph-pink'
+          ? 'bg-ralph-pink text-black border-ralph-pink'
           : 'bg-white text-black border-gray-300 hover:border-black'
       }`}
       style={{

@@ -134,7 +134,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         type="button"
         onClick={handleAddToBag}
         disabled={!product.available || adding}
-        className="mt-3 w-full rounded-full py-2.5 text-white text-[15px] transition-colors bg-ralph-pink hover:bg-ralph-pink/90 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-3 w-full rounded-full py-2.5 text-black text-[15px] transition-colors bg-ralph-pink hover:bg-ralph-pink/90 disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ fontFamily: 'var(--font-intro, "Gooper Trial"), serif', fontWeight: 600 }}
       >
         {!product.available ? 'Sold out' : adding ? 'Adding…' : 'Add to bag'}

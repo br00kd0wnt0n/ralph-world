@@ -23,7 +23,7 @@ export default function TVControls({
         onClick={() => onToggleOverlay(overlay === 'show-info' ? 'none' : 'show-info')}
         className={`rounded-md px-3 py-2 text-xs font-bold uppercase tracking-wide border transition-colors ${
           overlay === 'show-info'
-            ? 'bg-ralph-pink text-white border-ralph-pink'
+            ? 'bg-ralph-pink text-black border-ralph-pink'
             : 'bg-black/50 text-white border-white/20 hover:border-ralph-pink'
         }`}
       >

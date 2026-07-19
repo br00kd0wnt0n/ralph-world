@@ -110,7 +110,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               <span
                 className={`text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${
                   tier === 'paid'
-                    ? 'bg-ralph-pink text-white'
+                    ? 'bg-ralph-pink text-black'
                     : tier === 'free'
                     ? 'bg-ralph-teal text-black'
                     : 'bg-black/10 text-black/60'
@@ -157,7 +157,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               <form action={startSubscriptionCheckout}>
                 <button
                   type="submit"
-                  className="inline-block rounded-full bg-ralph-pink text-white px-5 py-2 text-sm hover:bg-ralph-pink/90 transition-colors"
+                  className="inline-block rounded-full bg-ralph-pink text-black px-5 py-2 text-sm hover:bg-ralph-pink/90 transition-colors"
                   style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
                 >
                   Upgrade to paid &mdash; £3/month

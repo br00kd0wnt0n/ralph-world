@@ -420,7 +420,7 @@ export default function ArticleOverlay({
                   </p>
                   <button
                     onClick={onSubscribe}
-                    className="rounded-full bg-ralph-pink px-8 py-3 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
+                    className="rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
                   >
                     Sign up to read
                   </button>
@@ -439,7 +439,7 @@ export default function ArticleOverlay({
                   </p>
                   <button
                     onClick={onSubscribe}
-                    className="rounded-full bg-ralph-pink px-8 py-3 text-white font-medium hover:bg-ralph-pink/90 transition-colors"
+                    className="rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
                   >
                     Upgrade to paid
                   </button>

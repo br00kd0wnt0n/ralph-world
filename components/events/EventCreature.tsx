@@ -40,7 +40,7 @@ export default function EventCreature({
             Event
           </span>
           {event.badge && (
-            <span className="absolute -top-2 -right-2 bg-ralph-pink text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+            <span className="absolute -top-2 -right-2 bg-ralph-pink text-black text-[8px] font-bold px-1.5 py-0.5 rounded-full">
               {event.badge}
             </span>
           )}

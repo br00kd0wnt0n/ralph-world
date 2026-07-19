@@ -193,7 +193,7 @@ export default function CartDrawer() {
           )}
           {lines.length > 0 ? (
             cart?.checkoutUrl ? (
-              // Shadow button with a pink outline (pink rim + pink offset shadow)
+              // Pink shadow button — pink fill, black text, black frame + shadow
               <div className="relative w-full">
                 <div
                   aria-hidden="true"
@@ -203,7 +203,7 @@ export default function CartDrawer() {
                     left: 4,
                     width: '100%',
                     height: '100%',
-                    backgroundColor: '#EA128B',
+                    backgroundColor: 'black',
                     pointerEvents: 'none',
                   }}
                 />
@@ -212,8 +212,8 @@ export default function CartDrawer() {
                   className="btn-press relative w-full inline-flex items-center justify-center"
                   style={{
                     height: 48,
-                    border: '2px solid #EA128B',
-                    backgroundColor: 'white',
+                    border: '2px solid black',
+                    backgroundColor: '#EA128B',
                     color: 'black',
                     fontFamily: "'Gooper Trial', serif",
                     fontWeight: 600,

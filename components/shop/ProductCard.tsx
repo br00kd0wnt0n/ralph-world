@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import { formatPrice } from '@/lib/shopify/format'
 import { useCart } from '@/context/CartContext'
 import type { ProductSummary } from '@/lib/shopify/types'
@@ -36,11 +35,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
   }
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
-      className="relative flex flex-col w-full md:w-[224px]"
-    >
+    <div className="group relative flex flex-col w-full md:w-[224px]">
       {/* Clickable area — opens the product overlay/detail */}
       <button
         type="button"
@@ -50,14 +45,14 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         {/* Framed image — shop_product_container.png decorative frame sits on
             top of the product photo. Frame PNG is 448 × 612, so card is
             224 × 306 at half scale. */}
-        <div className="relative w-full" style={{ aspectRatio: '448 / 612' }}>
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '448 / 612' }}>
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
               alt={product.title}
               fill
               sizes="(max-width: 768px) 50vw, 224px"
-              className="object-cover"
+              className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-muted text-xs bg-gray-100">
@@ -129,16 +124,24 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         </div>
       </button>
 
-      {/* Add to bag — below the price */}
-      <button
-        type="button"
-        onClick={handleAddToBag}
-        disabled={!product.available || adding}
-        className="mt-3 w-full rounded-full py-2.5 text-black text-[15px] transition-colors bg-ralph-pink hover:bg-ralph-pink/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{ fontFamily: 'var(--font-intro, "Gooper Trial"), serif', fontWeight: 600 }}
-      >
-        {!product.available ? 'Sold out' : adding ? 'Adding…' : 'Add to bag'}
-      </button>
-    </motion.div>
+      {/* Add to bag — white shadow button (black frame + offset shadow) */}
+      <div className="relative mt-3 w-full">
+        <div
+          className="absolute inset-0 translate-x-1 translate-y-1 bg-black"
+          aria-hidden="true"
+        />
+        <button
+          type="button"
+          onClick={handleAddToBag}
+          disabled={!product.available || adding}
+          className={`${
+            !product.available || adding ? '' : 'btn-press'
+          } relative w-full border-2 border-black bg-white py-2.5 text-black text-[15px] disabled:opacity-50 disabled:cursor-not-allowed`}
+          style={{ fontFamily: 'var(--font-intro, "Gooper Trial"), serif', fontWeight: 600 }}
+        >
+          {!product.available ? 'Sold out' : adding ? 'Adding…' : 'Add to bag'}
+        </button>
+      </div>
+    </div>
   )
 }

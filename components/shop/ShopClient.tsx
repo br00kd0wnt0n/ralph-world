@@ -275,7 +275,7 @@ export default function ShopClient({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      className="max-w-6xl mx-auto grid justify-center grid-cols-2 gap-4 md:gap-16 md:grid-cols-[repeat(auto-fill,224px)]"
+                      className="max-w-6xl mx-auto grid justify-center grid-cols-2 gap-x-4 gap-y-12 min-[576px]:grid-cols-[repeat(auto-fill,224px)] min-[576px]:gap-8 md:gap-16 md:pb-20"
                     >
                       {products.map((product) => (
                         <ProductCard

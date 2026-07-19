@@ -56,19 +56,23 @@ export default function ProductDetail({
 
   return (
     <div className="max-w-5xl mx-auto px-6 pt-2 pb-16 md:pb-12">
-      <button
-        onClick={onBack}
-        className="mb-[22px] inline-flex items-center justify-center text-ralph-pink hover:opacity-80 transition-opacity"
-        style={{
-          fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
-          fontWeight: 600,
-          fontSize: 18,
-          lineHeight: 1,
-          letterSpacing: 0,
-        }}
-      >
-        &lt; Back
-      </button>
+      {/* 768–1199: mirror the content grid so the Back button centres over the
+          left column. <768 (single col) and >=1200: left-aligned. */}
+      <div className="min-[768px]:grid min-[768px]:grid-cols-2 min-[768px]:gap-12 min-[1200px]:block">
+        <button
+          onClick={onBack}
+          className="mb-[22px] inline-flex items-center justify-center text-ralph-pink hover:opacity-80 transition-opacity min-[768px]:justify-self-center min-[1200px]:justify-self-start"
+          style={{
+            fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+            fontWeight: 600,
+            fontSize: 18,
+            lineHeight: 1,
+            letterSpacing: 0,
+          }}
+        >
+          &lt; Back
+        </button>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-8 md:gap-12">
         {/* Left column — Swiper image gallery */}

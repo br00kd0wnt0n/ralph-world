@@ -496,22 +496,36 @@ export default function Nav() {
               )}
             </div>
 
-            {/* Right: basket */}
-            <button
-              onClick={openCart}
-              className="basket-btn relative flex items-center justify-center transition-colors hover:opacity-80"
-              aria-label="Shopping basket"
-            >
-              <img
-                src="/imgs/icon_shopping_basket.svg"
-                alt=""
-                aria-hidden="true"
-                style={{ height: 32, width: 'auto' }}
-              />
-              <span className="absolute left-1/2 -translate-x-1/2 text-[10px] text-white font-bold" style={{ top: 14 }}>
-                {itemCount}
-              </span>
-            </button>
+            {/* Right: basket + account avatar (when logged in) */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={openCart}
+                className="basket-btn relative flex items-center justify-center transition-colors hover:opacity-80"
+                aria-label="Shopping basket"
+              >
+                <img
+                  src="/imgs/icon_shopping_basket.svg"
+                  alt=""
+                  aria-hidden="true"
+                  style={{ height: 32, width: 'auto' }}
+                />
+                <span className="absolute left-1/2 -translate-x-1/2 text-[10px] text-white font-bold" style={{ top: 14 }}>
+                  {itemCount}
+                </span>
+              </button>
+              {user && (
+                <Link
+                  href="/account"
+                  className="relative flex h-8 w-8 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
+                  aria-label="Your account"
+                >
+                  {user.email?.[0]?.toUpperCase() ?? 'R'}
+                  {tier === 'paid' && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
+                  )}
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Mobile logo + nav */}

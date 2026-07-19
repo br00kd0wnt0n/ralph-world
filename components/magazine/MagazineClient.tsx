@@ -57,6 +57,24 @@ export default function MagazineClient({
       const data = await res.json()
       setOverlayArticle(data)
       setOverlayOpen(true)
+      // Reflect the pretty URL in the address bar (matches shop/events).
+      // Skip if we're already there (direct-hit / initialArticleSlug mount).
+      // History.prototype bypasses Next's router so the page doesn't re-mount.
+      if (window.location.pathname !== `/magazine/${slug}`) {
+        History.prototype.pushState.call(
+          window.history,
+          null,
+          '',
+          `/magazine/${slug}`,
+        )
+      }
+    }
+  }
+
+  function closeArticle() {
+    setOverlayOpen(false)
+    if (window.location.pathname.startsWith('/magazine/')) {
+      History.prototype.pushState.call(window.history, null, '', '/magazine')
     }
   }
 
@@ -219,7 +237,7 @@ export default function MagazineClient({
       <ArticleOverlay
         article={overlayArticle}
         isOpen={overlayOpen}
-        onClose={() => setOverlayOpen(false)}
+        onClose={closeArticle}
         onSubscribe={() => setSubscribeOpen(true)}
       />
 
@@ -228,7 +246,7 @@ export default function MagazineClient({
         onClose={() => setSubscribeOpen(false)}
         returnTo={
           overlayArticle?.slug
-            ? `/magazine?read=${encodeURIComponent(overlayArticle.slug)}`
+            ? `/magazine/${encodeURIComponent(overlayArticle.slug)}`
             : '/magazine'
         }
       />

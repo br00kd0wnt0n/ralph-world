@@ -76,6 +76,16 @@ criterion + level / SEO purpose / Core Web Vital).
 - **Magazine** grid `pb-12`; images site-wide `user-select:none` +
   `-webkit-user-drag:none` so selecting text no longer grabs images
   (commit cb45d6f).
+- **Shop + nav + cart** (commit 40d3a13):
+  - Listing cards: image zooms within its (static) frame on hover instead
+    of the whole card scaling; Add-to-bag is a white shadow button.
+  - Grid: fixed 224px cards from ≥576 (smaller 32px gap), bigger `<576`
+    row gap (`gap-y-12`), `md:pb-20` bottom padding.
+  - Product page: Back button centred over the left column on 768–1199.
+  - Nav: `<1200` logged-in users get the account avatar to the right of the
+    basket (copied from desktop).
+  - Cart drawer: Checkout is now a pink shadow button (pink fill, black
+    text/frame/shadow).
 
 ---
 

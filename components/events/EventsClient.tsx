@@ -16,9 +16,11 @@ import type { SiteCopy } from '@/lib/data/site-copy'
 interface EventsClientProps {
   activeEvents?: EventRow[]
   copy?: Partial<SiteCopy>
+  /** Set by the /events/[slug] server route — opens that event's panel. */
+  initialShowSlug?: string
 }
 
-export default function EventsClient({ activeEvents = [], copy }: EventsClientProps) {
+export default function EventsClient({ activeEvents = [], copy, initialShowSlug }: EventsClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
   return (
     <motion.div
@@ -125,6 +127,7 @@ export default function EventsClient({ activeEvents = [], copy }: EventsClientPr
           <MinglingCharacters
             events={activeEvents}
             onSubscribe={() => setSubscribeOpen(true)}
+            initialShowSlug={initialShowSlug}
           />
         </motion.div>
       </section>

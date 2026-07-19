@@ -83,6 +83,8 @@ type RsvpStatus = 'idle' | 'loading' | 'attending' | 'full' | 'error'
 interface MinglingCharactersProps {
   events?: Event[]
   onSubscribe?: () => void
+  /** Set by the /events/[slug] server route — opens that event's panel. */
+  initialShowSlug?: string
 }
 
 /**
@@ -90,7 +92,7 @@ interface MinglingCharactersProps {
  * Each character moves slowly left/right with slight randomness.
  * Arms stick up from the crowd representing active events.
  */
-export default function MinglingCharacters({ events = [], onSubscribe }: MinglingCharactersProps) {
+export default function MinglingCharacters({ events = [], onSubscribe, initialShowSlug }: MinglingCharactersProps) {
   const { user } = useAuth()
   const eventCount = events.length
   const containerRef = useRef<HTMLDivElement>(null)
@@ -259,11 +261,12 @@ export default function MinglingCharacters({ events = [], onSubscribe }: Minglin
     }
   })
 
-  // On mount, check the URL for `?show=slug` (set by the /events/[slug]
-  // redirect page). If it matches an arm, open it in expanded mode.
+  // On mount, open the initial event's panel — from the /events/[slug] server
+  // route (initialShowSlug) or the legacy ?show= fallback (old links). If it
+  // matches an arm, open it in expanded mode.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const slug = params.get('show')
+    const slug = initialShowSlug ?? params.get('show')
     if (!slug) return
     const idx = arms.findIndex((a) => a.slug === slug)
     if (idx < 0) return

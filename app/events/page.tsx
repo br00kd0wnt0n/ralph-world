@@ -9,10 +9,12 @@ export const metadata: Metadata = {
   title: 'Events',
   description:
     'Ralph does things in rooms. Screenings, parties, panels, and the occasional pop-up.',
+  alternates: { canonical: '/events' },
   openGraph: {
     title: 'Ralph Events',
     description:
       'Screenings, parties, panels, and the occasional pop-up.',
+    url: '/events',
   },
 }
 

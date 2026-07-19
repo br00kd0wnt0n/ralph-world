@@ -32,7 +32,7 @@ export default function RouteError({
           homepage.
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <Button label="Try again" onClick={() => reset()} filled pink />
+          <Button label="Try again" onClick={() => reset()} filled />
           <Button label="Go home" href="/" />
         </div>
         {error.digest && (

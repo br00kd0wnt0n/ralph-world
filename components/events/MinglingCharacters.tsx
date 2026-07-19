@@ -917,16 +917,16 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
 
           const { left } = getArmPosition(i)
           // When ANY arm is expanded, non-expanded arms slide down out of
-          // view. The expanded arm centers horizontally (left: 50%).
-          const isThisActive = activeArm === i
-          const effectiveLeft = isThisExpanded ? 50 : isThisActive ? 48 : left
+          // view. The expanded arm centers horizontally (left: 50%). While
+          // just active (mini panel open), every arm — including the clicked
+          // one — uses its coordinated getArmPosition value so they bunch in
+          // space together.
+          const effectiveLeft = isThisExpanded ? 50 : left
           const verticalOffset = isExpanded
             ? isThisExpanded
               ? 50              // active arm drops 50px to nest under the expanded panel
               : arm.height + 100 // others slide all the way off-screen
-            : isThisActive
-              ? 25             // selected (brief panel): drop a little so it obscures the panel less
-              : 0
+            : 0
 
           return (
             // Desktop: the arm is the trigger that opens the event's mini panel,

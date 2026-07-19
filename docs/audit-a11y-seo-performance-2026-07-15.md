@@ -32,6 +32,8 @@ Every point is tagged with the standard it satisfies:
 ## Progress log
 *Running tally of what's shipped, newest first. Full detail against each item inline below.*
 
+- **2026-07-19 (Phase 4)** — **Perf deep cuts (mostly done).** ✅ `experimental.optimizePackageImports` (framer-motion + swiper). ✅ Deleted unused per-frame sprite folders (2.6 MB) — sprites use the packed sheets. ✅ Removed unused `@stripe/stripe-js` (**hls.js kept** — used by `useHls`; audit note was stale). ✅ **AA contrast**: black text on pink site-wide (WCAG 1.4.3). ✅ Confirmed large PNGs (article_lead, planets) are already optimised via `next/image` local-guarded pattern — no re-encode needed. **Deferred:** swiper Footer lazy-load (needs panel extraction), re-spriting the 13k-wide sheets (art change), Roboto weight trim (all four used).
+
 - **2026-07-19 (Phase 2)** — **Phase 2 COMPLETE (Reduced-motion & focus).** ✅ **Global reduced-motion** (#3): CSS blanket rule + per-canvas gates (CanvasStage/Midground/Foreground/Starfield) + `useParallax` flatten + `<MotionConfig reducedMotion="user">` + instant page transitions. ✅ **Starfield** hidden-tab pause (`visibilitychange`). ✅ **Events overlay** un-`aria-hidden`ed + arms/cards are labelled buttons + expanded panel is a focus-trapped `role="dialog"` with Escape. ✅ **MobileMenu** focus trap + Escape + dialog role. ✅ **ProductOverlay** focus trap + dialog role. ✅ **`<header>` banner** landmark around the nav. ✅ **h1s**: `/tv`, `/join-ralph`, home (+ section titles → `<h2>`); `MobileHome` confirmed dead code. ✅ **PlanetSection** fake `div role=link` → real links (CTA + sr-only planet-only link). ✅ **TVStatic** `aria-hidden` + **TV countdown** announces only at milestones.
 
 - **2026-07-19 (batch 2)** — **Phase 1 substantially complete.** ✅ **CanvasStage mobile+theme gate** (#4): `cosy-dynamics` + `matchMedia('(min-width:768px)')` gate + `hidden md:block` — no full-viewport paint on phones. ✅ **Skip link + `<main id>`** (#10): visually-hidden "Skip to content" link (first focusable) targets `#main-content`. ✅ **Home metadata** + canonical (`app/page.tsx`, `absolute` title). ✅ **`/work-with-us`** title/description de-staled ("Play with Ralph" → "Work with Us") + canonical. ✅ **noindex auth pages**: `/login`, `/account` (metadata) + `/reset-password` (new thin server `layout.tsx`, since the page is a client component). ✅ **Branded `not-found.tsx`** (404, noindex, home/magazine CTAs). ✅ **Reciprocal hreflang**: `/contact` ↔ `/jp/contact` now a consistent cluster (fixed jp's `en` from `/` → `/contact`). ✅ **`aria-current="page"`** on active nav links (both desktop nav rows + MobileMenu Worlds). ✅ **Gooper Trial preload** (`<link rel=preload>` in `<head>`). ✅ **Alt fixes**: cart thumbnail falls back to product title; Globe frames `alt=""` + `aria-hidden`. **Remaining Phase 1:** only the deferred broadcaster/TV thumbnails (see #2).
@@ -171,7 +173,7 @@ Every point is tagged with the standard it satisfies:
 
 | Sev | Risk | Where |
 |-----|------|-------|
-| 🔴 | White on ralph-pink `#EA128B` (~3.9:1) fails AA for normal text | filled pink buttons/badges (`Button.tsx:74`, login CTAs, account avatar) |
+| 🔴 | ✅ White on ralph-pink `#EA128B` (~3.9:1) fails AA for normal text — *done 07-19: text switched to BLACK on all pink surfaces site-wide (ui/Button filled, shop/nav/account/legal/tv/lab/magazine/jp/events + login). Hover states already black.* | filled pink buttons/badges (`Button.tsx`, login CTAs, account avatar) |
 | 🟡 | Pink `#EA128B` on black (~4.3:1) borderline for small text | nav links, mobile menu links |
 | 🟡 | `text-white/70`, `text-white/60` small print | Footer, LoginForm muted text |
 | 🟡 | `placeholder-gray-500` / `placeholder-black/40` (also the only label, §2c) | Footer/Join Ralph inputs |
@@ -190,8 +192,9 @@ Every point is tagged with the standard it satisfies:
 | 🟡 | **Five** `planet_*.png` (822px, 116–172 KB) often rendered smaller. **[verified 07-18]** Was "six" — the sixth conflated `planet_creative.png` (next row). | `[Perf: weight/CLS]` | `public/imgs/planet_{events,lab,mag,shop,tv}.png` | Already partly `next/image`; finish + they'll resize/AVIF. |
 | 🟡 | `planet_creative.png` is 1500×1486 | `[Perf: weight]` | `public/imgs/planet_creative.png` | Resize to display size. |
 | 🟡 | Remaining local raster raw `<img>` (hero text, footer planet, event chars). **[verified 07-18]** Removed "wordmark" — `Nav.tsx` already uses `next/image` for the wordmark (its raw `<img>` is the basket icon). | `[Perf: LCP/CLS]` | `Hero.tsx`, `FooterPlanet.tsx`, `MinglingCharacters.tsx` | Move to `next/image` where layout allows (local-guarded pattern already used in `PlanetSection`). |
-| 🟡 | Oversized sprite sheets decode huge in memory: `saucer.png` 13464×246 (~13 MB RGBA), `satellite.png` 10528×282 (~12 MB) | `[Perf: memory/CPU]` | `public/animations/` | Consider fewer frames / smaller cells / on-demand. |
-| ⚪ | Duplicate assets: both packed sheet **and** per-frame folders shipped (`satelite/` 1016K, `saucer/` 584K, `got-coin/` 404K) | `[Perf: deploy weight]` | `public/animations/*/` | Remove the unused per-frame folders from the deployed bundle. |
+| 🟡 | ☐ Oversized sprite sheets decode huge in memory: `saucer.png` 13464×246 (~13 MB RGBA), `satellite.png` 10528×282 (~12 MB) — **deferred:** needs the art re-sprited (fewer frames / smaller cells), not a code change. | `[Perf: memory/CPU]` | `public/animations/` | Consider fewer frames / smaller cells / on-demand. |
+| ⚪ | ✅ Duplicate assets: both packed sheet **and** per-frame folders shipped — *done 07-19: deleted all unused per-frame folders (2.6 MB); sprites load from the packed sheets* | `[Perf: deploy weight]` | `public/animations/*/` | Remove the unused per-frame folders from the deployed bundle. |
+| ⚪ | ✅/n-a Large PNGs (article_lead, planets) — **[verified 07-19]** rendered via `next/image` (local-guarded `startsWith('/')` pattern) → optimizer already serves resized AVIF/WebP; source size is not user-facing. No re-encode needed. | `[Perf: LCP/weight]` | magazine/home | — |
 
 ### 3b. Animations / runtime
 | Sev | Item | Fixes | File | Fix |
@@ -204,14 +207,14 @@ Every point is tagged with the standard it satisfies:
 | Sev | Item | Fixes | File | Fix |
 |-----|------|-------|------|-----|
 | 🟡 | ✅ Gooper Trial (`@font-face`) not preloaded though used above the fold — *done 07-19: `<link rel=preload as=font crossorigin>` for the woff2 in `<head>`* | `[Perf: LCP (FOUT)]` | `app/layout.tsx`, `app/globals.css` | `<link rel="preload" as="font" ... crossorigin>` for the woff2. |
-| 🟡 | Roboto ships 4 weights (400/600/700/800) | `[Perf: weight]` | `app/layout.tsx:26-30` | Drop any unused weight. |
+| 🟡 | ☐ Roboto ships 4 weights (400/600/700/800) — **deferred:** all four map to design tokens (body 400/600, chrome 700, tag 800); trimming risks a missing-weight fallback. Left as-is. | `[Perf: weight]` | `app/layout.tsx` | Drop any unused weight. |
 
 ### 3d. Bundle / client JS
 | Sev | Item | Fixes | Fix |
 |-----|------|-------|-----|
-| 🟡 | `Footer.tsx` (client, imports **swiper**) is in the root layout → swiper+framer ship on every page | `[Perf: TBT/INP + weight]` | Lazy-load the swiper panel (`next/dynamic`), or split the contact/offices panel out. |
-| 🟡 | framer-motion in 31 files, swiper static-imported in 4 | `[Perf: TBT/INP + weight]` | Add `experimental.optimizePackageImports: ['framer-motion','swiper']`; dynamic-import swiper carousels. |
-| ⚪ | `hls.js` dep with no import found; `@stripe/stripe-js` never `loadStripe`d | `[Perf: weight]` | Confirm dead → remove from deps. |
+| 🟡 | ☐ `Footer.tsx` (client, imports **swiper**) is in the root layout → swiper ships on every page — **deferred:** dynamic-importing it means extracting the panel (form state + offices) into its own component; higher risk. `optimizePackageImports` (below) tree-shakes it in the meantime. | `[Perf: TBT/INP + weight]` | Lazy-load the swiper panel (`next/dynamic`), or split the contact/offices panel out. |
+| 🟡 | ✅ framer-motion in 31 files, swiper static-imported in 4 — *done 07-19: added `experimental.optimizePackageImports: ['framer-motion','swiper']`* | `[Perf: TBT/INP + weight]` | Add `experimental.optimizePackageImports: ['framer-motion','swiper']`; dynamic-import swiper carousels. |
+| ⚪ | ✅/corrected `@stripe/stripe-js` removed (unused). **[verified 07-19]** `hls.js` is **KEPT** — it IS used (`hooks/useHls.ts` → HomepageTvTeaser + LivePlayer); the audit's "unused" note was stale. | `[Perf: weight]` | Confirm dead → remove from deps. |
 
 ### 3f. Core Web Vitals (CLS / LCP)
 | Sev | Item | Fixes | File | Fix |
@@ -256,7 +259,7 @@ Legend: ✅ ok · ⚠️ needs work.
 - **Phase 1 — Quick wins (S, ~½–1 day): ✅ COMPLETE (07-19)** — one item deferred. Shipped: ✅ favicon set + web manifest + `theme-color` (#1); ✅ CanvasStage mobile gate (#4); ✅ sitemap fix + remove `/play` (#8) + robots `/reset-password`; ✅ skip link + `<main id>` (#10); ✅ `/work-with-us` + home metadata (+ canonicals); ✅ noindex auth pages; ✅ branded `not-found.tsx`; ✅ reciprocal hreflang on `/contact`↔`/jp/contact`; ✅ `aria-current`; ✅ Gooper preload; ✅ cart/globe alt fixes. ⏳ **Deferred:** `remotePatterns`/next-image for **broadcaster/TV thumbnails** only (Shopify done; broadcaster host must be confirmed at runtime first — #2).
 - **Phase 2 — Reduced-motion & focus (M): ✅ COMPLETE (07-19)** — global `prefers-reduced-motion` (CSS + framer MotionConfig + canvases + Starfield visibility guard + parallax) (#3), MobileMenu focus trap/Escape/dialog (#5), ProductOverlay + event-overlay focus/dialog, `<header>` landmark, TV/join-ralph/home h1s + heading order, PlanetSection real links, TVStatic aria-hidden + TV countdown throttle.
 - **Phase 3 — Forms & content SEO (M/L):** Footer + Join Ralph labels/aria-live (#9), dynamic metadata + canonical for article/event/product (#6), JSON-LD (#7), per-route OG images.
-- **Phase 4 — Perf deep cuts (M):** re-encode remaining large PNGs to WebP/AVIF, drop duplicate per-frame sprite folders, lazy-load swiper/Footer panel, `optimizePackageImports`, trim unused deps/font weights, contrast fixes after measurement.
+- **Phase 4 — Perf deep cuts (M): ✅ mostly done (07-19)** — ✅ `optimizePackageImports` (framer-motion/swiper); ✅ dropped duplicate per-frame sprite folders (2.6 MB); ✅ removed unused `@stripe/stripe-js` (hls.js kept — it's used); ✅ AA contrast (black text on pink) site-wide; ✅ large PNGs already optimised via `next/image` (no re-encode needed). **Deferred:** lazy-load swiper/Footer (needs panel extraction), re-sprite the oversized sheets (art change), trim Roboto weights (all in use).
 
 ## 6. Verification
 - **Lighthouse** (mobile + desktop) on `/`, `/magazine`, `/shop`, an article, `/tv` — target ≥95 SEO/Best-Practices, ≥90 Perf, ≥95 A11y; compare before/after.

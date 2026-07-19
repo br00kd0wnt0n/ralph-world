@@ -45,6 +45,20 @@ criterion + level / SEO purpose / Core Web Vital).
   `div role=link` → real links; TVStatic `aria-hidden`; TV countdown
   announces only at 60s/30s/10s.
 
+### Audit Phase 4 — perf deep cuts (commits 9170668, 55fd0d7)
+- **Bundle**: `experimental.optimizePackageImports` for framer-motion +
+  swiper.
+- **Assets**: deleted the unused per-frame sprite folders under
+  `public/animations` (2.6 MB) — sprites load from the packed sheets.
+- **Deps**: removed unused `@stripe/stripe-js` (client). `hls.js` kept —
+  it's used by `hooks/useHls.ts` (audit's "unused" note was stale).
+- **Contrast (WCAG 1.4.3)**: black text on pink site-wide (buttons,
+  badges, active pills, account avatar) — white-on-`#EA128B` failed AA.
+- Confirmed the large PNGs (article_lead, planets) are already optimised
+  via `next/image` (local-guarded pattern) — no re-encode needed.
+- Deferred: swiper Footer lazy-load (needs panel extraction), re-spriting
+  the oversized sheets (art change), Roboto weight trim (all four used).
+
 ### UI polish
 - **Footer** contact/offices panel (commit e296e7b): mobile panel is now
   in normal flow (single page scroll, no nested scroll); opens scrolled so

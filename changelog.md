@@ -4,6 +4,67 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-19 — A11y/SEO/Perf audit Phases 1 & 2 + UI polish
+
+Implemented the first two phases of the pre-launch audit
+(`docs/audit-a11y-seo-performance-2026-07-15.md`) and a batch of related
+UI polish. The audit doc is kept as the living record — every item has a
+✅/⏳ status, a Progress log, and a tag for the standard it fixes (WCAG
+criterion + level / SEO purpose / Core Web Vital).
+
+### Audit Phase 1 — perf/SEO/a11y quick wins (commit 693b2b6)
+- **Favicon set**: replaced the 420 KB PNG favicon with
+  `app/{favicon.ico,icon.png,apple-icon.png}` + `public/{icon-192,icon-512,
+  icon-maskable-512}.png`; added `public/manifest.webmanifest` +
+  `theme-color`. Tab now loads ~15 KB instead of 426 KB.
+- **Images**: `next.config.ts` `remotePatterns` (cdn.shopify.com +
+  picsum.photos); 4 Shopify `<img>` → `next/image`. CanvasStage gated to
+  cosy-dynamics + `min-width:768px`. (Broadcaster/TV thumbnails deferred —
+  presigned host unconfirmed.)
+- **SEO**: async `sitemap.ts` (article/event/product URLs, dropped dead
+  `/play`); `robots.ts` noindex `/reset-password`; home + `/work-with-us`
+  metadata + canonicals; noindex on `/login`/`/account`/`/reset-password`;
+  branded `not-found.tsx`; reciprocal hreflang `/contact` ↔ `/jp/contact`.
+- **A11y**: skip link + `<main id>`; `aria-current` on active nav links;
+  cart/globe alt fixes; Gooper font preload.
+- Nav: +20px bottom gap on desktop (≥1200) + tablet (≥767) nav rows so
+  active-item underlines clear the page content.
+
+### Audit Phase 2 — reduced-motion & focus (commit ac11ddd)
+- **Reduced-motion (WCAG 2.2.2/2.3.3)**: CSS blanket rule + per-canvas
+  gates (CanvasStage/Midground/Foreground/Starfield) + `useParallax`
+  flatten + `<MotionConfig reducedMotion="user">` + instant page
+  transitions.
+- **Starfield** pauses its rAF on hidden tab (`visibilitychange`).
+- **Focus/dialogs**: events overlay taken out of `aria-hidden` (arms/cards
+  are labelled buttons; expanded panel is a focus-trapped `role="dialog"`
+  with Escape); MobileMenu + ProductOverlay focus trap + Escape + dialog
+  role.
+- **Landmarks/headings**: `<header>` banner around the nav; h1s on `/tv`,
+  `/join-ralph`, home (section titles → h2); PlanetSection fake
+  `div role=link` → real links; TVStatic `aria-hidden`; TV countdown
+  announces only at 60s/30s/10s.
+
+### UI polish
+- **Footer** contact/offices panel (commit e296e7b): mobile panel is now
+  in normal flow (single page scroll, no nested scroll); opens scrolled so
+  the form top sits under the collapsed header; close button aligned to the
+  content padding. Home FooterPlanet: 84px bottom clearance < 768 so the
+  tagline clears the footer globe.
+- **Login** (commit e296e7b): white panel, Gooper "Sign in to Ralph",
+  brand shadow buttons (white Google / pink primary with **black** text for
+  AA contrast), inputs matched to the Join Ralph fields, footer-clearing
+  bottom padding.
+- **Home planet panels** (commit 4e96866): stay hidden until the planet
+  image loads then open only on hover/tap (removed the load-time "peek"
+  sliver); two-column panels now extend down to 1100px (280px columns in
+  the 1100–1199 band).
+- **Magazine** grid `pb-12`; images site-wide `user-select:none` +
+  `-webkit-user-drag:none` so selecting text no longer grabs images
+  (commit cb45d6f).
+
+---
+
 ## 2026-07-17 — Events page: mobile expanded card polish
 
 Frontend polish of the events "arm" info cards, all in

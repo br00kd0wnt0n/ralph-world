@@ -9,13 +9,13 @@ interface FooterPlanetProps {
 export default function FooterPlanet({ tagline = 'The Entertainment People' }: FooterPlanetProps) {
   return (
     <div
-      className="relative flex justify-center overflow-hidden pt-[100px] min-[576px]:pt-[120px] md:pt-[180px] pb-[24px] min-[576px]:pb-0"
+      className="relative flex justify-center overflow-hidden pt-[100px] min-[576px]:pt-[120px] md:pt-[180px] pb-[84px] md:pb-0"
       style={{ marginBottom: -1 }}
     >
-      {/* White panel filling the 24px gap below the planet on < 576px.
-          Removed on larger viewports where padding-bottom is 0. */}
+      {/* White panel filling the gap below the planet on < 768px so the tagline
+          clears the footer globe. Removed at md+ where padding-bottom is 0. */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-[24px] bg-white min-[576px]:hidden pointer-events-none"
+        className="absolute bottom-0 left-0 right-0 h-[84px] bg-white md:hidden pointer-events-none"
         aria-hidden="true"
       />
 

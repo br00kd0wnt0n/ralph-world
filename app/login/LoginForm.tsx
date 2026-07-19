@@ -1,9 +1,46 @@
 'use client'
 
-import { useActionState, useState, useTransition } from 'react'
+import { useActionState, useState, useTransition, type ReactNode } from 'react'
 import Link from 'next/link'
 import { signinWithCredentials, signupAction } from './actions'
 import type { SigninResult, SignupResult } from './actions'
+
+/**
+ * Full-width shadow button matching the brand `Button` component: an offset
+ * black shadow behind a bordered button that presses toward it (`.btn-press`).
+ * `variant`: white (Google) or pink (primary CTA). Gooper type throughout.
+ */
+function ShadowButton({
+  children,
+  variant = 'pink',
+  type = 'submit',
+  disabled = false,
+}: {
+  children: ReactNode
+  variant?: 'white' | 'pink'
+  type?: 'button' | 'submit'
+  disabled?: boolean
+}) {
+  const isPink = variant === 'pink'
+  return (
+    <div className="relative w-full">
+      <div
+        className="absolute inset-0 translate-x-1 translate-y-1 bg-black"
+        aria-hidden="true"
+      />
+      <button
+        type={type}
+        disabled={disabled}
+        className={`${disabled ? '' : 'btn-press'} relative w-full flex items-center justify-center gap-3 border-2 border-black py-3 text-base disabled:opacity-60 disabled:cursor-not-allowed ${
+          isPink ? 'bg-ralph-pink text-black' : 'bg-white text-black'
+        }`}
+        style={{ fontFamily: "var(--font-intro, 'Gooper Trial'), serif", fontWeight: 600 }}
+      >
+        {children}
+      </button>
+    </div>
+  )
+}
 
 interface Props {
   callbackUrl: string
@@ -44,16 +81,16 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
   >(signupAction, null)
 
   return (
-    <div className="bg-surface/80 backdrop-blur border border-border/50 rounded-2xl p-6">
+    <div className="bg-white rounded-2xl px-6 py-12 text-black">
       {/* URL-driven banner (verify=ok, verify=error, ?error=…) */}
       {banner && (
         <div
           className={`mb-4 rounded-lg p-3 text-sm border ${
             banner.tone === 'success'
-              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
               : banner.tone === 'error'
-              ? 'bg-red-500/20 border-red-500/40 text-red-300'
-              : 'bg-sky-500/15 border-sky-500/40 text-sky-200'
+              ? 'bg-red-50 border-red-300 text-red-700'
+              : 'bg-sky-50 border-sky-300 text-sky-800'
           }`}
           role="status"
         >
@@ -69,11 +106,7 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
           })
         }}
       >
-        <button
-          type="submit"
-          disabled={isGooglePending}
-          className="w-full flex items-center justify-center gap-3 rounded-full bg-white py-3 text-black font-medium hover:bg-white/90 transition-colors disabled:opacity-60"
-        >
+        <ShadowButton variant="white" type="submit" disabled={isGooglePending}>
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -81,40 +114,43 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
           </svg>
           {isGooglePending ? 'Opening Google…' : 'Continue with Google'}
-        </button>
+        </ShadowButton>
       </form>
 
       {/* divider */}
       <div className="flex items-center my-5">
-        <div className="flex-1 h-px bg-border/60" />
-        <span className="px-3 text-xs uppercase tracking-widest text-muted">or</span>
-        <div className="flex-1 h-px bg-border/60" />
+        <div className="flex-1 h-px bg-black/15" />
+        <span className="px-3 text-xs uppercase tracking-widest text-black/50">or</span>
+        <div className="flex-1 h-px bg-black/15" />
       </div>
 
       {/* Mode toggle */}
-      <div className="flex rounded-full bg-background/60 border border-border/40 p-1 mb-4 text-sm">
+      <div className="flex rounded-lg border-2 border-black p-1 mb-4 text-sm">
         <button
           type="button"
           onClick={() => setMode('signin')}
-          className={`flex-1 py-1.5 rounded-full transition-colors ${
+          className={`flex-1 py-1.5 rounded-md transition-colors ${
             mode === 'signin'
-              ? 'bg-ralph-pink text-white font-medium'
-              : 'text-secondary hover:text-primary'
+              ? 'bg-ralph-pink text-black font-medium'
+              : 'text-black/60 hover:text-black'
           }`}
+          style={{ fontFamily: "var(--font-intro, 'Gooper Trial'), serif", fontWeight: 600 }}
         >
           Sign in
         </button>
         <button
           type="button"
           onClick={() => setMode('signup')}
-          className={`flex-1 py-1.5 rounded-full transition-colors ${
+          className={`flex-1 py-1.5 rounded-md transition-colors ${
             mode === 'signup'
-              ? 'bg-ralph-pink text-white font-medium'
-              : 'text-secondary hover:text-primary'
+              ? 'bg-ralph-pink text-black font-medium'
+              : 'text-black/60 hover:text-black'
           }`}
+          style={{ fontFamily: "var(--font-intro, 'Gooper Trial'), serif", fontWeight: 600 }}
         >
           Create account
         </button>
+
       </div>
 
       {/* SIGN IN */}
@@ -136,21 +172,19 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
             required
           />
           {signinState && !signinState.ok && (
-            <p className="text-sm text-red-300" role="alert">
+            <p className="text-sm text-red-600" role="alert">
               {signinState.message ?? 'Couldn’t sign in.'}
             </p>
           )}
-          <button
-            type="submit"
-            disabled={signinPending}
-            className="w-full rounded-full bg-ralph-pink text-white py-3 font-medium hover:bg-ralph-pink/90 transition-colors disabled:opacity-60"
-          >
-            {signinPending ? 'Signing in…' : 'Sign in'}
-          </button>
+          <div className="pt-1">
+            <ShadowButton type="submit" disabled={signinPending}>
+              {signinPending ? 'Signing in…' : 'Sign in'}
+            </ShadowButton>
+          </div>
           <div className="text-center">
             <Link
               href="/reset-password"
-              className="text-xs text-muted hover:text-secondary transition-colors"
+              className="text-xs text-black/50 hover:text-black transition-colors"
             >
               Forgot your password?
             </Link>
@@ -185,27 +219,25 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
           {signupState && (
             <p
               className={`text-sm ${
-                signupState.ok ? 'text-emerald-300' : 'text-red-300'
+                signupState.ok ? 'text-emerald-700' : 'text-red-600'
               }`}
               role={signupState.ok ? 'status' : 'alert'}
             >
               {signupState.message}
             </p>
           )}
-          <button
-            type="submit"
-            disabled={signupPending}
-            className="w-full rounded-full bg-ralph-pink text-white py-3 font-medium hover:bg-ralph-pink/90 transition-colors disabled:opacity-60"
-          >
-            {signupPending ? 'Creating account…' : 'Create account'}
-          </button>
-          <p className="text-xs text-muted text-center">
+          <div className="pt-1">
+            <ShadowButton type="submit" disabled={signupPending}>
+              {signupPending ? 'Creating account…' : 'Create account'}
+            </ShadowButton>
+          </div>
+          <p className="text-xs text-black/50 text-center">
             We’ll email you a link to verify your address before you can sign in.
           </p>
         </form>
       )}
 
-      <p className="text-muted text-xs mt-6 text-center">
+      <p className="text-black/50 text-xs mt-6 text-center">
         By {mode === 'signin' ? 'signing in' : 'creating an account'}, you
         agree to Ralph’s Terms and Privacy Policy.
       </p>
@@ -225,7 +257,7 @@ interface FieldProps {
 function Field({ label, name, type, autoComplete, required, hint }: FieldProps) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-widest text-muted mb-1">
+      <span className="block text-xs uppercase tracking-widest text-black/60 mb-1">
         {label}
       </span>
       <input
@@ -233,9 +265,18 @@ function Field({ label, name, type, autoComplete, required, hint }: FieldProps) 
         type={type}
         autoComplete={autoComplete}
         required={required}
-        className="w-full rounded-lg bg-background/60 border border-border/40 px-3 py-2 text-primary text-sm focus:outline-none focus:border-ralph-pink/60 transition-colors"
+        className="w-full bg-gray-200 px-4 placeholder-black/40 focus:outline-none focus:ring-2 focus:ring-ralph-pink/40"
+        style={{
+          height: 43,
+          borderRadius: 8,
+          color: 'black',
+          fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+          fontWeight: 600,
+          fontSize: 16,
+          lineHeight: 1,
+        }}
       />
-      {hint && <span className="block text-xs text-muted mt-1">{hint}</span>}
+      {hint && <span className="block text-xs text-black/50 mt-1">{hint}</span>}
     </label>
   )
 }

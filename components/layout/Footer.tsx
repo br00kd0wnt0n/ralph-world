@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperType } from 'swiper'
@@ -85,7 +85,26 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   // translateY(0), revealing the offices/contact-form panel above.
   const [panelOpen, setPanelOpen] = useState(false)
   const swiperRef = useRef<SwiperType | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
   const [activeSlide, setActiveSlide] = useState(0)
+
+  // Bring the expanded panel into view after opening. On mobile the panel is
+  // in normal flow (it grows the page → single page scroll), so we scroll the
+  // form's top to just under the collapsed header. On desktop it's an overlay
+  // that scrolls internally, so we just scroll the page to the bottom.
+  const HEADER_OFFSET = 72 // collapsed mobile header height + a small gap
+  const scrollPanelIntoView = useCallback(() => {
+    window.setTimeout(() => {
+      const mobile = window.matchMedia('(max-width: 767px)').matches
+      if (mobile && panelRef.current) {
+        const top =
+          panelRef.current.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+      } else {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+      }
+    }, 60)
+  }, [])
 
   // Form state — simple controlled inputs. Wire to API later.
   const [enquiry, setEnquiry] = useState('')
@@ -103,10 +122,10 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
     const t = setTimeout(() => {
       swiperRef.current?.slideTo(slide, 0)
       setPanelOpen(true)
-      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+      scrollPanelIntoView()
     }, 540)
     return () => clearTimeout(t)
-  }, [footerRequest])
+  }, [footerRequest, scrollPanelIntoView])
 
   // Swiper is always mounted (the panel just collapses via height), so
   // both triggers slide to their slide and open the panel. When the
@@ -116,12 +135,14 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   function handleGlobeClick() {
     swiperRef.current?.slideTo(0, panelOpen ? undefined : 0)
     setPanelOpen(true)
+    scrollPanelIntoView()
   }
 
   function handleContactClick(e: React.MouseEvent) {
     e.preventDefault()
     swiperRef.current?.slideTo(1, panelOpen ? undefined : 0)
     setPanelOpen(true)
+    scrollPanelIntoView()
   }
 
   function handleClose() {
@@ -197,7 +218,10 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   }
 
   return (
-    <footer className="relative z-10">
+    // Mobile: flex column so the expandable panel (order-first) sits ABOVE the
+    // bar in normal flow — opening it grows the footer and the page scrolls
+    // (no nested panel scroll). Desktop: block, panel is an absolute overlay.
+    <footer className="relative z-10 flex flex-col md:block">
       {/* footer-top — always-visible bar. Globe + buttons. min-height 103
           on md+, grows on narrow viewports as the social row wraps under
           Contact us. Pink top border is the top edge of the whole footer
@@ -272,21 +296,21 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
           than pushing it. The footer's collapsed height stays at the
           bar's 103px in normal document flow. */}
       <motion.div
+        ref={panelRef}
         initial={false}
         animate={{ height: panelOpen ? 'auto' : 0 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="absolute left-0 right-0 bottom-full bg-black overflow-hidden"
+        className="order-first md:order-none relative md:absolute md:left-0 md:right-0 md:bottom-full bg-black overflow-hidden"
         style={{ borderTop: '4px solid #EA128B' }}
       >
-        {/* Close button — anchored to the panel (which spans the full
-            viewport width via left-0/right-0), so the right offset is
-            from the viewport edge, not the inner max-w-6xl container.
-            Sits above the scrollable content via z-10. Default + hover
-            states swap via the `group` parent and group-hover. */}
+        {/* Close button — its right inset mirrors the content container's left
+            padding (px-4 / px-6 / px-16) so it lines up with the "Contact" title.
+            Sits above the scrollable content via z-10. Default + hover states
+            swap via the `group` parent and group-hover. */}
         <button
           type="button"
           onClick={handleClose}
-          className="group absolute top-4 right-[calc(var(--spacing)*6)] w-12 h-12 z-10"
+          className="group absolute top-4 right-4 min-[420px]:right-6 md:right-16 w-12 h-12 z-10"
           aria-label="Close panel"
         >
           <img
@@ -303,10 +327,9 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
           />
         </button>
 
-        <div
-          className="overflow-y-auto"
-          style={{ maxHeight: 'calc(100svh - 103px)' }}
-        >
+        {/* Mobile: no cap → panel is as tall as the form (single page scroll).
+            Desktop: cap to the viewport and scroll internally (overlay). */}
+        <div className="md:overflow-y-auto md:max-h-[calc(100svh_-_103px)]">
           <div className="relative max-w-6xl mx-auto px-4 min-[420px]:px-6 md:px-16 py-12 pb-28 md:pb-12">
 
             <Swiper

@@ -110,7 +110,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 relative z-10">
+    <div className="min-h-screen flex items-center justify-center px-6 pb-[100px] relative z-10">
       <div className="max-w-sm w-full">
         <div className="flex flex-col items-center mb-8">
           <Image
@@ -121,7 +121,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             className="rounded-full mb-6"
             priority
           />
-          <h1 className="text-3xl font-bold text-primary mb-2 text-center">
+          <h1
+            className="text-3xl mb-2 text-center text-primary"
+            style={{ fontFamily: "var(--font-intro, 'Gooper Trial'), serif", fontWeight: 600 }}
+          >
             {initialMode === 'signup' ? 'Join Ralph' : 'Sign in to Ralph'}
           </h1>
           <p className="text-secondary text-sm text-center">

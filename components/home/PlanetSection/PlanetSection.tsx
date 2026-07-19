@@ -29,6 +29,9 @@ const PLANET_SIZE = 411
 const PANEL_HEIGHT = 276
 const PEEK_VISIBLE = 20
 const COLUMN_WIDTH = 340
+// Narrower columns used in the 1100–1199 band so two columns still fit beside
+// the 411px planet (full-width two columns need ~1215px).
+const COLUMN_WIDTH_NARROW = 280
 const PANEL_PADDING = 20
 const COLUMN_GAP = 20
 
@@ -86,7 +89,9 @@ export default function PlanetSection({
   const { isExiting } = useTransitionState()
 
   const [isActive, setIsActive] = useState(false)
-  const [isInView, setIsInView] = useState(false)
+  // True once the planet image has actually loaded — panels stay fully hidden
+  // until then so nothing flashes on page load.
+  const [planetLoaded, setPlanetLoaded] = useState(false)
   const [sectionWidth, setSectionWidth] = useState(0)
   const [planetCenterY, setPlanetCenterY] = useState(0)
   const [planetHeight, setPlanetHeight] = useState(0)
@@ -130,32 +135,26 @@ export default function PlanetSection({
       setPlanetHeight(pRect.height)
     }
     update()
-    // Re-measure when planet image loads (height changes)
+    // Re-measure + mark loaded when the planet image loads (height changes).
+    // If it's already cached/complete, the 'load' event won't fire — mark now.
     const img = planet.querySelector('img')
-    if (img) img.addEventListener('load', update)
+    const onLoad = () => {
+      update()
+      setPlanetLoaded(true)
+    }
+    if (img) {
+      if (img.complete && img.naturalWidth > 0) setPlanetLoaded(true)
+      else img.addEventListener('load', onLoad)
+    }
     const ro = new ResizeObserver(() => update())
     ro.observe(section)
     ro.observe(planet)
     return () => {
       ro.disconnect()
-      if (img) img.removeEventListener('load', update)
+      if (img) img.removeEventListener('load', onLoad)
     }
   }, [])
 
-  // Scroll-based peek
-  useEffect(() => {
-    const check = () => {
-      const el = sectionRef.current
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      const vh = window.innerHeight
-      const center = rect.top + rect.height / 2
-      setIsInView(center > vh * 0.05 && center < vh * 0.95)
-    }
-    window.addEventListener('scroll', check, { passive: true })
-    check()
-    return () => window.removeEventListener('scroll', check)
-  }, [])
 
   // Track mouse Y (always, lightweight)
   useEffect(() => {
@@ -215,7 +214,7 @@ export default function PlanetSection({
   // (carousel) column in that range — the title + copy + CTA in the
   // left column is enough on its own and the single-col panel
   // comfortably fits down to ~855px wide viewports.
-  const hasRoomForTwoColumns = sectionWidth === 0 || sectionWidth >= 1200
+  const hasRoomForTwoColumns = sectionWidth === 0 || sectionWidth >= 1100
 
   // Responsive planet size — must match the Tailwind classes on the
   // rendered <img>:
@@ -248,7 +247,11 @@ export default function PlanetSection({
   const hasMoreForward = carouselIndex + 2 < moduleCard.items.length
   const hasMoreBack = carouselIndex > 0
 
-  const panelState = isActive ? 'open' : isInView ? 'peek' : 'hidden'
+  // Panels stay fully hidden until the planet has loaded + the section is
+  // measured + transitions are armed, then open only on hover/tap. No "peek"
+  // sliver on load.
+  const panelReady = planetLoaded && sectionWidth > 0 && transitionsOn
+  const panelState = panelReady && isActive ? 'open' : 'hidden'
 
   const planetLeft = planetOnRight
     ? sectionWidth - sectionPadding - planetSize
@@ -257,14 +260,20 @@ export default function PlanetSection({
   // Panel = content width + half planet (the half that tucks behind the planet)
   const hasItems = moduleCard.items.length > 0
   // TV always shows preview; magazine + shop show carousel when items exist.
-  // Events + lab are single-column (left only). Two-column panel is also
-  // suppressed below 1200px viewport so the panel fits.
+  // Events + lab are single-column (left only). Two-column panel is
+  // suppressed below 1100px viewport so the panel fits.
   const hasRightColumn =
     hasRoomForTwoColumns &&
     (id === 'tv' || ((id === 'magazine' || id === 'shop') && hasItems))
+  // In the 1100–1199 band, narrow BOTH columns so two fit beside the planet.
+  // Single-column layouts keep the full width.
+  const columnWidth =
+    hasRightColumn && sectionWidth > 0 && sectionWidth < 1200
+      ? COLUMN_WIDTH_NARROW
+      : COLUMN_WIDTH
   const contentWidth = hasRightColumn
-    ? PANEL_PADDING * 2 + COLUMN_WIDTH * 2 + COLUMN_GAP
-    : PANEL_PADDING * 2 + COLUMN_WIDTH
+    ? PANEL_PADDING * 2 + columnWidth * 2 + COLUMN_GAP
+    : PANEL_PADDING * 2 + columnWidth
   const halfPlanet = planetSize / 2
   const panelWidth = contentWidth + halfPlanet
 
@@ -351,9 +360,9 @@ export default function PlanetSection({
             : 'none',
           pointerEvents: panelState === 'open' ? 'auto' : 'none',
           padding: PANEL_PADDING,
-          // Stay fully hidden until measured + transition-ready, so no partial
-          // panel flashes before the section is sized on load.
-          visibility: transitionsOn && sectionWidth > 0 ? 'visible' : 'hidden',
+          // Stay fully hidden until the planet has loaded + measured +
+          // transition-ready, so no partial panel flashes before load.
+          visibility: panelReady ? 'visible' : 'hidden',
         }}
         initial={false}
         animate={{
@@ -378,7 +387,7 @@ export default function PlanetSection({
           {/* Column 1: text — staggered reveal */}
           <motion.div
             className={`flex flex-col justify-between h-full shrink-0 ${!planetOnRight ? 'items-end text-right' : 'items-start text-left'}`}
-            style={{ width: COLUMN_WIDTH }}
+            style={{ width: columnWidth }}
             initial={false}
             animate={{
               opacity: panelState === 'open' ? 1 : 0,
@@ -420,7 +429,7 @@ export default function PlanetSection({
           {id === 'tv' && hasRightColumn && (
             <motion.div
               className="flex flex-col shrink-0"
-              style={{ width: COLUMN_WIDTH }}
+              style={{ width: columnWidth }}
               initial={false}
               animate={{
                 opacity: panelState === 'open' ? 1 : 0,
@@ -457,7 +466,7 @@ export default function PlanetSection({
             return (
               <motion.div
                 className="flex flex-col shrink-0"
-                style={{ width: COLUMN_WIDTH }}
+                style={{ width: columnWidth }}
                 initial={false}
                 animate={{
                   opacity: panelState === 'open' ? 1 : 0,
@@ -550,7 +559,7 @@ export default function PlanetSection({
           {id !== 'tv' && id !== 'magazine' && id !== 'shop' && id !== 'events' && id !== 'lab' && hasItems && (
             <motion.div
               className="flex items-center gap-2 shrink-0"
-              style={{ width: COLUMN_WIDTH }}
+              style={{ width: columnWidth }}
               initial={false}
               animate={{
                 opacity: panelState === 'open' ? 1 : 0,

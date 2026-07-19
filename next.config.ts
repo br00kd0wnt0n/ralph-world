@@ -43,6 +43,18 @@ const nextConfig: NextConfig = {
   images: {
     // Prefer AVIF (falls back to WebP, then the original) for next/image.
     formats: ['image/avif', 'image/webp'],
+    // Hosts allowed through the next/image optimizer.
+    //  - cdn.shopify.com: all Storefront product images.
+    //  - picsum.photos: dev/mock product images (lib/shopify/mock.ts) used when
+    //    Shopify env vars aren't configured.
+    // NOTE: Broadcaster/Ralph TV thumbnails are backend-authored, likely
+    // presigned object-store URLs on a variable host — deliberately NOT added
+    // here; confirm the runtime host before optimizing those (they may be
+    // better left unoptimized due to TTL'd query strings).
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cdn.shopify.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+    ],
   },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]

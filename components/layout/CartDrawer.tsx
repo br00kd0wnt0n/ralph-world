@@ -115,7 +115,7 @@ export default function CartDrawer() {
                       {image && (
                         <img
                           src={image.url}
-                          alt={image.altText ?? ''}
+                          alt={image.altText ?? line.merchandise.product.title ?? ''}
                           className="w-full h-full object-cover"
                         />
                       )}

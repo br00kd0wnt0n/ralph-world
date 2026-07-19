@@ -1,8 +1,14 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth, signIn } from '@/lib/auth'
 import { LoginForm, type BannerState } from './LoginForm'
+
+export const metadata: Metadata = {
+  title: 'Log in',
+  robots: { index: false, follow: false },
+}
 
 interface LoginPageProps {
   searchParams: Promise<{

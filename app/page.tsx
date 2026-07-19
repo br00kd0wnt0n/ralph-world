@@ -5,8 +5,23 @@ import PlanetSection from '@/components/home/PlanetSection'
 import FooterPlanet from '@/components/home/FooterPlanet'
 import CanvasStage from '@/components/anim/CanvasStage'
 import type { ModuleCardData } from '@/components/home/PlanetSection'
+import type { Metadata } from 'next'
 
 export const revalidate = 60
+
+export const metadata: Metadata = {
+  // `absolute` bypasses the layout's "%s | Ralph" template on the home page.
+  title: { absolute: 'Ralph — The Entertainment People' },
+  description:
+    'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Ralph — The Entertainment People',
+    description:
+      'Pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
+    url: '/',
+  },
+}
 
 export default async function Home() {
   const [

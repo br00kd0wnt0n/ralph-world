@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { formatPrice } from '@/lib/shopify/format'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
@@ -110,10 +111,12 @@ export default function ProductOverlay({
               <div className="md:order-2">
                 <div className="aspect-square bg-white border border-gray-900 relative overflow-hidden">
                   {mainImage ? (
-                    <img
+                    <Image
                       src={mainImage.url}
                       alt={mainImage.altText ?? product.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted">
@@ -139,7 +142,13 @@ export default function ProductOverlay({
                           i === selectedImage ? 'border-ralph-green' : 'border-gray-300'
                         }`}
                       >
-                        <img src={img.url} alt="" className="w-full h-full object-cover" />
+                        <Image
+                          src={img.url}
+                          alt=""
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
                       </button>
                     ))}
                   </div>

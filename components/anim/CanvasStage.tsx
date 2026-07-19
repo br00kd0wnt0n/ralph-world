@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTheme } from '@/context/ThemeContext'
 import { registerTicker } from '@/lib/anim/sequencer'
 import { ANIMATIONS } from '@/lib/anim/animations'
 import { createSaucerShow } from '@/lib/anim/saucerShow'
@@ -54,6 +55,7 @@ interface Member {
  *  - saucer show: see lib/anim/saucerShow
  */
 export default function CanvasStage() {
+  const { theme } = useTheme()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   // Portal target only exists after mount (no document during SSR).
   const [mounted, setMounted] = useState(false)
@@ -61,6 +63,10 @@ export default function CanvasStage() {
 
   useEffect(() => {
     if (!mounted) return
+    // Match the other canvases: cosy-dynamics theme + desktop only. On phones
+    // the full-viewport per-frame paint isn't worth the battery/CPU.
+    if (theme !== 'cosy-dynamics') return
+    if (!window.matchMedia('(min-width: 768px)').matches) return
     const canvasEl = canvasRef.current
     if (!canvasEl) return
     const context = canvasEl.getContext('2d')
@@ -207,17 +213,19 @@ export default function CanvasStage() {
       stopTicker()
       window.removeEventListener('resize', resize)
     }
-  }, [mounted])
+  }, [mounted, theme])
 
   // Portalled to <body> so it escapes <main>'s stacking context and can paint
   // over the footer. z-40: above footer (z-10) + foreground (z-20), below the
   // nav / cart / cookie chrome (z-50+), so decorative sprites never cover UI.
-  if (!mounted) return null
+  if (!mounted || theme !== 'cosy-dynamics') return null
   return createPortal(
+    // `hidden md:block` keeps the canvas off the DOM paint path on mobile,
+    // complementing the effect's matchMedia gate (which stops the ticker).
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-40"
+      className="pointer-events-none fixed inset-0 z-40 hidden md:block"
     />,
     document.body,
   )

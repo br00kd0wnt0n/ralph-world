@@ -11,12 +11,13 @@ import { getSiteCopy } from '@/lib/data/site-copy'
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: 'Play with Ralph',
+  title: 'Work with Us',
   description:
-    'Work with Ralph — the agency arm. Campaigns, content, culture.',
+    'Work with Ralph — campaigns, content and culture from the Entertainment People.',
+  alternates: { canonical: '/work-with-us' },
   openGraph: {
-    title: 'Play with Ralph',
-    description: 'Work with Ralph. Campaigns, content, culture.',
+    title: 'Work with Ralph',
+    description: 'Campaigns, content and culture from the Entertainment People.',
   },
 }
 

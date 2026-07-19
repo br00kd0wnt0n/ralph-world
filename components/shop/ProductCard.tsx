@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { formatPrice } from '@/lib/shopify/format'
 import { useCart } from '@/context/CartContext'
@@ -51,10 +52,12 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
             224 × 306 at half scale. */}
         <div className="relative w-full" style={{ aspectRatio: '448 / 612' }}>
           {product.imageUrl ? (
-            <img
+            <Image
               src={product.imageUrl}
               alt={product.title}
-              className="absolute inset-0 w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 50vw, 224px"
+              className="object-cover"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-muted text-xs bg-gray-100">

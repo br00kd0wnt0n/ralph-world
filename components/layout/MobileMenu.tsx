@@ -283,7 +283,14 @@ export default function MobileMenu() {
               Worlds
             </h2>
             {WORLDS.map((item) => (
-              <Link key={item.href} href={item.href} onClick={() => handleNav(item.href)} className={linkClass} style={GOOPER}>
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => handleNav(item.href)}
+                aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
+                className={linkClass}
+                style={GOOPER}
+              >
                 {item.label}
               </Link>
             ))}

@@ -327,7 +327,9 @@ export default function Nav() {
           className="hidden min-[1200px]:flex flex-col items-center"
           style={{
             paddingTop: navFixed ? 0 : 16,
-            paddingBottom: navFixed ? 0 : 54,
+            // +20px vs the previous 54 so the active-item underlines (moved
+            // down from strike-throughs) clear the page content below.
+            paddingBottom: navFixed ? 0 : 74,
             transition: 'padding 0.3s ease-out',
           }}
         >
@@ -371,6 +373,7 @@ export default function Nav() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
                   className={`pointer-events-auto relative text-nav-link transition-colors ${
                     isActive
                       ? 'text-primary'
@@ -541,7 +544,9 @@ export default function Nav() {
             {/* Nav items - hidden on <767px, becomes fixed when scrolled */}
             <div
               className={`hidden min-[767px]:flex items-center justify-center w-full ${
-                navFixed ? 'fixed left-0 right-0' : ''
+                // +20px below the row (non-fixed only) so the active-item
+                // underlines clear the page content, matching desktop.
+                navFixed ? 'fixed left-0 right-0' : 'min-[767px]:mb-5'
               }`}
               style={{
                 height: 44,
@@ -557,6 +562,7 @@ export default function Nav() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-current={isActive ? 'page' : undefined}
                     className={`pointer-events-auto relative text-nav-link transition-colors ${
                       isActive
                         ? 'text-primary'

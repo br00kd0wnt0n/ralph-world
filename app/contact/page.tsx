@@ -5,6 +5,11 @@ import { getSiteCopy } from '@/lib/data/site-copy'
 export const metadata: Metadata = {
   title: 'Contact',
   description: 'Get in touch with the Ralph team.',
+  alternates: {
+    canonical: '/contact',
+    // Reciprocal hreflang cluster with the JP contact page.
+    languages: { en: '/contact', 'ja-JP': '/jp/contact' },
+  },
 }
 
 export default async function ContactPage() {

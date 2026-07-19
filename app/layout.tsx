@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Roboto } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
@@ -39,11 +39,10 @@ export const metadata: Metadata = {
   },
   description:
     'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
-  icons: {
-    icon: '/ralph-logo.png',
-    shortcut: '/ralph-logo.png',
-    apple: '/ralph-logo.png',
-  },
+  // Icons are auto-detected from app/favicon.ico, app/icon.png and
+  // app/apple-icon.png (Next file-based metadata). The PWA icon set
+  // (192/512 + maskable) is declared in public/manifest.webmanifest.
+  manifest: '/manifest.webmanifest',
   openGraph: {
     type: 'website',
     siteName: 'Ralph',
@@ -61,6 +60,11 @@ export const metadata: Metadata = {
   },
 }
 
+// theme-color drives the mobile browser chrome; black matches the site bg.
+export const viewport: Viewport = {
+  themeColor: '#000000',
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -76,7 +80,26 @@ export default async function RootLayout({
       data-theme="cosy-dynamics"
       className={`${playfair.variable} ${roboto.variable} h-full antialiased`}
     >
+      <head>
+        {/* Preload the above-the-fold display font (used by hero/titles/buttons)
+            so it isn't discovered late via the CSS @font-face. */}
+        <link
+          rel="preload"
+          href="/fonts/Gooper7-SemiBold.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="min-h-full flex flex-col">
+        {/* Skip link — first focusable element; jumps keyboard/SR users past
+            the nav straight to the page content. */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black focus:shadow-lg"
+        >
+          Skip to content
+        </a>
         <Providers>
           <PlanetPreloader />
           <Starfield />
@@ -86,7 +109,7 @@ export default async function RootLayout({
           </MenuFade>
           <BackgroundLayer />
           <PageShift>
-            <main className="flex-1 flex flex-col relative z-10">
+            <main id="main-content" className="flex-1 flex flex-col relative z-10">
               <PageTransitionWrapper>
                 {children}
               </PageTransitionWrapper>

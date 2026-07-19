@@ -6,7 +6,10 @@ export const metadata: Metadata = {
   description:
     'Ralph Creative Tokyo へのお問い合わせフォーム。ブランディング・キャンペーン・コンテンツ制作などのご相談を承ります。',
   alternates: {
-    languages: { 'ja-JP': '/jp/contact', en: '/' },
+    canonical: '/jp/contact',
+    // Must mirror /contact's cluster exactly (en → /contact, not home) so the
+    // hreflang return links are consistent.
+    languages: { en: '/contact', 'ja-JP': '/jp/contact' },
   },
 }
 

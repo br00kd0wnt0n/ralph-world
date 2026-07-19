@@ -73,7 +73,8 @@ export default function Globe() {
         <img
           key={`globe-${i}`}
           src={`/imgs/${src}`}
-          alt="Globe"
+          alt=""
+          aria-hidden="true"
           style={{
             display: src === currentGlobe ? 'block' : 'none',
             position: 'absolute',
@@ -89,7 +90,8 @@ export default function Globe() {
         <img
           key={`sign-${i}`}
           src={`/imgs/${src}`}
-          alt="Sign"
+          alt=""
+          aria-hidden="true"
           style={{
             display: src === currentSign ? 'block' : 'none',
             position: 'absolute',

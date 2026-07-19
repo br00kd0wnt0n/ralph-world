@@ -32,6 +32,8 @@ Every point is tagged with the standard it satisfies:
 ## Progress log
 *Running tally of what's shipped, newest first. Full detail against each item inline below.*
 
+- **2026-07-19 (Phase 3)** — **Forms & content SEO.** ✅ **Forms**: Footer contact + Join Ralph now have real (sr-only) labels + `aria-required` + `aria-live` (WCAG 1.3.1/3.3.2/4.1.3). ✅ **True content URLs (no query strings)**: `/shop/[handle]`, `/events/[slug]`, `/magazine/[slug]` now server-render the section shell with the item open (via `initial*` props) instead of redirecting — kept the pushState in-app UX (see `docs/true-urls-plan-2026-07-19.md`). ✅ **Per-item metadata + canonical** on all three (+ list-page canonicals). ✅ **JSON-LD**: Organization + WebSite (layout) + Product / Event / Article per item (paid article body never emitted server-side). ✅ **Per-item OG images** via `openGraph.images` (item image) on each route. Legacy `?read=`/`?product=`/`?show=` kept as fallbacks (old links / OAuth return). **Remaining:** BreadcrumbList JSON-LD (optional) + generated OG cards (optional); Level 2 server-rendered item body (optional, magazine paywall-aware).
+
 - **2026-07-19 (Phase 4)** — **Perf deep cuts (mostly done).** ✅ `experimental.optimizePackageImports` (framer-motion + swiper). ✅ Deleted unused per-frame sprite folders (2.6 MB) — sprites use the packed sheets. ✅ Removed unused `@stripe/stripe-js` (**hls.js kept** — used by `useHls`; audit note was stale). ✅ **AA contrast**: black text on pink site-wide (WCAG 1.4.3). ✅ Confirmed large PNGs (article_lead, planets) are already optimised via `next/image` local-guarded pattern — no re-encode needed. **Deferred:** swiper Footer lazy-load (needs panel extraction), re-spriting the 13k-wide sheets (art change), Roboto weight trim (all four used).
 
 - **2026-07-19 (Phase 2)** — **Phase 2 COMPLETE (Reduced-motion & focus).** ✅ **Global reduced-motion** (#3): CSS blanket rule + per-canvas gates (CanvasStage/Midground/Foreground/Starfield) + `useParallax` flatten + `<MotionConfig reducedMotion="user">` + instant page transitions. ✅ **Starfield** hidden-tab pause (`visibilitychange`). ✅ **Events overlay** un-`aria-hidden`ed + arms/cards are labelled buttons + expanded panel is a focus-trapped `role="dialog"` with Escape. ✅ **MobileMenu** focus trap + Escape + dialog role. ✅ **ProductOverlay** focus trap + dialog role. ✅ **`<header>` banner** landmark around the nav. ✅ **h1s**: `/tv`, `/join-ralph`, home (+ section titles → `<h2>`); `MobileHome` confirmed dead code. ✅ **PlanetSection** fake `div role=link` → real links (CTA + sr-only planet-only link). ✅ **TVStatic** `aria-hidden` + **TV countdown** announces only at milestones.
@@ -52,10 +54,10 @@ Every point is tagged with the standard it satisfies:
 | 3 | A11y | ✅ **No `prefers-reduced-motion`** anywhere (heavy canvas/parallax/framer) — *done 07-19: CSS blanket + per-canvas gates + useParallax + MotionConfig + page transitions (see §2a)* | `[WCAG 2.2.2 A / 2.3.3 AAA]` | 🔴 | M |
 | 4 | Perf | ✅ `CanvasStage` has **no mobile gating** — continuous full-viewport rAF paint on phones — *done 07-19: cosy-dynamics + `min-width:768px` gate + `hidden md:block`* | `[Perf: mobile CPU/battery]` | 🔴 | S |
 | 5 | A11y | ✅ **MobileMenu**: no focus trap, no Escape, no initial focus — *done 07-19: focus trap + Escape + dialog role* | `[WCAG 2.4.3 A / 4.1.2 A]` | 🔴 | M |
-| 6 | SEO | Dynamic routes (article/event/product) are **redirect stubs with no metadata** | `[SEO: indexation]` | 🔴 | M |
-| 7 | SEO | **No JSON-LD** structured data (Organization, Article, Product, Event) | `[SEO: rich results]` | 🔴 | M |
+| 6 | SEO | ✅ Dynamic routes (article/event/product) are **redirect stubs with no metadata** — *done 07-19: pretty routes now server-render + per-item metadata/canonical/OG; no query strings* | `[SEO: indexation]` | 🔴 | M |
+| 7 | SEO | ✅ **No JSON-LD** structured data (Organization, Article, Product, Event) — *done 07-19: Org+WebSite (layout) + Product/Event/Article (per item)* | `[SEO: rich results]` | 🔴 | M |
 | 8 | SEO | ✅ `sitemap.ts` is static, omits all content, lists a **dead `/play` URL** — *done 07-19: async, pulls articles/events/products, `/play` removed* | `[SEO: crawl]` | 🔴 | S |
-| 9 | A11y | **Placeholder-only form labels** (Footer contact, Join Ralph) | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.3 AA]` | 🔴 | M |
+| 9 | A11y | ✅ **Placeholder-only form labels** (Footer contact, Join Ralph) — *done 07-19: sr-only labels + aria-required + aria-live* | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.3 AA]` | 🔴 | M |
 | 10 | A11y | ✅ **No skip-to-content link** — *done 07-19: skip link + `<main id="main-content">`* | `[WCAG 2.4.1 A]` | 🟡 | S |
 
 ---
@@ -65,9 +67,9 @@ Every point is tagged with the standard it satisfies:
 ### 1a. Per-route metadata
 | Sev | Item | Fixes | File | Fix |
 |-----|------|-------|------|-----|
-| 🔴 | Magazine article route is a bare `redirect()` → `/magazine?read=slug`; no `generateMetadata`, so every article shares the site default title/desc/OG | `[SEO: indexation]` | `app/magazine/[slug]/page.tsx` | Add `generateMetadata` (per-article title, description, canonical, OG image). Render real content at the slug URL instead of redirecting, OR keep redirect but emit metadata + canonical first. |
-| 🔴 | Same pattern — no per-event metadata | `[SEO: indexation]` | `app/events/[slug]/page.tsx` | `generateMetadata` per event (name, date, location → also Event JSON-LD, §1d). |
-| 🔴 | Same pattern — no per-product metadata | `[SEO: indexation]` | `app/shop/[handle]/page.tsx` | `generateMetadata` per product (title, price, image → Product JSON-LD). |
+| 🔴 | ✅ Magazine article route was a bare `redirect()` — *done 07-19: renders MagazineClient with the overlay open (initialArticleSlug); `generateMetadata` (title/desc/canonical/OG/publishedTime) + Article JSON-LD; paid body stays client-gated* | `[SEO: indexation]` | `app/magazine/[slug]/page.tsx` | Add `generateMetadata` … render real content at the slug URL. |
+| 🔴 | ✅ per-event metadata — *done 07-19: `generateMetadata` + Event JSON-LD + `getEventBySlug`; renders EventsClient with the panel open* | `[SEO: indexation]` | `app/events/[slug]/page.tsx` | `generateMetadata` per event (name, date, location → Event JSON-LD). |
+| 🔴 | ✅ per-product metadata — *done 07-19: `generateMetadata` + Product JSON-LD (offers); renders ShopClient with the detail open (initialProduct)* | `[SEO: indexation]` | `app/shop/[handle]/page.tsx` | `generateMetadata` per product (title, price, image → Product JSON-LD). |
 | 🟡 | ✅ Home page exports no `metadata` (uses layout default only) — *done 07-19: title (`absolute`)/description/canonical/OG added* | `[SEO: indexation]` | `app/page.tsx` | Add home-specific title/description/canonical/OG. |
 | 🟡 | ✅ `/work-with-us` still titled "Play with Ralph" / "the agency arm" — *done 07-19: retitled "Work with Us" + copy + canonical* | `[SEO: indexation]` | `app/work-with-us/page.tsx` | Update title + description copy. |
 | ⚪ | ✅ `/login`, `/account`, `/reset-password` have no `robots:{index:false}` — *done 07-19: metadata on login/account; new server `layout.tsx` for the client reset-password page* | `[SEO: crawl control]` | those pages | Add noindex to auth pages (account/login already robots-disallowed; add reset-password). |
@@ -99,17 +101,17 @@ Every point is tagged with the standard it satisfies:
 ### 1d. Structured data (JSON-LD) — none exists
 | Sev | Item | Fixes | Fix |
 |-----|------|-------|-----|
-| 🔴 | No schema.org anywhere | `[SEO: rich results]` | Add: **Organization + WebSite** (root layout), **Article** (magazine article), **Product** + offers (shop), **Event** (events), **BreadcrumbList** (section→item). Emit via a small `<script type="application/ld+json">` component. |
+| 🔴 | ✅ No schema.org anywhere — *done 07-19: `<JsonLd>` component; Organization + WebSite (layout) + Article/Product/Event per item. BreadcrumbList still optional/outstanding.* | `[SEO: rich results]` | Add: **Organization + WebSite** (root layout), **Article** (magazine article), **Product** + offers (shop), **Event** (events), **BreadcrumbList** (section→item). Emit via a small `<script type="application/ld+json">` component. |
 
 ### 1e. Canonical / duplicate content
 | Sev | Item | Fixes | Fix |
 |-----|------|-------|-----|
-| 🔴 | Canonical content lives on query-string URLs (`/magazine?read=`, `/shop?product=`, `/events?show=`); pretty `[slug]` routes only redirect and set no canonical; content not in sitemap | `[SEO: canonical]` | Decide one canonical URL form (recommend the pretty `/magazine/[slug]` etc. rendering real content), set `alternates.canonical`, and put those in the sitemap. This resolves §1a + §1c together. |
+| 🔴 | ✅ Canonical content lived on query-string URLs — *done 07-19: pretty `[slug]`/`[handle]` routes now render real content + `alternates.canonical`; sitemap already lists them; content-item query strings are no longer generated (only read as legacy fallbacks). See `docs/true-urls-plan-2026-07-19.md`.* | `[SEO: canonical]` | Decide one canonical URL form (pretty routes) + `alternates.canonical` + sitemap. |
 
 ### 1f. OpenGraph images
 | Sev | Item | Fixes | Fix |
 |-----|------|-------|-----|
-| 🟡 | Single generic OG card for the whole site (`app/opengraph-image.tsx`); no per-article/product/event image, no `twitter-image` | `[SEO: social]` | Add dynamic per-route `opengraph-image.tsx` for magazine/shop/events (use the lead image or a generated card). |
+| 🟡 | ✅/⏳ Single generic OG card for the whole site — *done 07-19: each `[slug]` route sets `openGraph.images` to the item's own image (per-item OG). Generated branded cards + `twitter-image` still optional.* | `[SEO: social]` | Add dynamic per-route `opengraph-image.tsx` for magazine/shop/events (use the lead image or a generated card). |
 
 ### 1g. Headings (also A11y §5)
 | Sev | Item | Fixes | File | Fix |
@@ -145,8 +147,8 @@ Every point is tagged with the standard it satisfies:
 ### 2c. Forms
 | Sev | Item | Fixes | File | Fix |
 |-----|------|-------|------|-----|
-| 🔴 | Contact form: placeholder-only labels, `<select>` "label" is a disabled option, no `aria-live` feedback (submit only `console.log`s) | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.2 A / 4.1.3 AA]` | `components/layout/Footer.tsx:424-469` | Add real `<label>`s (visually-hidden ok), `role="alert"` errors + `role="status"` success. Model on `LoginForm.tsx`. |
-| 🔴 | Join Ralph: email/first/last/password placeholder-only, no labels | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.2 A]` | `components/join-ralph/JoinRalphClient.tsx:507-667` | Add labels/`aria-label`. (Marketing checkbox already correct.) |
+| 🔴 | ✅ Contact form: placeholder-only labels, `<select>` "label" is a disabled option, no `aria-live` — *done 07-19: sr-only `<label>`s (incl. the select) + `role="status"` aria-live. Submit still local (a11y-first; `/api/contact` TODO — a11y-only was the chosen scope).* | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.2 A / 4.1.3 AA]` | `components/layout/Footer.tsx` | Add real `<label>`s, `role="alert"`/`role="status"`. |
+| 🔴 | ✅ Join Ralph: email/first/last/password placeholder-only — *done 07-19: sr-only `<label>`s + `aria-required` + password `aria-describedby`* | `[WCAG 1.3.1 A / 3.3.2 A / 4.1.2 A]` | `components/join-ralph/JoinRalphClient.tsx` | Add labels/`aria-label`. |
 | 🟡 | No visible/AT "required" indicator on those forms | `[WCAG 3.3.2 A]` | same | Add required markers + `aria-required`. |
 
 ### 2d. Images / alt (mostly good — targeted fixes)
@@ -258,7 +260,7 @@ Legend: ✅ ok · ⚠️ needs work.
 ## 5. Recommended phased rollout
 - **Phase 1 — Quick wins (S, ~½–1 day): ✅ COMPLETE (07-19)** — one item deferred. Shipped: ✅ favicon set + web manifest + `theme-color` (#1); ✅ CanvasStage mobile gate (#4); ✅ sitemap fix + remove `/play` (#8) + robots `/reset-password`; ✅ skip link + `<main id>` (#10); ✅ `/work-with-us` + home metadata (+ canonicals); ✅ noindex auth pages; ✅ branded `not-found.tsx`; ✅ reciprocal hreflang on `/contact`↔`/jp/contact`; ✅ `aria-current`; ✅ Gooper preload; ✅ cart/globe alt fixes. ⏳ **Deferred:** `remotePatterns`/next-image for **broadcaster/TV thumbnails** only (Shopify done; broadcaster host must be confirmed at runtime first — #2).
 - **Phase 2 — Reduced-motion & focus (M): ✅ COMPLETE (07-19)** — global `prefers-reduced-motion` (CSS + framer MotionConfig + canvases + Starfield visibility guard + parallax) (#3), MobileMenu focus trap/Escape/dialog (#5), ProductOverlay + event-overlay focus/dialog, `<header>` landmark, TV/join-ralph/home h1s + heading order, PlanetSection real links, TVStatic aria-hidden + TV countdown throttle.
-- **Phase 3 — Forms & content SEO (M/L):** Footer + Join Ralph labels/aria-live (#9), dynamic metadata + canonical for article/event/product (#6), JSON-LD (#7), per-route OG images.
+- **Phase 3 — Forms & content SEO (M/L): ✅ COMPLETE (07-19)** — Footer + Join Ralph labels/aria-live (#9); **true content URLs** (no query strings) with dynamic metadata + canonical for article/event/product (#6, see `docs/true-urls-plan-2026-07-19.md`); JSON-LD Org/WebSite/Article/Product/Event (#7); per-item OG images. *Optional extras:* BreadcrumbList JSON-LD, generated OG cards, Level-2 server-rendered item bodies, wiring `/api/contact`.
 - **Phase 4 — Perf deep cuts (M): ✅ mostly done (07-19)** — ✅ `optimizePackageImports` (framer-motion/swiper); ✅ dropped duplicate per-frame sprite folders (2.6 MB); ✅ removed unused `@stripe/stripe-js` (hls.js kept — it's used); ✅ AA contrast (black text on pink) site-wide; ✅ large PNGs already optimised via `next/image` (no re-encode needed). **Deferred:** lazy-load swiper/Footer (needs panel extraction), re-sprite the oversized sheets (art change), trim Roboto weights (all in use).
 
 ## 6. Verification

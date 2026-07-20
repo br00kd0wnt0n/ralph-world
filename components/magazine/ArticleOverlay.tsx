@@ -150,7 +150,7 @@ export default function ArticleOverlay({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 80 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed inset-0 min-[575px]:inset-3 md:inset-4 min-[992px]:inset-6 z-[100] overflow-y-auto overscroll-none shadow-2xl"
+        className="fixed inset-0 z-[100] overflow-hidden shadow-2xl"
         style={{ backgroundColor: theme.bg }}
       >
       {/* Close button — same image-swap (default + hover) as the footer
@@ -159,7 +159,7 @@ export default function ArticleOverlay({
       <button
         type="button"
         onClick={onClose}
-        className="group absolute z-[101] w-12 h-12 top-9 right-9 min-[575px]:top-12 min-[575px]:right-12 md:top-16 md:right-16 min-[992px]:top-[86px] min-[992px]:right-[86px]"
+        className="group absolute z-[101] w-8 h-8 min-[992px]:w-12 min-[992px]:h-12 top-9 right-9 min-[575px]:top-12 min-[575px]:right-12 md:top-16 md:right-16 min-[992px]:top-[86px] min-[992px]:right-[86px]"
         aria-label="Close"
       >
         <img
@@ -176,9 +176,12 @@ export default function ArticleOverlay({
         />
       </button>
 
+      {/* Scrollable content — the overlay frame + close button stay fixed
+          (frame is overflow-hidden); only this inner wrapper scrolls. */}
+      <div className="h-full overflow-y-auto overscroll-none">
       {/* Middle container - repeating bg image + responsive padding */}
       <div
-        className="relative min-h-full p-5 min-[575px]:p-8 md:p-12 min-[992px]:p-[70px]"
+        className="relative min-h-full p-5 pr-8 min-[576px]:p-8 min-[576px]:px-10 md:p-12 min-[992px]:p-[70px]"
         style={{
           backgroundImage: article.leadMediaUrl ? `url(${article.leadMediaUrl})` : undefined,
           backgroundRepeat: 'repeat',
@@ -462,6 +465,7 @@ export default function ArticleOverlay({
         )}
           </motion.div>
         </div>
+      </div>
       </div>
       </motion.div>
     </AnimatePresence>,

@@ -4,6 +4,21 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-20 — Magazine article overlay polish
+
+`components/magazine/ArticleOverlay.tsx`:
+- **Close button now stays pinned** while reading: the overlay frame is a
+  non-scrolling `fixed` container (`overflow-hidden`) and the content scrolls
+  in an inner `overflow-y-auto` wrapper, so the (absolute) close button holds
+  its start position on every breakpoint (was scrolling away with the body).
+- Close button is **32×32px on <992** (48×48 at ≥992).
+- **Full-bleed overlay** at all sizes (`inset-0`) — removed the `inset-3/4/6`
+  gap that framed the article on ≥576.
+- Middle-container padding: `<576` right = 32px (`pr-8`); `576–767`
+  left/right = 40px (`px-10`); 768+ unchanged.
+
+---
+
 ## 2026-07-19 — A11y/SEO/Perf audit Phases 1 & 2 + UI polish
 
 Implemented the first two phases of the pre-launch audit

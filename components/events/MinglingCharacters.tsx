@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { accentTextCss } from '@/lib/event-themes'
+import Arm from './Arm'
 
 // Fixed (deterministic) scramble so the row isn't in numerical order while
 // staying SSR-safe (a runtime shuffle would cause a hydration mismatch).
@@ -20,48 +21,12 @@ const CHARACTERS = [
   '/imgs/event_character_04.png',
 ]
 
-// Event accent → matching arm art. Only four accent colours are supported;
-// the panel background is taken from the arm theme so the arm always matches
-// the panel exactly. `bg` = each arm SVG's actual fill colour.
-//   green_arm  #4CAF50 · blue_arm  #00C4B4 (teal)
-//   pink_arm   #7B3FE4 (purple/pink) · orange_arm #EE6626
-const ARM_THEMES = {
-  green: { bg: '#4CAF50', arm: '/imgs/green_arm.svg' },
-  blue: { bg: '#00C4B4', arm: '/imgs/blue_arm.svg' },
-  purple: { bg: '#7B3FE4', arm: '/imgs/pink_arm.svg' },
-  orange: { bg: '#EE6626', arm: '/imgs/orange_arm.svg' },
-} as const
-type ArmColour = keyof typeof ARM_THEMES
-const ARM_CYCLE: ArmColour[] = ['green', 'blue', 'purple', 'orange']
-
-// Resolve a sent accent (hex or name) to one of the four arm colours; null if
-// unrecognised (caller falls back to the cycle). Accepts the arm hexes, the
-// event-accent-palette hexes, and colour names.
-function resolveArmColour(accent?: string | null): ArmColour | null {
-  if (!accent) return null
-  const a = accent.trim().toLowerCase()
-  const byHex: Record<string, ArmColour> = {
-    '#4caf50': 'green',
-    '#44b758': 'green',
-    '#00c4b4': 'blue',
-    '#5fbcbf': 'blue',
-    '#7b3fe4': 'purple',
-    '#ea128b': 'purple',
-    '#ff2098': 'purple', // pink → purple/pink arm
-    '#ee6626': 'orange',
-    '#f26524': 'orange',
-    '#ff6b35': 'orange',
-  }
-  const byName: Record<string, ArmColour> = {
-    green: 'green',
-    blue: 'blue',
-    teal: 'blue',
-    purple: 'purple',
-    pink: 'purple',
-    orange: 'orange',
-  }
-  return byHex[a] ?? byName[a] ?? null
-}
+// Arm art is a single canonical /imgs/arm.svg whose sleeve fill uses
+// `currentColor`, so the wrapper's `color` drives it. Any accent hex
+// works — palette in lib/event-themes.ts can grow freely and doubling
+// up on colours is fine. Fallback colour when an event has no accent
+// set is the Ralph green CSS var, applied inside the <Arm> component.
+const ARM_FALLBACK = 'var(--color-ralph-green)'
 
 interface Event {
   id?: string
@@ -234,12 +199,7 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
   // Generate arm data
   const arms = Array.from({ length: eventCount }, (_, i) => {
     const event = events[i]
-    // Arm art matches the panel accent; fall back to a cycle if none/unknown.
-    const armColour =
-      resolveArmColour(event?.accentColour) ?? ARM_CYCLE[i % ARM_CYCLE.length]
-    const armTheme = ARM_THEMES[armColour]
     return {
-      src: armTheme.arm,
       // Default position evenly: first arm at ~15%, last arm at ~85%
       defaultLeft: eventCount === 1 ? 50 : 15 + (70 / (eventCount - 1)) * i,
       height: 500 + (i * 17) % 50, // 500-550px, deterministic variation
@@ -254,8 +214,9 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
       location: event?.locationName || '',
       locationAddress: event?.locationAddress || '',
       locationPostcode: event?.locationPostcode || '',
-      // Panel colour comes from the arm theme so the panel always matches the arm.
-      accentColour: armTheme.bg,
+      // Panel + arm share the event's accent — any palette hex works
+      // now that arm sleeves render via currentColor.
+      accentColour: event?.accentColour ?? null,
       thumbnailUrl: event?.thumbnailUrl || null,
       externalTicketUrl: event?.externalTicketUrl || null,
       rsvpEnabled: event?.rsvpEnabled ?? false,
@@ -836,12 +797,10 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                     'event-arm-hold 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both',
                 }}
               >
-                <img
-                  src={arm.src}
-                  alt=""
-                  draggable={false}
-                  className="select-none block"
-                  style={{ height: '100%', width: 'auto' }}
+                <Arm
+                  color={arm.accentColour ?? ARM_FALLBACK}
+                  className="select-none block h-full"
+                  style={{ width: 'auto' }}
                 />
               </div>
               {panelWrapper}
@@ -902,10 +861,8 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                 }}
                 onClick={() => handleShowMore(i)}
               >
-                <img
-                  src={arm.src}
-                  alt=""
-                  draggable={false}
+                <Arm
+                  color={arm.accentColour ?? ARM_FALLBACK}
                   className="max-w-none select-none absolute"
                   style={{
                     height: MOBILE_ARM_LEN,
@@ -962,10 +919,8 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
               }}
               onClick={() => handleArmClick(i)}
             >
-              <img
-                src={arm.src}
-                alt=""
-                draggable={false}
+              <Arm
+                color={arm.accentColour ?? ARM_FALLBACK}
                 className="max-w-none select-none transition-[filter] duration-300 group-hover:[filter:drop-shadow(4px_0_0_#000)_drop-shadow(-4px_0_0_#000)_drop-shadow(0_4px_0_#000)_drop-shadow(0_-4px_0_#000)]"
                 style={{
                   height: arm.height,

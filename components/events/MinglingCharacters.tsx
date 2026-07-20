@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { accentTextCss } from '@/lib/event-themes'
-import Arm from './Arm'
+import Arm, { ARM_SHAPES } from './Arm'
 
 // Fixed (deterministic) scramble so the row isn't in numerical order while
 // staying SSR-safe (a runtime shuffle would cause a hydration mismatch).
@@ -200,6 +200,9 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
   const arms = Array.from({ length: eventCount }, (_, i) => {
     const event = events[i]
     return {
+      // Shape cycles through ARM_SHAPES so consecutive events don't
+      // look identical even if two share the same accent hex.
+      shapeId: i % ARM_SHAPES.length,
       // Default position evenly: first arm at ~15%, last arm at ~85%
       defaultLeft: eventCount === 1 ? 50 : 15 + (70 / (eventCount - 1)) * i,
       height: 500 + (i * 17) % 50, // 500-550px, deterministic variation
@@ -798,6 +801,7 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                 }}
               >
                 <Arm
+                  shapeId={arm.shapeId}
                   color={arm.accentColour ?? ARM_FALLBACK}
                   className="select-none block h-full"
                   style={{ width: 'auto' }}
@@ -862,6 +866,7 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                 onClick={() => handleShowMore(i)}
               >
                 <Arm
+                  shapeId={arm.shapeId}
                   color={arm.accentColour ?? ARM_FALLBACK}
                   className="max-w-none select-none absolute"
                   style={{
@@ -920,6 +925,7 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
               onClick={() => handleArmClick(i)}
             >
               <Arm
+                shapeId={arm.shapeId}
                 color={arm.accentColour ?? ARM_FALLBACK}
                 className="max-w-none select-none transition-[filter] duration-300 group-hover:[filter:drop-shadow(4px_0_0_#000)_drop-shadow(-4px_0_0_#000)_drop-shadow(0_4px_0_#000)_drop-shadow(0_-4px_0_#000)]"
                 style={{

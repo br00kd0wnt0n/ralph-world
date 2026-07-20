@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { accentTextCss } from '@/lib/event-themes'
 
 // Fixed (deterministic) scramble so the row isn't in numerical order while
 // staying SSR-safe (a runtime shuffle would cause a hydration mismatch).
@@ -555,6 +556,9 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                 borderRadius: 12,
                 position: 'relative',
                 backgroundColor: arm.accentColour || 'var(--color-ralph-green)',
+                // Inner copy inherits `color` — flips to white when the
+                // accent is brand purple so text stays readable.
+                color: accentTextCss(arm.accentColour),
                 transform: isPanelOpen
                   ? `scale(1) rotate(${isThisExpanded ? 0 : arm.panelRotation}deg)`
                   : `scale(0) rotate(${panelOnRight ? 100 : -100}deg)`,

@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext'
 import { flagEmoji } from './flag'
 import { isSafeUrl } from '@/lib/safe-url'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { accentTextCss } from '@/lib/event-themes'
 import type { EventCreatureData } from './EventCreature.types'
 
 // Two stages: 'card' anchored near the creature with a Show Me More CTA,
@@ -92,7 +93,12 @@ export default function EventFlyout({
   const trapRef = useFocusTrap<HTMLDivElement>(isFull)
 
   let containerClass: string
-  let containerStyle: React.CSSProperties = { backgroundColor: event.accent_colour }
+  // Pair the accent hex with its vetted text colour so brand purple (which
+  // fails AA against black) flips to white copy automatically.
+  let containerStyle: React.CSSProperties = {
+    backgroundColor: event.accent_colour,
+    color: accentTextCss(event.accent_colour),
+  }
 
   if (isFull) {
     containerClass =

@@ -73,6 +73,11 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
   const [isMobile, setIsMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false) // 576–991
   const [isWide, setIsWide] = useState(false) // 768–991
+  // Desktop: which event's zone is hovered/focused (drives the arm highlight),
+  // and the measured section width used to size arms to their zone.
+  const [hoveredArm, setHoveredArm] = useState<number | null>(null)
+  const [sectionWidth, setSectionWidth] = useState(0)
+  const rootRef = useRef<HTMLDivElement>(null)
   // Gates positioned rendering until the viewport is measured, so arms/cards
   // mount straight into the correct (mobile/desktop) spot instead of flashing
   // from the SSR desktop layout and animating across.
@@ -158,6 +163,18 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
     }
   }, [])
 
+  // Measure the section width so desktop arms can be sized to their zone
+  // (width / event count) and never overlap, however many events there are.
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const measure = () => setSectionWidth(el.offsetWidth)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   // Submit RSVP for an event
   const handleRsvp = useCallback(async (eventId: string) => {
     if (!eventId) return
@@ -196,6 +213,22 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
     })
   }
 
+  // Desktop: each event owns an equal-width vertical zone; the arm centres in
+  // its zone and is capped to the zone's width so arms fan out evenly and never
+  // overlap, no matter how many events. (Mobile uses the vertical card stack.)
+  const ARM_MAX_ASPECT = 0.58 // widest shape ≈ 270/470 (w/h)
+  const ARM_BASE_HEIGHT = 500
+  const ARM_MIN_HEIGHT = 380 // stay tall enough to read + clear the base clip
+  const zoneWidthPx = eventCount > 0 && sectionWidth > 0 ? sectionWidth / eventCount : 0
+  // Prefer full-height arms; only shorten (never below ARM_MIN_HEIGHT) when a
+  // full-height arm would be far wider than its zone. Modest overlap between
+  // neighbours is fine — the click target is the zone, not the arm — so we
+  // allow an arm to be up to ~1.3× its zone before trimming its height.
+  const desktopArmHeight =
+    zoneWidthPx > 0
+      ? Math.max(ARM_MIN_HEIGHT, Math.min(ARM_BASE_HEIGHT, (zoneWidthPx * 1.3) / ARM_MAX_ASPECT))
+      : ARM_BASE_HEIGHT
+
   // Generate arm data
   const arms = Array.from({ length: eventCount }, (_, i) => {
     const event = events[i]
@@ -203,9 +236,9 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
       // Shape cycles through ARM_SHAPES so consecutive events don't
       // look identical even if two share the same accent hex.
       shapeId: i % ARM_SHAPES.length,
-      // Default position evenly: first arm at ~15%, last arm at ~85%
-      defaultLeft: eventCount === 1 ? 50 : 15 + (70 / (eventCount - 1)) * i,
-      height: 500 + (i * 17) % 50, // 500-550px, deterministic variation
+      // Centre of this event's equal-width zone (matches the click zones below).
+      defaultLeft: (i + 0.5) * (100 / eventCount),
+      height: desktopArmHeight - ((i * 13) % 24), // slight per-arm variation for life
       // Random slight rotation for panel (-8 to 8 degrees), deterministic per arm
       panelRotation: ((i * 7 + 3) % 17) - 8,
       // Event data
@@ -400,6 +433,7 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
 
   return (
     <div
+      ref={rootRef}
       className="relative transition-opacity duration-500"
       style={{
         height: isMobile ? mobileContainerHeight : 500,
@@ -412,6 +446,13 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
         const { left, bunchDirection } = getArmPosition(i)
         const isActive = activeArm === i
         const isThisExpanded = expandedArm === i
+
+        // Desktop stacking (see the arms below): the clicked/expanded arm lifts
+        // to the top (40); its panel sits just under it (39) but above every
+        // other arm (20). Mobile keeps its own order (expanded card floats 90).
+        const panelZ = isMobile
+          ? isThisExpanded ? 90 : 15
+          : isActive || isThisExpanded ? 39 : 15
 
         // Mobile (<992): vertical card stack. Cards alternate which side
         // they're aligned to, with the arm coming in from the opposite side.
@@ -461,7 +502,9 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                 transform: 'translateX(-50%)',
               }
           : {
-              bottom: isThisExpanded ? 205 : -100 + arm.height - 150,
+              // Keep the mini panel at a stable height regardless of how short
+              // the arm gets as event count grows (arm height is zone-capped).
+              bottom: isThisExpanded ? 205 : -100 + ARM_BASE_HEIGHT - 150,
               left: isThisExpanded ? '50%' : `${left}%`,
               transform: isThisExpanded
                 ? 'translateX(-50%)'
@@ -473,8 +516,8 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
         const panelWrapper = (
           <div
             key={`panel-${i}`}
-            className={`absolute ${isMobile && isThisExpanded ? 'z-[90]' : 'z-[15]'} ${isMobile ? '' : 'transition-all duration-500 ease-out'} pointer-events-none`}
-            style={wrapperStyle}
+            className={`absolute ${isMobile ? '' : 'transition-all duration-500 ease-out'} pointer-events-none`}
+            style={{ ...wrapperStyle, zIndex: panelZ }}
           >
             {/* Panel. Expanded = modal dialog (focus-trapped, aria-modal).
                 Mobile mini = a button (whole card taps through to details). */}
@@ -820,7 +863,10 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
           Desktop (>=992): clip vertically so arm bases hide, allow horizontal overflow.
           Mobile (<992):   clip horizontally so arm bases hide, allow vertical overflow. */}
       <div
-        className="absolute inset-0 z-20 pointer-events-none"
+        // No z-index here (would trap arm z-indices in one layer): individual
+        // arm z lives in the root context so the active arm can rise above its
+        // panel while the others stay below it. overflow still clips the bases.
+        className="absolute inset-0 pointer-events-none"
         style={
           isMobile
             ? { overflowX: 'clip', overflowY: 'visible' }
@@ -882,6 +928,7 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
           }
 
           const { left } = getArmPosition(i)
+          const isActive = activeArm === i
           // When ANY arm is expanded, non-expanded arms slide down out of
           // view. The expanded arm centers horizontally (left: 50%). While
           // just active (mini panel open), every arm — including the clicked
@@ -895,26 +942,21 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
             : 0
 
           return (
-            // Desktop: the arm is the trigger that opens the event's mini panel,
-            // so expose it as a button for keyboard/SR users.
+            // Desktop: the arm is purely decorative — the equal-width zone
+            // (rendered below) is the click/keyboard target. The arm just
+            // highlights when its zone is hovered or focused.
             <div
               key={`arm-${i}`}
-              role="button"
-              tabIndex={isExpanded ? -1 : 0}
-              aria-label={`${arm.title} — view details`}
-              onKeyDown={(e) => {
-                if (isExpanded) return
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  handleArmClick(i)
-                }
-              }}
-              className={`group absolute z-20 transition-all duration-500 ease-out ${
+              aria-hidden="true"
+              className={`absolute pointer-events-none transition-all duration-500 ease-out ${
                 isAnyActive ? '' : 'animate-wave'
-              } ${isHidden ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
+              }`}
               style={{
                 bottom: -100,
                 left: `${effectiveLeft}%`,
+                // Clicked/expanded arm on top (40), above its panel (39);
+                // every resting arm sits at 20.
+                zIndex: isActive || isThisExpanded ? 40 : 20,
                 transform: `translateX(-50%) translateY(${verticalOffset}px)`,
                 transformOrigin: 'bottom center',
                 animationDelay: `${(i * 0.7) % 2}s`,
@@ -922,22 +964,57 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                 animationPlayState: isAnyActive ? 'paused' : 'running',
                 opacity: isHidden ? 0 : 1,
               }}
-              onClick={() => handleArmClick(i)}
             >
               <Arm
                 shapeId={arm.shapeId}
                 color={arm.accentColour ?? ARM_FALLBACK}
-                className="max-w-none select-none transition-[filter] duration-300 group-hover:[filter:drop-shadow(4px_0_0_#000)_drop-shadow(-4px_0_0_#000)_drop-shadow(0_4px_0_#000)_drop-shadow(0_-4px_0_#000)]"
+                className="max-w-none select-none transition-[filter] duration-300"
                 style={{
                   height: arm.height,
                   width: 'auto',
                   transformOrigin: 'bottom center',
+                  filter:
+                    hoveredArm === i && !isAnyActive
+                      ? 'drop-shadow(4px 0 0 #000) drop-shadow(-4px 0 0 #000) drop-shadow(0 4px 0 #000) drop-shadow(0 -4px 0 #000)'
+                      : undefined,
                 }}
               />
             </div>
           )
         })}
       </div>
+
+      {/* Desktop click zones. The section is split into `eventCount` equal-width
+          columns; clicking (or Enter/Space on) a column opens that event — far
+          easier to hit than the narrow arm, and unambiguous even when arms
+          visually overlap. Inert while a mini/expanded panel is open so the
+          panel keeps its own clicks. */}
+      {mounted && !isMobile && eventCount > 0 && (
+        <div
+          className={`absolute inset-0 z-[21] ${
+            isAnyActive || isExpanded ? 'pointer-events-none' : ''
+          }`}
+        >
+          {arms.map((arm, i) => (
+            <button
+              key={`zone-${i}`}
+              type="button"
+              aria-label={`${arm.title} — view details`}
+              tabIndex={isExpanded ? -1 : 0}
+              onClick={() => handleArmClick(i)}
+              onMouseEnter={() => setHoveredArm(i)}
+              onMouseLeave={() => setHoveredArm((h) => (h === i ? null : h))}
+              onFocus={() => setHoveredArm(i)}
+              onBlur={() => setHoveredArm((h) => (h === i ? null : h))}
+              className="absolute top-0 bottom-0 cursor-pointer bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
+              style={{
+                left: `${(i * 100) / eventCount}%`,
+                width: `${100 / eventCount}%`,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Character container - absolutely positioned at bottom.
           Hidden < 992 — mobile arms enter from the sides instead.

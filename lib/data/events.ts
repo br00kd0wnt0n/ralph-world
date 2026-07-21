@@ -1,6 +1,6 @@
 import { getDb } from '@/lib/db'
 import { events } from '@/lib/db/schema'
-import { eq, and, desc, asc } from 'drizzle-orm'
+import { eq, and, desc, asc, gte, or, isNull } from 'drizzle-orm'
 
 export interface EventRow {
   id: string
@@ -27,10 +27,21 @@ export interface EventRow {
 export async function getActiveEvents(): Promise<EventRow[]> {
   try {
     const db = getDb()
+    // "In the past" is decided by the event date, not just the CMS `is_past`
+    // flag (which can lag). Keep an event visible through the end of its day,
+    // so gate on the start of today. Undated events stay visible.
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
     const rows = await db
       .select()
       .from(events)
-      .where(and(eq(events.status, 'published'), eq(events.isPast, false)))
+      .where(
+        and(
+          eq(events.status, 'published'),
+          eq(events.isPast, false),
+          or(isNull(events.eventDate), gte(events.eventDate, startOfToday)),
+        ),
+      )
       .orderBy(asc(events.eventDate))
     return rows as EventRow[]
   } catch {

@@ -94,7 +94,10 @@ export default function Arm({
     <div
       ref={ref}
       aria-hidden="true"
-      className={className}
+      // Force the injected <svg> to size to this wrapper's (definite) height:
+      // some arm SVGs ship with width/height attributes and some carry only a
+      // viewBox — without this, the attribute-less ones collapse to nothing.
+      className={`${className ?? ''} [&>svg]:block [&>svg]:h-full [&>svg]:w-auto`.trim()}
       style={{
         color: color ?? 'var(--color-ralph-green)',
         display: 'inline-block',

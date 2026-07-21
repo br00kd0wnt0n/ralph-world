@@ -4,6 +4,23 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-21 — Events panel poster loading + mobile arm z-index
+
+`components/events/MinglingCharacters.tsx`:
+- **Expanded-panel poster loads gracefully.** New `PosterImage` component:
+  shows a centred spinner while the poster loads, then fades the image up
+  (`opacity 0→1`, 500ms) once it's ready. Guards the cached-image case (an
+  on-mount `img.complete` check so it never stays stuck invisible) and
+  clears the spinner on error. (No frame box behind the spinner.)
+- **Mobile arms sit above the cards.** The side-entering hands moved from
+  `z-5` to `z-20` — above the mini card panels (`z-15`) — so the hand
+  reaching in from the side overlaps the card. They still slide out at 0
+  opacity when a card is expanded, so they never cover the `z-90` expanded
+  view. (Fixes a regression from dropping the arms container's
+  stacking-context z-index during the arms overhaul.)
+
+---
+
 ## 2026-07-21 — Events arms overhaul + UI polish
 
 ### Events — arm rendering, click zones & past-event gate

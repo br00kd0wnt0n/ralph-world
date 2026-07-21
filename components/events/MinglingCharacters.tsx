@@ -54,6 +54,53 @@ interface MinglingCharactersProps {
 }
 
 /**
+ * Expanded-panel poster. Shows a bordered frame + spinner immediately (so the
+ * area is never empty), then fades the image up once it loads. onError also
+ * clears the spinner so a broken image doesn't spin forever.
+ */
+function PosterImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+  // A cached image can finish before React attaches onLoad — catch that on
+  // mount so it doesn't stay stuck invisible with the spinner running.
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) setLoaded(true)
+  }, [])
+  return (
+    <div className="relative flex h-full w-full items-center justify-center">
+      {/* Spinner while the poster loads. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-out"
+        style={{
+          opacity: loaded ? 0 : 1,
+          pointerEvents: 'none',
+        }}
+      >
+        <span
+          className="animate-spin rounded-full"
+          style={{
+            width: 28,
+            height: 28,
+            border: '3px solid rgba(0,0,0,0.15)',
+            borderTopColor: 'rgba(0,0,0,0.55)',
+          }}
+        />
+      </div>
+      <img
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+        className="max-h-full max-w-full object-contain transition-opacity duration-500 ease-out"
+        style={{ borderRadius: 8, border: '6px solid white', opacity: loaded ? 1 : 0 }}
+      />
+    </div>
+  )
+}
+
+/**
  * Animated characters mingling across the screen like guests at a social event.
  * Each character moves slowly left/right with slight randomness.
  * Arms stick up from the crowd representing active events.
@@ -737,12 +784,7 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                       poster's inset from the panel edge is 60px (36 + p-6's 24). */}
                   <div className="flex-1 flex items-center justify-end px-[36px] min-[576px]:px-0">
                     {arm.thumbnailUrl ? (
-                      <img
-                        src={arm.thumbnailUrl}
-                        alt={arm.title}
-                        className="max-w-full max-h-full object-contain"
-                        style={{ borderRadius: 8, border: '6px solid white' }}
-                      />
+                      <PosterImage src={arm.thumbnailUrl} alt={arm.title} />
                     ) : (
                       <div
                         className="w-full h-full flex items-center justify-center"
@@ -898,7 +940,10 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
               <div
                 key={`arm-${i}`}
                 aria-hidden="true"
-                className={`group absolute z-[5] transition-all duration-500 ease-out ${
+                // Above the mini card panels (15) so the hand reaching in from
+                // the side sits over the card. (Slides out at 0 opacity when a
+                // card is expanded, so it never covers the z-90 expanded view.)
+                className={`group absolute z-20 transition-all duration-500 ease-out ${
                   mobileHidden ? 'pointer-events-none' : 'cursor-pointer pointer-events-auto'
                 }`}
                 style={{

@@ -4,6 +4,29 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-22 — Join Ralph decoration tweaks + subscribe/login journey spec
+
+`components/join-ralph/JoinRalphClient.tsx` (+ `public/imgs/fun-worth-finding.svg`,
+`public/imgs/text-join-ralph.svg`):
+- Added the **"Fun worth finding" badge** absolute in the upper-right of the
+  title column (`right-0 top-[-20px]`, 130px, desktop-only, non-interactive).
+- Nudged the **magazine cover** further left (`-left-2` → `left-[-48px]`) and
+  raised the **painter character** by 100px (`translateY -100 → -200`).
+- Swapped the slides container from `overflow-hidden` to
+  `overflow-clip` + `[overflow-clip-margin:40px]` so the mag cover / badge can
+  bleed ~40px past the edge without being cropped, while the full-width slide
+  transitions (translate 100% **and** fade) stay effectively clipped. Falls
+  back to edge-clipping on browsers without `overflow-clip-margin`.
+
+`docs/subscribe-login-journey-backend-spec.md` (new): spec to forward to the
+backend dev for the reworked email-first Subscribe/Login journey. Documents the
+one hard requirement — a new enumeration-aware `POST /api/auth/check-email`
+endpoint (`{ exists, hasPassword, usesGoogle, verified }`, rate-limited) to
+branch login vs. signup — plus the unverified-signup → tier/paid-checkout
+decision, and the front-end/back-end boundary.
+
+---
+
 ## 2026-07-21 — Events panel poster loading + mobile arm z-index
 
 `components/events/MinglingCharacters.tsx`:

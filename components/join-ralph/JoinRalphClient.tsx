@@ -257,7 +257,14 @@ export default function JoinRalphClient({
           className="relative z-10 pb-16 min-h-[60vh]"
           style={{ paddingTop: 100 }}
         >
-          <div className="max-w-5xl mx-auto px-6 overflow-hidden" style={{ paddingTop: 100 }}>
+          {/* overflow-clip (+ a small clip-margin) instead of overflow-hidden so
+              the decorative mag cover / badge can bleed ~40px past the edge
+              without being cropped, while the full-width slide transitions
+              (which translate 100% AND fade) are still effectively clipped. */}
+          <div
+            className="max-w-5xl mx-auto px-6 overflow-clip [overflow-clip-margin:40px]"
+            style={{ paddingTop: 100 }}
+          >
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={step}
@@ -328,7 +335,7 @@ function Slide1({
       <div className="relative">
         {/* Latest shop magazine cover */}
         {magCoverUrl && (
-          <div className="absolute -left-2 top-20 hidden md:block pointer-events-none">
+          <div className="absolute left-[-48px] top-20 hidden md:block pointer-events-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={magCoverUrl}
@@ -346,13 +353,22 @@ function Slide1({
           className="relative z-10 block mx-auto w-full max-w-[250px] h-auto"
         />
 
+        {/* "Fun worth finding" badge — upper-right of the title */}
+        <img
+          src="/imgs/fun-worth-finding.svg"
+          alt=""
+          aria-hidden="true"
+          className="absolute right-0 top-[-20px] z-20 hidden md:block pointer-events-none select-none"
+          style={{ width: 130, height: 'auto' }}
+        />
+
         {/* Painter character */}
         <img
           src="/imgs/join-ralph-painter.svg"
           alt=""
           aria-hidden="true"
           className="relative z-10 block mt-8 ml-auto pointer-events-none select-none"
-          style={{ width: 153, height: 'auto', transform: 'translate(20px, -100px)' }}
+          style={{ width: 153, height: 'auto', transform: 'translate(20px, -200px)' }}
         />
       </div>
 

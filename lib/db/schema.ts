@@ -212,7 +212,29 @@ export const caseStudies = pgTable('case_studies', {
   title: text('title'),
   subtitle: text('subtitle'),
   thumbnailUrl: text('thumbnail_url'),
+  // Kept as an escape hatch — if set, the public list still links out
+  // to that URL. Otherwise the row renders on /case-studies/[slug]
+  // using the fields below.
   externalUrlOverride: text('external_url_override'),
+  // Client logo image shown at the top of the case study.
+  clientLogoUrl: text('client_logo_url'),
+  // Free-form pill labels floated on the title screen.
+  tags: text('tags').array(),
+  // Brand palette derived from the client logo — first entry is the
+  // dominant, subsequent entries are used for accents in section
+  // transitions. jsonb of hex strings.
+  brandColors: jsonb('brand_colors'),
+  // Independent overrides for the subtitle + primary CTA colour;
+  // fall back to brandColors[1] / brandColors[0] respectively on the
+  // renderer if left null.
+  subtitleColor: text('subtitle_color'),
+  ctaColor: text('cta_color'),
+  // Closing "Get in Touch" section overrides.
+  outroHeading: text('outro_heading'),
+  outroSubtitle: text('outro_subtitle'),
+  // Ordered case-study sections — scroll-driven modules on the public
+  // renderer. See CaseStudySection type in the viewer for shape.
+  sections: jsonb('sections'),
   sortOrder: integer('sort_order').default(0),
   publishedAt: timestamp('published_at', { mode: 'date' }),
 })

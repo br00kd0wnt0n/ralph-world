@@ -64,12 +64,12 @@ function RequestForm() {
   if (sent) {
     return (
       <>
-        <h1 className="text-2xl font-bold text-primary mb-4 font-[family-name:var(--font-display)]">
+        <h1 className="text-2xl font-bold text-primary mb-4 font-[family-name:var(--font-intro,'Gooper_Trial')]">
           Check your email
         </h1>
         <p className="text-secondary text-sm">
-          If <strong>{email}</strong> has a Ralph.world account, we&apos;ve sent a reset link.
-          It expires in 1 hour.
+          If{' '}<strong>{email}</strong>{' '}has a Ralph.world account, we&apos;ve sent a
+          reset link. It expires in 1 hour.
         </p>
         <p className="text-secondary text-sm mt-4">
           Didn&apos;t get it? Check your spam folder or{' '}
@@ -87,7 +87,7 @@ function RequestForm() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-primary mb-2 font-[family-name:var(--font-display)]">
+      <h1 className="text-2xl font-bold text-primary mb-2 font-[family-name:var(--font-intro,'Gooper_Trial')]">
         Reset your password
       </h1>
       <p className="text-secondary text-sm mb-8">
@@ -165,7 +165,7 @@ function ConfirmForm({ email, token }: { email: string; token: string }) {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-primary mb-2 font-[family-name:var(--font-display)]">
+      <h1 className="text-2xl font-bold text-primary mb-2 font-[family-name:var(--font-intro,'Gooper_Trial')]">
         Choose a new password
       </h1>
       <p className="text-secondary text-sm mb-8">

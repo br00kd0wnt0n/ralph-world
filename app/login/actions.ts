@@ -104,14 +104,23 @@ export async function signupAction(
     if (result.ok) {
       return { ok: true, message: 'Check your inbox — we’ve sent you a verification link.' }
     }
-    // Validation errors surface to the user. Account-existence cases
-    // are enumeration-safe — we return ok so the UI shows the same
-    // "check your inbox" message regardless.
     if (
       result.reason === 'invalid_email' ||
       result.reason === 'invalid_password'
     ) {
       return { ok: false, error: result.reason, message: result.message }
+    }
+    // Existing verified account — tell them explicitly and steer to sign in.
+    // We used to hide this behind the generic "check your inbox" response for
+    // enumeration resistance, but that made legit repeat-signups look like
+    // duplicates were being created. The unverified branch below still
+    // returns success because signupWithPassword resends the verify email.
+    if (result.reason === 'already_registered_verified') {
+      return {
+        ok: false,
+        error: result.reason,
+        message: 'That email is already registered. Try signing in, or reset your password if you’ve forgotten it.',
+      }
     }
     return {
       ok: true,

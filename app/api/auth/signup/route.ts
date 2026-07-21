@@ -50,15 +50,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, message: 'Check your inbox to verify your email.' })
   }
 
-  // Reveal validation errors to the user but mask account-existence.
   if (result.reason === 'invalid_email' || result.reason === 'invalid_password') {
     return NextResponse.json(
       { ok: false, error: result.reason, message: result.message },
       { status: 400 }
     )
   }
-  // For both already-registered branches, return the same enumeration-safe
-  // response shape the client would see on a real signup.
+  // Existing verified account — tell the caller explicitly rather than
+  // returning a fake success. Matches the server-action UX in
+  // app/login/actions.ts.
+  if (result.reason === 'already_registered_verified') {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: result.reason,
+        message:
+          'That email is already registered. Sign in, or reset your password if you’ve forgotten it.',
+      },
+      { status: 409 }
+    )
+  }
+  // Unverified branch — a fresh verification email was just resent, so the
+  // user-facing message is the same success shape.
   return NextResponse.json({
     ok: true,
     message: 'Check your inbox to verify your email.',

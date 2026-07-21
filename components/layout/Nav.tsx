@@ -56,6 +56,22 @@ export default function Nav() {
   const { itemCount, openCart } = useCart()
   const { setOpen: setMobileOpen } = useMenu()
   const [subscribeOpen, setSubscribeOpen] = useState(false)
+
+  // /subscribe redirects to /?subscribe=1 — pop the modal open on arrival.
+  // Without this the visitor lands on the (dark) homepage with a stray
+  // query flag and nothing appears to happen, which read to testers as a
+  // black-on-black page.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('subscribe') === '1') {
+      setSubscribeOpen(true)
+      params.delete('subscribe')
+      const qs = params.toString()
+      const next = window.location.pathname + (qs ? `?${qs}` : '')
+      window.history.replaceState(null, '', next)
+    }
+  }, [pathname])
   const [scrollProgress, setScrollProgress] = useState(navState.progress)
   const [navFixed, setNavFixed] = useState(navState.fixed)
   const isFirstLoad = useRef(true)

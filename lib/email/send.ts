@@ -206,6 +206,20 @@ export function _resetResendClient(): void {
   cachedClient = null
 }
 
+/**
+ * Ensure the `from` header always includes a display name. Gmail (and
+ * some other clients) show the bare local-part of the address as the
+ * sender name when no friendly name is attached, so a value like
+ * `hello@send.ralph.world` renders in the inbox list as literally
+ * "hello". If the env value is already `Name <addr>` we leave it alone;
+ * bare-address values get wrapped with "Ralph.world".
+ */
+export function normaliseFromAddress(value: string): string {
+  const trimmed = value.trim()
+  if (trimmed.includes('<') && trimmed.includes('>')) return trimmed
+  return `Ralph.world <${trimmed}>`
+}
+
 // ── Public API ──────────────────────────────────────────────────────────
 
 export interface SendTemplateInput<T extends TemplateId = TemplateId> {
@@ -243,7 +257,9 @@ export async function sendTemplate(
   // Render + send.
   const subject = entry.subject(props as never)
   const react = entry.render(props as never)
-  const from = process.env.RESEND_FROM ?? 'Ralph.world <hello@ralph.world>'
+  const from = normaliseFromAddress(
+    process.env.RESEND_FROM ?? 'hello@ralph.world'
+  )
   // Optional reply-to — lets us send from a system address (send.ralph.world)
   // while replies land somewhere a human reads (e.g. hello@ralph.world).
   const replyTo = process.env.RESEND_REPLY_TO ?? 'subscriptions@ralph.world'

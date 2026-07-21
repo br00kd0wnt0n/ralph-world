@@ -57,8 +57,6 @@ export default function PlayPlanets({ items }: PlayPlanetsProps) {
             <a
               key={cs.id}
               href={url}
-              target="_blank"
-              rel="noopener noreferrer"
               className="absolute group"
               style={{
                 left: `${pos.xPct}%`,
@@ -123,8 +121,6 @@ export default function PlayPlanets({ items }: PlayPlanetsProps) {
             <a
               key={cs.id}
               href={url}
-              target="_blank"
-              rel="noopener noreferrer"
               className="aspect-square rounded-full overflow-hidden ring-2 ring-ralph-pink relative group"
             >
               {cs.thumbnailUrl ? (

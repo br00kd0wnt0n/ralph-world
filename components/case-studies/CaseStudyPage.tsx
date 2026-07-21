@@ -5,6 +5,7 @@ import type {
   CaseStudyMedia,
   CaseStudySection,
 } from '@/lib/data/case-studies'
+import CaseStudyCarousel from './CaseStudyCarousel'
 
 const DEFAULT_BRAND_COLORS = [
   '#e17b77',
@@ -18,20 +19,14 @@ interface Props {
   study: CaseStudyFull
 }
 
-// The viewer stored section.media as EITHER a single object OR an array.
-// Normalise before rendering so downstream code only handles one shape.
+// Viewer exports stored section.media as either an array or a single
+// object; normalise both before rendering so downstream code only
+// handles one shape.
 function mediaItems(section: CaseStudySection): CaseStudyMedia[] {
   const m = section.media
   if (!m) return []
   if (Array.isArray(m)) return m.filter((x) => x && x.url)
   return m.url ? [m] : []
-}
-
-function mediaKind(m: CaseStudyMedia): 'video' | 'image' {
-  if (m.type === 'video') return 'video'
-  const url = m.url ?? ''
-  if (/\.(mp4|mov|webm)(?:$|\?)/i.test(url)) return 'video'
-  return 'image'
 }
 
 function isSafeMediaUrl(u: string | null | undefined): u is string {
@@ -50,7 +45,6 @@ export default function CaseStudyPage({ study }: Props) {
 
   return (
     <article className="mx-auto max-w-6xl px-4 py-16 sm:py-24 text-white">
-      {/* Breadcrumb back to work-with-us */}
       <div className="mb-8">
         <Link
           href="/work-with-us"
@@ -61,11 +55,8 @@ export default function CaseStudyPage({ study }: Props) {
       </div>
 
       {/* Hero */}
-      <header className="text-center mb-24">
+      <header className="text-center mb-24 sm:mb-32">
         {isSafeMediaUrl(study.clientLogoUrl) && (
-          // Client logos aren't fixed-ratio — a fixed max-h keeps big
-          // horizontal logos and tall square marks from wrecking the
-          // hero rhythm.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={study.clientLogoUrl}
@@ -109,77 +100,19 @@ export default function CaseStudyPage({ study }: Props) {
         )}
       </header>
 
-      {/* Sections */}
+      {/* Sections — alternating layout matching the viewer:
+          - Hero sections: full-width media on top, copy centred below
+          - Non-hero: copy 55% / media 45%, alternating left/right
+          - Mobile: stack vertically */}
       <div className="space-y-24 sm:space-y-32">
-        {study.sections.map((section, i) => {
-          const media = mediaItems(section)
-          const hasMedia = media.length > 0
-          const isHero = hasMedia && !!section.heroMedia
-          const isEven = i % 2 === 0
-          const key = section.id ?? `section-${i}`
-
-          const copyBlock = (
-            <div className="max-w-xl">
-              {section.label && (
-                <h2 className="text-2xl sm:text-3xl font-semibold mb-4">
-                  {section.label}
-                </h2>
-              )}
-              {section.copy && (
-                <p className="whitespace-pre-wrap text-white/85 leading-relaxed">
-                  {section.copy}
-                </p>
-              )}
-              {section.launchUrl && isSafeUrl(section.launchUrl) && (
-                <div className="mt-6">
-                  <a
-                    href={section.launchUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block rounded-full px-5 py-2 text-sm font-semibold transition-transform hover:scale-105"
-                    style={{
-                      background: ctaColor,
-                      color: '#0a0a0a',
-                    }}
-                  >
-                    View →
-                  </a>
-                </div>
-              )}
-            </div>
-          )
-
-          const mediaBlock = hasMedia ? (
-            <SectionMedia items={media} />
-          ) : null
-
-          if (isHero) {
-            return (
-              <section key={key} className="flex flex-col items-center gap-8">
-                <div className="w-full max-w-4xl">{mediaBlock}</div>
-                <div className="text-center">{copyBlock}</div>
-              </section>
-            )
-          }
-          if (!hasMedia) {
-            return (
-              <section key={key} className="flex justify-center">
-                {copyBlock}
-              </section>
-            )
-          }
-          return (
-            <section
-              key={key}
-              className={`grid grid-cols-1 md:grid-cols-2 items-center gap-8 sm:gap-12 ${
-                isEven ? '' : 'md:[&>*:first-child]:order-2'
-              }`}
-            >
-              <div className="min-w-0">{copyBlock}</div>
-              <div className="min-w-0">{mediaBlock}</div>
-            </section>
-          )
-        })}
+        {study.sections.map((section, i) => (
+          <SectionRow
+            key={section.id ?? `section-${i}`}
+            section={section}
+            index={i}
+            ctaColor={ctaColor}
+          />
+        ))}
       </div>
 
       {/* Outro */}
@@ -191,7 +124,9 @@ export default function CaseStudyPage({ study }: Props) {
           }}
         />
         <h2 className="text-3xl sm:text-4xl font-bold mb-4">{outroHeading}</h2>
-        <p className="mx-auto max-w-xl text-white/70 mb-8">{outroSubtitle}</p>
+        <p className="mx-auto max-w-xl text-white/70 mb-8 whitespace-pre-wrap">
+          {outroSubtitle}
+        </p>
         <Link
           href="/contact"
           className="inline-block rounded-full px-6 py-3 text-sm font-semibold transition-transform hover:scale-105"
@@ -207,48 +142,76 @@ export default function CaseStudyPage({ study }: Props) {
   )
 }
 
-function SectionMedia({ items }: { items: CaseStudyMedia[] }) {
-  const safe = items.filter((m) => isSafeMediaUrl(m.url))
-  if (safe.length === 0) return null
-
-  if (safe.length === 1) {
-    return renderSingle(safe[0])
-  }
-  // Multi-item: responsive grid — 1 col on mobile, up to 3 col on desktop
-  // depending on count. Keeps thumbnail rows tidy without needing a
-  // client-side carousel for MVP.
-  const cols = safe.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
-  return (
-    <div className={`grid grid-cols-1 ${cols} gap-3`}>
-      {safe.map((m, i) => (
-        <div key={m.id ?? `m-${i}`} className="rounded-lg overflow-hidden bg-black/30">
-          {renderSingle(m)}
-        </div>
-      ))}
-    </div>
-  )
+interface SectionRowProps {
+  section: CaseStudySection
+  index: number
+  ctaColor: string
 }
 
-function renderSingle(m: CaseStudyMedia) {
-  const kind = mediaKind(m)
-  if (kind === 'video') {
+function SectionRow({ section, index, ctaColor }: SectionRowProps) {
+  const items = mediaItems(section).filter((m) => isSafeMediaUrl(m.url))
+  const hasMedia = items.length > 0
+  const isEven = index % 2 === 0
+  const isHero = hasMedia && !!section.heroMedia
+
+  const copy = (
+    <div className={`max-w-xl ${isHero ? 'mx-auto text-center' : ''}`}>
+      {section.label && (
+        <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-white/50 mb-4">
+          {section.label}
+        </h2>
+      )}
+      {section.copy && (
+        <p className="whitespace-pre-wrap text-white/85 leading-relaxed text-lg sm:text-xl">
+          {section.copy}
+        </p>
+      )}
+      {section.launchUrl && isSafeUrl(section.launchUrl) && (
+        <div className={`mt-6 ${isHero ? 'flex justify-center' : ''}`}>
+          <a
+            href={section.launchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-md px-6 py-3 text-xs font-semibold uppercase tracking-[0.15em] transition-transform hover:scale-105"
+            style={{
+              background: ctaColor,
+              color: '#0a0a0a',
+              boxShadow: `0 4px 20px ${ctaColor}55`,
+            }}
+          >
+            Click to Launch →
+          </a>
+        </div>
+      )}
+    </div>
+  )
+
+  if (isHero) {
     return (
-      <video
-        src={m.url}
-        controls
-        playsInline
-        preload="metadata"
-        className="w-full h-auto rounded-lg bg-black"
-      />
+      <section className="flex flex-col items-center gap-10">
+        <div className="w-full max-w-4xl">
+          <CaseStudyCarousel items={items} anchorSide="right" />
+        </div>
+        {copy}
+      </section>
     )
   }
+  if (!hasMedia) {
+    return <section className="flex justify-center">{copy}</section>
+  }
+  // Non-hero: alternating flex row/row-reverse — 55% copy / 45% media
+  // matches the viewer's default width split. Stacks on mobile.
+  const anchorSide = isEven ? 'right' : 'left'
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={m.url}
-      alt={m.alt ?? ''}
-      className="w-full h-auto rounded-lg"
-      loading="lazy"
-    />
+    <section
+      className={`flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-10 md:gap-16`}
+    >
+      <div className="w-full md:basis-[55%] md:shrink md:grow-0 min-w-0 flex justify-center md:justify-start">
+        {copy}
+      </div>
+      <div className="w-full md:basis-[45%] md:shrink md:grow-0 min-w-0">
+        <CaseStudyCarousel items={items} anchorSide={anchorSide} />
+      </div>
+    </section>
   )
 }

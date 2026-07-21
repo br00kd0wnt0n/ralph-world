@@ -27,11 +27,23 @@ const CONFIG = {
     'h1',
     'h2',
     'h3',
+    'h4',
     'blockquote',
+    'code',
+    // Table set — needed for the legal pages (privacy data-table,
+    // cookies matrix). Article bodies use tables rarely but they cost
+    // nothing to allow.
+    'table',
+    'thead',
+    'tbody',
+    'tfoot',
+    'tr',
+    'th',
+    'td',
   ],
   // `style` is allow-listed so Tiptap's TextAlign extension survives, but the
   // hook below narrows its value to just `text-align: left|center|right`.
-  ALLOWED_ATTR: ['href', 'target', 'rel', 'style'],
+  ALLOWED_ATTR: ['href', 'target', 'rel', 'style', 'colspan', 'rowspan', 'scope'],
 }
 
 // Restrict style attributes to a single safe declaration. Without this, the

@@ -7,6 +7,36 @@ import Button from '@/components/ui/Button'
 const STORAGE_KEY = 'ralph-cookie-consent'
 type StoredConsent = 'cookies_all' | 'cookies_necessary'
 
+// New JSON shape includes the policy version the user consented to,
+// so the banner can re-prompt when legal copy changes.
+interface StoredConsentRecord {
+  choice: StoredConsent
+  version: string
+}
+
+/** Parse either the new JSON record or a legacy bare-string value.
+ *  Legacy rows are treated as "consented to an unknown version" — the
+ *  version mismatch check will re-prompt them on next mount. */
+function readStored(raw: string | null): StoredConsentRecord | null {
+  if (!raw) return null
+  if (raw === 'cookies_all' || raw === 'cookies_necessary') {
+    return { choice: raw, version: '__legacy__' }
+  }
+  try {
+    const parsed = JSON.parse(raw) as Partial<StoredConsentRecord>
+    if (
+      (parsed?.choice === 'cookies_all' ||
+        parsed?.choice === 'cookies_necessary') &&
+      typeof parsed?.version === 'string'
+    ) {
+      return parsed as StoredConsentRecord
+    }
+  } catch {
+    /* fall through */
+  }
+  return null
+}
+
 /**
  * Cookie consent banner — Task 3.10.
  *
@@ -28,18 +58,25 @@ type StoredConsent = 'cookies_all' | 'cookies_necessary'
  * a `ralph-cookie-reset` window event that this component listens for,
  * re-showing the banner so users can change their mind.
  */
-export default function CookieBanner() {
+export default function CookieBanner({
+  currentPolicyVersion,
+}: {
+  /** Live policy version passed down from the root layout (server-fetched).
+   *  When a stored consent record's version doesn't match, we re-prompt. */
+  currentPolicyVersion: string
+}) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
   // On mount, decide whether to show. If stored, also boot Sentry.
   useEffect(() => {
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY) as StoredConsent | null
-      if (stored === 'cookies_all') {
+      const stored = readStored(window.localStorage.getItem(STORAGE_KEY))
+      const versionMatches = stored?.version === currentPolicyVersion
+      if (stored?.choice === 'cookies_all' && versionMatches) {
         initSentryClient()
       }
-      if (stored !== 'cookies_all' && stored !== 'cookies_necessary') {
+      if (!stored || !versionMatches) {
         setOpen(true)
       }
     } catch {
@@ -58,13 +95,17 @@ export default function CookieBanner() {
     }
     window.addEventListener('ralph-cookie-reset', onReset)
     return () => window.removeEventListener('ralph-cookie-reset', onReset)
-  }, [])
+  }, [currentPolicyVersion])
 
   async function choose(choice: StoredConsent) {
     if (busy) return
     setBusy(true)
     try {
-      window.localStorage.setItem(STORAGE_KEY, choice)
+      const record: StoredConsentRecord = {
+        choice,
+        version: currentPolicyVersion,
+      }
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(record))
     } catch {
       /* ignore — server consent row is still the binding record */
     }

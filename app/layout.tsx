@@ -17,6 +17,7 @@ import PageShift from '@/components/layout/PageShift'
 import MenuFade from '@/components/layout/MenuFade'
 import MobileMenu from '@/components/layout/MobileMenu'
 import CookieBanner from '@/components/legal/CookieBanner'
+import { getCurrentPolicyVersion } from '@/lib/consent'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 const playfair = Playfair_Display({
@@ -74,7 +75,10 @@ export default async function RootLayout({
   // Site copy feeds the global footer (tagline, socials, copyright).
   // Cached via unstable_cache + tagged 'site-copy', so this is a cheap
   // shared read and safe-falls-back to defaults if the DB is unreachable.
-  const copy = await getSiteCopy()
+  const [copy, policyVersion] = await Promise.all([
+    getSiteCopy(),
+    getCurrentPolicyVersion(),
+  ])
   return (
     <html
       lang="en-GB"
@@ -141,7 +145,7 @@ export default async function RootLayout({
           </MenuFade>
           <CartDrawer />
           <MobileMenu />
-          <CookieBanner />
+          <CookieBanner currentPolicyVersion={policyVersion} />
         </Providers>
       </body>
     </html>

@@ -432,3 +432,25 @@ export const contactSubmissions = pgTable('contact_submissions', {
   userAgent: text('user_agent'),
   notifiedAt: timestamp('notified_at', { mode: 'date' }),
 })
+
+/**
+ * Legal pages — /legal/{slug} content edited from the CMS instead of
+ * hand-coded React. body_html is Tiptap-authored rich HTML, sanitised
+ * on render. last_updated_auto bumps on every save;
+ * last_updated_override lets an editor pin a specific display date
+ * (useful when a save is a wording tidy that shouldn't reset the "Last
+ * updated" line). Every save also bumps the global legal policy
+ * version (stored in homepage_config) so the cookie banner re-prompts
+ * users whose stored consent was against an older version.
+ */
+export const legalPages = pgTable('legal_pages', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  slug: text('slug').unique().notNull(), // 'privacy' | 'terms' | 'cookies'
+  title: text('title').notNull(),
+  bodyHtml: text('body_html').notNull(),
+  lastUpdatedAuto: timestamp('last_updated_auto', { mode: 'date' }).defaultNow().notNull(),
+  lastUpdatedOverride: timestamp('last_updated_override', { mode: 'date' }),
+  isPublished: boolean('is_published').default(true),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+})

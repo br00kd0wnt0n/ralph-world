@@ -1,6 +1,7 @@
 import 'server-only'
+import { eq } from 'drizzle-orm'
 import { getDb } from '@/lib/db'
-import { consentLog } from '@/lib/db/schema'
+import { consentLog, homepageConfig } from '@/lib/db/schema'
 
 /**
  * GDPR consent log (architecture doc §14).
@@ -30,10 +31,43 @@ export type ConsentSource =
   | 'substack_migration'
 
 /**
- * Current policy version stamp. Bump when terms / privacy / marketing
- * copy changes substantively so we can prove what users consented to.
+ * Compile-time fallback policy version. Used only when the DB-stored
+ * `legal_policy_version` can't be read (e.g. DB unreachable at consent
+ * time). Bump this alongside the DB value when landing a manual DB
+ * change so the fallback stays honest.
  */
 export const POLICY_VERSION = '2026-06-v1'
+
+/**
+ * DB key that carries the live policy version. Bumped by the CMS
+ * legal-page save action every time an editor saves any of the three
+ * legal pages (privacy / terms / cookies). The cookie banner reads it
+ * on mount and re-prompts the user if their stored consent was
+ * against an older version.
+ */
+export const POLICY_VERSION_KEY = 'legal_policy_version'
+
+/**
+ * Read the current policy version from homepage_config. Falls back to
+ * the compile-time POLICY_VERSION on any error so consent logging
+ * survives a DB outage.
+ */
+export async function getCurrentPolicyVersion(): Promise<string> {
+  try {
+    const db = getDb()
+    const [row] = await db
+      .select()
+      .from(homepageConfig)
+      .where(eq(homepageConfig.key, POLICY_VERSION_KEY))
+      .limit(1)
+    if (row && typeof row.value === 'string' && row.value.length > 0) {
+      return row.value
+    }
+  } catch (err) {
+    console.error('[consent] failed to read live policy version:', err)
+  }
+  return POLICY_VERSION
+}
 
 export interface LogConsentInput {
   /** User giving / withdrawing consent. null only after account erasure (retention). */
@@ -48,12 +82,16 @@ export interface LogConsentInput {
 export async function logConsent(input: LogConsentInput): Promise<void> {
   try {
     const db = getDb()
+    // Resolve version lazily so the caller doesn't have to fetch it
+    // themselves. If the caller passed one (migrations do), respect it.
+    const policyVersion =
+      input.policyVersion ?? (await getCurrentPolicyVersion())
     await db.insert(consentLog).values({
       userId: input.userId,
       consentType: input.consentType,
       granted: input.granted,
       source: input.source,
-      policyVersion: input.policyVersion ?? POLICY_VERSION,
+      policyVersion,
     })
   } catch (err) {
     console.error('[consent] failed to write consent_log row:', err)

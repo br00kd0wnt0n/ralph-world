@@ -102,18 +102,21 @@ export const DEFAULT_COPY = {
   play_expertise_4_body:
     'Live activations, immersive experiences, partnerships, and in-person moments that drive cultural conversation.',
 
-  // Subscribe modal
+  // Subscribe modal — defaults match the pre-CMS on-screen strings so
+  // nothing visible changes until an editor overrides them via
+  // /site-copy → Subscribe Modal.
   subscribe_heading: 'JOIN RALPH',
   subscribe_free_heading: 'Experience pop culture for the fun of it.',
   subscribe_free_body:
-    'Get access to our magazine articles, events listings, and the full Ralph experience. Absolutely free.',
+    "For the princely sum of just your email address, you can enjoy access to all our editorial content, buy tickets to one of our amazing IRL events and much more. Sounds good, right? Then what's stopping you?",
   subscribe_free_cta: 'Hook me up for free',
   subscribe_paid_heading: 'Prefer your culture more hands-on?',
   subscribe_paid_price: '£3 a month*',
-  subscribe_paid_body: 'Quarterly mag + TV channel + everything else',
+  subscribe_paid_body:
+    "Then you need a bit of The Ralph™ in your life. For just £3 a month you'll get our quarterly fun, glossy mag straight through your letterbox. On top of that, we'll switch on our TV channel for you, plus everything else Ralph World has to offer.",
   subscribe_paid_cta: 'Join for £3 per month',
   subscribe_paid_smallprint:
-    '* Billed monthly at £3. Includes VAT and postage. Cancel anytime from your account.',
+    'Billed monthly at £3. Includes VAT and UK postage for the quarterly magazine.',
 
   // Footer
   footer_tagline: 'The Entertainment People',

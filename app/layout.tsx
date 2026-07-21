@@ -18,6 +18,7 @@ import MenuFade from '@/components/layout/MenuFade'
 import MobileMenu from '@/components/layout/MobileMenu'
 import CookieBanner from '@/components/legal/CookieBanner'
 import { getCurrentPolicyVersion } from '@/lib/consent'
+import { SiteCopyProvider } from '@/components/layout/SiteCopyContext'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 const playfair = Playfair_Display({
@@ -124,28 +125,30 @@ export default async function RootLayout({
           ]}
         />
         <Providers>
-          <PlanetPreloader />
-          <Starfield />
-          <MenuFade>
-            <MidgroundCanvas />
-            <Nav />
-          </MenuFade>
-          <BackgroundLayer />
-          <PageShift>
-            <main id="main-content" className="flex-1 flex flex-col relative z-10">
-              <PageTransitionWrapper>
-                {children}
-              </PageTransitionWrapper>
-            </main>
-            <Footer variant="dark" copy={copy} />
-          </PageShift>
-          <MenuFade>
-            <ForegroundLayer />
-            <ForegroundCanvas />
-          </MenuFade>
-          <CartDrawer />
-          <MobileMenu />
-          <CookieBanner currentPolicyVersion={policyVersion} />
+          <SiteCopyProvider value={copy}>
+            <PlanetPreloader />
+            <Starfield />
+            <MenuFade>
+              <MidgroundCanvas />
+              <Nav />
+            </MenuFade>
+            <BackgroundLayer />
+            <PageShift>
+              <main id="main-content" className="flex-1 flex flex-col relative z-10">
+                <PageTransitionWrapper>
+                  {children}
+                </PageTransitionWrapper>
+              </main>
+              <Footer variant="dark" copy={copy} />
+            </PageShift>
+            <MenuFade>
+              <ForegroundLayer />
+              <ForegroundCanvas />
+            </MenuFade>
+            <CartDrawer />
+            <MobileMenu />
+            <CookieBanner currentPolicyVersion={policyVersion} />
+          </SiteCopyProvider>
         </Providers>
       </body>
     </html>

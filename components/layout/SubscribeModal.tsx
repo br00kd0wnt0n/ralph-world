@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { resolveSectionTheme } from '@/lib/section-themes'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useSiteCopy } from './SiteCopyContext'
 
 interface SubscribeModalProps {
   isOpen: boolean
@@ -27,6 +28,34 @@ export default function SubscribeModal({
   returnTo,
 }: SubscribeModalProps) {
   const router = useRouter()
+  const copy = useSiteCopy()
+  // Fallbacks match the pre-CMS on-screen strings so any missing key
+  // (context outside the provider, DB missing, etc.) renders the same
+  // thing users saw before this component became CMS-driven.
+  const heading = copy?.subscribe_heading ?? 'JOIN RALPH'
+  const freeHeading =
+    copy?.subscribe_free_heading ?? 'Experience pop culture for the fun of it.'
+  const freeBody =
+    copy?.subscribe_free_body ??
+    "For the princely sum of just your email address, you can enjoy access to all our editorial content, buy tickets to one of our amazing IRL events and much more. Sounds good, right? Then what's stopping you?"
+  const freeCta = copy?.subscribe_free_cta ?? 'Hook me up for free'
+  const paidHeading =
+    copy?.subscribe_paid_heading ?? 'Prefer your culture more hands-on?'
+  const paidBody =
+    copy?.subscribe_paid_body ??
+    "Then you need a bit of The Ralph™ in your life. For just £3 a month you'll get our quarterly fun, glossy mag straight through your letterbox. On top of that, we'll switch on our TV channel for you, plus everything else Ralph World has to offer."
+  const paidCta = copy?.subscribe_paid_cta ?? 'Join for £3 per month'
+  const smallprint =
+    copy?.subscribe_paid_smallprint ??
+    'Billed monthly at £3. Includes VAT and UK postage for the quarterly magazine.'
+
+  // Render "JOIN RALPH"-style two-word headings with a line break between
+  // the words for the poster feel. Single-word or multi-word headings
+  // render flat.
+  const headingWords = heading.trim().split(/\s+/)
+  const headingLines =
+    headingWords.length === 2 ? headingWords : [heading]
+
   const theme = resolveSectionTheme('subscribe_modal', themeKey)
   // Default (ralph-purple) keeps the hard-coded #0F0420 palette the
   // embedded SVG illustrations are matched to. Any other theme swaps
@@ -145,7 +174,12 @@ export default function SubscribeModal({
               className="relative text-6xl md:text-[7rem] font-bold text-black mb-4 z-10 font-[family-name:var(--font-display)] leading-[0.9]"
               style={{ transform: 'rotate(-3deg)' }}
             >
-              JOIN<br />RALPH
+              {headingLines.map((word, i) => (
+                <span key={i}>
+                  {word}
+                  {i < headingLines.length - 1 && <br />}
+                </span>
+              ))}
             </h1>
 
             {/* Astronaut/character placeholder */}
@@ -166,39 +200,32 @@ export default function SubscribeModal({
             {/* Free tier */}
             <div className="relative z-10 max-w-md">
               <h3 className="text-lg md:text-xl font-bold text-black mb-2">
-                Experience pop culture for the fun of it.
+                {freeHeading}
               </h3>
-              <p className="text-sm text-gray-700 mb-4 leading-relaxed">
-                For the princely sum of just your email address, you can enjoy
-                access to all our editorial content, buy tickets to one of our
-                amazing IRL events and much more. Sounds good, right? Then
-                what&apos;s stopping you?
+              <p className="text-sm text-gray-700 mb-4 leading-relaxed whitespace-pre-line">
+                {freeBody}
               </p>
               <button
                 onClick={() => goToJoinRalph('free')}
                 className="border border-black rounded-md px-5 py-2 text-black font-medium text-sm hover:bg-black hover:text-white transition-colors"
               >
-                Hook me up for free
+                {freeCta}
               </button>
             </div>
 
             {/* Paid tier */}
             <div className="relative z-10 max-w-md">
               <h3 className="text-lg md:text-xl font-bold text-black mb-2">
-                Prefer your culture more hands-on?
+                {paidHeading}
               </h3>
-              <p className="text-sm text-gray-700 mb-4 leading-relaxed">
-                Then you need a bit of The Ralph&trade; in your life. For
-                just £3 a month you&apos;ll get our quarterly fun, glossy
-                mag straight through your letterbox. On top of that,
-                we&apos;ll switch on our TV channel for you, plus
-                everything else Ralph World has to offer.
+              <p className="text-sm text-gray-700 mb-4 leading-relaxed whitespace-pre-line">
+                {paidBody}
               </p>
               <button
                 onClick={() => goToJoinRalph('paid')}
                 className="border border-black rounded-md px-5 py-2 text-black font-medium text-sm hover:bg-black hover:text-white transition-colors"
               >
-                Join for £3 per month
+                {paidCta}
               </button>
             </div>
           </div>
@@ -206,7 +233,7 @@ export default function SubscribeModal({
 
         {/* Fine print */}
         <p className="max-w-5xl mx-auto text-xs text-gray-500 mt-12 md:pl-[55%]">
-          Billed monthly at £3. Includes VAT and UK postage for the quarterly magazine.
+          {smallprint}
         </p>
       </div>
     </div>

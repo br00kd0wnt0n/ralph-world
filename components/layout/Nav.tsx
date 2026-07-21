@@ -289,6 +289,25 @@ export default function Nav() {
               </Link>
             </>
           )}
+          {/* Logged in: account avatar sits on the LEFT (mirrors mobile),
+              nesting to the right of the circle logo as it scales in — same
+              buttonMargin shift the Subscribe button uses. */}
+          {user && (
+            <Link
+              href="/account"
+              aria-label="Your account"
+              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
+              style={{
+                marginLeft: buttonMargin,
+                transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+            >
+              {user.email?.[0]?.toUpperCase() ?? 'R'}
+              {tier === 'paid' && (
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
+              )}
+            </Link>
+          )}
         </div>
 
         {/* Right: actions */}
@@ -306,17 +325,7 @@ export default function Nav() {
           </Link>
           {/* <ThemeToggle /> + <LanguageModal /> hidden for launch —
               restore when themes / i18n ship. */}
-          {user && (
-            <Link
-              href="/account"
-              className="relative flex h-8 w-8 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
-            >
-              {user.email?.[0]?.toUpperCase() ?? 'R'}
-              {tier === 'paid' && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
-              )}
-            </Link>
-          )}
+          {/* Account avatar moved to the left cluster (mirrors mobile). */}
           <button
             onClick={openCart}
             className="basket-btn relative flex items-center justify-center transition-colors hover:opacity-80"

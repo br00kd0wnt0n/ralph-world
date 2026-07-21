@@ -48,8 +48,9 @@ All notable changes documented here, organised by session. Most recent on top.
   now fades in/out together with the planet.
 - `components/layout/Nav.tsx`, `components/layout/MobileMenu.tsx`: language
   selector hidden (header + mobile menu); the logged-in account avatar moved
-  to the left cluster (beside the burger) with the Ralph logo spaced
-  correctly whether or not it's shown.
+  to the left cluster on **both** mobile (beside the burger) and desktop
+  (beside the circle logo, using the same scroll-in `buttonMargin` shift as
+  the Subscribe button), with the Ralph logo spaced correctly.
 - `components/anim/CanvasStage.tsx`, `lib/anim/saucerShow.ts`: reduced the
   screen-takeover animations (saucers/aliens) — first appearance random
   1–5 min, then repeats every 10 min.

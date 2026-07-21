@@ -43,13 +43,28 @@ async function fetchLegalPage(slug: string): Promise<LegalPage | null> {
  * Cached per-slug read. Legal-page saves in the CMS bump the
  * `legal-pages` tag via revalidateTag, so this stays instantly
  * fresh across a save without a hard TTL.
+ *
+ * unstable_cache serialises the cached value as JSON, which strips
+ * Date prototypes and turns them into ISO strings. We rehydrate here
+ * so callers always get real Date instances — otherwise
+ * .toLocaleDateString() on a cached page throws at render.
  */
-export const getLegalPage = (slug: string) =>
-  unstable_cache(
+export const getLegalPage = async (slug: string): Promise<LegalPage | null> => {
+  const cached = await unstable_cache(
     () => fetchLegalPage(slug),
     ['legal-page', slug],
     { revalidate: 3600, tags: ['legal-pages', `legal-page:${slug}`] }
   )()
+  if (!cached) return null
+  return {
+    ...cached,
+    displayLastUpdated: new Date(cached.displayLastUpdated),
+    lastUpdatedAuto: new Date(cached.lastUpdatedAuto),
+    lastUpdatedOverride: cached.lastUpdatedOverride
+      ? new Date(cached.lastUpdatedOverride)
+      : null,
+  }
+}
 
 export const LEGAL_SLUGS = ['privacy', 'terms', 'cookies'] as const
 export type LegalSlug = (typeof LEGAL_SLUGS)[number]

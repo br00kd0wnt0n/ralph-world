@@ -107,30 +107,42 @@ export default function JpContactClient() {
   // ── Success state ────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <main className="bg-white min-h-screen">
-        <div className="max-w-3xl mx-auto px-6 py-24 text-center">
-          <p style={eyebrowStyle}>ご相談ありがとうございます</p>
-          <h1 style={h1Style} className="mb-4">
-            ご連絡いただきありがとうございます
-          </h1>
-          <hr style={dividerStyle} />
-          <p className="text-black/80 text-base leading-relaxed" style={bodyStyle}>
-            ご相談内容を受け付けました。通常2営業日以内に担当よりご連絡いたします。まずはカジュアルに話しましょう。
-          </p>
-        </div>
+      <main>
+        <section className="relative" style={{ minHeight: 'calc(100svh - 200px)' }}>
+          <PinkPlanetTop />
+          <div className="relative z-10 pb-24" style={{ paddingTop: 200 }}>
+            <div className="max-w-3xl mx-auto px-6 text-center">
+              <p style={eyebrowStyle}>ご相談ありがとうございます</p>
+              <h1 style={h1Style} className="mb-4">
+                ご連絡いただきありがとうございます
+              </h1>
+              <hr style={dividerStyle} />
+              <p className="text-black/80 text-base leading-relaxed" style={bodyStyle}>
+                ご相談内容を受け付けました。通常2営業日以内に担当よりご連絡いたします。まずはカジュアルに話しましょう。
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
     )
   }
 
   // ── Form ─────────────────────────────────────────────────────────────
   return (
-    <main className="bg-white min-h-screen">
-      <div className="max-w-3xl mx-auto px-6 py-16 md:py-24">
-        <header className="mb-12">
-          <p style={eyebrowStyle} className="mb-2">
-            お気軽にご相談ください
-          </p>
-        </header>
+    <main>
+      <section className="relative" style={{ minHeight: 'calc(100svh - 200px)' }}>
+        {/* Pink planet top (creative) + white fill — same layout as the
+            magazine/events section pages. */}
+        <PinkPlanetTop />
+
+        {/* Content */}
+        <div className="relative z-10 pb-24" style={{ paddingTop: 200 }}>
+          <div className="max-w-3xl mx-auto px-6">
+            <header className="mb-12">
+              <p style={eyebrowStyle} className="mb-2">
+                お気軽にご相談ください
+              </p>
+            </header>
 
         <form onSubmit={handleSubmit} className="space-y-14">
           {/* Q1 */}
@@ -254,21 +266,63 @@ export default function JpContactClient() {
             </p>
           )}
 
-          {/* Submit — styled as the final grid cell per the mood memo */}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-ralph-pink hover:opacity-90 disabled:opacity-50 transition-opacity text-black text-center py-6 text-lg font-semibold tracking-wide rounded-sm"
-          >
-            {submitting ? '送信中…' : '相談してみる →'}
-          </button>
+          {/* Submit — pink shadow button (pink fill, black text/frame/shadow) */}
+          <div className="relative w-full">
+            <div
+              className="absolute inset-0 translate-x-1 translate-y-1 bg-black"
+              aria-hidden="true"
+            />
+            <button
+              type="submit"
+              disabled={submitting}
+              className={`${submitting ? '' : 'btn-press'} relative w-full border-2 border-black bg-ralph-pink text-black text-center py-6 text-lg font-semibold tracking-wide disabled:opacity-50`}
+            >
+              {submitting ? '送信中…' : '相談してみる →'}
+            </button>
+          </div>
 
           <p className="text-center text-sm text-gray-500" style={helperStyle}>
             通常2営業日以内にご連絡します。まずはカジュアルに話しましょう。
           </p>
         </form>
-      </div>
+          </div>
+        </div>
+      </section>
     </main>
+  )
+}
+
+/** Pink planet top + white fill — the shared section-page decoration
+    (creative planet is ralph-pink), used by both page states. */
+function PinkPlanetTop() {
+  return (
+    <div className="absolute inset-0 z-0">
+      <div className="relative w-full" style={{ height: 270 }}>
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
+          style={{
+            backgroundImage: 'url(/imgs/planet_background_creative.svg)',
+            backgroundPosition: 'top center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+            width: '100%',
+          }}
+          aria-hidden="true"
+        />
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 h-full pointer-events-none planet-bg-cover"
+          style={{
+            backgroundImage: 'url(/imgs/planet_foreground_creative.svg)',
+            backgroundPosition: 'top center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+            width: '100%',
+          }}
+          aria-hidden="true"
+        />
+      </div>
+      <div className="absolute bg-white" style={{ top: 270, left: 0, right: 0, bottom: 0 }} />
+    </div>
   )
 }
 

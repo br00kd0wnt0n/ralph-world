@@ -4,6 +4,62 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-21 — Events arms overhaul + UI polish
+
+### Events — arm rendering, click zones & past-event gate
+`components/events/Arm.tsx`, `components/events/MinglingCharacters.tsx`,
+`lib/data/events.ts`:
+- **Fixed: only 2 of 6 arms rendered.** The inline-SVG `<Arm>` injects each
+  shape via `innerHTML`; only `arm_2.svg` ships explicit `width`/`height`,
+  the others carry just a `viewBox`, so in the `width:auto` wrapper the
+  attribute-less shapes collapsed to zero size. Only arms landing on
+  `arm_2` (shapeId 1 → indices 1 & 5) had a size — hence exactly two arms.
+  Forced the injected `<svg>` to fill the wrapper's definite height
+  (`[&>svg]:h-full [&>svg]:w-auto`) so every shape sizes identically. Also
+  fixes the decorative mobile arms.
+- **Equal-width click zones (desktop).** The section is split into
+  `eventCount` equal columns; clicking / Enter / Space on a column opens
+  that event — a big, unambiguous target vs. the narrow arm, and it scales
+  to any count. Zones go inert while a mini/expanded panel is open;
+  hover/focus on a zone highlights its arm.
+- **Arms centred + sized to their zone.** Each arm centres on its zone and
+  its height is derived from the measured zone width (ResizeObserver),
+  floored 380–500px with modest neighbour overlap allowed (arm ≤ ~1.3× its
+  zone), replacing the old 15–85% band so all events fan out evenly and
+  stay tall/readable at any count or width.
+- **z-index layering on click.** The clicked (or expanded) arm lifts to the
+  top (40), its panel sits just under it (39) but above every resting arm
+  (20). Removed the arms container's stacking-context `z-index` so per-arm
+  z competes directly with the panels layer.
+- **Past events hidden.** `getActiveEvents` now gates on the event date
+  (start of today), not just the CMS `is_past` flag, so a past-dated event
+  drops its arm even when the flag lags. Undated events stay visible;
+  `getEventBySlug` (direct `/events/[slug]` links) is unaffected.
+
+### UI polish
+- `components/layout/Footer.tsx`: social links (TikTok / Instagram / YouTube)
+  are now CMS-driven from the footer site-copy URLs (each icon hidden when
+  no URL is set — no dead `#` links); the expanded location/contact panel
+  closes automatically on route change.
+- `components/magazine/ArticleOverlay.tsx`: Facebook / X / Link share buttons
+  wired up — Facebook sharer + X intent open share popups; "Link" copies the
+  article's canonical URL to the clipboard with brief "Copied!" feedback.
+- `components/magazine/MagazineClient.tsx`: the magazine planet sprite (alien)
+  now fades in/out together with the planet.
+- `components/layout/Nav.tsx`, `components/layout/MobileMenu.tsx`: language
+  selector hidden (header + mobile menu); the logged-in account avatar moved
+  to the left cluster (beside the burger) with the Ralph logo spaced
+  correctly whether or not it's shown.
+- `components/anim/CanvasStage.tsx`, `lib/anim/saucerShow.ts`: reduced the
+  screen-takeover animations (saucers/aliens) — first appearance random
+  1–5 min, then repeats every 10 min.
+- `components/jp/JpContactClient.tsx`: `/jp/contact` restructured to the
+  shared planet-top layout (pink planet) with a pink shadow confirm button.
+- `app/account/page.tsx`: Preferences section (theme + language) hidden for
+  launch until those features ship.
+
+---
+
 ## 2026-07-20 — Magazine article overlay polish
 
 `components/magazine/ArticleOverlay.tsx`:

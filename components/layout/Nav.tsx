@@ -8,7 +8,6 @@ import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import { useMenu } from '@/context/MenuContext'
 // import ThemeToggle from './ThemeToggle' // hidden for launch — restore when themes ship
-import LanguageModal from './LanguageModal'
 import SubscribeModal from './SubscribeModal'
 
 const NAV_ITEMS = [
@@ -305,8 +304,9 @@ export default function Nav() {
           >
             Work with us
           </Link>
-          {/* <ThemeToggle /> hidden for launch — restore when themes ship */}
-          {user ? (
+          {/* <ThemeToggle /> + <LanguageModal /> hidden for launch —
+              restore when themes / i18n ship. */}
+          {user && (
             <Link
               href="/account"
               className="relative flex h-8 w-8 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
@@ -316,8 +316,6 @@ export default function Nav() {
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
               )}
             </Link>
-          ) : (
-            <LanguageModal />
           )}
           <button
             onClick={openCart}
@@ -444,7 +442,7 @@ export default function Nav() {
               transition: 'background 0.3s ease-out, backdrop-filter 0.3s ease-out',
             }}
           >
-            {/* Left: burger + circle logo */}
+            {/* Left: burger + account avatar (logged in) + circle logo */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileOpen(true)}
@@ -457,6 +455,18 @@ export default function Nav() {
                   <line x1="3" y1="18" x2="21" y2="18" />
                 </svg>
               </button>
+              {user && (
+                <Link
+                  href="/account"
+                  className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
+                  aria-label="Your account"
+                >
+                  {user.email?.[0]?.toUpperCase() ?? 'R'}
+                  {tier === 'paid' && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
+                  )}
+                </Link>
+              )}
               {pathname === '/' ? (
                 <button
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -512,7 +522,7 @@ export default function Nav() {
               )}
             </div>
 
-            {/* Right: basket + account avatar (when logged in) */}
+            {/* Right: basket */}
             <div className="flex items-center gap-3">
               <button
                 onClick={openCart}
@@ -529,18 +539,6 @@ export default function Nav() {
                   {itemCount}
                 </span>
               </button>
-              {user && (
-                <Link
-                  href="/account"
-                  className="relative flex h-8 w-8 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
-                  aria-label="Your account"
-                >
-                  {user.email?.[0]?.toUpperCase() ?? 'R'}
-                  {tier === 'paid' && (
-                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
-                  )}
-                </Link>
-              )}
             </div>
           </div>
 

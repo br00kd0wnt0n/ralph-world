@@ -14,11 +14,11 @@ const SAUCER = ANIMATIONS['saucer']
 const BULLET = ANIMATIONS['bullet']
 const EXPLOSION = ANIMATIONS['explosion']
 
-// Show pacing
-const FIRST_MIN = 4_000
-const FIRST_MAX = 9_000
-const GAP_MIN = 18_000
-const GAP_MAX = 40_000
+// Show pacing — first appearance 1–5 min after load, then repeats every 10 min.
+const FIRST_MIN = 60_000
+const FIRST_MAX = 300_000
+const GAP_MIN = 600_000
+const GAP_MAX = 600_000
 const FIGHT_CHANCE = 0.35
 
 // Saucer feel

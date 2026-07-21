@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth, type SessionWithProfile } from '@/lib/auth'
-import AccountPreferences from '@/components/account/AccountPreferences'
 import PrivacyControls from '@/components/account/PrivacyControls'
 import SignOutButton from '@/components/account/SignOutButton'
 import { startSubscriptionCheckout, openBillingPortal } from './actions'
@@ -198,12 +197,14 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             <PrivacyControls initialMarketingOptIn={marketingOptIn} />
           </Section>
 
-          {/* Preferences */}
+          {/* Preferences (theme + language) hidden for launch — restore when
+              themes / i18n ship.
           <Section title="Preferences">
             <AccountPreferences
               initialLanguage={session.profile?.languagePreference ?? 'en'}
             />
           </Section>
+          */}
 
           {/* Sign out */}
           <Section title="Sign out">

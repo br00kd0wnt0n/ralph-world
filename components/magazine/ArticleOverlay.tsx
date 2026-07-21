@@ -29,6 +29,33 @@ export default function ArticleOverlay({
 }: ArticleOverlayProps) {
   const { user, tier } = useAuth()
   const [mounted, setMounted] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  // Share the article's canonical pretty URL. Facebook/X open a share popup;
+  // "Link" copies the URL to the clipboard with brief "Copied!" feedback.
+  const handleShare = useCallback(
+    (platform: 'Facebook' | 'X' | 'Link') => {
+      if (typeof window === 'undefined' || !article?.slug) return
+      const url = `${window.location.origin}/magazine/${article.slug}`
+      if (platform === 'Link') {
+        navigator.clipboard?.writeText(url).then(
+          () => {
+            setCopied(true)
+            window.setTimeout(() => setCopied(false), 2000)
+          },
+          () => {},
+        )
+        return
+      }
+      const title = article.title ?? 'Ralph'
+      const shareUrl =
+        platform === 'Facebook'
+          ? `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+          : `https://x.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`
+      window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=520')
+    },
+    [article?.slug, article?.title],
+  )
 
   // All hooks must run unconditionally before any early return (Rules of
   // Hooks). The focus trap is a no-op when `isOpen` is false, so it's
@@ -346,7 +373,7 @@ export default function ArticleOverlay({
           )}
 
           <div className="flex justify-center gap-4" style={{ marginBottom: '0.5rem' }}>
-            {['Facebook', 'X', 'Link'].map((label) => (
+            {(['Facebook', 'X', 'Link'] as const).map((label) => (
               <div key={label} style={{ position: 'relative', display: 'inline-block' }}>
                 <div
                   style={{
@@ -360,6 +387,8 @@ export default function ArticleOverlay({
                   }}
                 />
                 <button
+                  type="button"
+                  onClick={() => handleShare(label)}
                   className="btn-press flex items-center justify-center"
                   style={{
                     position: 'relative',
@@ -374,9 +403,11 @@ export default function ArticleOverlay({
                     lineHeight: 1,
                     letterSpacing: 0,
                   }}
-                  aria-label={`Share on ${label}`}
+                  aria-label={
+                    label === 'Link' ? 'Copy link to this article' : `Share on ${label}`
+                  }
                 >
-                  {label}
+                  {label === 'Link' && copied ? 'Copied!' : label}
                 </button>
               </div>
             ))}

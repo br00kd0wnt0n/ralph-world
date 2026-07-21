@@ -72,6 +72,8 @@ export default function MobileMenu() {
   }, [isOpen, setOpen])
   const currentLanguage =
     LANGUAGES.find((l) => l.code === language)?.label ?? 'English'
+  // Language switcher hidden for launch — restore when i18n ships.
+  const SHOW_LANGUAGE: boolean = false
 
   // Close the menu only once the route actually changes, so the navigation
   // commits while the page is still off-screen and the new page slides in
@@ -231,9 +233,8 @@ export default function MobileMenu() {
             )}
             {/* Language — same icon as the nav; opens an inline list that
                 works like the nav dropdown (pick + persist, tick on current).
-                Button + reveal are grouped in one nav child so the parent's
-                gap doesn't jolt the layout when the list mounts; the reveal's
-                own spacing lives inside its animated height. */}
+                Hidden for launch (SHOW_LANGUAGE) — restore when i18n ships. */}
+            {SHOW_LANGUAGE && (
             <div className="flex flex-col items-start">
               <button
                 type="button"
@@ -294,6 +295,7 @@ export default function MobileMenu() {
                 )}
               </AnimatePresence>
             </div>
+            )}
 
             {/* Worlds */}
             <h2 className={headerClass} style={headerStyle}>

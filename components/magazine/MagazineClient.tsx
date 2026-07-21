@@ -173,13 +173,21 @@ export default function MagazineClient({
 
         {/* Spinning coin on the planet's top curve. Anchored to the centre
             with a fixed +200px offset so it stays put on the curve regardless
-            of viewport width (the planet apex is centred). */}
-        <SpriteAnimation
-          name="got-coin"
-          width={174}
-          className="absolute z-[5] left-1/2 top-[-100px] pointer-events-none select-none hidden min-[576px]:block translate-x-[100px] min-[768px]:translate-x-[200px] rotate-[16deg]"
-          style={{ transformOrigin: 'bottom center' }}
-        />
+            of viewport width (the planet apex is centred). Wrapped in the
+            planet's own sectionBgVariants so it fades in WITH the planet
+            (instead of popping in); the coin's own translate/rotate stays on
+            the inner element so framer's reveal transform doesn't clobber it. */}
+        <motion.div
+          variants={sectionBgVariants}
+          className="absolute z-[5] left-1/2 top-[-100px] pointer-events-none select-none hidden min-[576px]:block"
+        >
+          <SpriteAnimation
+            name="got-coin"
+            width={174}
+            className="translate-x-[100px] min-[768px]:translate-x-[200px] rotate-[16deg]"
+            style={{ transformOrigin: 'bottom center' }}
+          />
+        </motion.div>
 
         {/* Content layer - animates LAST */}
         <motion.div

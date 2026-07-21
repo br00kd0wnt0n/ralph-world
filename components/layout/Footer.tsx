@@ -10,6 +10,7 @@ import Globe from './Globe'
 import Button from '@/components/ui/Button'
 import CookiePreferencesLink from '@/components/legal/CookiePreferencesLink'
 import { useMenu } from '@/context/MenuContext'
+import { usePathname } from 'next/navigation'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
 const ENQUIRY_OPTIONS = [
@@ -87,6 +88,13 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   const swiperRef = useRef<SwiperType | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
   const [activeSlide, setActiveSlide] = useState(0)
+
+  // The footer lives in the root layout, so it persists across client
+  // navigation — collapse the expanded panel whenever the route changes.
+  const pathname = usePathname()
+  useEffect(() => {
+    setPanelOpen(false)
+  }, [pathname])
 
   // Bring the expanded panel into view after opening. On mobile the panel is
   // in normal flow (it grows the page → single page scroll), so we scroll the
@@ -265,33 +273,42 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
           >
             Contact us
           </button>
-          <a
-            href={tiktokUrl || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-icon-btn"
-            aria-label="TikTok"
-          >
-            <img src="/imgs/icon_tiktok.svg" alt="" className="footer-icon" />
-          </a>
-          <a
-            href={instagramUrl || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-icon-btn"
-            aria-label="Instagram"
-          >
-            <img src="/imgs/icon_instagram.svg" alt="" className="footer-icon" />
-          </a>
-          <a
-            href={youtubeUrl || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-icon-btn"
-            aria-label="YouTube"
-          >
-            <img src="/imgs/icon_youtube.svg" alt="" className="footer-icon" />
-          </a>
+          {/* Social icons — CMS-driven (site copy: footer_{tiktok,instagram,
+              youtube}_url). Each only renders when its URL is set, so there
+              are no dead '#' links before the CMS is populated. */}
+          {tiktokUrl && (
+            <a
+              href={tiktokUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-icon-btn"
+              aria-label="TikTok"
+            >
+              <img src="/imgs/icon_tiktok.svg" alt="" className="footer-icon" />
+            </a>
+          )}
+          {instagramUrl && (
+            <a
+              href={instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-icon-btn"
+              aria-label="Instagram"
+            >
+              <img src="/imgs/icon_instagram.svg" alt="" className="footer-icon" />
+            </a>
+          )}
+          {youtubeUrl && (
+            <a
+              href={youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-icon-btn"
+              aria-label="YouTube"
+            >
+              <img src="/imgs/icon_youtube.svg" alt="" className="footer-icon" />
+            </a>
+          )}
         </div>
       </div>
 

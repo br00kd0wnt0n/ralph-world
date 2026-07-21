@@ -202,7 +202,6 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           <Section title="Preferences">
             <AccountPreferences
               initialLanguage={session.profile?.languagePreference ?? 'en'}
-              initialTheme={session.profile?.themePreference ?? 'cosy-dynamics'}
             />
           </Section>
 

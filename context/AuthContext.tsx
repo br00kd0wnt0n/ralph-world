@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react'
 import { SessionProvider, useSession } from 'next-auth/react'
+import type { Session } from 'next-auth'
 import type { SessionProfile } from '@/lib/auth'
 
 /**
@@ -54,9 +55,20 @@ function AuthInner({ children }: { children: ReactNode }) {
   )
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+  session,
+}: {
+  children: ReactNode
+  /** Session pre-fetched on the server via auth() in the root layout.
+   *  Without this, useSession() starts in 'loading' with a null session
+   *  and only reconciles after a /api/auth/session round-trip — so the
+   *  header shows the guest state for a beat after login, and never
+   *  updates within a single client navigation if the fetch stalls. */
+  session?: Session | null
+}) {
   return (
-    <SessionProvider>
+    <SessionProvider session={session}>
       <AuthInner>{children}</AuthInner>
     </SessionProvider>
   )

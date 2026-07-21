@@ -6,8 +6,15 @@ import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
 import { MenuProvider } from '@/context/MenuContext'
 import type { ReactNode } from 'react'
+import type { Session } from 'next-auth'
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  session,
+}: {
+  children: ReactNode
+  session?: Session | null
+}) {
   return (
     // reducedMotion="user" makes every framer-motion animation on the site
     // honour the OS "reduce motion" setting (disables transform/layout motion,
@@ -15,7 +22,7 @@ export function Providers({ children }: { children: ReactNode }) {
     // MobileMenu decorative floats.
     <MotionConfig reducedMotion="user">
       <ThemeProvider>
-        <AuthProvider>
+        <AuthProvider session={session}>
           <CartProvider>
             <MenuProvider>{children}</MenuProvider>
           </CartProvider>

@@ -124,29 +124,37 @@ export default function PrivacyControls({
         </p>
       </div>
 
-      {/* Download my data */}
-      <div className="pt-5 border-t border-black/10">
-        <p className="text-black text-sm font-bold">Download my data</p>
-        <p className="text-black/70 text-xs font-semibold mt-0.5 mb-2">
-          Export a JSON file with the personal data Ralph holds about you (UK
-          GDPR Art. 15). For data held by Stripe / Shopify / Sentry / Resend,{' '}
-          <a
-            href="mailto:hello@ralph.world?subject=Data%20export%20request"
-            className="underline text-ralph-pink hover:opacity-80"
+      {/* Your data — collapsed by default so it doesn't dominate the page,
+          but discoverable so we still satisfy UK GDPR Art. 15 transparency. */}
+      <details className="pt-5 border-t border-black/10 group">
+        <summary className="text-black text-sm font-bold cursor-pointer list-none flex items-center gap-2 hover:text-ralph-pink transition-colors">
+          <span className="inline-block transition-transform group-open:rotate-90">
+            ›
+          </span>
+          Your data
+        </summary>
+        <div className="mt-2 pl-4">
+          <p className="text-black/70 text-xs font-semibold mb-2">
+            Export a JSON file with the personal data Ralph holds about you (UK
+            GDPR Art. 15). For data held by Stripe / Shopify / Sentry / Resend,{' '}
+            <a
+              href="mailto:hello@ralph.world?subject=Data%20export%20request"
+              className="underline text-ralph-pink hover:opacity-80"
+            >
+              email us
+            </a>
+            .
+          </p>
+          <button
+            type="button"
+            onClick={downloadData}
+            className="rounded-full border-2 border-black/30 px-4 py-1.5 text-sm text-black hover:border-black transition-colors"
+            style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
           >
-            email us
-          </a>
-          .
-        </p>
-        <button
-          type="button"
-          onClick={downloadData}
-          className="rounded-full border-2 border-black/30 px-4 py-1.5 text-sm text-black hover:border-black transition-colors"
-          style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
-        >
-          Download as JSON
-        </button>
-      </div>
+            Download as JSON
+          </button>
+        </div>
+      </details>
 
       {/* Delete account */}
       <div className="pt-5 border-t border-black/10">

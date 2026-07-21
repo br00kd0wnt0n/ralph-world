@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useTheme, THEMES } from '@/context/ThemeContext'
 import { safeSet } from '@/lib/safe-storage'
 
 const LANGUAGES = [
@@ -12,49 +11,21 @@ const LANGUAGES = [
 
 interface AccountPreferencesProps {
   initialLanguage: string
-  initialTheme: string
 }
 
 // Server-persisted preferences. On change, we save immediately rather than
 // making the user click "save" — single-choice controls are expected to
 // feel live. Failures revert the control and surface an inline error.
+//
+// The theme picker used to live here but was pulled for launch — themes
+// aren't shipping in v1, and testers were confused by a control that
+// didn't do anything. Language stays because it drives the /jp locale.
 export default function AccountPreferences({
   initialLanguage,
-  initialTheme,
 }: AccountPreferencesProps) {
-  const { theme, setTheme } = useTheme()
   const [language, setLanguage] = useState(initialLanguage)
-  const [activeTheme, setActiveTheme] = useState(initialTheme || theme)
   const [error, setError] = useState<string | null>(null)
-  const [savingField, setSavingField] = useState<'theme' | 'language' | null>(
-    null
-  )
-
-  async function saveTheme(next: string) {
-    setError(null)
-    const prev = activeTheme
-    setActiveTheme(next)
-    setTheme(next) // update UI immediately
-    setSavingField('theme')
-    try {
-      const res = await fetch('/api/profile/theme', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: next }),
-      })
-      if (!res.ok) {
-        setActiveTheme(prev)
-        setTheme(prev)
-        setError('Could not save theme — try again.')
-      }
-    } catch {
-      setActiveTheme(prev)
-      setTheme(prev)
-      setError('Network issue — try again.')
-    } finally {
-      setSavingField(null)
-    }
-  }
+  const [savingField, setSavingField] = useState<'language' | null>(null)
 
   async function saveLanguage(next: string) {
     setError(null)
@@ -83,33 +54,6 @@ export default function AccountPreferences({
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-[10px] uppercase tracking-widest text-black/60 font-bold mb-2">
-          Theme
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => saveTheme(t.id)}
-              disabled={savingField === 'theme'}
-              className={`text-left rounded-lg border-2 px-3 py-2 text-sm transition-colors ${
-                activeTheme === t.id
-                  ? 'border-ralph-pink bg-ralph-pink/10 text-black'
-                  : 'border-black/20 text-black/70 hover:text-black hover:border-black/40'
-              } disabled:opacity-60`}
-            >
-              <span className="block font-semibold">{t.label}</span>
-              {t.type === 'immersive' && (
-                <span className="text-[10px] text-black/50 uppercase tracking-widest font-semibold">
-                  Coming soon
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div>
         <label className="block text-[10px] uppercase tracking-widest text-black/60 font-bold mb-2">
           Language

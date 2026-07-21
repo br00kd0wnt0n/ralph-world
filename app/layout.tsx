@@ -5,6 +5,7 @@ import { Providers } from './providers'
 import Nav from '@/components/layout/Nav'
 import Footer from '@/components/layout/Footer'
 import CartDrawer from '@/components/layout/CartDrawer'
+import { auth } from '@/lib/auth'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import { BackgroundLayer } from '@/context/ThemeContext'
 import Starfield from '@/components/layout/Starfield'
@@ -76,9 +77,15 @@ export default async function RootLayout({
   // Site copy feeds the global footer (tagline, socials, copyright).
   // Cached via unstable_cache + tagged 'site-copy', so this is a cheap
   // shared read and safe-falls-back to defaults if the DB is unreachable.
-  const [copy, policyVersion] = await Promise.all([
+  // auth() feeds the client-side SessionProvider its initial session so
+  // the Nav header doesn't have to wait on /api/auth/session to know
+  // the user is signed in. Without this the header flashes the guest
+  // state (or stays guest, if the fetch is slow/blocked) after a login
+  // redirect — the observed §9.8 bug.
+  const [copy, policyVersion, session] = await Promise.all([
     getSiteCopy(),
     getCurrentPolicyVersion(),
+    auth(),
   ])
   return (
     <html
@@ -124,7 +131,7 @@ export default async function RootLayout({
             },
           ]}
         />
-        <Providers>
+        <Providers session={session}>
           <SiteCopyProvider value={copy}>
             <PlanetPreloader />
             <Starfield />

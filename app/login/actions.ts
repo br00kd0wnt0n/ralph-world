@@ -78,7 +78,11 @@ export async function signinWithCredentials(
 
 export interface SignupResult {
   ok: boolean
-  error?: 'invalid_email' | 'invalid_password' | 'Unknown'
+  error?:
+    | 'invalid_email'
+    | 'invalid_password'
+    | 'already_registered_verified'
+    | 'Unknown'
   message?: string
 }
 

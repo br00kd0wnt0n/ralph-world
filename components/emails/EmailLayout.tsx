@@ -34,9 +34,18 @@ interface EmailLayoutProps {
  * header working in test/dev where the env var isn't set.
  */
 export function EmailLayout({ preview, children, locale = 'en' }: EmailLayoutProps) {
+  // The link back to the site is fine as ralph.world once DNS cuts
+  // over. But the wordmark <img> needs a URL that resolves TODAY, or
+  // Gmail shows an empty pink bar and testers see "no logo in the
+  // header". Default the image host to the Railway URL (always live)
+  // and only fall back to the linkUrl host if EMAIL_ASSET_URL is set
+  // (post-cutover we can drop this override).
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://ralph.world'
-  const wordmarkSrc = `${appUrl}/ralph-wordmark.png`
+  const assetHost =
+    process.env.EMAIL_ASSET_URL?.trim() ||
+    'https://ralph-world-production.up.railway.app'
+  const wordmarkSrc = `${assetHost}/ralph-wordmark.png`
   const year = new Date().getFullYear()
   const isJa = locale === 'ja'
   const signOff = isJa ? '— Ralph Creative Tokyo' : '— The Ralph Team'

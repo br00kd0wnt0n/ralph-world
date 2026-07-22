@@ -4,6 +4,21 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-22 — Build fix (emnapi overrides) + email wordmark
+
+- **Build fix:** removed the `@emnapi/*` / `@napi-rs` `overrides` from
+  `package.json` and regenerated `package-lock.json`. The overrides pinned
+  `@emnapi/core`/`runtime` to `1.11.2`, but adding `@react-email/ui` shifted
+  the tree so the lockfile resolved `1.11.1`; a newer npm (Railway/Nixpacks)
+  enforced the override on `npm ci` and failed `EUSAGE` (missing `1.11.2`)
+  while local npm 11.6.2 didn't. These are optional wasm-fallback deps for
+  `@tailwindcss/oxide` (the Linux build uses the native binary), so pinning
+  bought nothing. Verified a clean production-mode `npm ci` now passes.
+- **Email header:** switched the wordmark to `ralph-wordmark-white-240.png`
+  (240px source) rendered at **120px** for a crisp 2× on retina.
+
+---
+
 ## 2026-07-22 — Transactional email styling: shadow CTA, dividers, Gooper
 
 `components/emails/*` (shared `EmailLayout` + the 5 migrated templates):

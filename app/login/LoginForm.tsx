@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState, useTransition, type ReactNode } from 'react'
+import { useActionState, useEffect, useRef, useState, useTransition, type ReactNode } from 'react'
 import Link from 'next/link'
 import { signinWithCredentials, signupAction } from './actions'
 import type { SigninResult, SignupResult } from './actions'
@@ -49,6 +49,23 @@ interface Props {
   banner: BannerState | null
   /** Google sign-in is wired via a server action passed from the page. */
   googleAction: () => Promise<void>
+  /**
+   * Optional: fired once after a successful email/password signup. Lets a host
+   * flow (e.g. the /join-ralph subscribe journey) advance to its next step
+   * instead of showing the inline "check your inbox" message.
+   */
+  onSignupSuccess?: (fields: { email: string; name: string }) => void
+  /**
+   * Optional heading rendered above the Google button (black Gooper). Used by
+   * /join-ralph, which has no separate page title above the form. Omitted on
+   * /login, which supplies its own h1.
+   */
+  heading?: string
+  /**
+   * Bare = no white card / vertical padding (for /join-ralph, which sits on a
+   * white page). Default keeps the white card for /login's dark background.
+   */
+  bare?: boolean
 }
 
 export type BannerState =
@@ -66,7 +83,7 @@ export type BannerState =
  * The email/password path uses useActionState so we can render inline
  * errors without a page reload.
  */
-export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Props) {
+export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSignupSuccess, heading, bare }: Props) {
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode)
   const [isGooglePending, startGoogleTransition] = useTransition()
 
@@ -80,8 +97,33 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
     FormData
   >(signupAction, null)
 
+  // Captured from the last signup submit so the host callback can use them.
+  const signupFieldsRef = useRef({ email: '', name: '' })
+  const signupFiredRef = useRef(false)
+  useEffect(() => {
+    if (signupState?.ok && !signupFiredRef.current) {
+      signupFiredRef.current = true
+      onSignupSuccess?.(signupFieldsRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signupState])
+
   return (
-    <div className="bg-white rounded-2xl px-6 py-12 text-black">
+    <div className={bare ? 'px-0 md:px-6 text-black' : 'bg-white rounded-2xl px-6 py-12 text-black'}>
+      {heading && (
+        <h2
+          className="text-center text-black mb-6"
+          style={{
+            fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+            fontWeight: 600,
+            fontSize: 22,
+            lineHeight: 1.2,
+          }}
+        >
+          {heading}
+        </h2>
+      )}
+
       {/* URL-driven banner (verify=ok, verify=error, ?error=…) */}
       {banner && (
         <div
@@ -117,11 +159,17 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
         </ShadowButton>
       </form>
 
-      {/* divider */}
-      <div className="flex items-center my-5">
-        <div className="flex-1 h-px bg-black/15" />
-        <span className="px-3 text-xs uppercase tracking-widest text-black/50">or</span>
-        <div className="flex-1 h-px bg-black/15" />
+      {/* divider — just a centred "or" in black Gooper, no rules */}
+      <div
+        className="text-center text-black my-5"
+        style={{
+          fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+          fontWeight: 600,
+          fontSize: 16,
+          lineHeight: 1,
+        }}
+      >
+        or
       </div>
 
       {/* Mode toggle */}
@@ -194,12 +242,22 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
 
       {/* SIGN UP */}
       {mode === 'signup' && (
-        <form action={signupFormAction} className="space-y-3">
+        <form
+          action={(fd) => {
+            signupFieldsRef.current = {
+              email: String(fd.get('email') ?? ''),
+              name: String(fd.get('name') ?? ''),
+            }
+            signupFormAction(fd)
+          }}
+          className="space-y-3"
+        >
           <Field
-            label="Name (optional)"
+            label="Name"
             name="name"
             type="text"
             autoComplete="name"
+            required
           />
           <Field
             label="Email"
@@ -214,7 +272,6 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
             type="password"
             autoComplete="new-password"
             required
-            hint="Minimum 10 characters."
           />
           {signupState && (
             <p
@@ -231,15 +288,20 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction }: Pr
               {signupPending ? 'Creating account…' : 'Create account'}
             </ShadowButton>
           </div>
-          <p className="text-xs text-black/50 text-center">
-            We’ll email you a link to verify your address before you can sign in.
-          </p>
         </form>
       )}
 
-      <p className="text-black/50 text-xs mt-6 text-center">
+      <p className="text-black text-xs mt-6 text-center">
         By {mode === 'signin' ? 'signing in' : 'creating an account'}, you
-        agree to Ralph’s Terms and Privacy Policy.
+        agree to Ralph’s{' '}
+        <Link href="/legal/terms" className="underline hover:opacity-70 transition-opacity">
+          Terms
+        </Link>{' '}
+        and{' '}
+        <Link href="/legal/privacy" className="underline hover:opacity-70 transition-opacity">
+          Privacy Policy
+        </Link>
+        .
       </p>
     </div>
   )
@@ -251,32 +313,30 @@ interface FieldProps {
   type: string
   autoComplete?: string
   required?: boolean
-  hint?: string
 }
 
-function Field({ label, name, type, autoComplete, required, hint }: FieldProps) {
+// No visible label — the placeholder carries the field name, with an
+// aria-label kept for assistive tech (placeholders alone aren't accessible).
+function Field({ label, name, type, autoComplete, required }: FieldProps) {
   return (
-    <label className="block">
-      <span className="block text-xs uppercase tracking-widest text-black/60 mb-1">
-        {label}
-      </span>
-      <input
-        name={name}
-        type={type}
-        autoComplete={autoComplete}
-        required={required}
-        className="w-full bg-gray-200 px-4 placeholder-black/40 focus:outline-none focus:ring-2 focus:ring-ralph-pink/40"
-        style={{
-          height: 43,
-          borderRadius: 8,
-          color: 'black',
-          fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
-          fontWeight: 600,
-          fontSize: 16,
-          lineHeight: 1,
-        }}
-      />
-      {hint && <span className="block text-xs text-black/50 mt-1">{hint}</span>}
-    </label>
+    <input
+      name={name}
+      type={type}
+      autoComplete={autoComplete}
+      required={required}
+      placeholder={label}
+      aria-label={label}
+      aria-required={required}
+      className="w-full bg-[#D9D9D9] px-4 placeholder-[#000000BF] focus:outline-none focus:ring-2 focus:ring-ralph-pink/40"
+      style={{
+        height: 43,
+        borderRadius: 8,
+        color: 'black',
+        fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+        fontWeight: 600,
+        fontSize: 16,
+        lineHeight: 1,
+      }}
+    />
   )
 }

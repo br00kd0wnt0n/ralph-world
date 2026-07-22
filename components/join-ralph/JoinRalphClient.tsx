@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect, useState, useTransition, useActionState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { sectionPageVariants } from '@/lib/animation/page-transitions'
-import { signupAction, type SignupResult } from '@/app/login/actions'
 import Button from '@/components/ui/Button'
+import { LoginForm } from '@/app/login/LoginForm'
 
 type Tier = 'free' | 'paid'
-type Step = 1 | 2 | 3 | 4
+type Step = 1 | 2 | 3
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -24,19 +24,6 @@ const slideVariants = {
 }
 
 const slideTransition = { type: 'tween' as const, duration: 0.4, ease: 'easeInOut' as const }
-
-// Shared signup field style — grey fill, 8px radius, black Gooper text.
-const fieldClass =
-  'w-full bg-gray-200 px-4 placeholder-black/40 focus:outline-none focus:ring-2 focus:ring-ralph-pink/40'
-const fieldStyle: React.CSSProperties = {
-  height: 43,
-  borderRadius: 8,
-  color: 'black',
-  fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
-  fontWeight: 600,
-  fontSize: 16,
-  lineHeight: 1,
-}
 
 // Body copy — Roboto 600, 13px / 23px, black, centred.
 const bodyCopyStyle: React.CSSProperties = {
@@ -68,59 +55,6 @@ function BackButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-// Full-width shadow button (skeuomorphic offset shadow + black rim, Gooper
-// face). Accepts an icon + text as children. Matches the shared Button look.
-function ShadowButton({
-  children,
-  type = 'button',
-  onClick,
-  disabled = false,
-}: {
-  children: React.ReactNode
-  type?: 'button' | 'submit'
-  onClick?: () => void
-  disabled?: boolean
-}) {
-  return (
-    <div className="relative w-full">
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: 4,
-          left: 4,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'black',
-          pointerEvents: 'none',
-        }}
-      />
-      <button
-        type={type}
-        onClick={onClick}
-        disabled={disabled}
-        className={`relative w-full inline-flex items-center justify-center gap-3 ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'btn-press'
-        }`}
-        style={{
-          height: 43,
-          border: '2px solid black',
-          backgroundColor: 'white',
-          color: 'black',
-          fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
-          fontWeight: 600,
-          fontSize: 16,
-          lineHeight: 1,
-          cursor: 'pointer',
-          transition: 'transform 0.15s ease',
-        }}
-      >
-        {children}
-      </button>
-    </div>
-  )
-}
-
 export default function JoinRalphClient({
   magCoverUrl = null,
 }: {
@@ -130,30 +64,19 @@ export default function JoinRalphClient({
   const params = useSearchParams()
 
   const rawStep = parseInt(params.get('step') ?? '1', 10) || 1
-  const step = Math.max(1, Math.min(4, rawStep)) as Step
+  const step = Math.max(1, Math.min(3, rawStep)) as Step
   const tier: Tier = params.get('tier') === 'paid' ? 'paid' : 'free'
-  // Preview mode (?preview=1): skip the "needs form data" guard and seed
-  // placeholder name/email so slides 3 & 4 can be styled without filling
-  // out the flow. Dev/design aid only.
+  // Preview mode (?preview=1): seed placeholder signup fields so the tier +
+  // verify slides can be styled without walking the flow. Dev/design aid only.
   const preview = params.get('preview') === '1'
 
-  // Form state carried across slides 2 → 3 → 4. Held in component state
-  // rather than URL so we don't leak emails into the URL/history.
-  // Trade-off: a hard refresh on slide 3+ bounces back to slide 2.
-  const [email, setEmail] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [password, setPassword] = useState('')
+  // Email/name captured from the signup form (LoginForm) so the verify slide
+  // can show them + resend. Kept in state, not the URL, so we don't leak the
+  // address. Trade-off: a hard refresh on slide 2/3 bounces back to slide 1.
+  const [signupEmail, setSignupEmail] = useState(preview ? 'you@example.com' : '')
+  const [signupName, setSignupName] = useState(preview ? 'Alex' : '')
   const [direction, setDirection] = useState(0)
-  const [isGooglePending, startGoogleTransition] = useTransition()
 
-  const [signupState, signupFormAction, signupPending] = useActionState<
-    SignupResult | null,
-    FormData
-  >(signupAction, null)
-
-  // Build a new search-params URL for a given step + tier (keeps the
-  // current tier unless explicitly overridden).
   function buildHref(targetStep: number, targetTier: Tier = tier) {
     const sp = new URLSearchParams()
     sp.set('step', String(targetStep))
@@ -166,43 +89,21 @@ export default function JoinRalphClient({
     router.push(buildHref(targetStep, targetTier))
   }
 
-  // Bounce hard-refreshed users back to step 2 when slide 3+ requires
-  // form data that's been lost. Only intervene if the URL is downstream
-  // of where the state can support.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Steps 2 (tier) and 3 (verify) are only reachable after a signup this
+  // session; a hard refresh loses that state — bounce back to the form.
   useEffect(() => {
-    if (!preview && (step === 3 || step === 4) && !email) {
-      router.replace(buildHref(2))
+    if (!preview && (step === 2 || step === 3) && !signupEmail) {
+      router.replace(buildHref(1))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, email, preview])
+  }, [step, signupEmail, preview])
 
-  // When the signup action succeeds, advance to the verify slide.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => {
-    if (signupState?.ok && step === 3) {
-      setDirection(1)
-      router.push(buildHref(4))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signupState])
-
-  function handleSelectTier(t: Tier) {
-    goToStep(2, t)
-  }
-
-  function handleGoogleSignup() {
-    const callbackUrl =
-      tier === 'paid' ? '/account?upgrade=paid' : '/account'
-    startGoogleTransition(() => {
-      void signIn('google', { callbackUrl })
-    })
-  }
-
-  function handleEmailContinue(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email.trim()) return
-    goToStep(3)
+  // New account created → carry the details and move to the tier slide.
+  function handleSignupSuccess(fields: { email: string; name: string }) {
+    setSignupEmail(fields.email)
+    setSignupName(fields.name)
+    setDirection(1)
+    router.push(buildHref(2))
   }
 
   return (
@@ -211,7 +112,7 @@ export default function JoinRalphClient({
       initial="initial"
       animate="animate"
     >
-      {/* Page h1 — visually hidden; the signup flow's own step headings are h2. */}
+      {/* Page h1 — visually hidden; the flow's own step headings are h2/h3. */}
       <h1 className="sr-only">Join Ralph</h1>
       <section
         className="relative"
@@ -250,9 +151,6 @@ export default function JoinRalphClient({
         </div>
 
         {/* Content */}
-        {/* overflow-hidden on the slides container is needed for the horizontal
-            slide transitions, so 100px of the top offset lives *inside* it
-            (as padding) to give slide characters headroom without being clipped. */}
         <div
           className="relative z-10 pb-16 min-h-[60vh]"
           style={{ paddingTop: 100 }}
@@ -261,10 +159,7 @@ export default function JoinRalphClient({
               the decorative mag cover / badge can bleed ~40px past the edge
               without being cropped, while the full-width slide transitions
               (which translate 100% AND fade) are still effectively clipped. */}
-          <div
-            className="max-w-5xl mx-auto px-6 overflow-clip [overflow-clip-margin:40px]"
-            style={{ paddingTop: 100 }}
-          >
+          <div className="max-w-5xl mx-auto px-6 overflow-clip [overflow-clip-margin:40px] min-[992px]:pt-[100px]">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={step}
@@ -276,37 +171,44 @@ export default function JoinRalphClient({
                 transition={slideTransition}
                 className="pb-6"
               >
-                {step === 1 && <Slide1 onSelectTier={handleSelectTier} magCoverUrl={magCoverUrl} />}
+                {step === 1 && (
+                  <Slide1
+                    magCoverUrl={magCoverUrl}
+                    right={
+                      <LoginForm
+                        bare
+                        heading="Log in or sign up to Ralph.World"
+                        callbackUrl="/account"
+                        initialMode="signup"
+                        banner={null}
+                        googleAction={async () => {
+                          await signIn('google', { callbackUrl: '/account' })
+                        }}
+                        onSignupSuccess={handleSignupSuccess}
+                      />
+                    }
+                  />
+                )}
                 {step === 2 && (
-                  <Slide2
-                    email={email}
-                    setEmail={setEmail}
-                    onBack={() => goToStep(1)}
-                    onGoogle={handleGoogleSignup}
-                    googlePending={isGooglePending}
-                    onSubmit={handleEmailContinue}
+                  <TierSlide
+                    onSelectTier={(t) => {
+                      if (t === 'free') {
+                        // Digital Ralph — straight to the magazine.
+                        router.push('/magazine')
+                      } else {
+                        // Physical Ralph — Stripe checkout (bounces to login
+                        // first if the just-signed-up user isn't authed yet).
+                        window.location.href = '/api/account/upgrade'
+                      }
+                    }}
+                    firstName={signupName}
                   />
                 )}
                 {step === 3 && (
-                  <Slide3
-                    email={email || (preview ? 'you@example.com' : '')}
-                    firstName={firstName}
-                    setFirstName={setFirstName}
-                    lastName={lastName}
-                    setLastName={setLastName}
-                    password={password}
-                    setPassword={setPassword}
+                  <VerifySlide
+                    email={signupEmail}
+                    firstName={signupName}
                     onBack={() => goToStep(2)}
-                    signupFormAction={signupFormAction}
-                    signupPending={signupPending}
-                    signupState={signupState}
-                  />
-                )}
-                {step === 4 && (
-                  <Slide4
-                    email={email || (preview ? 'you@example.com' : '')}
-                    firstName={firstName || (preview ? 'Alex' : '')}
-                    onBack={() => goToStep(3)}
                   />
                 )}
               </motion.div>
@@ -319,23 +221,24 @@ export default function JoinRalphClient({
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Slide 1 — JOIN RALPH hero + tier copy
+// Slide 1 — JOIN RALPH hero (left) + login / signup form (right)
 // ────────────────────────────────────────────────────────────────────────────
 
 function Slide1({
-  onSelectTier,
   magCoverUrl,
+  right,
 }: {
-  onSelectTier: (t: Tier) => void
   magCoverUrl?: string | null
+  right: React.ReactNode
 }) {
+  // Single column (auto height) below 992px; two equal columns at >=992.
   return (
-    <div className="grid md:grid-cols-[1fr_1fr] gap-8 md:gap-16 items-start">
-      {/* Left: JOIN RALPH title + magazine cover decoration + astronaut */}
+    <div className="grid min-[992px]:grid-cols-[1fr_1fr] gap-8 min-[992px]:gap-16 items-start">
+      {/* Left: JOIN RALPH title + magazine cover decoration + painter */}
       <div className="relative">
         {/* Latest shop magazine cover */}
         {magCoverUrl && (
-          <div className="absolute left-[-48px] top-20 hidden md:block pointer-events-none">
+          <div className="absolute left-[-48px] top-20 hidden min-[1200px]:block pointer-events-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={magCoverUrl}
@@ -350,97 +253,115 @@ function Slide1({
         <img
           src="/imgs/text-join-ralph.svg"
           alt="Join Ralph"
-          className="relative z-10 block mx-auto w-full max-w-[250px] h-auto"
+          className="relative z-10 block mx-auto w-full max-w-[180px] min-[992px]:max-w-[250px] h-auto"
         />
 
-        {/* "Fun worth finding" badge — upper-right of the title */}
+        {/* "Fun worth finding" badge — centred over the title, then nudged
+            right (120px < 992, 150px >= 992). Smaller below 992. */}
         <img
           src="/imgs/fun-worth-finding.svg"
           alt=""
           aria-hidden="true"
-          className="absolute right-0 top-[-20px] z-20 hidden md:block pointer-events-none select-none"
-          style={{ width: 130, height: 'auto' }}
+          className="absolute left-1/2 -translate-x-1/2 ml-[120px] min-[992px]:ml-[150px] top-[-20px] z-20 block pointer-events-none select-none w-[100px] min-[992px]:w-[130px] h-auto"
         />
 
-        {/* Painter character */}
+        {/* Painter character — absolute so it doesn't add height; the column
+            then collapses to just the JOIN RALPH title. top-full + the upward
+            translate keep it in the same spot as the old in-flow version. */}
         <img
           src="/imgs/join-ralph-painter.svg"
           alt=""
           aria-hidden="true"
-          className="relative z-10 block mt-8 ml-auto pointer-events-none select-none"
-          style={{ width: 153, height: 'auto', transform: 'translate(20px, -200px)' }}
+          className="absolute top-full right-0 z-10 hidden min-[992px]:block pointer-events-none select-none"
+          style={{ width: 153, height: 'auto', transform: 'translate(20px, -168px)' }}
         />
       </div>
 
-      {/* Right: tiers */}
-      <div className="flex flex-col gap-10 relative pt-4">
-        {/* Free tier */}
-        <div className="relative z-10 max-w-md">
-          <h3
-            className="text-black mb-3"
-            style={{
-              fontFamily: "'Gooper Trial', serif",
-              fontWeight: 600,
-              fontSize: 22,
-              lineHeight: '100%',
-              letterSpacing: 0,
-            }}
-          >
-            Experience pop culture for the fun of it.
-          </h3>
-          <p
-            className="text-black mb-5"
-            style={{
-              fontFamily: 'var(--font-body), Arial, sans-serif',
-              fontWeight: 600,
-              fontSize: 16,
-              lineHeight: '28px',
-              letterSpacing: 0,
-            }}
-          >
-            For the princely sum of just your email address, you can enjoy
-            access to all our editorial content, buy tickets to one of our
-            amazing IRL events and much more. Sounds good, right? Then
-            what&apos;s stopping you?
-          </p>
-          <Button
-            label="Hook me up for free"
-            onClick={() => onSelectTier('free')}
-            minWidth={230}
-          />
-        </div>
+      {/* Right: login / signup. Capped + centred at <992 when stacked; fills
+          the column at >=992. */}
+      <div className="relative z-10 w-full max-w-[408px] mx-auto min-[992px]:max-w-none min-[992px]:mx-0">
+        {right}
+      </div>
+    </div>
+  )
+}
 
-        {/* Paid tier */}
-        <div className="relative z-10 max-w-md">
-          <h3
-            className="text-black mb-3"
-            style={{
-              fontFamily: "'Gooper Trial', serif",
-              fontWeight: 600,
-              fontSize: 22,
-              lineHeight: '100%',
-              letterSpacing: 0,
-            }}
-          >
-            Prefer your culture more hands-on?
-          </h3>
-          <p
-            className="text-black mb-5"
-            style={{
-              fontFamily: 'var(--font-body), Arial, sans-serif',
-              fontWeight: 600,
-              fontSize: 16,
-              lineHeight: '28px',
-              letterSpacing: 0,
-            }}
-          >
-            Then you need a bit of The Ralph&trade; in your life. For just
-            £3 a month you&apos;ll get our quarterly fun, glossy mag straight
-            through your letterbox. On top of that, we&apos;ll switch on our
-            TV channel for you, plus everything else Ralph World has to offer.
-          </p>
+// ────────────────────────────────────────────────────────────────────────────
+// Slide 2 — Choose your subscription tier (shown after a new signup)
+// ────────────────────────────────────────────────────────────────────────────
+
+function TierSlide({
+  onSelectTier,
+  firstName,
+}: {
+  onSelectTier: (t: Tier) => void
+  firstName: string
+}) {
+  const titleStyle: React.CSSProperties = {
+    fontFamily: "'Gooper Trial', serif",
+    fontWeight: 600,
+    fontSize: 22,
+    lineHeight: '110%',
+    letterSpacing: 0,
+  }
+  const bodyStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-body), Arial, sans-serif',
+    fontWeight: 600,
+    fontSize: 16,
+    lineHeight: '28px',
+    letterSpacing: 0,
+  }
+  return (
+    <div className="max-w-2xl mx-auto flex flex-col gap-10 py-16 md:px-16 min-[992px]:p-0">
+      <div className="relative">
+        <h2 className="text-center text-black" style={titleStyle}>
+          Hey{firstName ? `, ${firstName}` : ''}. Select your subscription level
+        </h2>
+        <img
+          src="/imgs/fun-worth-finding.svg"
+          alt=""
+          aria-hidden="true"
+          className="absolute -right-[100px] top-1/2 -translate-y-1/2 rotate-[15deg] hidden md:block pointer-events-none select-none w-[150px] h-auto"
+        />
+      </div>
+
+      {/* Digital (free) */}
+      <div className="relative z-10">
+        <h2 className="text-black" style={titleStyle}>
+          Digital Ralph
+        </h2>
+        <p className="text-black mb-3" style={titleStyle}>
+          £FREE
+        </p>
+        <p className="text-black mb-5" style={bodyStyle}>
+          Enjoy access to all our editorial content, buy tickets to one of our
+          amazing IRL events and much more. Sounds good, right? Then
+          what&apos;s stopping you?
+        </p>
+        <Button
+          label="I want to see Ralph"
+          onClick={() => onSelectTier('free')}
+          minWidth={230}
+        />
+      </div>
+
+      {/* Physical (paid) — right aligned */}
+      <div className="relative z-10 text-right">
+        <h2 className="text-black" style={titleStyle}>
+          Physical Ralph
+        </h2>
+        <p className="text-black mb-3" style={titleStyle}>
+          £3 per month
+        </p>
+        <p className="text-black mb-5" style={bodyStyle}>
+          Or for just £3 a month you&apos;ll also get everything Digital Ralph
+          has to offer, plus our quarterly fun, glossy mag straight through
+          your letterbox. If that wasn&apos;t enough we&apos;ll switch on our
+          TV channel for you too.
+        </p>
+        <div className="flex justify-end">
           <Button
-            label="Join for £3 per month"
+            label="I want to hold Ralph"
             onClick={() => onSelectTier('paid')}
             minWidth={230}
           />
@@ -451,304 +372,10 @@ function Slide1({
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Slide 2 — Google or email
+// Slide 3 — Verify your email
 // ────────────────────────────────────────────────────────────────────────────
 
-function Slide2({
-  email,
-  setEmail,
-  onBack,
-  onGoogle,
-  googlePending,
-  onSubmit,
-}: {
-  email: string
-  setEmail: (s: string) => void
-  onBack: () => void
-  onGoogle: () => void
-  googlePending: boolean
-  onSubmit: (e: React.FormEvent) => void
-}) {
-  return (
-    <div>
-      {/* Centred form column. Astronaut is absolutely positioned just to the
-        right of the form (decorative; hidden on mobile where there's no room). */}
-      <div className="relative mx-auto w-full" style={{ maxWidth: 361 }}>
-        <BackButton onClick={onBack} />
-        <img
-          src="/imgs/join-raph-astronaut.svg"
-          alt=""
-          aria-hidden="true"
-          className="hidden md:block absolute left-full top-1/2 -translate-y-1/2 ml-2 pointer-events-none select-none"
-          style={{ width: 182, height: 'auto' }}
-        />
-        <div className="w-full">
-          {/* Google — shadow button style */}
-          <ShadowButton onClick={onGoogle} disabled={googlePending}>
-            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-            {googlePending ? 'Opening Google…' : 'Continue with Google'}
-          </ShadowButton>
-
-          <div className="flex items-center justify-center my-5">
-            <span
-              style={{
-                fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
-                fontWeight: 600,
-                fontSize: 16,
-                lineHeight: 1,
-                letterSpacing: 0,
-                color: '#000000',
-              }}
-            >
-              or
-            </span>
-          </div>
-
-          <form onSubmit={onSubmit} className="space-y-3">
-            <label htmlFor="join-email" className="sr-only">
-              Email
-            </label>
-            <input
-              id="join-email"
-              type="email"
-              autoComplete="email"
-              required
-              aria-required="true"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={fieldClass}
-              style={fieldStyle}
-            />
-            <button
-              type="submit"
-              className="w-full hover:bg-black/5 transition-colors"
-              style={{
-                height: 43,
-                border: '2px solid #00000066',
-                backgroundColor: 'transparent',
-                color: 'black',
-                fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
-                fontWeight: 600,
-                fontSize: 16,
-                lineHeight: 1,
-                cursor: 'pointer',
-              }}
-            >
-              Continue
-            </button>
-          </form>
-
-          <p
-            className="text-black mt-4 text-center mx-auto"
-            style={{
-              fontFamily: 'var(--font-body), Arial, sans-serif',
-              fontWeight: 600,
-              fontSize: 12,
-              lineHeight: 1,
-              letterSpacing: 0,
-              maxWidth: '80%',
-            }}
-          >
-            By signing up, you are creating an account with Ralph and agree to
-            Ralph&apos;s{' '}
-            <a href="/legal/terms" className="underline font-extrabold">
-              Terms
-            </a>{' '}
-            and{' '}
-            <a href="/legal/privacy" className="underline font-extrabold">
-              Privacy Policy
-            </a>
-            .
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// Slide 3 — Complete your account (credentials form)
-// ────────────────────────────────────────────────────────────────────────────
-
-function Slide3({
-  email,
-  firstName,
-  setFirstName,
-  lastName,
-  setLastName,
-  password,
-  setPassword,
-  onBack,
-  signupFormAction,
-  signupPending,
-  signupState,
-}: {
-  email: string
-  firstName: string
-  setFirstName: (s: string) => void
-  lastName: string
-  setLastName: (s: string) => void
-  password: string
-  setPassword: (s: string) => void
-  onBack: () => void
-  signupFormAction: (formData: FormData) => void
-  signupPending: boolean
-  signupState: SignupResult | null
-}) {
-  return (
-    <div>
-      {/* Centred form column with the eyes character to its right (matches Slide 2). */}
-      <div className="relative mx-auto w-full" style={{ maxWidth: 361 }}>
-        <BackButton onClick={onBack} />
-        <img
-          src="/imgs/join-ralph-eyes.svg"
-          alt=""
-          aria-hidden="true"
-          className="hidden md:block absolute left-full top-1/2 -translate-y-1/2 ml-2 pointer-events-none select-none"
-          style={{ width: 120, height: 'auto' }}
-        />
-        <div className="w-full">
-          <h2
-            className="text-2xl text-black text-center mb-2"
-            style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
-          >
-            Complete your account
-          </h2>
-          <p
-            className="text-center mb-6"
-            style={{
-              fontFamily: 'var(--font-body), Arial, sans-serif',
-              fontWeight: 600,
-              fontSize: 13,
-              lineHeight: '33px',
-              letterSpacing: 0,
-              color: '#000',
-            }}
-          >
-            {email}
-          </p>
-
-          <form action={signupFormAction}>
-            {/* Server-action FormData: combine first + last into `name`. */}
-            <input
-              type="hidden"
-              name="name"
-              value={`${firstName} ${lastName}`.trim()}
-            />
-            <input type="hidden" name="email" value={email} />
-
-            {/* Name fields */}
-            <div className="space-y-3">
-              <label htmlFor="join-first-name" className="sr-only">
-                First name
-              </label>
-              <input
-                id="join-first-name"
-                type="text"
-                autoComplete="given-name"
-                required
-                aria-required="true"
-                placeholder="First name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className={fieldClass}
-                style={fieldStyle}
-              />
-              <label htmlFor="join-last-name" className="sr-only">
-                Last name
-              </label>
-              <input
-                id="join-last-name"
-                type="text"
-                autoComplete="family-name"
-                required
-                aria-required="true"
-                placeholder="Last name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className={fieldClass}
-                style={fieldStyle}
-              />
-            </div>
-
-            {/* Password — double gap above to separate from the name fields */}
-            <div className="mt-6 space-y-2">
-              <label htmlFor="join-password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="join-password"
-                type="password"
-                name="password"
-                autoComplete="new-password"
-                required
-                aria-required="true"
-                minLength={10}
-                placeholder="Password"
-                aria-describedby="join-password-hint"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={fieldClass}
-                style={fieldStyle}
-              />
-              <p id="join-password-hint" className="text-xs text-black/60">Minimum 10 characters.</p>
-            </div>
-
-            {/* Marketing opt-in — GDPR requires this to be an unchecked,
-                granular, explicit choice (no pre-ticked boxes). */}
-            <label className="flex items-start gap-2 mt-4 cursor-pointer text-xs text-black">
-              <input
-                type="checkbox"
-                name="marketing_opt_in"
-                className="mt-0.5 h-4 w-4 accent-ralph-pink shrink-0"
-              />
-              <span>
-                Send me the Ralph newsletter — news, drops, and the
-                occasional pun. You can unsubscribe any time.
-              </span>
-            </label>
-
-            {signupState && !signupState.ok && (
-              <p className="text-sm text-red-600 mt-3" role="alert">
-                {signupState.message}
-              </p>
-            )}
-
-            <div className="mt-4">
-              <ShadowButton type="submit" disabled={signupPending}>
-                {signupPending ? 'Creating account…' : 'Continue'}
-              </ShadowButton>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// Slide 4 — Verify your email
-// ────────────────────────────────────────────────────────────────────────────
-
-function Slide4({
+function VerifySlide({
   email,
   firstName,
   onBack,
@@ -777,7 +404,7 @@ function Slide4({
 
   return (
     <div>
-      {/* Centred column with the character to the side. Wider than Slides 2 & 3. */}
+      {/* Centred column with the character to the side. */}
       <div className="relative mx-auto w-full text-center" style={{ maxWidth: 620 }}>
         <BackButton onClick={onBack} />
         <div className="w-full">

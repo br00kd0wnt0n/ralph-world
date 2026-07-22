@@ -4,6 +4,48 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-22 — Integrate login into the /join-ralph subscribe journey
+
+Merged auth into the subscribe flow so `/join-ralph` is the single entry point;
+`/login` stays as an internal endpoint (email-verify / password-reset /
+protected-route callbacks) but is no longer user-facing — full retirement
+deferred.
+
+`app/login/LoginForm.tsx` (now shared with join-ralph):
+- New optional props: `heading` (black Gooper title above Google — join-ralph
+  only), `bare` (no white card / vertical padding, for the white subscribe
+  page), `onSignupSuccess(fields)` (fires once on signup so the host flow can
+  advance).
+- Removed two text blocks (password "Minimum 10 characters." hint + the "we'll
+  email you a link…" note).
+- Inputs: label-less with **placeholders** (aria-label kept for AT), bg
+  `#D9D9D9`, 8px radius, placeholder colour `#000000BF`; **Name is now
+  required**.
+- "or" divider is black Gooper with the rules removed; legal line is black
+  with **Terms** → `/legal/terms` and **Privacy Policy** → `/legal/privacy`.
+
+`components/join-ralph/JoinRalphClient.tsx` — rebuilt into 3 slides:
+- **Slide 1:** JOIN RALPH art (left) + the login/signup form (right).
+  Sign in → `/account`; Google → `/account`; Create account → advance to the
+  tier slide. Removed the old email + name/password signup slides.
+- **Slide 2 (tier):** new copy — Digital Ralph £FREE / Physical Ralph £3 per
+  month — under a centred "Hey, [name]. Select your subscription level"
+  heading with a rotated "fun worth finding" star. **I want to see Ralph** →
+  `/magazine`; **I want to hold Ralph** → `/api/account/upgrade` (Stripe;
+  bounces to login if the just-signed-up user isn't authed yet — verify-then-
+  checkout still a backend TODO). Second block right-aligned.
+- **Slide 3 (verify):** unchanged (reachable via direct link / preview).
+- Responsive Slide 1: single stacked column < 992 (art collapses to the title
+  height; painter is absolute + hidden < 992), form capped to 408px & centred
+  < 992; mag cover shows only ≥ 1200; title 180px < 992 / 250px ≥ 992; badge
+  centred, nudged right (120/150px), shown on mobile.
+
+`components/layout/Nav.tsx`, `components/layout/MobileMenu.tsx`:
+- Removed the "Log in" button; "Subscribe to Ralph" → **"Login / Subscribe"**.
+  On desktop the button moved to the right cluster, next to the basket.
+
+---
+
 ## 2026-07-22 — Build fix (emnapi overrides) + email wordmark
 
 - **Build fix:** removed the `@emnapi/*` / `@napi-rs` `overrides` from

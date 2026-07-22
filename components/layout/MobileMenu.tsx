@@ -178,8 +178,11 @@ export default function MobileMenu() {
                 width={200}
                 height={98}
                 // Fixed height (width auto) so the bar reserves space and
-                // doesn't shift once the image loads.
+                // doesn't shift once the image loads. Inline width:auto too —
+                // next/image doesn't reliably detect the Tailwind w-auto and
+                // warns about a modified dimension without it.
                 className="h-[71px] min-[768px]:h-[92px] w-auto"
+                style={{ width: 'auto' }}
                 priority
               />
             </Link>
@@ -222,14 +225,9 @@ export default function MobileMenu() {
                 Your account
               </Link>
             ) : (
-              <>
-                <Link href="/join-ralph" onClick={() => handleNav('/join-ralph')} className={linkClass} style={GOOPER}>
-                  Subscribe to Ralph
-                </Link>
-                <Link href="/login" onClick={() => handleNav('/login')} className={linkClass} style={GOOPER}>
-                  Log in
-                </Link>
-              </>
+              <Link href="/join-ralph" onClick={() => handleNav('/join-ralph')} className={linkClass} style={GOOPER}>
+                Login / Subscribe
+              </Link>
             )}
             {/* Language — same icon as the nav; opens an inline list that
                 works like the nav dropdown (pick + persist, tick on current).

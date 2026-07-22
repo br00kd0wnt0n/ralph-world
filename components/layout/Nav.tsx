@@ -258,37 +258,6 @@ export default function Nav() {
               </svg>
             </Link>
           )}
-          {!user && (
-            <>
-              <Link
-                href="/join-ralph"
-                className={`subscribe-btn text-header-btn border-2 px-4 flex items-center justify-center ${
-                  pathname === '/join-ralph'
-                    ? 'bg-ralph-pink text-black border-[#6D003D]'
-                    : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D]'
-                }`}
-                style={{
-                  borderRadius: 22,
-                  '--subscribe-margin': `${buttonMargin}px`,
-                  marginLeft: buttonMargin,
-                  transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s, color 0.15s, border-color 0.15s',
-                } as React.CSSProperties}
-              >
-                Subscribe to Ralph
-              </Link>
-              <Link
-                href="/login"
-                className={`text-header-btn border-2 px-4 ml-6 mid:ml-4 transition-colors flex items-center justify-center ${
-                  pathname === '/login'
-                    ? 'bg-ralph-pink text-black border-[#6D003D]'
-                    : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D]'
-                }`}
-                style={{ borderRadius: 22 }}
-              >
-                Log in
-              </Link>
-            </>
-          )}
           {/* Logged in: account avatar sits on the LEFT (mirrors mobile),
               nesting to the right of the circle logo as it scales in — same
               buttonMargin shift the Subscribe button uses. */}
@@ -326,6 +295,19 @@ export default function Nav() {
           {/* <ThemeToggle /> + <LanguageModal /> hidden for launch —
               restore when themes / i18n ship. */}
           {/* Account avatar moved to the left cluster (mirrors mobile). */}
+          {!user && (
+            <Link
+              href="/join-ralph"
+              className={`text-header-btn border-2 px-4 transition-colors flex items-center justify-center ${
+                pathname === '/join-ralph'
+                  ? 'bg-ralph-pink text-black border-[#6D003D]'
+                  : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D]'
+              }`}
+              style={{ borderRadius: 22 }}
+            >
+              Login / Subscribe
+            </Link>
+          )}
           <button
             onClick={openCart}
             className="basket-btn relative flex items-center justify-center transition-colors hover:opacity-80"

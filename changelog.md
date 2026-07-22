@@ -4,6 +4,27 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-22 — Transactional email styling: shadow CTA, dividers, Gooper
+
+`components/emails/*` (shared `EmailLayout` + the 5 migrated templates):
+- **CTA button** restyled to match the site's shadow button — pink fill,
+  black bold text, 2px black border, hard `4px 4px 0` black offset shadow,
+  **square corners** (no radius). `box-shadow`/radius degrade gracefully in
+  Outlook (flat bordered button).
+- **Divider** between title and content now on **all** templates (added to
+  the 5 that lacked it), matching the branded ones.
+- **CTA spacing** made symmetric — equal gap above and below the button.
+- **Footer** `ralph.world` is now a link to `https://ralph.world/` (and the
+  `© … Ralph.World · ralph.world` line renders on every email now that all
+  share `EmailLayout`).
+- **Gooper** display font on the **title (h1)** and **CTA text**, via a scoped
+  `@font-face` in the head (not React Email's global `<Font>`, which would
+  restyle body text). Falls back to **sans-serif** (`"Helvetica Neue",
+  Helvetica, Arial`) where web fonts aren't supported (Gmail/Outlook); Gooper
+  renders in Apple Mail / iOS. Font loads from the deployed asset host.
+
+---
+
 ## 2026-07-22 — Transactional email header + unified layout
 
 `components/emails/*`, `public/ralph-wordmark-white.png`, `package.json`:

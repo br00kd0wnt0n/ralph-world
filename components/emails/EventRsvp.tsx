@@ -22,6 +22,7 @@ export function EventRsvp({
   return (
     <EmailLayout preview={`You're going to ${eventTitle}`}>
       <Text style={styles.h1}>You&apos;re going! 🎟</Text>
+      <hr style={styles.divider} />
       <Text style={styles.paragraph}>{greeting}</Text>
       <Text style={styles.paragraph}>
         Your RSVP for <strong>{eventTitle}</strong> is confirmed.

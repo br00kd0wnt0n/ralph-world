@@ -52,9 +52,24 @@ export function EmailLayout({ preview, children, locale = 'en' }: EmailLayoutPro
   const isJa = locale === 'ja'
   const signOff = isJa ? '— Ralph Creative Tokyo' : '— The Ralph Team'
   const supportEmail = isJa ? 'tokyo@ralphandco.com' : 'hello@ralph.world'
+  // Scoped @font-face for the Gooper display font used on titles + CTAs.
+  // Only clients that keep <head> styles AND support web fonts (Apple Mail,
+  // iOS Mail) render Gooper; Gmail/Outlook ignore it and fall back to serif
+  // (the fallback is baked into the h1/button font stacks). Served from the
+  // deployed asset host, same as the wordmark.
+  const fontFaceCss = `@font-face {
+  font-family: 'Gooper Trial';
+  src: url('${assetHost}/fonts/Gooper7-SemiBold.woff2') format('woff2'),
+       url('${assetHost}/fonts/Gooper7-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}`
   return (
     <Html>
-      <Head />
+      <Head>
+        <style dangerouslySetInnerHTML={{ __html: fontFaceCss }} />
+      </Head>
       <Preview>{preview}</Preview>
       <Body style={body}>
         <Container style={outer}>
@@ -81,7 +96,10 @@ export function EmailLayout({ preview, children, locale = 'en' }: EmailLayoutPro
               {isJa ? ' までお気軽にどうぞ。' : '.'}
             </Text>
             <Text style={footerLegal}>
-              © {year} Ralph.World · {appUrl.replace(/^https?:\/\//, '')}
+              © {year} Ralph.World ·{' '}
+              <Link href="https://ralph.world/" style={footerLink}>
+                ralph.world
+              </Link>
             </Text>
           </Section>
         </Container>
@@ -173,7 +191,7 @@ const footerLink = {
 
 export const styles = {
   h1: {
-    fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+    fontFamily: "'Gooper Trial', \"Helvetica Neue\", Helvetica, Arial, sans-serif",
     fontSize: '26px',
     fontWeight: 700,
     lineHeight: 1.25,
@@ -198,15 +216,23 @@ export const styles = {
     textDecoration: 'underline',
   },
   buttonWrap: {
-    margin: '24px 0 8px',
+    // Equal gap above and below the CTA.
+    margin: '24px 0',
     textAlign: 'center' as const,
   },
+  // Mirrors the site's shadow button: pink fill, black text, black border and
+  // a hard black offset "shadow". box-shadow + border-radius are honoured by
+  // modern clients (Apple Mail, iOS, Gmail web/app); Outlook desktop ignores
+  // both, so it degrades to a flat pink button with a solid black border —
+  // still on-brand.
   button: {
     display: 'inline-block',
+    fontFamily: "'Gooper Trial', \"Helvetica Neue\", Helvetica, Arial, sans-serif",
     backgroundColor: '#EA128B',
-    color: '#FFFFFF',
+    color: '#000000',
     padding: '12px 24px',
-    borderRadius: '999px',
+    border: '2px solid #000000',
+    boxShadow: '4px 4px 0 #000000',
     textDecoration: 'none',
     fontWeight: 700,
     fontSize: '14px',

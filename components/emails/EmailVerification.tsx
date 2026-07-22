@@ -15,6 +15,7 @@ export function EmailVerification({ verificationUrl, recipientName }: Props) {
   return (
     <EmailLayout preview="Confirm your Ralph.world email address">
       <Text style={styles.h1}>Verify your email</Text>
+      <hr style={styles.divider} />
       <Text style={styles.paragraph}>{greeting}</Text>
       <Text style={styles.paragraph}>
         Tap the link below to confirm this email belongs to you and finish

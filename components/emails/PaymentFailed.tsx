@@ -12,6 +12,7 @@ export function PaymentFailed({ recipientName, updatePaymentUrl }: Props) {
   return (
     <EmailLayout preview="Action needed: your Ralph payment didn't go through">
       <Text style={styles.h1}>Payment failed</Text>
+      <hr style={styles.divider} />
       <Text style={styles.paragraph}>{greeting}</Text>
       <Text style={styles.paragraph}>
         We couldn&apos;t take your latest Ralph subscription payment. This can

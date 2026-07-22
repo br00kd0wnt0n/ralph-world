@@ -14,6 +14,7 @@ export function PasswordReset({ resetUrl, recipientName }: Props) {
   return (
     <EmailLayout preview="Reset your Ralph.world password">
       <Text style={styles.h1}>Reset your password</Text>
+      <hr style={styles.divider} />
       <Text style={styles.paragraph}>{greeting}</Text>
       <Text style={styles.paragraph}>
         We received a request to reset your Ralph.world password. Click the

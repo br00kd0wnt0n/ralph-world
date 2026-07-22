@@ -16,6 +16,7 @@ export function SubscriptionReceipt({ recipientName, periodEnd, amount, manageUr
   return (
     <EmailLayout preview="You're now a paid Ralph subscriber — thanks!">
       <Text style={styles.h1}>You&apos;re subscribed 🎉</Text>
+      <hr style={styles.divider} />
       <Text style={styles.paragraph}>{greeting}</Text>
       <Text style={styles.paragraph}>
         Your Ralph subscription is now active. {amount}/month — next billing

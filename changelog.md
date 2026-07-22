@@ -4,6 +4,27 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-22 — Transactional email header + unified layout
+
+`components/emails/*`, `public/ralph-wordmark-white.png`, `package.json`:
+- **Header logo** now sits **top-left at 200px** (was centered, 120px) and uses
+  the new **white wordmark** (`ralph-wordmark-white.png`) — the previous pink
+  wordmark was near-invisible on the brand-pink header bar. (Logo still loads
+  from the Railway asset host / `EMAIL_ASSET_URL`, so the white PNG must be
+  deployed for it to render.)
+- **All 9 templates now share `EmailLayout`.** Migrated the 5 that were
+  standalone with ad-hoc styling (`EmailVerification`, `EventRsvp`,
+  `PaymentFailed`, `PasswordReset`, `SubscriptionReceipt`) to wrap in
+  `EmailLayout`, mapping their inline styles to the shared `styles` helpers.
+  Content/props unchanged; side-benefit: they gain the consistent branded
+  header + footer and their CTAs move to the current brand pink `#EA128B`
+  (from the old `#FF2098`).
+- **Local preview tooling:** added `@react-email/ui` as a devDependency — the
+  `npm run email:dev` React Email preview server (port 3500) requires it, and
+  v6.9 otherwise stalls on an interactive install prompt.
+
+---
+
 ## 2026-07-22 — Join Ralph decoration tweaks + subscribe/login journey spec
 
 `components/join-ralph/JoinRalphClient.tsx` (+ `public/imgs/fun-worth-finding.svg`,

@@ -45,7 +45,9 @@ export function EmailLayout({ preview, children, locale = 'en' }: EmailLayoutPro
   const assetHost =
     process.env.EMAIL_ASSET_URL?.trim() ||
     'https://ralph-world-production.up.railway.app'
-  const wordmarkSrc = `${assetHost}/ralph-wordmark.png`
+  // White wordmark — the header bar is brand pink, so the pink wordmark
+  // would be invisible against it.
+  const wordmarkSrc = `${assetHost}/ralph-wordmark-white.png`
   const year = new Date().getFullYear()
   const isJa = locale === 'ja'
   const signOff = isJa ? '— Ralph Creative Tokyo' : '— The Ralph Team'
@@ -61,7 +63,7 @@ export function EmailLayout({ preview, children, locale = 'en' }: EmailLayoutPro
               <Img
                 src={wordmarkSrc}
                 alt="Ralph"
-                width="120"
+                width="200"
                 style={wordmark}
               />
             </Link>
@@ -109,7 +111,7 @@ const headerBar = {
   backgroundColor: '#EA128B',
   borderRadius: '12px 12px 0 0',
   padding: '24px',
-  textAlign: 'center' as const,
+  textAlign: 'left' as const,
 }
 
 const headerLink = {
@@ -120,7 +122,7 @@ const headerLink = {
 const wordmark = {
   display: 'block',
   height: 'auto',
-  margin: '0 auto',
+  margin: 0,
 }
 
 const card = {

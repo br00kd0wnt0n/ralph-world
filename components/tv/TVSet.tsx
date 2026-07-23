@@ -49,6 +49,10 @@ export default function TVSet({
   const [volume, setVolume] = useState(0.7)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [schedule, setSchedule] = useState<ScheduleItem[]>([])
+  // Authoritative now-playing (what the streamer is ACTUALLY playing). Preferred over
+  // the time-based schedule pointer for the "On now / Up next" readout so it matches
+  // the live stream.
+  const [nowPlaying, setNowPlaying] = useState<{ current: ScheduleItem | null; next: ScheduleItem | null }>({ current: null, next: null })
   const containerRef = useRef<HTMLDivElement>(null)
   const volumeMeterRef = useRef<HTMLDivElement>(null)
   const isDraggingVolume = useRef(false)
@@ -206,6 +210,34 @@ export default function TVSet({
     }
   }, [])
 
+  // Poll the authoritative now-playing (streamer's real current clip). Faster than the
+  // schedule poll because clips can be short and this must track the live stream.
+  useEffect(() => {
+    let mounted = true
+    async function fetchNowPlaying() {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+      try {
+        const res = await fetch(`/api/broadcaster/now-playing?t=${Date.now()}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (mounted) setNowPlaying({ current: data?.current ?? null, next: data?.next ?? null })
+      } catch {
+        /* keep last known — the schedule fallback covers gaps */
+      }
+    }
+    fetchNowPlaying()
+    const interval = setInterval(fetchNowPlaying, 10_000)
+    function onVisible() {
+      if (document.visibilityState === 'visible') fetchNowPlaying()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      mounted = false
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [])
+
   function handleFullscreen() {
     const el = containerRef.current
     if (!el) return
@@ -224,8 +256,10 @@ export default function TVSet({
     setVolume(Math.max(0, Math.min(1, next)))
   }
 
-  const currentShow = schedule[0]
-  const nextShow = schedule[1]
+  // Prefer the authoritative now-playing; fall back to the schedule pointer only if
+  // the streamer status is unavailable.
+  const currentShow = nowPlaying.current ?? schedule[0]
+  const nextShow = nowPlaying.next ?? schedule[1]
 
   // Determine screen state.
   // When previewEnabled is false, guests watch freely with no expiry.

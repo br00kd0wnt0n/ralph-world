@@ -1,4 +1,4 @@
-import type { RelayStatus, BroadcasterAsset, ScheduleItem } from './types'
+import type { RelayStatus, BroadcasterAsset, ScheduleItem, NowPlayingResult } from './types'
 
 const TIMEOUT_MS = 3000
 
@@ -39,6 +39,43 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}) {
 function getAuthHeaders(): HeadersInit {
   const token = process.env.BROADCASTER_SERVICE_TOKEN
   return token ? { 'X-Service-Token': token } : {}
+}
+
+function toScheduleItem(s: unknown): ScheduleItem | null {
+  if (!s || typeof s !== 'object') return null
+  const o = s as Record<string, unknown>
+  if (!o.showName) return null
+  return {
+    startTime: '',
+    endTime: '',
+    showName: String(o.showName),
+    description: o.description != null ? String(o.description) : undefined,
+    assetId: o.assetId != null ? String(o.assetId) : undefined,
+    thumbnailUrl: (o.thumbnailUrl as string | null | undefined) ?? null,
+  }
+}
+
+/**
+ * Authoritative now-playing from the broadcaster backend (GET /now-playing).
+ * Reflects the streamer's REAL current clip, so it always matches the live stream —
+ * unlike the time-based schedule pointer, which drifts. Never throws.
+ */
+export async function getNowPlaying(): Promise<NowPlayingResult> {
+  const empty: NowPlayingResult = { streaming: false, current: null, next: null }
+  const url = process.env.BROADCASTER_BACKEND_URL
+  if (!url) return empty
+  try {
+    const res = await fetchWithTimeout(`${url}/now-playing`, { headers: getAuthHeaders() })
+    if (!res.ok) return empty
+    const data = await res.json()
+    return {
+      streaming: Boolean(data.streaming),
+      current: toScheduleItem(data.current),
+      next: toScheduleItem(data.next),
+    }
+  } catch {
+    return empty
+  }
 }
 
 /**

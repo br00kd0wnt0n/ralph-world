@@ -36,3 +36,14 @@ export interface LiveState {
   current?: ScheduleItem
   next?: ScheduleItem
 }
+
+/**
+ * Authoritative now-playing from the broadcaster backend's GET /now-playing.
+ * Reflects what the streamer is ACTUALLY playing (not a time-of-day estimate),
+ * so it always matches the live stream.
+ */
+export interface NowPlayingResult {
+  streaming: boolean
+  current: ScheduleItem | null
+  next: ScheduleItem | null
+}

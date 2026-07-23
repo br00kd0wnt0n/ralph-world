@@ -175,10 +175,50 @@ function cleanAssetName(filename: string): string {
   return filename.replace(/\.(mp4|mov|mkv|webm|m4v)$/i, '').trim()
 }
 
+interface BroadcasterStatus {
+  day?: string
+  index?: number
+  offsetSec?: number
+  ended?: boolean
+  item?: { assetId?: string; name?: string; durationSec?: number } | null
+}
+
+// Ask the broadcaster where its own pointer actually is right now.
+// This is the source of truth — the broadcaster's stream is driven from
+// this same maths, so any positional derivation on our side that doesn't
+// use this will drift under real conditions (TZ mismatch, stream restart,
+// clock skew, playlist edits mid-loop). Returns null on any failure so
+// getSchedule can fall back to local computation.
+async function getBroadcasterStatus(
+  now: Date
+): Promise<BroadcasterStatus | null> {
+  const url = process.env.BROADCASTER_BACKEND_URL
+  if (!url) return null
+  try {
+    const day = DAY_NAMES[now.getDay()]
+    const res = await fetchWithTimeout(
+      `${url}/status/${CHANNEL}/${WEEK}/${day}`,
+      { headers: getAuthHeaders() }
+    )
+    if (!res.ok) return null
+    return (await res.json()) as BroadcasterStatus
+  } catch {
+    return null
+  }
+}
+
 /**
  * Get today's schedule from the Broadcaster, enriched with show names and
- * wall-clock times computed from the current loop pointer. Returns an ordered
- * list starting with the currently-playing item. Empty array on any error.
+ * wall-clock times anchored to the broadcaster's own pointer. Returns an
+ * ordered list starting with the currently-playing item. Empty array on
+ * any error.
+ *
+ * Anchoring off /status (not off local `computePointer` against playStart)
+ * is what stops the schedule strip drifting against the actual stream.
+ * The broadcaster resolves `play_start` in the container's local TZ (UTC
+ * on Railway); we used to resolve it as Europe/London — a 60-min mismatch
+ * mod loop-length in BST. Even without the TZ bug, local derivation
+ * would drift across any stream restart or mid-loop playlist edit.
  */
 export async function getSchedule(
   now: Date = new Date()
@@ -188,12 +228,13 @@ export async function getSchedule(
 
   try {
     const day = DAY_NAMES[now.getDay()]
-    const [playlistRes, assets] = await Promise.all([
+    const [playlistRes, assets, status] = await Promise.all([
       fetchWithTimeout(
         `${url}/feed/${CHANNEL}/${WEEK}/${day}/playlist`,
         { headers: getAuthHeaders() }
       ),
       getAssets(),
+      getBroadcasterStatus(now),
     ])
 
     if (!playlistRes.ok) return []
@@ -204,52 +245,51 @@ export async function getSchedule(
     const assetById = new Map(assets.map((a) => [a.id, a]))
     const durations = items.map((it) => it.durationSec || 0)
 
-    // Pointer maths and iteration timing MUST run against every item in
-    // the playlist — the live stream really plays stingers/idents, and
-    // if we skip them here the current-time pointer drifts against
-    // what's actually on air. We filter for display only, at the very
-    // end.
-    const { index: currentIdx } = computePointer(
-      data.playbackMode,
-      data.playStart,
-      durations,
-      now
-    )
-
-    // Anchor wall-clock times to the CURRENT loop iteration in London,
-    // then roll forward. For 'playthru', anchor to playStart.
-    const loopStartMs = londonHHMMTodayToUtcMs(data.playStart, now.getTime())
-    const total = durations.reduce((a, b) => a + b, 0)
-    let iterStartMs = loopStartMs
-    if (data.playbackMode === 'loop' && total > 0) {
-      const deltaSec = Math.floor((now.getTime() - loopStartMs) / 1000)
-      const iterations = Math.floor(deltaSec / total)
-      iterStartMs = loopStartMs + iterations * total * 1000
+    // Prefer the broadcaster's authoritative pointer; fall back to local
+    // derivation if /status is unavailable (network error, older
+    // broadcaster build, missing token) so the strip stays populated
+    // rather than empty.
+    let currentIdx: number
+    let currentOffsetSec: number
+    if (
+      status &&
+      typeof status.index === 'number' &&
+      typeof status.offsetSec === 'number'
+    ) {
+      currentIdx = Math.max(0, Math.min(items.length - 1, status.index))
+      currentOffsetSec = Math.max(0, status.offsetSec)
+    } else {
+      const ptr = computePointer(data.playbackMode, data.playStart, durations, now)
+      currentIdx = ptr.index
+      currentOffsetSec = ptr.offsetSec
     }
 
+    // Anchor: when did the current item start? That's `now - offsetSec`.
+    // Every subsequent item follows in order, wrapping the loop as needed.
+    const currentItemStartMs = now.getTime() - currentOffsetSec * 1000
+
     // Skip stingers / idents / bumpers from the schedule display. Under
-    // 60s of duration the item renders as e.g. \"16:00-16:00\" in HH:MM
+    // 60s of duration the item renders as e.g. "16:00-16:00" in HH:MM
     // and clutters the overlay. Anything the audience actually watches
     // as a "show" is well over a minute.
     const STINGER_MAX_SECS = 60
 
-    // Start times for item 0 of the current iteration, accumulating from
-    // there. We walk the FULL playlist (including stingers) to keep
-    // wall-clock times exact, then filter stingers out of the result.
     const result: ScheduleItem[] = []
     const n = items.length
-    // Return up to 20 items ahead (or wrap once around the loop) so the
-    // Schedule overlay has enough to show without scrolling forever.
+    // Return up to 20 items ahead (or one pass through the playlist for
+    // playthru) so the Schedule overlay has enough to show without
+    // scrolling forever.
     const maxItems = Math.min(20, data.playbackMode === 'loop' ? n : n - currentIdx)
 
+    // Walk forward from the current item, accumulating durations. We walk
+    // the FULL playlist (including stingers) so wall-clock times stay
+    // exact, then filter stingers out of the returned display list.
+    let cursorMs = currentItemStartMs
     for (let step = 0; step < maxItems; step++) {
       const i = (currentIdx + step) % n
-      const iteration = Math.floor((currentIdx + step) / n)
-      // Cumulative duration from start of THIS iteration to start of item i.
-      let cum = 0
-      for (let k = 0; k < i; k++) cum += durations[k]
-      const startMs = iterStartMs + iteration * total * 1000 + cum * 1000
+      const startMs = cursorMs
       const endMs = startMs + durations[i] * 1000
+      cursorMs = endMs
 
       if ((durations[i] ?? 0) < STINGER_MAX_SECS) continue
 
@@ -264,6 +304,10 @@ export async function getSchedule(
         assetId: items[i].assetId,
         thumbnailUrl: asset?.thumbnailUrl ?? null,
       })
+
+      // Guard: for playthru mode with a huge playlist, don't walk past
+      // the natural end. (Loop mode wraps via i = (idx+step) % n above.)
+      if (data.playbackMode === 'playthru' && step >= n - 1 - currentIdx) break
     }
 
     return result

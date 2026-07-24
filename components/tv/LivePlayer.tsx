@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useHls } from '@/hooks/useHls'
+import { useRelayUrl } from '@/hooks/useRelayUrl'
 
 interface LivePlayerProps {
   relayUrl?: string
@@ -22,8 +23,15 @@ export default function LivePlayer({
   offlineLabel = 'OFFLINE',
   offlineMessage = 'Tune in later',
 }: LivePlayerProps) {
-  const streamUrl =
-    relayUrl ?? process.env.NEXT_PUBLIC_BROADCASTER_RELAY_URL ?? null
+  // Prop wins (used by tests / homepage teaser overrides). Otherwise pull
+  // the URL at runtime from /api/broadcaster/relay-url — reading
+  // process.env.NEXT_PUBLIC_… here would bake whatever value was set at
+  // BUILD time into the client bundle, which silently vanished on any
+  // Railway rebuild that didn't have the var set. Runtime fetch means
+  // env changes take effect without a rebuild and null returns are
+  // observable via network log rather than silent-black.
+  const runtimeRelayUrl = useRelayUrl()
+  const streamUrl = relayUrl ?? runtimeRelayUrl
   const { videoRef, isReady, error } = useHls(streamUrl)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMutedForAutoplay, setIsMutedForAutoplay] = useState(true)

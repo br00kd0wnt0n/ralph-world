@@ -1,6 +1,7 @@
 'use client'
 
 import { useHls } from '@/hooks/useHls'
+import { useRelayUrl } from '@/hooks/useRelayUrl'
 
 /**
  * Compact live-feed preview for the homepage TV panel.
@@ -15,7 +16,8 @@ import { useHls } from '@/hooks/useHls'
  * doesn't render a broken video element in dev / when broadcaster is down.
  */
 interface HomepageTvTeaserProps {
-  /** Optional override — defaults to NEXT_PUBLIC_BROADCASTER_RELAY_URL. */
+  /** Optional override — defaults to the URL served by
+   *  /api/broadcaster/relay-url (BROADCASTER_RELAY_URL runtime env). */
   relayUrl?: string
   className?: string
 }
@@ -24,8 +26,10 @@ export default function HomepageTvTeaser({
   relayUrl,
   className = '',
 }: HomepageTvTeaserProps) {
-  const streamUrl =
-    relayUrl ?? process.env.NEXT_PUBLIC_BROADCASTER_RELAY_URL ?? null
+  // See LivePlayer for why this pulls from a runtime endpoint instead
+  // of reading process.env.NEXT_PUBLIC_… directly.
+  const runtimeRelayUrl = useRelayUrl()
+  const streamUrl = relayUrl ?? runtimeRelayUrl
   const { videoRef, isReady, error } = useHls(streamUrl)
 
   if (!streamUrl || error) {

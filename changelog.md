@@ -17,10 +17,11 @@ All notable changes documented here, organised by session. Most recent on top.
 - **Duffy Hand Letters for article titles** (`app/globals.css` +
   `public/fonts/DuffyHandLetters-Regular.woff2`): new `@font-face`
   (`font-display: swap`), applied with a **Gooper fallback** to:
-  - the **article overlay** title (`ArticleOverlay` h1),
-  - the **magazine cover-story** title (`CoverStory`).
-  Both sized **40px < 576 / 48px ≥ 576**. Grid-card titles left on their
-  existing sans-serif.
+  - the **article overlay** title (`ArticleOverlay` h1) — 40px < 576 / 48px
+    576–991 / **60px ≥ 992**,
+  - the **magazine cover-story** title (`CoverStory`) — 40px < 576 / 48px
+    ≥ 576.
+  Grid-card titles left on their existing sans-serif.
 
 ---
 

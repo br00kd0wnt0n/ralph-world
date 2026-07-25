@@ -56,6 +56,8 @@ interface Member {
  */
 export default function CanvasStage() {
   const { theme } = useTheme()
+  // Runs on the dark (cosy-dynamics) and light themes.
+  const active = theme === 'cosy-dynamics' || theme === 'light'
   const canvasRef = useRef<HTMLCanvasElement>(null)
   // Portal target only exists after mount (no document during SSR).
   const [mounted, setMounted] = useState(false)
@@ -65,7 +67,7 @@ export default function CanvasStage() {
     if (!mounted) return
     // Match the other canvases: cosy-dynamics theme + desktop only. On phones
     // the full-viewport per-frame paint isn't worth the battery/CPU.
-    if (theme !== 'cosy-dynamics') return
+    if (!active) return
     if (!window.matchMedia('(min-width: 768px)').matches) return
     // Honour reduced-motion: skip the decorative squad/saucer animation.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -215,19 +217,19 @@ export default function CanvasStage() {
       stopTicker()
       window.removeEventListener('resize', resize)
     }
-  }, [mounted, theme])
+  }, [mounted, theme, active])
 
   // Portalled to <body> so it escapes <main>'s stacking context and can paint
   // over the footer. z-40: above footer (z-10) + foreground (z-20), below the
   // nav / cart / cookie chrome (z-50+), so decorative sprites never cover UI.
-  if (!mounted || theme !== 'cosy-dynamics') return null
+  if (!mounted || !active) return null
   return createPortal(
     // `hidden md:block` keeps the canvas off the DOM paint path on mobile,
     // complementing the effect's matchMedia gate (which stops the ticker).
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-40 hidden md:block"
+      className="pointer-events-none fixed inset-0 z-40 hidden md:block light:grayscale"
     />,
     document.body,
   )

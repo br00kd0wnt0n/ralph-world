@@ -4,6 +4,40 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-25 — Light mode styling
+
+Full light-mode pass (branch `feat/light-mode`). The dark theme
+(`cosy-dynamics`) remains the forced default; **`?theme=light`** previews light
+mode (query-only — not persisted, so it can never get stuck).
+
+- **Tailwind `light:` variant** (`app/globals.css`) — `light:` utilities apply
+  under `[data-theme="light"]`; all changes below are scoped to it. Added a
+  `--nav-scrim` RGB token (black in dark, white in light) for the header bars.
+- **Nav / header** (`Nav.tsx`): black text; nav buttons → black text/border
+  with black-bg/white-text active+hover; WORLDS links black (top + scrolled);
+  header blur-bar scrim white; RALPH wordmark, basket icon + counter → black.
+- **Section intros + home hero** (`SectionIntro.tsx`, `Hero.tsx`): title
+  images `brightness-0` (black) and intro text black.
+- **Mobile menu** (`MobileMenu.tsx`): black links/headers + black wordmark.
+- **Starfield** (`Starfield.tsx`): now runs in light mode with **dark** stars
+  and dark shooting-star trails.
+- **Homepage planets** (`PlanetSection.tsx`): planets `grayscale`; planet title
+  (black) + tagline (black); **expandable panels → black bg + white content**,
+  using a new **`onBlack`** shadow-button variant (`ui/Button.tsx`: black fill,
+  white text/border/shadow).
+- **Scroll indicator** (`ScrollIndicator.tsx`): black arrow + label.
+- **Canvas layers shown in light mode + monochrome**: `MidgroundCanvas`,
+  `CanvasStage`, `ForegroundLayer` (all `grayscale` in light).
+- **Footer** (`Footer.tsx`): pink top border → black. **Footer planet**
+  (`FooterPlanet.tsx`): stretches to full width (capped 1500px, fixed height)
+  at ≥1200 instead of a fixed ~1087px.
+
+> Stopgap: the planet/section title art is recoloured via `brightness-0` /
+> `invert` filters — to be replaced with currentColor SVGs so title fill/stroke
+> are fully theme-controllable.
+
+---
+
 ## 2026-07-25 — Force dark theme + Duffy Hand Letters article titles
 
 - **Force the dark theme for everyone** (`context/ThemeContext.tsx`): always

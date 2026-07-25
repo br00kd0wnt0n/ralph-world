@@ -110,9 +110,9 @@ export default function MobileMenu() {
   }, [isOpen])
 
   const linkClass =
-    'text-ralph-pink hover:text-white transition-colors text-[24px] min-[576px]:text-[28px]'
+    'text-ralph-pink hover:text-white transition-colors text-[24px] min-[576px]:text-[28px] light:text-black light:hover:text-black'
   const headerClass =
-    'uppercase text-white mt-6 min-[576px]:mt-8 mb-1 text-[16px] min-[576px]:text-[18px]'
+    'uppercase text-white mt-6 min-[576px]:mt-8 mb-1 text-[16px] min-[576px]:text-[18px] light:text-black'
   const headerStyle: React.CSSProperties = {
     fontFamily: 'var(--font-body), Arial, sans-serif', // Roboto
     fontWeight: 900, // Black
@@ -181,7 +181,7 @@ export default function MobileMenu() {
                 // doesn't shift once the image loads. Inline width:auto too —
                 // next/image doesn't reliably detect the Tailwind w-auto and
                 // warns about a modified dimension without it.
-                className="h-[71px] min-[768px]:h-[92px] w-auto"
+                className="h-[71px] min-[768px]:h-[92px] w-auto light:brightness-0"
                 style={{ width: 'auto' }}
                 priority
               />
@@ -279,7 +279,7 @@ export default function MobileMenu() {
                             setLanguage(lang.code)
                             setLangOpen(false)
                           }}
-                          className="flex items-center gap-2 text-ralph-pink hover:text-white transition-colors text-[18px] min-[576px]:text-[20px]"
+                          className="flex items-center gap-2 text-ralph-pink hover:text-white transition-colors text-[18px] min-[576px]:text-[20px] light:text-black light:hover:text-black"
                           style={GOOPER}
                         >
                           {lang.label}

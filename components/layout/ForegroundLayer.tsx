@@ -17,6 +17,8 @@ export default function ForegroundLayer() {
   const pathname = usePathname()
   const containerRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number>(0)
+  // Runs on the dark (cosy-dynamics) and light themes; monochrome in light.
+  const active = theme === 'cosy-dynamics' || theme === 'light'
 
   // Hide the alien rocket on the homepage for now.
   const items = useMemo(
@@ -28,7 +30,7 @@ export default function ForegroundLayer() {
   )
 
   useEffect(() => {
-    if (theme !== 'cosy-dynamics') return
+    if (!active) return
 
     const mql = window.matchMedia('(max-width: 767px)')
     if (mql.matches) return
@@ -61,9 +63,9 @@ export default function ForegroundLayer() {
       window.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(rafRef.current)
     }
-  }, [theme, items])
+  }, [theme, items, active])
 
-  if (theme !== 'cosy-dynamics') return null
+  if (!active) return null
 
   // Homepage keeps these in front of content (z-20); subpages drop them below
   // the content (z-[5], still above the starfield/midground).
@@ -72,7 +74,7 @@ export default function ForegroundLayer() {
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 pointer-events-none overflow-hidden hidden md:block ${
+      className={`fixed inset-0 pointer-events-none overflow-hidden hidden md:block light:grayscale ${
         isHome ? 'z-20' : 'z-[5]'
       }`}
       aria-hidden="true"

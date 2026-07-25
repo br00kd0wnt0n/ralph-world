@@ -15,6 +15,7 @@ import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { planetSectionVariants } from '@/lib/animation/homepage'
 import { PLANET_EXIT_DIRECTIONS } from '@/lib/animation/page-transitions'
 import { useTransitionState } from '@/components/layout/PageTransitionWrapper'
+import { useTheme } from '@/context/ThemeContext'
 import type { PlanetSectionProps } from './PlanetSection.types'
 
 const POSITION_LAYOUTS = {
@@ -69,11 +70,17 @@ export default function PlanetSection({
   moduleCard,
   planetImageUrl,
 }: PlanetSectionProps) {
-  // Purple = white text, all others (blue, green, yellow, orange) = black text
+  // Light mode: expandable panels are black with white text/CTAs, regardless
+  // of the section accent.
+  const { theme } = useTheme()
+  const isLightTheme = theme === 'light'
+
+  // Purple = white text, all others (blue, green, yellow, orange) = black text.
+  // In light mode force white text (panels are black).
   const whitTextBgs = ['#7B3FE4']
-  const useWhiteText = whitTextBgs.some(
-    (c) => c.toLowerCase() === accentColor.toLowerCase()
-  )
+  const useWhiteText =
+    isLightTheme ||
+    whitTextBgs.some((c) => c.toLowerCase() === accentColor.toLowerCase())
   const textColor = useWhiteText ? 'text-white' : 'text-black'
   const textMuted = useWhiteText ? 'text-white' : 'text-black'
   const ctaBg = useWhiteText
@@ -348,7 +355,7 @@ export default function PlanetSection({
             sectionWidth > 0 && sectionWidth < 992
               ? planetCenterY - PANEL_HEIGHT / 2
               : planetCenterY + planetHeight / 2 - 50 - PANEL_HEIGHT,
-          backgroundColor: accentColor,
+          backgroundColor: isLightTheme ? '#000000' : accentColor,
           borderRadius: 12,
           // padding is included in width so the clip-path (which insets by the
           // full width when hidden) fully covers it — otherwise the padding
@@ -403,6 +410,9 @@ export default function PlanetSection({
                   <img
                     src={TITLE_SECONDARY_IMAGES[id].src}
                     alt={moduleCard.heading}
+                    // light mode: white title on the black panel (stopgap until
+                    // the titles become currentColor SVGs).
+                    className="light:brightness-0 light:invert"
                     style={{ width: TITLE_SECONDARY_IMAGES[id].w, height: TITLE_SECONDARY_IMAGES[id].h }}
                   />
                 </h2>
@@ -422,7 +432,7 @@ export default function PlanetSection({
                 {moduleCard.description}
               </p>
             </div>
-            <Button href={moduleCard.href} label={moduleCard.ctaLabel} />
+            <Button href={moduleCard.href} label={moduleCard.ctaLabel} onBlack={isLightTheme} />
           </motion.div>
 
           {/* Column 2: TV preview — broadcast still + subtitle + body */}
@@ -689,7 +699,9 @@ export default function PlanetSection({
                 ? { height: 52, width: 'auto' }
                 : { width: TITLE_IMAGES[id].w, height: TITLE_IMAGES[id].h }
             }
-            className="mb-2"
+            // light mode: solid black title (brightness-0 also merges the
+            // baked-in stroke into black, so no visible outline).
+            className="mb-2 light:brightness-0"
           />
         ) : (
           <div
@@ -698,7 +710,7 @@ export default function PlanetSection({
             aria-label={label}
           />
         )}
-        <p className={`text-intro text-white ${planetOnRight ? 'text-right' : 'text-left'}`}>
+        <p className={`text-intro text-white light:text-black ${planetOnRight ? 'text-right' : 'text-left'}`}>
           {tagline}
         </p>
       </motion.div>
@@ -747,7 +759,8 @@ export default function PlanetSection({
               const planetSrc =
                 planetImageUrl || PLANET_IMAGES[id] || '/imgs/planet_tv.png'
               const planetClass =
-                'w-[220px] md:w-[350px] min-[992px]:w-[411px] h-auto object-contain transition-transform group-hover:scale-[1.03]'
+                // light mode: monochrome planet colours (not the footer planet).
+                'w-[220px] md:w-[350px] min-[992px]:w-[411px] h-auto object-contain transition-transform group-hover:scale-[1.03] light:grayscale'
               // Local assets go through next/image (AVIF + resized to display
               // size); CMS/remote URLs stay as a plain <img> (no host config).
               return planetSrc.startsWith('/') ? (

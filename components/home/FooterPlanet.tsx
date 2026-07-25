@@ -19,12 +19,15 @@ export default function FooterPlanet({ tagline = 'The Entertainment People' }: F
         aria-hidden="true"
       />
 
-      <div id="footer-planet" style={{ transform: 'translateY(1px)' }}>
+      <div id="footer-planet" className="min-[1200px]:w-full min-[1200px]:max-w-[1500px]" style={{ transform: 'translateY(1px)' }}>
         <img
           src="/imgs/footer_planet.png"
           alt=""
           style={{ width: (2898 / 2) * 0.75, height: (484 / 2) * 0.75 }}
-          className="max-w-none"
+          // >=1200: stretch to fill the width (up to the wrapper's 1500px cap)
+          // while keeping the fixed inline height — the image distorts wider,
+          // it doesn't grow taller. (! overrides the inline width.)
+          className="max-w-none min-[1200px]:w-full!"
         />
         {/* Eyed-alien standing on the planet's top, 150px left of centre.
             Part of #footer-planet so it moves with the planet. */}

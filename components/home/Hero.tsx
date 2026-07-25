@@ -22,7 +22,7 @@ const introStyle: React.CSSProperties = {
 }
 
 const introClasses =
-  'text-white text-center text-[15px] leading-[19px] min-[576px]:text-[16px] min-[576px]:leading-[24px]'
+  'text-white text-center text-[15px] leading-[19px] min-[576px]:text-[16px] min-[576px]:leading-[24px] light:text-black'
 
 export default function Hero({ heading, line1, line2, line3, themeKey }: HeroProps) {
   const theme = resolveSectionTheme('home_hero', themeKey)
@@ -49,7 +49,7 @@ export default function Hero({ heading, line1, line2, line3, themeKey }: HeroPro
           <img
             src="/imgs/text_welcome_to_our_world.png"
             alt={heading}
-            className="mx-auto max-w-full h-auto md:h-[126px]"
+            className="mx-auto max-w-full h-auto md:h-[126px] light:brightness-0"
             style={{ width: 1126 / 2 }}
           />
         </motion.h1>

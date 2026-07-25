@@ -106,9 +106,11 @@ interface FlyerState {
 export default function MidgroundCanvas() {
   const { theme } = useTheme()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Runs on the dark (cosy-dynamics) and light themes.
+  const active = theme === 'cosy-dynamics' || theme === 'light'
 
   useEffect(() => {
-    if (theme !== 'cosy-dynamics') return
+    if (!active) return
     if (!window.matchMedia('(min-width: 768px)').matches) return
     // Honour reduced-motion: skip the drifting flyers + parallax props.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -238,15 +240,15 @@ export default function MidgroundCanvas() {
       stopTicker()
       window.removeEventListener('resize', resize)
     }
-  }, [theme])
+  }, [theme, active])
 
-  if (theme !== 'cosy-dynamics') return null
+  if (!active) return null
 
   return (
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[1] hidden md:block"
+      className="pointer-events-none fixed inset-0 z-[1] hidden md:block light:grayscale"
     />
   )
 }

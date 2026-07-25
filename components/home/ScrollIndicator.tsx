@@ -24,12 +24,13 @@ export default function ScrollIndicator() {
         src="/imgs/scroll-arrow.svg"
         alt=""
         aria-hidden="true"
+        className="light:brightness-0"
         style={{ width: 34, height: 'auto' }}
         animate={{ y: [0, 6, 0] }}
         transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
       />
       <span
-        className="text-ralph-pink text-xs tracking-widest uppercase"
+        className="text-ralph-pink text-xs tracking-widest uppercase light:text-black"
         style={{ fontFamily: 'var(--font-body), Arial, sans-serif', fontWeight: 700 }}
       >
         SCROLL

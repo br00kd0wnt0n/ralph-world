@@ -36,11 +36,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Launch: force the dark Starfield theme for everyone. The theme switcher
     // is hidden and the other themes' backgrounds aren't ready, so a stale
-    // stored preference (e.g. 'light' or 'ralph-world') would otherwise leave
-    // users on a broken / light-grey background. Restore the stored-theme
-    // read below when multi-theme ships.
-    setThemeState('cosy-dynamics')
-    document.documentElement.setAttribute('data-theme', 'cosy-dynamics')
+    // stored preference would otherwise leave users on a broken background.
+    // `?theme=light` opts into light mode for previewing (not persisted, so it
+    // never gets stuck). Restore the stored-theme read when multi-theme ships.
+    const previewLight =
+      new URLSearchParams(window.location.search).get('theme') === 'light'
+    const next = previewLight ? 'light' : 'cosy-dynamics'
+    setThemeState(next)
+    document.documentElement.setAttribute('data-theme', next)
     // const stored = safeGet('ralph-theme')
     // if (stored && THEMES.some((t) => t.id === stored)) {
     //   setThemeState(stored)

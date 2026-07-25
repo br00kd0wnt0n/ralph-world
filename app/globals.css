@@ -14,6 +14,9 @@
 /* ── Mid-screen breakpoint (1200px - 1440px) ── */
 @variant mid (@media (min-width: 1200px) and (max-width: 1440px));
 
+/* ── Light theme variant — `light:` utilities apply when <html data-theme="light"> ── */
+@variant light ([data-theme="light"] &);
+
 /* ── Fonts ── */
 @font-face {
   font-family: 'Gooper Trial';
@@ -43,6 +46,9 @@
   --color-border: #3D2560;
   --color-muted: #6B5B8A;
 
+  /* Header blur-bar scrim (RGB triplet, used as rgba(var(--nav-scrim), a)). */
+  --nav-scrim: 0, 0, 0;
+
   --color-ralph-pink: #EA128B;
   --color-ralph-blue: #5FBCBF;
   --color-ralph-yellow: #FBC000;
@@ -59,6 +65,9 @@
   --color-secondary: #4A3A6A;
   --color-border: #E0D8F0;
   --color-muted: #8A7AA8;
+
+  /* Light mode: white header scrim instead of black. */
+  --nav-scrim: 255, 255, 255;
 
   --color-ralph-pink: #EA128B;
   --color-ralph-blue: #5FBCBF;

@@ -28,6 +28,10 @@ const PARTICLE_COLOURS = [
   { r: 255, g: 240, b: 230 },  // faint warm
 ]
 
+// Light theme: a single dark shade (matches --color-primary #1A0A2E). The
+// per-star twinkle alpha gives a range of greys against the light background.
+const LIGHT_STAR = { r: 26, g: 10, b: 46 }
+
 type Particle = {
   x: number
   y: number
@@ -122,11 +126,14 @@ export default function Starfield() {
   // we've travelled through space into the menu.
   const isSubpage = pathname !== '/'
   const horizontal = open || isSubpage
+  // The starfield runs on the dark (cosy-dynamics) and light themes; in light
+  // mode the stars are drawn in dark shades instead of white (see draw()).
+  const showStarfield = theme === 'cosy-dynamics' || theme === 'light'
 
   useEffect(() => {
     // While the menu is open the field runs everywhere (incl. mobile) so it
     // shows behind the menu; otherwise it stays theme-gated + hidden on mobile.
-    if (!open && theme !== 'cosy-dynamics') return
+    if (!open && !showStarfield) return
     if (!open && window.matchMedia('(max-width: 767px)').matches) return
     // Honour reduced-motion: skip the twinkle / shooting-stars / menu drift.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -194,7 +201,9 @@ export default function Starfield() {
         if (xPos < 0) xPos += w
         if (xPos > w) xPos -= w
 
-        const { r, g, b } = p.colour
+        // Light mode: draw stars in dark shades (the twinkle alpha still
+        // varies, so they read as a range of greys on the light background).
+        const { r, g, b } = theme === 'light' ? LIGHT_STAR : p.colour
         const rgba = `rgba(${r},${g},${b},${alpha})`
 
         if (p.shape === 'cross') {
@@ -231,8 +240,9 @@ export default function Starfield() {
           s.x - s.vx * (s.length / Math.hypot(s.vx, s.vy)),
           s.y - s.vy * (s.length / Math.hypot(s.vx, s.vy))
         )
-        grad.addColorStop(0, `rgba(255,255,255,${alpha})`)
-        grad.addColorStop(1, `rgba(255,255,255,0)`)
+        const trailRGB = theme === 'light' ? '26,10,46' : '255,255,255'
+        grad.addColorStop(0, `rgba(${trailRGB},${alpha})`)
+        grad.addColorStop(1, `rgba(${trailRGB},0)`)
 
         ctx!.beginPath()
         ctx!.strokeStyle = grad
@@ -276,11 +286,11 @@ export default function Starfield() {
       document.removeEventListener('visibilitychange', onVisibility)
       cancelAnimationFrame(animationId)
     }
-  }, [theme, horizontal, open])
+  }, [theme, horizontal, open, showStarfield])
 
   // Render the canvas whenever the field can run: normal theme-gated mode, or
   // any time the menu is open (which forces it on, mobile included).
-  if (!open && theme !== 'cosy-dynamics') return null
+  if (!open && !showStarfield) return null
 
   return (
     <canvas

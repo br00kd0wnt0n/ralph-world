@@ -240,8 +240,8 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
           Contact us. Pink top border is the top edge of the whole footer
           regardless of state. */}
       <div
-        className="relative bg-black flex items-center justify-between px-4 min-[420px]:px-6 md:px-16 py-3"
-        style={{ minHeight: 103, borderTop: '4px solid #EA128B' }}
+        className="relative bg-black flex items-center justify-between px-4 min-[420px]:px-6 md:px-16 py-3 border-t-4 border-[#EA128B] light:border-black"
+        style={{ minHeight: 103 }}
       >
         {/* Globe — bottom left, overflows the top of the bar. Clicking
             opens the bottom panel on slide 0 (or closes if already
@@ -322,8 +322,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
         initial={false}
         animate={{ height: panelOpen ? 'auto' : 0 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="order-first md:order-none relative md:absolute md:left-0 md:right-0 md:bottom-full bg-black overflow-hidden"
-        style={{ borderTop: '4px solid #EA128B' }}
+        className="order-first md:order-none relative md:absolute md:left-0 md:right-0 md:bottom-full bg-black overflow-hidden border-t-4 border-[#EA128B] light:border-black"
       >
         {/* Close button — its right inset mirrors the content container's left
             padding (px-4 / px-6 / px-16) so it lines up with the "Contact" title.

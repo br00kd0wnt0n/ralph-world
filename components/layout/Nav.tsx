@@ -175,7 +175,7 @@ export default function Nav() {
                   height: 7,
                   backdropFilter: `blur(${blurAmount}px)`,
                   WebkitBackdropFilter: `blur(${blurAmount}px)`,
-                  backgroundColor: `rgba(0, 0, 0, ${opacity})`,
+                  backgroundColor: `rgba(var(--nav-scrim), ${opacity})`,
                 }}
               />
             )
@@ -285,8 +285,8 @@ export default function Nav() {
             href="/work-with-us"
             className={`text-header-btn border-2 px-4 transition-colors flex items-center justify-center ${
               pathname === '/work-with-us'
-                ? 'bg-ralph-pink text-black border-[#6D003D]'
-                : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D]'
+                ? 'bg-ralph-pink text-black border-[#6D003D] light:bg-black light:text-white light:border-black'
+                : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D] light:text-black light:border-black light:hover:bg-black light:hover:text-white light:hover:border-black'
             }`}
             style={{ borderRadius: 22 }}
           >
@@ -300,8 +300,8 @@ export default function Nav() {
               href="/join-ralph"
               className={`text-header-btn border-2 px-4 transition-colors flex items-center justify-center ${
                 pathname === '/join-ralph'
-                  ? 'bg-ralph-pink text-black border-[#6D003D]'
-                  : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D]'
+                  ? 'bg-ralph-pink text-black border-[#6D003D] light:bg-black light:text-white light:border-black'
+                  : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D] light:text-black light:border-black light:hover:bg-black light:hover:text-white light:hover:border-black'
               }`}
               style={{ borderRadius: 22 }}
             >
@@ -318,9 +318,10 @@ export default function Nav() {
               src="/imgs/icon_shopping_basket.svg"
               alt=""
               aria-hidden="true"
+              className="light:brightness-0"
               style={{ height: 44, width: 'auto' }}
             />
-            <span className="basket-count absolute left-1/2 -translate-x-1/2 text-white font-bold">
+            <span className="basket-count absolute left-1/2 -translate-x-1/2 text-white font-bold light:text-black">
               {itemCount}
             </span>
           </button>
@@ -356,6 +357,8 @@ export default function Nav() {
               alt="ralph"
               width={200}
               height={98}
+              // light mode: recolour the pink wordmark to black.
+              className="light:brightness-0"
               style={{ height: 98, width: 'auto' }}
               priority
             />
@@ -385,8 +388,8 @@ export default function Nav() {
                     isActive
                       ? 'text-primary'
                       : navFixed
-                        ? 'text-white/90 hover:text-white'
-                        : 'text-ralph-pink hover:text-primary'
+                        ? 'text-white/90 hover:text-white light:text-black/90 light:hover:text-black'
+                        : 'text-ralph-pink hover:text-primary light:text-black light:hover:text-black'
                   }`}
                   style={{
                     fontSize: navFixed ? '20px' : undefined,
@@ -426,7 +429,7 @@ export default function Nav() {
             style={{
               height: 60,
               background: navFixed
-                ? 'linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%)'
+                ? 'linear-gradient(to bottom, rgba(var(--nav-scrim), 0.5) 0%, rgba(var(--nav-scrim), 0) 100%)'
                 : 'transparent',
               backdropFilter: navFixed ? 'blur(12px)' : 'none',
               WebkitBackdropFilter: navFixed ? 'blur(12px)' : 'none',
@@ -524,9 +527,10 @@ export default function Nav() {
                   src="/imgs/icon_shopping_basket.svg"
                   alt=""
                   aria-hidden="true"
+                  className="light:brightness-0"
                   style={{ height: 32, width: 'auto' }}
                 />
-                <span className="absolute left-1/2 -translate-x-1/2 text-[10px] text-white font-bold" style={{ top: 14 }}>
+                <span className="absolute left-1/2 -translate-x-1/2 text-[10px] text-white font-bold light:text-black" style={{ top: 14 }}>
                   {itemCount}
                 </span>
               </button>
@@ -557,6 +561,8 @@ export default function Nav() {
                 alt="ralph"
                 width={200}
                 height={98}
+                // light mode: recolour the pink wordmark to black.
+                className="light:brightness-0"
                 style={{ height: 98, width: 'auto' }}
                 priority
               />
@@ -588,8 +594,8 @@ export default function Nav() {
                       isActive
                         ? 'text-primary'
                         : navFixed
-                          ? 'text-white/90 hover:text-white'
-                          : 'text-ralph-pink hover:text-primary'
+                          ? 'text-white/90 hover:text-white light:text-black/90 light:hover:text-black'
+                          : 'text-ralph-pink hover:text-primary light:text-black light:hover:text-black'
                     }`}
                     style={{
                       fontSize: navFixed ? '20px' : undefined,

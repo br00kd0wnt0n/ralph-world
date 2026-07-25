@@ -38,7 +38,8 @@ export default function SectionIntro({ section, heading, lines }: SectionIntroPr
             <img
               src={titleImage.src}
               alt={heading}
-              className="mx-auto"
+              // light mode: recolour the white title image to black.
+              className="mx-auto light:brightness-0"
               style={{
                 maxWidth: titleImage.maxWidth ?? titleImage.w / 2,
                 width: '100%',
@@ -46,7 +47,7 @@ export default function SectionIntro({ section, heading, lines }: SectionIntroPr
               }}
             />
           ) : (
-            <span className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-display)]">
+            <span className="text-5xl md:text-7xl font-bold font-[family-name:var(--font-display)] light:text-black">
               {heading}
             </span>
           )}
@@ -56,7 +57,7 @@ export default function SectionIntro({ section, heading, lines }: SectionIntroPr
           <motion.p
             key={index}
             variants={heroChildVariants}
-            className={`text-body text-white text-center ${index < lines.length - 1 ? 'mb-4' : 'mb-10'}`}
+            className={`text-body text-white text-center light:text-black ${index < lines.length - 1 ? 'mb-4' : 'mb-10'}`}
           >
             {line}
           </motion.p>

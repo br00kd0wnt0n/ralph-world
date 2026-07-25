@@ -24,6 +24,15 @@
   font-display: swap;
 }
 
+/* Duffy Hand Letters — display font for article titles (falls back to Gooper). */
+@font-face {
+  font-family: 'Duffy Hand Letters';
+  src: url('/fonts/DuffyHandLetters-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ── Theme: Cosy Dynamics (default dark) ── */
 :root,
 :root[data-theme="cosy-dynamics"] {

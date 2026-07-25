@@ -266,8 +266,8 @@ export default function ArticleOverlay({
 
         {/* Title — inherits theme.text from the parent overlay */}
         <h1
-          className="max-w-[700px] mx-auto text-3xl md:text-5xl font-bold text-center"
-          style={{ marginBottom: '2rem', fontFamily: "'Gooper Trial', serif" }}
+          className="max-w-[700px] mx-auto text-[40px] min-[576px]:text-[48px] font-bold text-center"
+          style={{ marginBottom: '2rem', fontFamily: "'Duffy Hand Letters', 'Gooper Trial', serif" }}
         >
           {article.title}
         </h1>

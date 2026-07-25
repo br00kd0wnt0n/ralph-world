@@ -101,8 +101,8 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
               here — it lives on the article child page only (kept in bold
               there). The cover stays clean: title + kicker. */}
           <h3
-            className="text-intro text-black mb-1"
-            style={{ fontSize: 18, lineHeight: 1 }}
+            className="text-black mb-1 text-[40px] min-[576px]:text-[48px]"
+            style={{ lineHeight: 1, fontWeight: 600, fontFamily: "'Duffy Hand Letters', 'Gooper Trial', serif" }}
           >
             {article.title}
           </h3>

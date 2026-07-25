@@ -4,6 +4,26 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-25 — Force dark theme + Duffy Hand Letters article titles
+
+- **Force the dark theme for everyone** (`context/ThemeContext.tsx`): always
+  apply `cosy-dynamics`, ignoring any stored `ralph-theme` preference. The
+  theme switcher is hidden for launch, but a *stale stored preference* left
+  some users stuck on a broken background with no way to change it — `light`
+  renders a `#FAFAFA` light-grey bg, and `ralph-world`/`multicolor` render the
+  visual-canvas iframe which the CSP `frame-src` blocks (grey). Diagnosed from
+  a colleague's console showing the blocked-iframe CSP error. The stored-theme
+  read is commented out, ready to restore when multi-theme ships.
+- **Duffy Hand Letters for article titles** (`app/globals.css` +
+  `public/fonts/DuffyHandLetters-Regular.woff2`): new `@font-face`
+  (`font-display: swap`), applied with a **Gooper fallback** to:
+  - the **article overlay** title (`ArticleOverlay` h1),
+  - the **magazine cover-story** title (`CoverStory`).
+  Both sized **40px < 576 / 48px ≥ 576**. Grid-card titles left on their
+  existing sans-serif.
+
+---
+
 ## 2026-07-22 — Integrate login into the /join-ralph subscribe journey
 
 Merged auth into the subscribe flow so `/join-ralph` is the single entry point;

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import CanvasBackground from '@/components/layout/CanvasBackground'
-import { safeGet, safeSet } from '@/lib/safe-storage'
+import { safeSet } from '@/lib/safe-storage'
 
 export type ThemeType = 'css-vars' | 'immersive'
 
@@ -34,13 +34,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState('cosy-dynamics')
 
   useEffect(() => {
-    const stored = safeGet('ralph-theme')
-    if (stored && THEMES.some((t) => t.id === stored)) {
-      setThemeState(stored)
-      document.documentElement.setAttribute('data-theme', stored)
-    } else {
-      document.documentElement.setAttribute('data-theme', 'cosy-dynamics')
-    }
+    // Launch: force the dark Starfield theme for everyone. The theme switcher
+    // is hidden and the other themes' backgrounds aren't ready, so a stale
+    // stored preference (e.g. 'light' or 'ralph-world') would otherwise leave
+    // users on a broken / light-grey background. Restore the stored-theme
+    // read below when multi-theme ships.
+    setThemeState('cosy-dynamics')
+    document.documentElement.setAttribute('data-theme', 'cosy-dynamics')
+    // const stored = safeGet('ralph-theme')
+    // if (stored && THEMES.some((t) => t.id === stored)) {
+    //   setThemeState(stored)
+    //   document.documentElement.setAttribute('data-theme', stored)
+    // } else {
+    //   document.documentElement.setAttribute('data-theme', 'cosy-dynamics')
+    // }
   }, [])
 
   function setTheme(id: string) {

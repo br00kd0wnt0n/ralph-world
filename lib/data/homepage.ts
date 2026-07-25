@@ -105,36 +105,26 @@ export async function getHomepageData() {
     const db = getDb()
     const picks = await readPicks()
 
-    const magPickIds = picks['home_magazine_picks'] ?? []
     const eventPickIds = picks['home_events_picks'] ?? []
     const labPickIds = picks['home_lab_picks'] ?? []
     const shopPickHandles = picks['home_shop_picks'] ?? []
 
     const [magazineRows, eventRows, labRows, tvItems] = await Promise.all([
-      magPickIds.length > 0
-        ? db
-            .select({
-              id: articles.id,
-              title: articles.title,
-              subtitle: articles.subtitle,
-              intro: articles.intro,
-              leadMediaUrl: articles.leadMediaUrl,
-            })
-            .from(articles)
-            .where(inArray(articles.id, magPickIds))
-            .then((rows) => orderByIds(rows, magPickIds))
-        : db
-            .select({
-              id: articles.id,
-              title: articles.title,
-              subtitle: articles.subtitle,
-              intro: articles.intro,
-              leadMediaUrl: articles.leadMediaUrl,
-            })
-            .from(articles)
-            .where(eq(articles.status, 'published'))
-            .orderBy(desc(articles.publishedAt))
-            .limit(2),
+      // Magazine carousel: always the latest 4 published articles (home
+      // picks are intentionally not used here — the panel shows "latest 4").
+      db
+        .select({
+          id: articles.id,
+          slug: articles.slug,
+          title: articles.title,
+          subtitle: articles.subtitle,
+          intro: articles.intro,
+          leadMediaUrl: articles.leadMediaUrl,
+        })
+        .from(articles)
+        .where(eq(articles.status, 'published'))
+        .orderBy(desc(articles.publishedAt))
+        .limit(4),
 
       eventPickIds.length > 0
         ? db
@@ -193,6 +183,7 @@ export async function getHomepageData() {
       subtitle: a.subtitle ?? a.intro ?? undefined,
       thumbnailUrl: a.leadMediaUrl ?? undefined,
       badge: i === 0 ? 'NEW' : undefined,
+      href: a.slug ? `/magazine/${a.slug}` : undefined,
     }))
 
     const eventItems: ModuleItem[] = eventRows.map((e) => ({
@@ -262,6 +253,7 @@ async function getShopItems(handles: string[]): Promise<ModuleItem[]> {
       thumbnailUrl: p.imageUrl ?? undefined,
       badge: p.available ? undefined : 'SOLD OUT',
       subtitle: `${p.price} ${p.currency}`,
+      href: p.handle ? `/shop/${p.handle}` : undefined,
     }))
   } catch {
     return []

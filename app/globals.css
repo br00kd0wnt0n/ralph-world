@@ -17,6 +17,34 @@
 /* ── Light theme variant — `light:` utilities apply when <html data-theme="light"> ── */
 @variant light ([data-theme="light"] &);
 
+/* Inline planet title art (TitleArt). The injected <svg> fills its wrapper;
+   in light mode the white-fill / accent-stroke art becomes black fill +
+   white stroke. */
+.title-art > svg {
+  height: 100%;
+  width: auto;
+  display: block;
+}
+/* Dark (default) theme: expanded-panel titles use a black fill (over their
+   coloured accent panel) instead of the art's baked white fill. */
+.title-art--panel svg path {
+  fill: #000;
+}
+/* …except the TV panel, which sits on a dark surface — keep its title white. */
+.title-art--panel-tv svg path {
+  fill: #fff;
+}
+/* Titles next to the planet: black fill, white stroke. */
+:root[data-theme="light"] .title-art svg path {
+  fill: #000;
+  stroke: #fff;
+}
+/* Titles inside the (black) expanded panel: white fill, black stroke. */
+:root[data-theme="light"] .title-art--panel svg path {
+  fill: #fff;
+  stroke: #000;
+}
+
 /* ── Fonts ── */
 @font-face {
   font-family: 'Gooper Trial';

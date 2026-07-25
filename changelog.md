@@ -4,6 +4,41 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-25 — Homepage panel carousels, title SVGs & animation fixes
+
+- **Magazine + shop panel carousels** (`PlanetSection.tsx`, `homepage.ts`,
+  `PlanetSection.types.ts`): the magazine panel now carries a Swiper carousel
+  (left of the copy) of the **latest 4 published articles**; each slide deep-
+  links to its article (`/magazine/[slug]`) while the rest of the panel links
+  to the section. Same deep-link behaviour on the shop carousel
+  (`/shop/[handle]`). Added an optional `href` to `ModuleItem`; the magazine
+  query now always returns the latest 4 published (the stale
+  `home_magazine_picks` config pointed at articles not in this DB, so the
+  carousel came up empty).
+- **Carousel width** now clamps to its column (`Math.min(323, columnWidth)`)
+  so it no longer overflows the 280px narrow column into the next one < 1200.
+- **Title art → inline SVGs** (`TitleArt.tsx` + `ralph_{tv,magazine,events,
+  shop,lab}_title.svg`): the five planet titles are injected as inline SVG
+  (fetched once, cached) so CSS can recolour `fill`/`stroke` per theme instead
+  of the old `brightness-0`/`invert` filters. Light mode: black fill/white
+  stroke next to the planet, white fill/black stroke on the panel. Dark mode:
+  panel titles fill **black** — except **Ralph TV**, which stays white
+  (`.title-art--panel-tv`). Replaces the stopgap noted in the light-mode entry.
+- **Panel reveal animation** (`PlanetSection.tsx`): the expand/contract had two
+  bugs — the collapse snapped partway then vanished, and (with reduce-motion
+  on) the expand was instant. Root causes: framer can't reliably interpolate a
+  whole `inset()` string (snap), and the global `prefers-reduced-motion` rule
+  zeroes all CSS `transition-duration` (instant). Fixed by animating a single
+  numeric MotionValue (the inset px) and rebuilding the clip-path each frame via
+  `useMotionTemplate` — JS-driven (survives reduce-motion), interpolates
+  cleanly both ways, and keeps `round 12px` rounded corners.
+- **Panel vertical centring** (`PlanetSection.tsx`): the panel is now centred on
+  the planet at every breakpoint (`top = planetCenterY - PANEL_HEIGHT/2`),
+  replacing the desktop bottom-anchored offset that sat it slightly high.
+  Removed the now-unused `planetHeight` state and `PEEK_VISIBLE` const.
+
+---
+
 ## 2026-07-25 — Light mode styling
 
 Full light-mode pass (branch `feat/light-mode`). The dark theme

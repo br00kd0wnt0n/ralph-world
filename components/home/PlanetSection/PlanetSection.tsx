@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import HomepageTvTeaser from '@/components/home/HomepageTvTeaser'
 import HomepageTvSubtitle from '@/components/home/HomepageTvSubtitle'
-import { motion } from 'framer-motion'
+import { motion, useMotionValue, useMotionTemplate, animate } from 'framer-motion'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperClass } from 'swiper/types'
 import 'swiper/css'
@@ -16,6 +16,7 @@ import { planetSectionVariants } from '@/lib/animation/homepage'
 import { PLANET_EXIT_DIRECTIONS } from '@/lib/animation/page-transitions'
 import { useTransitionState } from '@/components/layout/PageTransitionWrapper'
 import { useTheme } from '@/context/ThemeContext'
+import TitleArt from '@/components/home/TitleArt'
 import type { PlanetSectionProps } from './PlanetSection.types'
 
 const POSITION_LAYOUTS = {
@@ -28,7 +29,6 @@ const POSITION_LAYOUTS = {
 const SECTION_PADDING = 64
 const PLANET_SIZE = 411
 const PANEL_HEIGHT = 276
-const PEEK_VISIBLE = 20
 const COLUMN_WIDTH = 340
 // Narrower columns used in the 1100–1199 band so two columns still fit beside
 // the 411px planet (full-width two columns need ~1215px).
@@ -36,22 +36,26 @@ const COLUMN_WIDTH_NARROW = 280
 const PANEL_PADDING = 20
 const COLUMN_GAP = 20
 
-// Title images — displayed at half intrinsic size
+// Title art — inline SVGs (white fill + accent stroke; recoloured to black
+// fill / white stroke in light mode via .title-art in globals.css). Sizes kept
+// identical to the previous PNGs (which displayed at half intrinsic size).
 const TITLE_IMAGES: Record<string, { src: string; w: number; h: number }> = {
-  tv: { src: '/imgs/title_tv.png', w: 362 / 2, h: 134 / 2 },
-  magazine: { src: '/imgs/title_magazine.png', w: 369 / 2, h: 118 / 2 },
-  events: { src: '/imgs/title_events.png', w: 324 / 2, h: 100 / 2 },
-  shop: { src: '/imgs/title_shop.png', w: 195 / 2, h: 117 / 2 },
-  lab: { src: '/imgs/title_lab.png', w: 202 / 2, h: 116 / 2 },
+  tv: { src: '/imgs/ralph_tv_title.svg', w: 362 / 2, h: 134 / 2 },
+  magazine: { src: '/imgs/ralph_magazine_title.svg', w: 369 / 2, h: 118 / 2 },
+  events: { src: '/imgs/ralph_events_title.svg', w: 324 / 2, h: 100 / 2 },
+  shop: { src: '/imgs/ralph_shop_title.svg', w: 195 / 2, h: 117 / 2 },
+  lab: { src: '/imgs/ralph_lab_title.svg', w: 202 / 2, h: 116 / 2 },
 }
 
-// Secondary titles — used inside the expanded panel
+// Secondary titles — used inside the expanded panel. Same SVG art as the
+// primary titles; recoloured white fill + black stroke in light mode (they sit
+// on the black panel) via .title-art--panel in globals.css.
 const TITLE_SECONDARY_IMAGES: Record<string, { src: string; w: number; h: number }> = {
-  tv: { src: '/imgs/title_tv_secondary.png', w: 362 / 2, h: 134 / 2 },
-  magazine: { src: '/imgs/title_magazine_secondary.png', w: 369 / 2, h: 118 / 2 },
-  events: { src: '/imgs/title_events_secondary.png', w: 324 / 2, h: 100 / 2 },
-  shop: { src: '/imgs/title_shop_secondary.png', w: 196 / 2, h: 117 / 2 },
-  lab: { src: '/imgs/title_lab_secondary.png', w: 202 / 2, h: 116 / 2 },
+  tv: { src: '/imgs/ralph_tv_title.svg', w: 362 / 2, h: 134 / 2 },
+  magazine: { src: '/imgs/ralph_magazine_title.svg', w: 369 / 2, h: 118 / 2 },
+  events: { src: '/imgs/ralph_events_title.svg', w: 324 / 2, h: 100 / 2 },
+  shop: { src: '/imgs/ralph_shop_title.svg', w: 196 / 2, h: 117 / 2 },
+  lab: { src: '/imgs/ralph_lab_title.svg', w: 202 / 2, h: 116 / 2 },
 }
 
 const PLANET_IMAGES: Record<string, string> = {
@@ -96,12 +100,8 @@ export default function PlanetSection({
   const { isExiting } = useTransitionState()
 
   const [isActive, setIsActive] = useState(false)
-  // True once the planet image has actually loaded — panels stay fully hidden
-  // until then so nothing flashes on page load.
-  const [planetLoaded, setPlanetLoaded] = useState(false)
   const [sectionWidth, setSectionWidth] = useState(0)
   const [planetCenterY, setPlanetCenterY] = useState(0)
-  const [planetHeight, setPlanetHeight] = useState(0)
   const [isTouch, setIsTouch] = useState(false)
   const [transitionsOn, setTransitionsOn] = useState(false)
   const [swiperIndex, setSwiperIndex] = useState(0)
@@ -139,19 +139,13 @@ export default function PlanetSection({
       const sRect = section.getBoundingClientRect()
       const pRect = planet.getBoundingClientRect()
       setPlanetCenterY(pRect.top - sRect.top + pRect.height / 2)
-      setPlanetHeight(pRect.height)
     }
     update()
-    // Re-measure + mark loaded when the planet image loads (height changes).
-    // If it's already cached/complete, the 'load' event won't fire — mark now.
+    // Re-measure when the planet image loads (its height changes the layout).
     const img = planet.querySelector('img')
-    const onLoad = () => {
-      update()
-      setPlanetLoaded(true)
-    }
-    if (img) {
-      if (img.complete && img.naturalWidth > 0) setPlanetLoaded(true)
-      else img.addEventListener('load', onLoad)
+    const onLoad = () => update()
+    if (img && !(img.complete && img.naturalWidth > 0)) {
+      img.addEventListener('load', onLoad)
     }
     const ro = new ResizeObserver(() => update())
     ro.observe(section)
@@ -257,7 +251,12 @@ export default function PlanetSection({
   // Panels stay fully hidden until the planet has loaded + the section is
   // measured + transitions are armed, then open only on hover/tap. No "peek"
   // sliver on load.
-  const panelReady = planetLoaded && sectionWidth > 0 && transitionsOn
+  // Ready = measured + transition armed. NOT gated on the planet image load:
+  // that made the panel flip visibility:hidden→visible at the same moment it
+  // opened (if hovered mid-load), which skips the clip-path transition and
+  // makes the expand jump instantly. Painting the clipped state early (it's
+  // invisible via clip-path anyway) means every open animates smoothly.
+  const panelReady = sectionWidth > 0 && transitionsOn
   const panelState = panelReady && isActive ? 'open' : 'hidden'
 
   const planetLeft = planetOnRight
@@ -278,6 +277,9 @@ export default function PlanetSection({
     hasRightColumn && sectionWidth > 0 && sectionWidth < 1200
       ? COLUMN_WIDTH_NARROW
       : COLUMN_WIDTH
+  // Carousel frame fits its column (was a fixed 323px, which overflowed the
+  // 280px narrow column < 1200 into the next column).
+  const carouselWidth = Math.min(323, columnWidth)
   const contentWidth = hasRightColumn
     ? PANEL_PADDING * 2 + columnWidth * 2 + COLUMN_GAP
     : PANEL_PADDING * 2 + columnWidth
@@ -290,20 +292,31 @@ export default function PlanetSection({
     ? planetCenterX - panelWidth
     : planetCenterX
 
-  // Clip-path: reveals from the planet-facing edge outward
-  const getClipPath = () => {
-    if (panelState === 'open') return 'inset(0px 0px 0px 0px round 12px)'
+  // Clip-path reveal, from the planet-facing edge outward. We animate a single
+  // numeric MotionValue (the inset, in px) and rebuild the clip-path string
+  // from it each frame with useMotionTemplate. Two reasons this beats putting
+  // clip-path in framer's `animate`:
+  //   1. framer interpolates a lone number flawlessly, whereas tweening a whole
+  //      inset() string made the collapse snap partway ("contracts to ~200px
+  //      then disappears").
+  //   2. It's JS-driven, so the global prefers-reduced-motion CSS rule (which
+  //      zeroes every CSS transition-duration) can't flatten it to instant.
+  // `round 12px` is literal template text, so the rounded corners survive.
+  const clipInset = useMotionValue(panelWidth)
+  useEffect(() => {
+    const target = panelState === 'open' ? 0 : panelWidth
+    const controls = animate(clipInset, target, {
+      duration: transitionsOn ? 0.6 : 0,
+      ease: [0.22, 1, 0.36, 1],
+    })
+    return () => controls.stop()
+  }, [panelState, panelWidth, transitionsOn, clipInset])
 
-    if (planetOnRight) {
-      // Planet is right → panel is left → reveal from right edge (planet side)
-      const leftInset = panelState === 'hidden' ? panelWidth : panelWidth - PEEK_VISIBLE
-      return `inset(0px 0px 0px ${leftInset}px round 12px)`
-    } else {
-      // Planet is left → panel is right → reveal from left edge (planet side)
-      const rightInset = panelState === 'hidden' ? panelWidth : panelWidth - PEEK_VISIBLE
-      return `inset(0px ${rightInset}px 0px 0px round 12px)`
-    }
-  }
+  // Planet right → panel left → reveal from the right (planet) edge → inset from
+  // the left. Planet left → panel right → reveal from left edge → inset right.
+  const clipFromLeft = useMotionTemplate`inset(0px 0px 0px ${clipInset}px round 12px)`
+  const clipFromRight = useMotionTemplate`inset(0px ${clipInset}px 0px 0px round 12px)`
+  const clipPath = planetOnRight ? clipFromLeft : clipFromRight
 
   const planetShift =
     panelState === 'open' ? (planetOnRight ? 100 : -100) : 0
@@ -338,12 +351,8 @@ export default function PlanetSection({
         </Link>
       )}
       {/* Panel — content-width, clip-path masks it, spring overshoot on open.
-          Suppressed below 768px (planet-only view).
-          Top alignment:
-            - 768-991 (single-col panel) → vertically centred on the
-              planet (panel midpoint = planet midpoint)
-            - >= 992 → panel bottom anchored 50px above the planet's
-              bottom edge (original desktop design) */}
+          Suppressed below 768px (planet-only view). Vertically centred on the
+          planet (panel midpoint = planet midpoint) at every breakpoint. */}
       {!isPlanetOnly && (
       <motion.div
         className="absolute z-[6]"
@@ -351,24 +360,17 @@ export default function PlanetSection({
           left: panelLeft,
           width: panelWidth,
           height: PANEL_HEIGHT,
-          top:
-            sectionWidth > 0 && sectionWidth < 992
-              ? planetCenterY - PANEL_HEIGHT / 2
-              : planetCenterY + planetHeight / 2 - 50 - PANEL_HEIGHT,
+          // Vertically centred on the planet.
+          top: planetCenterY - PANEL_HEIGHT / 2,
           backgroundColor: isLightTheme ? '#000000' : accentColor,
           borderRadius: 12,
-          // padding is included in width so the clip-path (which insets by the
-          // full width when hidden) fully covers it — otherwise the padding
-          // strip peeks at 0 visible width.
           boxSizing: 'border-box',
-          clipPath: getClipPath(),
-          transition: transitionsOn
-            ? 'clip-path 0.6s cubic-bezier(0.22, 1, 0.36, 1)'
-            : 'none',
-          pointerEvents: panelState === 'open' ? 'auto' : 'none',
           padding: PANEL_PADDING,
-          // Stay fully hidden until the planet has loaded + measured +
-          // transition-ready, so no partial panel flashes before load.
+          pointerEvents: panelState === 'open' ? 'auto' : 'none',
+          // Clip-path reveal, driven by the clipInset MotionValue (see above).
+          clipPath,
+          // Stay fully hidden until measured + transition-ready, so no partial
+          // panel flashes before load.
           visibility: panelReady ? 'visible' : 'hidden',
         }}
         initial={false}
@@ -379,7 +381,10 @@ export default function PlanetSection({
         transition={
           isExiting
             ? { duration: 0.15, ease: 'easeIn' }
-            : { type: 'spring', stiffness: 200, damping: 20, mass: 0.8 }
+            : {
+                x: { type: 'spring', stiffness: 200, damping: 20, mass: 0.8 },
+                opacity: { duration: 0.2 },
+              }
         }
       >
         <div
@@ -407,13 +412,12 @@ export default function PlanetSection({
                 // Title art wrapped in an h2 so each section has a real heading
                 // (its alt text) — keeps a clean h1 → h2 document outline.
                 <h2 className="mb-1">
-                  <img
+                  <TitleArt
                     src={TITLE_SECONDARY_IMAGES[id].src}
                     alt={moduleCard.heading}
-                    // light mode: white title on the black panel (stopgap until
-                    // the titles become currentColor SVGs).
-                    className="light:brightness-0 light:invert"
-                    style={{ width: TITLE_SECONDARY_IMAGES[id].w, height: TITLE_SECONDARY_IMAGES[id].h }}
+                    width={TITLE_SECONDARY_IMAGES[id].w}
+                    height={TITLE_SECONDARY_IMAGES[id].h}
+                    className={`title-art--panel ${id === 'tv' ? 'title-art--panel-tv' : ''}`}
                   />
                 </h2>
               ) : (
@@ -484,15 +488,16 @@ export default function PlanetSection({
                 }}
                 transition={{ duration: 0.4, delay: panelState === 'open' ? 0.3 : 0, ease: 'easeOut' }}
               >
-                <div className="relative" style={{ width: 323, height: 204 }}>
+                <div className="relative" style={{ width: carouselWidth, height: 204 }}>
                   <div
                     style={{
-                      width: 323,
+                      width: carouselWidth,
                       height: 204,
                       border: '2px solid black',
                       borderRadius: 12,
                       overflow: 'hidden',
                       backgroundColor: '#e5e5e5',
+                      boxSizing: 'border-box',
                     }}
                   >
                     <Swiper
@@ -502,19 +507,36 @@ export default function PlanetSection({
                       speed={400}
                       className="w-full h-full"
                     >
-                      {moduleCard.items.map((item) => (
-                        <SwiperSlide key={item.id}>
-                          {item.thumbnailUrl ? (
-                            <img
-                              src={item.thumbnailUrl}
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full" />
-                          )}
-                        </SwiperSlide>
-                      ))}
+                      {moduleCard.items.map((item) => {
+                        const media = item.thumbnailUrl ? (
+                          <img
+                            src={item.thumbnailUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full" />
+                        )
+                        return (
+                          <SwiperSlide key={item.id}>
+                            {item.href ? (
+                              // Carousel links to the specific article/product;
+                              // stopPropagation so the panel's section-link
+                              // (navigateToSection) doesn't fire instead.
+                              <Link
+                                href={item.href}
+                                onClick={(e) => e.stopPropagation()}
+                                className="block w-full h-full"
+                                aria-label={item.title}
+                              >
+                                {media}
+                              </Link>
+                            ) : (
+                              media
+                            )}
+                          </SwiperSlide>
+                        )
+                      })}
                     </Swiper>
                   </div>
                   {showNav && (
@@ -691,17 +713,12 @@ export default function PlanetSection({
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
         {TITLE_IMAGES[id] ? (
-          <img
+          <TitleArt
             src={TITLE_IMAGES[id].src}
             alt={label}
-            style={
-              isPlanetOnly
-                ? { height: 52, width: 'auto' }
-                : { width: TITLE_IMAGES[id].w, height: TITLE_IMAGES[id].h }
-            }
-            // light mode: solid black title (brightness-0 also merges the
-            // baked-in stroke into black, so no visible outline).
-            className="mb-2 light:brightness-0"
+            width={isPlanetOnly ? 'auto' : TITLE_IMAGES[id].w}
+            height={isPlanetOnly ? 52 : TITLE_IMAGES[id].h}
+            className="mb-2"
           />
         ) : (
           <div

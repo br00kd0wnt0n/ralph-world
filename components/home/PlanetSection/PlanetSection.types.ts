@@ -15,6 +15,9 @@ export interface ModuleItem {
   thumbnailUrl?: string
   badge?: string
   subtitle?: string // date for events, issue # for articles
+  /** Deep link to the specific item (e.g. /magazine/[slug], /shop/[handle]).
+   *  Used by the panel carousels; the rest of the panel links to the section. */
+  href?: string
 }
 
 export interface PlanetSectionProps {

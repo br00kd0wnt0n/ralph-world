@@ -169,7 +169,7 @@ export default function CaseStudyCarousel({ items, anchorSide = 'right' }: Props
           type="button"
           onClick={() => canPrev && goTo(activeIndex - 1)}
           disabled={!canPrev}
-          className="w-9 h-9 flex items-center justify-center rounded-md border border-white/15 bg-white/5 text-white/80 hover:text-white transition disabled:opacity-30 disabled:cursor-default"
+          className="w-9 h-9 flex items-center justify-center rounded-md border border-white/15 light:border-black/15 bg-white/5 light:bg-black/5 text-white/80 light:text-black/80 hover:text-white light:hover:text-black transition disabled:opacity-30 disabled:cursor-default"
           aria-label="Previous"
         >
           ←
@@ -183,8 +183,8 @@ export default function CaseStudyCarousel({ items, anchorSide = 'right' }: Props
               aria-label={`Go to slide ${i + 1}`}
               className={`w-2 h-2 rounded-full border transition ${
                 i === activeIndex
-                  ? 'bg-white/80 border-white/40 scale-125'
-                  : 'bg-white/20 border-white/15 hover:bg-white/40'
+                  ? 'bg-white/80 light:bg-black/80 border-white/40 light:border-black/40 scale-125'
+                  : 'bg-white/20 light:bg-black/20 border-white/15 light:border-black/15 hover:bg-white/40 light:hover:bg-black/40'
               }`}
             />
           ))}
@@ -193,13 +193,13 @@ export default function CaseStudyCarousel({ items, anchorSide = 'right' }: Props
           type="button"
           onClick={() => canNext && goTo(activeIndex + 1)}
           disabled={!canNext}
-          className="w-9 h-9 flex items-center justify-center rounded-md border border-white/15 bg-white/5 text-white/80 hover:text-white transition disabled:opacity-30 disabled:cursor-default"
+          className="w-9 h-9 flex items-center justify-center rounded-md border border-white/15 light:border-black/15 bg-white/5 light:bg-black/5 text-white/80 light:text-black/80 hover:text-white light:hover:text-black transition disabled:opacity-30 disabled:cursor-default"
           aria-label="Next"
         >
           →
         </button>
       </div>
-      <div className="mt-2 text-center text-[11px] tracking-widest text-white/40 font-mono">
+      <div className="mt-2 text-center text-[11px] tracking-widest text-white/40 light:text-black/40 font-mono">
         {activeIndex + 1} / {total}
       </div>
     </div>

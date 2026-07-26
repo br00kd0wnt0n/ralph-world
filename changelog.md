@@ -4,6 +4,32 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-26 — Work-with-us stacking, case-study carousel + light mode
+
+- **Work-with-us responsive stacking** (`ParallaxPlanets.tsx`, `WhatsNextPlanet.tsx`,
+  `ExpertisePlanet.tsx`): below 992px the two planets stop parallaxing and stack
+  (Expertise on top), with an increased gap, 200px bottom padding, and the
+  What's Next planet dropped to a lower z-index with its shadow rotated to sit at
+  the planet top. Content blocks are now full-width `max-w-[380px]` with standard
+  side padding.
+- **Bullet stars** (`BulletStar.tsx` new, `globals.css`): expertise bullets render
+  as inline SVGs so their white paths recolour to off-black (`#232323`) in light
+  mode; shrunk to 20px and moved to hug each point below 576px.
+- **Expertise planet characters** (`ExpertisePlanet.tsx`): `banner_boy` perched on
+  the planet top (half size, monochrome in light) and `cat-o-tronic` at the bottom
+  (higher z than the planet, hidden < 992). Both new PNGs.
+- **Case studies carousel** (`PlayPlanets.tsx`): below 768px the case-study planets
+  become a full-bleed Swiper carousel — uniform size, looped, `ring-inset` so the
+  pink ring isn't clipped, shop-style bullet nav (monochrome in light). Hover
+  tooltip is always white bg + black text.
+- **Case study page light mode** (`CaseStudyPage.tsx`, `CaseStudyCarousel.tsx`):
+  the page was white-text-only (dark theme); all copy now flips to black in light
+  mode — title, section labels, body, outro, and the carousel arrows/dots/counter.
+  The title and outro heading render in **Gooper Trial**, and both CTAs
+  ("Get in touch", "Click to Launch") are now shared shadow buttons.
+
+---
+
 ## 2026-07-26 — Saucer fight, focus colours, shop loaders, planet characters
 
 - **Saucer show 2nd fighter → saucer_2** (`saucerShow.ts`, `saucer_2.png`): the

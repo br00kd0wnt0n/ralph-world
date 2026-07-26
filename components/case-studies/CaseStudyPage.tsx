@@ -6,6 +6,7 @@ import type {
   CaseStudySection,
 } from '@/lib/data/case-studies'
 import CaseStudyCarousel from './CaseStudyCarousel'
+import Button from '@/components/ui/Button'
 
 const DEFAULT_BRAND_COLORS = [
   '#e17b77',
@@ -37,18 +38,17 @@ export default function CaseStudyPage({ study }: Props) {
   const brand =
     study.brandColors.length > 0 ? study.brandColors : DEFAULT_BRAND_COLORS
   const accent = study.subtitleColor || brand[1] || DEFAULT_BRAND_COLORS[1]
-  const ctaColor = study.ctaColor || brand[0] || DEFAULT_BRAND_COLORS[0]
   const outroHeading = study.outroHeading || 'Get in touch'
   const outroSubtitle =
     study.outroSubtitle ||
     "Got a brief or an idea you want to brainstorm? Let's create something extraordinary together."
 
   return (
-    <article className="mx-auto max-w-6xl px-4 py-16 sm:py-24 text-white">
+    <article className="mx-auto max-w-6xl px-4 py-16 sm:py-24 text-white light:text-black">
       <div className="mb-8">
         <Link
           href="/work-with-us"
-          className="text-sm text-white/60 hover:text-white transition-colors"
+          className="text-sm text-white/60 light:text-black/60 hover:text-white light:hover:text-black transition-colors"
         >
           ← Back to Work with Ralph
         </Link>
@@ -65,7 +65,10 @@ export default function CaseStudyPage({ study }: Props) {
           />
         )}
         {study.title && (
-          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-4">
+          <h1
+            className="text-4xl sm:text-6xl tracking-tight mb-4"
+            style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
+          >
             {study.title}
           </h1>
         )}
@@ -110,7 +113,6 @@ export default function CaseStudyPage({ study }: Props) {
             key={section.id ?? `section-${i}`}
             section={section}
             index={i}
-            ctaColor={ctaColor}
           />
         ))}
       </div>
@@ -123,20 +125,18 @@ export default function CaseStudyPage({ study }: Props) {
             background: `linear-gradient(90deg, transparent, ${brand[0] || '#e17b77'}88, transparent)`,
           }}
         />
-        <h2 className="text-3xl sm:text-4xl font-bold mb-4">{outroHeading}</h2>
-        <p className="mx-auto max-w-xl text-white/70 mb-8 whitespace-pre-wrap">
+        <h2
+          className="text-3xl sm:text-4xl mb-4"
+          style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
+        >
+          {outroHeading}
+        </h2>
+        <p className="mx-auto max-w-xl text-white/70 light:text-black/70 mb-8 whitespace-pre-wrap">
           {outroSubtitle}
         </p>
-        <Link
-          href="/contact"
-          className="inline-block rounded-full px-6 py-3 text-sm font-semibold transition-transform hover:scale-105"
-          style={{
-            background: ctaColor,
-            color: '#0a0a0a',
-          }}
-        >
-          Get in touch →
-        </Link>
+        <div className="flex justify-center">
+          <Button label="Get in touch →" href="/contact" />
+        </div>
       </footer>
     </article>
   )
@@ -145,10 +145,9 @@ export default function CaseStudyPage({ study }: Props) {
 interface SectionRowProps {
   section: CaseStudySection
   index: number
-  ctaColor: string
 }
 
-function SectionRow({ section, index, ctaColor }: SectionRowProps) {
+function SectionRow({ section, index }: SectionRowProps) {
   const items = mediaItems(section).filter((m) => isSafeMediaUrl(m.url))
   const hasMedia = items.length > 0
   const isEven = index % 2 === 0
@@ -157,30 +156,18 @@ function SectionRow({ section, index, ctaColor }: SectionRowProps) {
   const copy = (
     <div className={`max-w-xl ${isHero ? 'mx-auto text-center' : ''}`}>
       {section.label && (
-        <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-white/50 mb-4">
+        <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-white/50 light:text-black/50 mb-4">
           {section.label}
         </h2>
       )}
       {section.copy && (
-        <p className="whitespace-pre-wrap text-white/85 leading-relaxed text-lg sm:text-xl">
+        <p className="whitespace-pre-wrap text-white/85 light:text-black/85 leading-relaxed text-lg sm:text-xl">
           {section.copy}
         </p>
       )}
       {section.launchUrl && isSafeUrl(section.launchUrl) && (
         <div className={`mt-6 ${isHero ? 'flex justify-center' : ''}`}>
-          <a
-            href={section.launchUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block rounded-md px-6 py-3 text-xs font-semibold uppercase tracking-[0.15em] transition-transform hover:scale-105"
-            style={{
-              background: ctaColor,
-              color: '#0a0a0a',
-              boxShadow: `0 4px 20px ${ctaColor}55`,
-            }}
-          >
-            Click to Launch →
-          </a>
+          <Button label="Click to Launch →" href={section.launchUrl} newTab />
         </div>
       )}
     </div>

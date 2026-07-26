@@ -8,6 +8,8 @@ interface WhatsNextPlanetProps {
   ctaLabel: string
   ctaHref: string
   shadowY?: MotionValue<number>
+  /** Stacked layout (< 992): shadow flips to the planet's top. */
+  stacked?: boolean
 }
 
 // The pink "What's next?" planet. The body copy is stored as plain text in
@@ -45,6 +47,7 @@ export default function WhatsNextPlanet({
   ctaLabel,
   ctaHref,
   shadowY,
+  stacked = false,
 }: WhatsNextPlanetProps) {
   return (
     <div className="relative flex items-center justify-center">
@@ -63,30 +66,42 @@ export default function WhatsNextPlanet({
           aria-hidden="true"
           className="w-full h-full object-contain"
         />
-        {/* Shadow - positioned at right of planet */}
+        {/* Shadow — right of the planet on desktop; when stacked it flips to
+            the top (rotated) since the planet tucks under the one above.
+            Light mode: invert the black shadow to white (opacity preserved). */}
         {shadowY && (
           <motion.img
             src="/imgs/planet_shadow.svg"
             alt=""
             aria-hidden="true"
-            // Light mode: invert the black shadow to white (opacity preserved)
-            // so it reads as a highlight rather than a black smudge.
             className="absolute pointer-events-none light:invert"
-            style={{
-              width: '50%',
-              height: 'auto',
-              right: 0,
-              top: '50%',
-              y: shadowY,
-              willChange: 'transform',
-            }}
+            style={
+              stacked
+                ? {
+                    width: '50%',
+                    height: 'auto',
+                    left: '25%',
+                    top: -220,
+                    rotate: 270,
+                    y: shadowY,
+                    willChange: 'transform',
+                  }
+                : {
+                    width: '50%',
+                    height: 'auto',
+                    right: 0,
+                    top: '50%',
+                    y: shadowY,
+                    willChange: 'transform',
+                  }
+            }
           />
         )}
       </div>
 
       {/* Content */}
       <div
-        className="relative z-20 text-right text-black w-[380px] py-8"
+        className="relative z-20 text-right text-black w-full max-w-[380px] py-8"
         style={{
           fontFamily: "'Gooper Trial', serif",
           fontWeight: 600,

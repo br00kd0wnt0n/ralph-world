@@ -66,6 +66,17 @@
   fill: #232323;
 }
 
+/* Bullet stars: inlined SVGs (white + pink paths). In light mode the white
+   paths flip to off-black; the pink stays. */
+.bullet-star svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+:root[data-theme="light"] .bullet-star svg path[fill="white"] {
+  fill: #232323;
+}
+
 /* ── Fonts ── */
 @font-face {
   font-family: 'Gooper Trial';

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import BulletStar from './BulletStar'
 
 // Inline the planet SVG (rather than an <img>) so CSS can recolour its white
 // body to off-black in light mode while leaving the black/pink details intact.
@@ -58,6 +59,16 @@ export default function ExpertisePlanet({ intro, bullets }: ExpertisePlanetProps
     if (planetRef.current) planetRef.current.innerHTML = planetSvg
   }, [planetSvg])
 
+  // < 576: shift the top character 100px further left.
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 575px)')
+    const sync = () => setNarrow(mql.matches)
+    sync()
+    mql.addEventListener('change', sync)
+    return () => mql.removeEventListener('change', sync)
+  }, [])
+
   return (
     <div className="relative flex items-center justify-center">
       {/* Planet background - absolutely positioned, height = content + 200px */}
@@ -69,7 +80,7 @@ export default function ExpertisePlanet({ intro, bullets }: ExpertisePlanetProps
           aspectRatio: '1 / 1',
           // Nudge left: the SVG planet blob sits slightly right of its viewBox
           // centre, so offset it back to sit behind the content.
-          marginLeft: -60,
+          marginLeft: -100,
         }}
       >
         <div
@@ -79,8 +90,30 @@ export default function ExpertisePlanet({ intro, bullets }: ExpertisePlanetProps
         />
       </div>
 
+      {/* Banner boy perched on the planet's top, centred above the content.
+          Monochrome in light mode. Half the PNG's native size (536×562). */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/animations/banner_boy.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute left-1/2 top-0 pointer-events-none select-none z-[5] light:grayscale"
+        style={{ width: 268, height: 'auto', transform: `translate(calc(-50% + ${narrow ? 50 : 150}px), calc(-100% + ${narrow ? 0 : 20}px))` }}
+      />
+
+      {/* Cat-o-tronic perched at the planet's bottom, centred. Above the planet
+          (z-[5]). Monochrome in light. Half the native size (393×522). */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/animations/cat-o-tronic.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute left-1/2 bottom-0 hidden min-[992px]:block pointer-events-none select-none z-[5] light:grayscale"
+        style={{ width: 294, height: 'auto', transform: 'translate(calc(-50% + 100px), 100%)' }}
+      />
+
       {/* Content */}
-      <div className="relative z-20 w-[380px] text-black light:text-white py-8">
+      <div className="relative z-20 w-full max-w-[380px] min-[576px]:-ml-[30px] text-black light:text-white py-8">
         <p
           className="text-left mb-5"
           style={{
@@ -99,15 +132,14 @@ export default function ExpertisePlanet({ intro, bullets }: ExpertisePlanetProps
             return (
               <li key={i} className={`relative ${isLeft ? 'text-left' : 'text-right'}`}>
                 {/* Bullet star - alternates left/right */}
-                <img
+                <BulletStar
                   src={src}
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute pointer-events-none"
+                  className={`absolute pointer-events-none w-5 min-[576px]:w-16 ${
+                    isLeft
+                      ? '-left-6 min-[576px]:-left-[76px]'
+                      : '-right-6 min-[576px]:-right-[76px]'
+                  }`}
                   style={{
-                    width: 64,
-                    height: 'auto',
-                    ...(isLeft ? { left: -76 } : { right: -76 }),
                     top: 0,
                     transform: `rotate(${rotation}deg)`,
                   }}

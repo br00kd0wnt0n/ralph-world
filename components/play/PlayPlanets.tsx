@@ -1,5 +1,10 @@
 'use client'
 
+import { useRef, useState } from 'react'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import type { Swiper as SwiperClass } from 'swiper/types'
+import 'swiper/css'
+
 export interface PlayPlanetItem {
   id: string
   title: string | null
@@ -38,6 +43,8 @@ interface PlayPlanetsProps {
 export default function PlayPlanets({ items }: PlayPlanetsProps) {
   const visible = items.slice(0, 8)
   const positions = layoutPlanets(visible.length)
+  const swiperRef = useRef<SwiperClass | null>(null)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   if (visible.length === 0) return null
 
@@ -76,20 +83,20 @@ export default function PlayPlanets({ items }: PlayPlanetsProps) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-ralph-pink/40 to-ralph-purple/40 flex items-center justify-center text-white/70 text-xs text-center px-4">
+                  <div className="w-full h-full bg-gradient-to-br from-ralph-pink/40 to-ralph-purple/40 flex items-center justify-center text-white/70 light:text-black/70 text-xs text-center px-4">
                     {cs.title ?? 'Case study'}
                   </div>
                 )}
               </div>
               {(cs.title || cs.subtitle) && (
-                <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center pointer-events-none text-center px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white light:bg-[#232323]">
+                <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center pointer-events-none text-center px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/70">
                   {cs.title && (
-                    <p className="text-black light:text-white font-bold text-sm leading-tight">
+                    <p className="text-black font-bold text-sm leading-tight">
                       {cs.title}
                     </p>
                   )}
                   {cs.subtitle && (
-                    <p className="text-black/70 light:text-white/80 text-[10px] leading-tight mt-0.5">
+                    <p className="text-black/70 text-[10px] leading-tight mt-0.5">
                       {cs.subtitle}
                     </p>
                   )}
@@ -111,43 +118,79 @@ export default function PlayPlanets({ items }: PlayPlanetsProps) {
         `}</style>
       </div>
 
-      {/* Mobile: 2-col compact grid */}
-      <div className="md:hidden grid grid-cols-2 gap-4 px-4 py-6">
-        {visible.map((cs) => {
-          const url = cs.url
-          return (
-            <a
-              key={cs.id}
-              href={url}
-              className="aspect-square rounded-full overflow-hidden ring-2 ring-ralph-pink relative group"
-            >
-              {cs.thumbnailUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
+      {/* Mobile (< 768): swipeable carousel — all planets the same size, with
+          the shop-style bullet nav. Full-bleed to the screen edges via a
+          viewport-width breakout so slides aren't cropped by container padding. */}
+      <div className="md:hidden py-6 relative left-1/2 -translate-x-1/2 w-screen">
+        <Swiper
+          onSwiper={(s) => {
+            swiperRef.current = s
+          }}
+          onSlideChange={(s) => setActiveIndex(s.realIndex)}
+          slidesPerView={1.4}
+          spaceBetween={16}
+          centeredSlides
+          loop={visible.length > 1}
+          className="w-full"
+        >
+          {visible.map((cs) => (
+            <SwiperSlide key={cs.id}>
+              <a
+                href={cs.url}
+                className="block aspect-square rounded-full overflow-hidden ring-2 ring-inset ring-ralph-pink relative group"
+              >
+                {cs.thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cs.thumbnailUrl}
+                    alt={cs.title ?? ''}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-ralph-pink/40 to-ralph-purple/40" />
+                )}
+                {(cs.title || cs.subtitle) && (
+                  <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center text-center px-4 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/70">
+                    {cs.title && (
+                      <p className="text-black font-bold text-sm leading-tight">
+                        {cs.title}
+                      </p>
+                    )}
+                    {cs.subtitle && (
+                      <p className="text-black/70 text-[10px] leading-tight mt-0.5">
+                        {cs.subtitle}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </a>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+
+        {visible.length > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-4">
+            {visible.map((cs, i) => (
+              <button
+                key={cs.id}
+                type="button"
+                onClick={() => swiperRef.current?.slideToLoop(i)}
+                aria-label={`Show case study ${i + 1} of ${visible.length}`}
+                className="cursor-pointer"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={cs.thumbnailUrl}
-                  alt={cs.title ?? ''}
-                  className="w-full h-full object-cover"
+                  src={i === activeIndex ? '/imgs/bullet_on.svg' : '/imgs/bullet_off.svg'}
+                  alt=""
+                  aria-hidden="true"
+                  width={16}
+                  height={16}
+                  className="block light:grayscale"
                 />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-ralph-pink/40 to-ralph-purple/40" />
-              )}
-              {(cs.title || cs.subtitle) && (
-                <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center text-center px-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white light:bg-[#232323]">
-                  {cs.title && (
-                    <p className="text-black light:text-white font-bold text-xs leading-tight">
-                      {cs.title}
-                    </p>
-                  )}
-                  {cs.subtitle && (
-                    <p className="text-black/70 light:text-white/80 text-[9px] leading-tight mt-0.5">
-                      {cs.subtitle}
-                    </p>
-                  )}
-                </div>
-              )}
-            </a>
-          )
-        })}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )

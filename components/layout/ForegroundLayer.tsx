@@ -3,13 +3,25 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
+import AlienBurnSaucer from '@/components/anim/AlienBurnSaucer'
+import type { AnimationName } from '@/lib/anim/animations'
 
 // Foreground parallax items — faster than content, in front of planets/panels
 // image items displayed at half intrinsic size
 // the spaceship was replaced by an animated saucer on ForegroundCanvas.
-const FOREGROUND_ITEMS = [
+const FOREGROUND_ITEMS: {
+  x: number
+  baseY: number
+  w: number
+  h: number
+  speed: number
+  image?: string
+  sprite?: AnimationName
+}[] = [
   { x: 23, baseY: 3100, image: '/imgs/item_front_alienrocket.png', w: 264 / 2, h: 586 / 2, speed: 1.3 },
-  { x: 18, baseY: 1425, image: '/imgs/item_front_saucer.png', w: 337 / 2, h: 503 / 2, speed: 1.35 },
+  // Saucer replaced by the "alien burn" sprite — plays forward then reverse,
+  // repeatedly (pingpong).
+  { x: 18, baseY: 1425, sprite: 'alien-burn', w: 337 / 2, h: 503 / 2, speed: 1.35 },
 ]
 
 export default function ForegroundLayer() {
@@ -24,7 +36,7 @@ export default function ForegroundLayer() {
   const items = useMemo(
     () =>
       pathname === '/'
-        ? FOREGROUND_ITEMS.filter((it) => !it.image.includes('item_front_alienrocket'))
+        ? FOREGROUND_ITEMS.filter((it) => !it.image?.includes('item_front_alienrocket'))
         : FOREGROUND_ITEMS,
     [pathname],
   )
@@ -79,21 +91,34 @@ export default function ForegroundLayer() {
       }`}
       aria-hidden="true"
     >
-      {items.map((item, i) => (
-        <img
-          key={item.image}
-          src={item.image}
-          alt=""
-          className="absolute"
-          style={{
-            left: `${item.x}%`,
-            top: item.baseY,
-            width: item.w,
-            height: item.h,
-            willChange: 'transform',
-          }}
-        />
-      ))}
+      {items.map((item) =>
+        item.sprite ? (
+          <AlienBurnSaucer
+            key={item.sprite}
+            width={item.w}
+            style={{
+              position: 'absolute',
+              left: `${item.x}%`,
+              top: item.baseY,
+              willChange: 'transform',
+            }}
+          />
+        ) : (
+          <img
+            key={item.image}
+            src={item.image}
+            alt=""
+            className="absolute"
+            style={{
+              left: `${item.x}%`,
+              top: item.baseY,
+              width: item.w,
+              height: item.h,
+              willChange: 'transform',
+            }}
+          />
+        ),
+      )}
     </div>
   )
 }

@@ -92,7 +92,7 @@ export default function PinkDropdown({
     <>
       {/* Full-screen underlay — dims everything and closes on click. */}
       <motion.div
-        className="fixed inset-0 z-[90] bg-[#000000B2]"
+        className="fixed inset-0 z-[90] bg-[#000000B2] light:bg-[#FFFFFFB2]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         onMouseDown={onClose}
@@ -114,7 +114,7 @@ export default function PinkDropdown({
       {/* Pink notch — sits behind the panel by DOM order, tip pokes above.
           69 = 50px visible from card right edge + 19px wrapper offset */}
       <div
-        className="absolute bg-ralph-pink"
+        className="absolute bg-ralph-pink light:bg-black"
         style={{
           width: 12,
           height: 12,
@@ -127,7 +127,7 @@ export default function PinkDropdown({
       {/* Pink wrapper provides the solid offset on right + bottom,
           with 45° angled cuts at top-right and bottom-left */}
       <div
-        className="bg-ralph-pink"
+        className="bg-ralph-pink light:bg-black"
         style={{
           paddingRight: 19,
           paddingBottom: 19,
@@ -136,7 +136,7 @@ export default function PinkDropdown({
         }}
       >
         <div
-          className="bg-white"
+          className="bg-white light:border-black!"
           style={{
             border: '3px solid #EA128B',
             padding: '16px 16px 16px 1.5rem',

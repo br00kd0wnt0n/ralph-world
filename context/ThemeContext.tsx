@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import CanvasBackground from '@/components/layout/CanvasBackground'
-import { safeSet } from '@/lib/safe-storage'
+import { safeGet, safeSet } from '@/lib/safe-storage'
 
 export type ThemeType = 'css-vars' | 'immersive'
 
@@ -17,8 +17,10 @@ export interface ThemeOption {
 export const THEMES: ThemeOption[] = [
   { id: 'cosy-dynamics', label: 'Starfield', type: 'css-vars' },
   { id: 'light', label: 'Light', type: 'css-vars' },
-  { id: 'ralph-world', label: 'Ralph World', type: 'immersive' },
-  { id: 'multicolor', label: 'Multicolor', type: 'immersive' },
+  // Immersive themes iframe an external visual canvas that the CSP frame-src
+  // blocks — disabled until the bundled canvas ships (see visual-canvas docs).
+  { id: 'ralph-world', label: 'Ralph World', type: 'immersive', disabled: true },
+  { id: 'multicolor', label: 'Multicolor', type: 'immersive', disabled: true },
   { id: '8-bit-nostalgia', label: '8-bit nostalgia', type: 'immersive', disabled: true },
   { id: '1980s-fever-dream', label: '1980s fever dream', type: 'immersive', disabled: true },
 ]
@@ -34,23 +36,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState('cosy-dynamics')
 
   useEffect(() => {
-    // Launch: force the dark Starfield theme for everyone. The theme switcher
-    // is hidden and the other themes' backgrounds aren't ready, so a stale
-    // stored preference would otherwise leave users on a broken background.
-    // `?theme=light` opts into light mode for previewing (not persisted, so it
-    // never gets stuck). Restore the stored-theme read when multi-theme ships.
-    const previewLight =
-      new URLSearchParams(window.location.search).get('theme') === 'light'
-    const next = previewLight ? 'light' : 'cosy-dynamics'
+    // Restore the saved theme, but only if it's a fully-built (enabled) theme —
+    // ignore a stale value pointing at a disabled/unfinished theme so no one
+    // gets stuck on a broken background. `?theme=` still works as a shareable
+    // override. Falls back to the dark Starfield default.
+    const enabled = THEMES.filter((t) => !t.disabled).map((t) => t.id)
+    const query = new URLSearchParams(window.location.search).get('theme')
+    const stored = safeGet('ralph-theme')
+    const next =
+      (query && enabled.includes(query) && query) ||
+      (stored && enabled.includes(stored) && stored) ||
+      'cosy-dynamics'
     setThemeState(next)
     document.documentElement.setAttribute('data-theme', next)
-    // const stored = safeGet('ralph-theme')
-    // if (stored && THEMES.some((t) => t.id === stored)) {
-    //   setThemeState(stored)
-    //   document.documentElement.setAttribute('data-theme', stored)
-    // } else {
-    //   document.documentElement.setAttribute('data-theme', 'cosy-dynamics')
-    // }
   }, [])
 
   function setTheme(id: string) {

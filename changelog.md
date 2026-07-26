@@ -4,6 +4,42 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-26 — Theme switcher, account light mode, nav + alien-burn saucer
+
+- **Theme switcher now visible** (`Nav.tsx`, `ThemeToggle.tsx`, `ThemeContext.tsx`):
+  restored the toggle in the desktop nav and added it to the mobile menu
+  (inline, below the login link). Only the two finished themes — **Starfield**
+  and **Light** — are selectable; the immersive themes are disabled (their
+  canvas is CSP-blocked). The chosen theme now persists (localStorage), guarded
+  so a stale/disabled value can't stick you on a broken background.
+  - Swatches are now mini theme previews (Starfield = black + white stars;
+    Light = off-white + black dots) instead of gradients; the trigger circle
+    shows the active theme's swatch. Light-mode chrome: black swatch borders,
+    black dropdown notch/shadow/border, white underlay, mid-opacity-black hover
+    on the trigger, low-opacity-black hover on the dropdown rows.
+- **Account page light mode** (`app/account/*`, `PrivacyControls`,
+  `SignOutButton`): sheet → `#232323`, text → white, dividers → white/10, avatar
+  border → white, PAID pill → white/black, pink links → white, outline buttons →
+  white; the upgrade CTA is now a shadow button (pink on the white sheet in dark,
+  white on the `#232323` sheet in light).
+- **Nav** (`Nav.tsx`): "Work with us" moved to the left cluster; it shifts right
+  to clear the circle logo as it scales in on scroll (and nests right of the
+  account avatar when logged in).
+- **Alien-burn saucer** (`AlienBurnSaucer.tsx`, `animations.ts`,
+  `alien-burn.png`, `ForegroundLayer.tsx`, `MobileMenu.tsx`): packed a 9-frame
+  sprite sheet from transparent SVGs and replaced `item_front_saucer.png`. Plays
+  forward-then-reverse (pingpong) with the exhaust plume looping behind it
+  (centred, tucked 40px into the saucer's bottom). On the mobile menu the saucer
+  fires up from below, through the screen and out the top each time the menu
+  opens. Monochrome in light mode.
+- **Mobile menu polish** (`MobileMenu.tsx`): link hover → underline, pressed →
+  0.6 opacity; moon nudged +100px.
+- **Touch tap feedback** (`globals.css`): on no-hover devices every link/button
+  dims to 0.6 opacity while pressed (shadow `.btn-press` buttons opt out, keeping
+  their translate press).
+
+---
+
 ## 2026-07-26 — Light-mode pass: work-with-us, join-ralph, footer, cart, 404
 
 Continuation of the light-mode work — decorative art desaturated and remaining

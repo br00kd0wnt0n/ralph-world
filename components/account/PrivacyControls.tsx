@@ -84,10 +84,10 @@ export default function PrivacyControls({
       <div>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-black text-sm font-bold">
+            <p className="text-black light:text-white text-sm font-bold">
               Ralph newsletter
             </p>
-            <p className="text-black/70 text-xs font-semibold mt-0.5">
+            <p className="text-black/70 light:text-white/70 text-xs font-semibold mt-0.5">
               News, drops, and the occasional pun. Unsubscribe any time.
             </p>
           </div>
@@ -99,7 +99,7 @@ export default function PrivacyControls({
             onClick={toggleMarketing}
             disabled={marketingBusy}
             className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ralph-pink focus:ring-offset-2 focus:ring-offset-white ${
-              marketingOptIn ? 'bg-ralph-pink' : 'bg-black/25'
+              marketingOptIn ? 'bg-ralph-pink' : 'bg-black/25 light:bg-white/25'
             } ${marketingBusy ? 'opacity-60' : ''}`}
           >
             <span
@@ -113,7 +113,7 @@ export default function PrivacyControls({
           {marketingError ? (
             <span className="text-red-600">{marketingError}</span>
           ) : marketingSavedAt ? (
-            <span className="text-black/60">
+            <span className="text-black/60 light:text-white/60">
               Saved{' '}
               {marketingSavedAt.toLocaleTimeString('en-GB', {
                 hour: '2-digit',
@@ -126,20 +126,20 @@ export default function PrivacyControls({
 
       {/* Your data — collapsed by default so it doesn't dominate the page,
           but discoverable so we still satisfy UK GDPR Art. 15 transparency. */}
-      <details className="pt-5 border-t border-black/10 group">
-        <summary className="text-black text-sm font-bold cursor-pointer list-none flex items-center gap-2 hover:text-ralph-pink transition-colors">
+      <details className="pt-5 border-t border-black/10 light:border-white/10 group">
+        <summary className="text-black light:text-white text-sm font-bold cursor-pointer list-none flex items-center gap-2 hover:text-ralph-pink transition-colors">
           <span className="inline-block transition-transform group-open:rotate-90">
             ›
           </span>
           Your data
         </summary>
         <div className="mt-2 pl-4">
-          <p className="text-black/70 text-xs font-semibold mb-2">
+          <p className="text-black/70 light:text-white/70 text-xs font-semibold mb-2">
             Export a JSON file with the personal data Ralph holds about you (UK
             GDPR Art. 15). For data held by Stripe / Shopify / Sentry / Resend,{' '}
             <a
               href="mailto:hello@ralph.world?subject=Data%20export%20request"
-              className="underline text-ralph-pink hover:opacity-80"
+              className="underline text-ralph-pink light:text-white hover:opacity-80"
             >
               email us
             </a>
@@ -148,7 +148,7 @@ export default function PrivacyControls({
           <button
             type="button"
             onClick={downloadData}
-            className="rounded-full border-2 border-black/30 px-4 py-1.5 text-sm text-black hover:border-black transition-colors"
+            className="rounded-full border-2 border-black/30 light:border-white/30 px-4 py-1.5 text-sm text-black light:text-white hover:border-black light:hover:border-white transition-colors"
             style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
           >
             Download as JSON
@@ -157,9 +157,9 @@ export default function PrivacyControls({
       </details>
 
       {/* Delete account */}
-      <div className="pt-5 border-t border-black/10">
+      <div className="pt-5 border-t border-black/10 light:border-white/10">
         <p className="text-red-600 text-sm font-bold">Delete account</p>
-        <p className="text-black/70 text-xs font-semibold mt-0.5 mb-3">
+        <p className="text-black/70 light:text-white/70 text-xs font-semibold mt-0.5 mb-3">
           Removes your account, profile, and most associated data. Records we
           must keep for legal/financial reasons (consent log,
           subscription/order history) are retained but unlinked from your
@@ -193,7 +193,7 @@ export default function PrivacyControls({
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 disabled={deletePending}
-                className="rounded-full border-2 border-black/30 px-4 py-1.5 text-sm text-black hover:border-black"
+                className="rounded-full border-2 border-black/30 light:border-white/30 px-4 py-1.5 text-sm text-black light:text-white hover:border-black light:hover:border-white"
                 style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
               >
                 Cancel

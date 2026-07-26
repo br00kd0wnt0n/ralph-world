@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import { useMenu } from '@/context/MenuContext'
-// import ThemeToggle from './ThemeToggle' // hidden for launch — restore when themes ship
+import ThemeToggle from './ThemeToggle'
 import SubscribeModal from './SubscribeModal'
 
 const NAV_ITEMS = [
@@ -277,10 +277,10 @@ export default function Nav() {
               )}
             </Link>
           )}
-        </div>
-
-        {/* Right: actions */}
-        <div className="flex items-center gap-6 mid:gap-4 pointer-events-auto">
+          {/* Work with us — lives in the left cluster now. It shifts right to
+              clear the circle logo as it scales in on scroll: when logged out it
+              carries the buttonMargin itself; when logged in the account avatar
+              carries that shift and this just nests to the avatar's right. */}
           <Link
             href="/work-with-us"
             className={`text-header-btn border-2 px-4 transition-colors flex items-center justify-center ${
@@ -288,12 +288,20 @@ export default function Nav() {
                 ? 'bg-ralph-pink text-black border-[#6D003D] light:bg-black light:text-white light:border-black'
                 : 'bg-transparent text-white border-white hover:bg-ralph-pink hover:text-black hover:border-[#6D003D] light:text-black light:border-black light:hover:bg-black light:hover:text-white light:hover:border-black'
             }`}
-            style={{ borderRadius: 22 }}
+            style={{
+              borderRadius: 22,
+              marginLeft: user ? 16 : buttonMargin,
+              transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
           >
             Work with us
           </Link>
-          {/* <ThemeToggle /> + <LanguageModal /> hidden for launch —
-              restore when themes / i18n ship. */}
+        </div>
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-6 mid:gap-4 pointer-events-auto">
+          <ThemeToggle />
+          {/* <LanguageModal /> still hidden for launch — restore when i18n ships. */}
           {/* Account avatar moved to the left cluster (mirrors mobile). */}
           {!user && (
             <Link

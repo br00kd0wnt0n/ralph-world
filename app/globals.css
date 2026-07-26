@@ -420,6 +420,21 @@ main > [data-transitioning] {
   }
 }
 
+/* ── Touch tap feedback ──
+   Touch devices get no hover, so give every link/button a pressed state for
+   tactile confirmation. Scoped to no-hover pointers so desktop is untouched.
+   The shadow buttons opt out — they already animate (translate to their
+   offset shadow) on :active, and dimming on top reads muddy. */
+@media (hover: none) {
+  a:active,
+  button:active {
+    opacity: 0.6;
+  }
+  .btn-press:active {
+    opacity: 1;
+  }
+}
+
 /* ── Reduced motion (WCAG 2.3.3) ──
    When the user's OS requests reduced motion, neutralise all CSS animations
    and transitions site-wide (the waving arms, the event-arm drop, hover/press

@@ -51,11 +51,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   return (
     <section className="px-6 py-16">
-        {/* Solid white sheet on the dark canvas — matches the legal pages. */}
-        <div className="max-w-2xl mx-auto bg-white text-black rounded-2xl shadow-xl px-6 sm:px-10 py-10">
+        {/* Solid white sheet on the dark canvas — matches the legal pages.
+            Light mode flips the sheet to off-black (#232323) + white text. */}
+        <div className="max-w-2xl mx-auto bg-white light:bg-[#232323] text-black light:text-white rounded-2xl shadow-xl px-6 sm:px-10 py-10">
           <Link
             href="/"
-            className="inline-block text-sm font-semibold text-black/60 hover:text-black transition-colors mb-8"
+            className="inline-block text-sm font-semibold text-black/60 light:text-white/60 hover:text-black light:hover:text-white transition-colors mb-8"
           >
             &larr; Back to Ralph.World
           </Link>
@@ -67,11 +68,11 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               <img
                 src={avatarUrl}
                 alt={displayName ?? 'avatar'}
-                className="w-16 h-16 rounded-full border-2 border-ralph-pink/40"
+                className="w-16 h-16 rounded-full border-2 border-ralph-pink/40 light:border-white/40"
               />
             ) : (
               <div
-                className="w-16 h-16 rounded-full border-2 border-ralph-pink/40 bg-black/[0.04] flex items-center justify-center text-xl text-black"
+                className="w-16 h-16 rounded-full border-2 border-ralph-pink/40 light:border-white/40 bg-black/[0.04] light:bg-white/10 flex items-center justify-center text-xl text-black light:text-white"
                 style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
               >
                 {displayName?.[0]?.toUpperCase() ?? '?'}
@@ -79,23 +80,23 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             )}
             <div className="min-w-0">
               <h1
-                className="text-2xl md:text-3xl text-black truncate"
+                className="text-2xl md:text-3xl text-black light:text-white truncate"
                 style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600, lineHeight: 1 }}
               >
                 {displayName}
               </h1>
-              <p className="text-black/60 text-sm font-semibold truncate">
+              <p className="text-black/60 light:text-white/60 text-sm font-semibold truncate">
                 {session.user.email}
               </p>
             </div>
           </div>
 
           {upgradeError && (
-            <div className="bg-ralph-pink/10 border border-ralph-pink/40 rounded-2xl p-4 mb-6 text-sm font-semibold text-black">
+            <div className="bg-ralph-pink/10 border border-ralph-pink/40 rounded-2xl p-4 mb-6 text-sm font-semibold text-black light:text-white">
               We couldn&apos;t start your checkout. Please try again, or{' '}
               <a
                 href="mailto:hello@ralph.world"
-                className="underline text-ralph-pink hover:opacity-80 transition-opacity"
+                className="underline text-ralph-pink light:text-white hover:opacity-80 transition-opacity"
               >
                 drop us a line
               </a>
@@ -109,10 +110,10 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               <span
                 className={`text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${
                   tier === 'paid'
-                    ? 'bg-ralph-pink text-black'
+                    ? 'bg-ralph-pink text-black light:bg-white'
                     : tier === 'free'
                     ? 'bg-ralph-teal text-black'
-                    : 'bg-black/10 text-black/60'
+                    : 'bg-black/10 text-black/60 light:bg-white/10 light:text-white/60'
                 }`}
               >
                 {tier ?? 'guest'}
@@ -123,7 +124,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                 </span>
               )}
             </div>
-            <p className="text-black text-sm font-semibold mb-2">
+            <p className="text-black light:text-white text-sm font-semibold mb-2">
               {tier === 'paid'
                 ? 'You have full access: magazine, TV, events, shop, and lab. Thanks for backing us.'
                 : tier === 'free'
@@ -133,7 +134,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                 : 'Get started to unlock the full Ralph experience.'}
             </p>
             {tier === 'paid' && subscriptionPeriodEnd && (
-              <p className="text-black/60 text-xs font-semibold mb-4">
+              <p className="text-black/60 light:text-white/60 text-xs font-semibold mb-4">
                 {subscriptionStatus === 'past_due'
                   ? `Last payment attempt failed. Stripe will retry; update your card if needed. Current period ends ${formatPeriodEnd(subscriptionPeriodEnd)}.`
                   : cancelAtPeriodEnd
@@ -146,7 +147,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               <form action={openBillingPortal}>
                 <button
                   type="submit"
-                  className="inline-block rounded-full border-2 border-black/30 px-5 py-2 text-black text-sm hover:border-black transition-colors"
+                  className="inline-block rounded-full border-2 border-black/30 light:border-white/30 px-5 py-2 text-black light:text-white text-sm hover:border-black light:hover:border-white transition-colors"
                   style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
                 >
                   Manage subscription
@@ -154,22 +155,38 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               </form>
             ) : (
               <form action={startSubscriptionCheckout}>
-                <button
-                  type="submit"
-                  className="inline-block rounded-full bg-ralph-pink text-black px-5 py-2 text-sm hover:bg-ralph-pink/90 transition-colors"
-                  style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
-                >
-                  Upgrade to paid &mdash; £3/month
-                </button>
+                {/* Shadow button — pink fill on the white sheet (dark theme),
+                    white fill on the #232323 sheet (light theme). */}
+                <div className="relative inline-block" style={{ width: 'fit-content' }}>
+                  <div
+                    aria-hidden="true"
+                    className="absolute bg-black pointer-events-none"
+                    style={{ top: 4, left: 4, width: '100%', height: '100%' }}
+                  />
+                  <button
+                    type="submit"
+                    className="btn-press relative inline-flex items-center justify-center border-2 border-black bg-ralph-pink light:bg-white text-black px-5"
+                    style={{
+                      height: 43,
+                      fontFamily: "'Gooper Trial', serif",
+                      fontWeight: 600,
+                      fontSize: 15,
+                      lineHeight: 1,
+                      transition: 'transform 0.15s ease',
+                    }}
+                  >
+                    Upgrade to paid &mdash; £3/month
+                  </button>
+                </div>
               </form>
             )}
           </Section>
 
           {/* Events — RSVPs land here once Phase 2 ships them. */}
           <Section title="Your events">
-            <p className="text-black/70 text-sm font-semibold">
+            <p className="text-black/70 light:text-white/70 text-sm font-semibold">
               RSVPs to Ralph events will show up here. None yet — keep an eye on{' '}
-              <Link href="/events" className="underline text-ralph-pink hover:opacity-80 transition-opacity">
+              <Link href="/events" className="underline text-ralph-pink light:text-white hover:opacity-80 transition-opacity">
                 the events page
               </Link>
               .
@@ -179,11 +196,11 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           {/* Shipping address — mirror of Shopify once a purchase is made (Phase 2). */}
           <Section title="Shipping address">
             {shippingAddress ? (
-              <pre className="text-black text-sm font-semibold whitespace-pre-wrap font-sans">
+              <pre className="text-black light:text-white text-sm font-semibold whitespace-pre-wrap font-sans">
                 {formatShippingAddress(shippingAddress)}
               </pre>
             ) : (
-              <p className="text-black/70 text-sm font-semibold">
+              <p className="text-black/70 light:text-white/70 text-sm font-semibold">
                 We&apos;ll show your shipping address here once you&apos;ve made a
                 purchase — it mirrors the address on file with Shopify.
               </p>
@@ -208,7 +225,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
           {/* Sign out */}
           <Section title="Sign out">
-            <p className="text-black/70 text-sm font-semibold mb-4">
+            <p className="text-black/70 light:text-white/70 text-sm font-semibold mb-4">
               Sign out on this device.
             </p>
             <SignOutButton />
@@ -262,9 +279,9 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <div className="py-7 border-t border-black/10 first:border-t-0 first:pt-0">
+    <div className="py-7 border-t border-black/10 light:border-white/10 first:border-t-0 first:pt-0">
       <h2
-        className="text-black mb-4"
+        className="text-black light:text-white mb-4"
         style={{
           fontFamily: "'Gooper Trial', serif",
           fontWeight: 600,

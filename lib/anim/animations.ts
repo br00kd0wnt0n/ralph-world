@@ -58,6 +58,13 @@ export const ANIMATIONS = {
     count: 6,
     fps: 10,
   },
+  'alien-burn': {
+    src: '/animations/alien-burn.png',
+    frameW: 164,
+    frameH: 160,
+    count: 9,
+    fps: 12,
+  },
   chaser: {
     src: '/animations/chaser.png',
     frameW: 402,

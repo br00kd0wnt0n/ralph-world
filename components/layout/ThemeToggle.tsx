@@ -5,17 +5,25 @@ import { motion } from 'framer-motion'
 import { useTheme, THEMES } from '@/context/ThemeContext'
 import PinkDropdown, { panelItemVariants, stackVariants } from './PinkDropdown'
 
-const SWATCH_COLORS: Record<string, string[]> = {
-  'cosy-dynamics': ['#000000', '#7B2FBE', '#FF2098'],
-  light: ['#FAFAFA', '#E0D8F0', '#FF2D6B'],
-  'ralph-world': ['#FBC000', '#31BDBF', '#EB008B'],
-  multicolor: ['#EB008B', '#FBC000', '#31BDBF', '#F16524'],
-  '8-bit-nostalgia': ['#2D2D2D', '#00FF00', '#FF00FF'],
-  '1980s-fever-dream': ['#FF00FF', '#00FFFF', '#FFFF00'],
+// Swatch previews — a mini of the actual theme, not a gradient:
+// Starfield = black with white "stars"; Light = off-white with black dots.
+export const SWATCH_PREVIEW: Record<string, { bg: string; dot: string }> = {
+  'cosy-dynamics': { bg: '#000000', dot: '#FFFFFF' },
+  light: { bg: '#FAFAFA', dot: '#000000' },
 }
+export const SWATCH_STARS: { top: number; left: number; size: number; opacity?: number }[] = [
+  { top: 11, left: 13, size: 3 },
+  { top: 20, left: 45, size: 2 },
+  { top: 41, left: 17, size: 2.5 },
+  { top: 15, left: 52, size: 1.5, opacity: 0.7 },
+  { top: 49, left: 43, size: 3 },
+  { top: 33, left: 31, size: 1.5, opacity: 0.6 },
+  { top: 52, left: 22, size: 1.5, opacity: 0.8 },
+]
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const isLight = theme === 'light'
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   // The PinkDropdown is portalled to document.body so it sits outside the
@@ -35,26 +43,41 @@ export default function ThemeToggle() {
   }, [])
 
   const activeTheme = THEMES.find((t) => t.id === theme) ?? THEMES[0]
-  const colors = SWATCH_COLORS[activeTheme.id] ?? SWATCH_COLORS['cosy-dynamics']
+  const activePreview = SWATCH_PREVIEW[activeTheme.id] ?? { bg: '#888888', dot: '#ffffff' }
 
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`text-header-btn flex items-center gap-2 mid:gap-0 transition-colors ${
+        className={`text-header-btn flex items-center gap-2 mid:gap-0 rounded-full px-2 -mx-2 transition-colors light:hover:bg-black/20 ${
           isOpen ? 'text-ralph-pink' : 'text-primary hover:text-ralph-pink'
         }`}
       >
         <span
-          className="theme-circle relative shrink-0"
+          className="theme-circle relative shrink-0 overflow-hidden"
           style={{
             width: 44,
             height: 44,
             borderRadius: '50%',
-            border: '2px solid white',
-            background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`,
+            border: `2px solid ${isLight ? '#000' : '#fff'}`,
+            backgroundColor: activePreview.bg,
           }}
         >
+          {/* Active theme's swatch preview — mini stars/dots (scaled to 44px). */}
+          {SWATCH_STARS.map((s, si) => (
+            <span
+              key={si}
+              className="absolute rounded-full"
+              style={{
+                top: s.top * (44 / 64),
+                left: s.left * (44 / 64),
+                width: s.size,
+                height: s.size,
+                backgroundColor: activePreview.dot,
+                opacity: s.opacity ?? 1,
+              }}
+            />
+          ))}
           {/* Arrow centered on circle for mid screens */}
           <svg
             width="13"
@@ -96,7 +119,7 @@ export default function ThemeToggle() {
         <PinkDropdown width={360} right={-33} triggerRef={ref} panelRef={panelRef} onClose={() => setIsOpen(false)}>
           <motion.div variants={stackVariants} className="flex flex-col gap-2">
             {THEMES.filter((t) => !t.disabled).map((t) => {
-              const swatchColors = SWATCH_COLORS[t.id] ?? ['#888', '#888', '#888']
+              const preview = SWATCH_PREVIEW[t.id] ?? { bg: '#888888', dot: '#ffffff' }
               const isActive = theme === t.id
               return (
                 <motion.button
@@ -106,19 +129,34 @@ export default function ThemeToggle() {
                     setTheme(t.id)
                     setIsOpen(false)
                   }}
-                  className="text-intro flex w-full items-center gap-4 text-black"
+                  className="text-intro flex w-full items-center gap-4 text-black -mx-3 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors"
                   style={{ fontSize: 16 }}
                 >
                   <span
-                    className="shrink-0"
+                    className="shrink-0 relative overflow-hidden"
                     style={{
                       width: 64,
                       height: 64,
                       borderRadius: 12,
-                      border: `2px solid ${isActive ? 'var(--color-ralph-pink)' : '#FFFFFF'}`,
-                      background: `linear-gradient(135deg, ${swatchColors[0]}, ${swatchColors[1]}, ${swatchColors[2]})`,
+                      border: `2px solid ${isActive ? 'var(--color-ralph-pink)' : isLight ? '#000000' : '#FFFFFF'}`,
+                      backgroundColor: preview.bg,
                     }}
-                  />
+                  >
+                    {SWATCH_STARS.map((s, si) => (
+                      <span
+                        key={si}
+                        className="absolute rounded-full"
+                        style={{
+                          top: s.top,
+                          left: s.left,
+                          width: s.size,
+                          height: s.size,
+                          backgroundColor: preview.dot,
+                          opacity: s.opacity ?? 1,
+                        }}
+                      />
+                    ))}
+                  </span>
                   <span className="flex-1 text-left">{t.label}</span>
                   {isActive && (
                     <img

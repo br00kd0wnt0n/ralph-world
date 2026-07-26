@@ -9,6 +9,9 @@ import { useAuth } from '@/context/AuthContext'
 import { useMenu } from '@/context/MenuContext'
 import { useLanguage, LANGUAGES } from '@/lib/useLanguage'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useTheme, THEMES } from '@/context/ThemeContext'
+import { SWATCH_PREVIEW, SWATCH_STARS } from './ThemeToggle'
+import AlienBurnSaucer from '@/components/anim/AlienBurnSaucer'
 
 const WORLDS = [
   { label: 'Ralph TV', href: '/tv' },
@@ -39,8 +42,7 @@ const col = (f: number) => `calc(${TEXT_COL} + (100% - ${TEXT_COL}) * ${f})`
 // Widths use clamp() so they grow on mid-range (tablet) screens.
 const DECOR = [
   { src: '/imgs/item_satellite.png', style: { top: '52%', left: col(0.16) }, w: 'clamp(104px, 13vw, 145px)', float: 12, rot: 10, dur: 8, enter: 60, slideDur: 0.5 },
-  { src: '/imgs/item_moon.png', style: { top: '8%', left: col(0.18) }, w: 'clamp(120px, 16vw, 172px)', float: 14, rot: 6, dur: 9, enter: 200, slideDur: 0.8 },
-  { src: '/imgs/item_front_saucer.png', style: { top: '16%', left: col(0.66) }, w: 'clamp(140px, 18vw, 196px)', float: 18, rot: -8, dur: 11, enter: 340, slideDur: 1.05 },
+  { src: '/imgs/item_moon.png', style: { top: '8%', left: `calc(${col(0.18)} + 100px)` }, w: 'clamp(120px, 16vw, 172px)', float: 14, rot: 6, dur: 9, enter: 200, slideDur: 0.8 },
   { src: '/imgs/item_planet.png', style: { bottom: '-3%', left: col(0.5) }, w: 'clamp(230px, 30vw, 320px)', float: 10, rot: 4, dur: 13, enter: 280, slideDur: 1.35 },
 ]
 
@@ -57,6 +59,9 @@ export default function MobileMenu() {
   const { open: isOpen, setOpen, openFooterPanel, setInstantNav } = useMenu()
   const { language, setLanguage } = useLanguage()
   const [langOpen, setLangOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const isLight = theme === 'light'
+  const [themeOpen, setThemeOpen] = useState(false)
   const onClose = () => setOpen(false)
   // Trap focus inside the open menu; restores focus to the burger on close.
   const menuRef = useFocusTrap<HTMLDivElement>(isOpen)
@@ -110,7 +115,7 @@ export default function MobileMenu() {
   }, [isOpen])
 
   const linkClass =
-    'text-ralph-pink hover:text-white transition-colors text-[24px] min-[576px]:text-[28px] light:text-black light:hover:text-black'
+    'text-ralph-pink light:text-black hover:underline underline-offset-4 active:opacity-60 transition-opacity text-[24px] min-[576px]:text-[28px]'
   const headerClass =
     'uppercase text-white mt-6 min-[576px]:mt-8 mb-1 text-[16px] min-[576px]:text-[18px] light:text-black'
   const headerStyle: React.CSSProperties = {
@@ -154,6 +159,23 @@ export default function MobileMenu() {
               }}
             />
           ))}
+        </motion.div>
+      )}
+      {/* Alien-burn saucer — fires up from below, through the screen and out the
+          top, once each time the menu opens. Above the decor (z-30), behind the
+          menu content (z-[80]). */}
+      {isOpen && (
+        <motion.div
+          key="menu-saucer-launch"
+          className="fixed left-1/2 z-[35] pointer-events-none select-none light:grayscale"
+          style={{ bottom: 0, width: 'clamp(140px, 18vw, 196px)' }}
+          initial={{ x: '-50%', y: '20vh' }}
+          animate={{ x: '-50%', y: '-130vh' }}
+          exit={{ opacity: 0, transition: { duration: 0.2 } }}
+          transition={{ y: { duration: 2.2, ease: 'easeIn' } }}
+          aria-hidden="true"
+        >
+          <AlienBurnSaucer width="100%" />
         </motion.div>
       )}
       {isOpen && (
@@ -229,6 +251,80 @@ export default function MobileMenu() {
                 Login / Subscribe
               </Link>
             )}
+            {/* Theme — inline expandable selector (mirrors the language one),
+                sits below the login/account link. */}
+            <div className="flex flex-col items-start w-full">
+              <button
+                type="button"
+                onClick={() => setThemeOpen((v) => !v)}
+                className={linkClass}
+                style={GOOPER}
+                aria-expanded={themeOpen}
+              >
+                Theme
+              </button>
+              <AnimatePresence initial={false}>
+                {themeOpen && (
+                  <motion.div
+                    key="theme-list"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="overflow-hidden w-full"
+                  >
+                    <div className="flex flex-col items-start gap-3 pl-6 pt-3">
+                      {THEMES.filter((t) => !t.disabled).map((t) => {
+                        const preview = SWATCH_PREVIEW[t.id] ?? { bg: '#888888', dot: '#ffffff' }
+                        const isActive = theme === t.id
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => {
+                              setTheme(t.id)
+                              setThemeOpen(false)
+                            }}
+                            className="flex items-center gap-3 text-ralph-pink hover:text-white transition-colors text-[18px] min-[576px]:text-[20px] light:text-black light:hover:text-black"
+                            style={GOOPER}
+                          >
+                            <span
+                              className="shrink-0 relative overflow-hidden"
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 8,
+                                border: `2px solid ${isActive ? 'var(--color-ralph-pink)' : isLight ? '#000000' : '#FFFFFF'}`,
+                                backgroundColor: preview.bg,
+                              }}
+                            >
+                              {SWATCH_STARS.map((s, si) => (
+                                <span
+                                  key={si}
+                                  className="absolute rounded-full"
+                                  style={{
+                                    top: s.top * (40 / 64),
+                                    left: s.left * (40 / 64),
+                                    width: s.size,
+                                    height: s.size,
+                                    backgroundColor: preview.dot,
+                                    opacity: s.opacity ?? 1,
+                                  }}
+                                />
+                              ))}
+                            </span>
+                            {t.label}
+                            {isActive && (
+                              <img src="/imgs/icon_tick.svg" alt="" aria-hidden="true" width={18} height={16} />
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             {/* Language — same icon as the nav; opens an inline list that
                 works like the nav dropdown (pick + persist, tick on current).
                 Hidden for launch (SHOW_LANGUAGE) — restore when i18n ships. */}

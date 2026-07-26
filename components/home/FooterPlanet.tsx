@@ -34,7 +34,7 @@ export default function FooterPlanet({ tagline = 'The Entertainment People' }: F
         <SpriteAnimation
           name="eyed-alien"
           width={90}
-          className="absolute z-[1] pointer-events-none select-none"
+          className="absolute z-[1] pointer-events-none select-none light:grayscale"
           style={{ left: '50%', top: 0, transform: 'translate(calc(-50% - 150px), calc(-100% + 65px))' }}
         />
         <div

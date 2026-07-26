@@ -82,19 +82,17 @@ export default function PlayPlanets({ items }: PlayPlanetsProps) {
                 )}
               </div>
               {(cs.title || cs.subtitle) && (
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none text-center px-4">
-                  <div className="bg-black/55 rounded-full px-3 py-1">
-                    {cs.title && (
-                      <p className="text-white font-bold text-sm leading-tight">
-                        {cs.title}
-                      </p>
-                    )}
-                    {cs.subtitle && (
-                      <p className="text-white/80 text-[10px] leading-tight mt-0.5">
-                        {cs.subtitle}
-                      </p>
-                    )}
-                  </div>
+                <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center pointer-events-none text-center px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white light:bg-[#232323]">
+                  {cs.title && (
+                    <p className="text-black light:text-white font-bold text-sm leading-tight">
+                      {cs.title}
+                    </p>
+                  )}
+                  {cs.subtitle && (
+                    <p className="text-black/70 light:text-white/80 text-[10px] leading-tight mt-0.5">
+                      {cs.subtitle}
+                    </p>
+                  )}
                 </div>
               )}
             </a>
@@ -134,19 +132,17 @@ export default function PlayPlanets({ items }: PlayPlanetsProps) {
                 <div className="w-full h-full bg-gradient-to-br from-ralph-pink/40 to-ralph-purple/40" />
               )}
               {(cs.title || cs.subtitle) && (
-                <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 text-center">
-                  <div className="bg-black/55 rounded-full px-2 py-1">
-                    {cs.title && (
-                      <p className="text-white font-bold text-xs leading-tight">
-                        {cs.title}
-                      </p>
-                    )}
-                    {cs.subtitle && (
-                      <p className="text-white/80 text-[9px] leading-tight mt-0.5">
-                        {cs.subtitle}
-                      </p>
-                    )}
-                  </div>
+                <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center text-center px-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white light:bg-[#232323]">
+                  {cs.title && (
+                    <p className="text-black light:text-white font-bold text-xs leading-tight">
+                      {cs.title}
+                    </p>
+                  )}
+                  {cs.subtitle && (
+                    <p className="text-black/70 light:text-white/80 text-[9px] leading-tight mt-0.5">
+                      {cs.subtitle}
+                    </p>
+                  )}
                 </div>
               )}
             </a>

@@ -184,7 +184,7 @@ export default function MagazineClient({
           <SpriteAnimation
             name="got-coin"
             width={174}
-            className="translate-x-[100px] min-[768px]:translate-x-[200px] rotate-[16deg]"
+            className="translate-x-[100px] min-[768px]:translate-x-[200px] rotate-[16deg] light:grayscale"
             style={{ transformOrigin: 'bottom center' }}
           />
         </motion.div>

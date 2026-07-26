@@ -332,7 +332,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                             {article.contentTags.map((tag) => (
                               <span
                                 key={tag}
-                                className="text-[9px] font-bold uppercase tracking-wide text-ralph-pink"
+                                className="text-[9px] font-bold uppercase tracking-wide text-ralph-pink light:text-white"
                               >
                                 {tag}
                               </span>

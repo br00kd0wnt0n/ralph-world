@@ -10,6 +10,7 @@ import Globe from './Globe'
 import Button from '@/components/ui/Button'
 import CookiePreferencesLink from '@/components/legal/CookiePreferencesLink'
 import { useMenu } from '@/context/MenuContext'
+import { useTheme } from '@/context/ThemeContext'
 import { usePathname } from 'next/navigation'
 import type { SiteCopy } from '@/lib/data/site-copy'
 
@@ -84,6 +85,8 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
   // visible by default (via transform: translateY(calc(100% - 103px))).
   // Clicking the globe or "Contact us" slides the whole footer up to
   // translateY(0), revealing the offices/contact-form panel above.
+  const { theme } = useTheme()
+  const isLight = theme === 'light'
   const [panelOpen, setPanelOpen] = useState(false)
   const swiperRef = useRef<SwiperType | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
@@ -268,7 +271,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
           <button
             type="button"
             onClick={handleContactClick}
-            className="text-chrome text-white hover:text-ralph-pink transition-colors"
+            className="text-chrome text-white hover:text-white/70 transition-colors"
             aria-label="Open contact form"
           >
             Contact us
@@ -322,7 +325,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
         initial={false}
         animate={{ height: panelOpen ? 'auto' : 0 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        className="order-first md:order-none relative md:absolute md:left-0 md:right-0 md:bottom-full bg-black overflow-hidden border-t-4 border-[#EA128B] light:border-black"
+        className="order-first md:order-none relative md:absolute md:left-0 md:right-0 md:bottom-full bg-black light:bg-[#232323] overflow-hidden border-t-4 border-[#EA128B] light:border-black"
       >
         {/* Close button — its right inset mirrors the content container's left
             padding (px-4 / px-6 / px-16) so it lines up with the "Contact" title.
@@ -338,13 +341,13 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
             src="/imgs/close_btn.svg"
             alt=""
             aria-hidden="true"
-            className="w-full h-full block group-hover:hidden select-none"
+            className="w-full h-full block group-hover:hidden select-none light:grayscale"
           />
           <img
             src="/imgs/close_btn_over.svg"
             alt=""
             aria-hidden="true"
-            className="w-full h-full hidden group-hover:block select-none"
+            className="w-full h-full hidden group-hover:block select-none light:grayscale"
           />
         </button>
 
@@ -410,7 +413,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                             alt={office.label}
                             width={office.title.width}
                             height={office.title.height}
-                            className="mb-4 sm:mx-auto select-none"
+                            className="mb-4 sm:mx-auto select-none light:grayscale"
                             style={{ height: 60, width: 'auto', maxWidth: 'none' }}
                           />
                           <address
@@ -436,7 +439,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                             <img
                               src={dividerSrc}
                               alt=""
-                              className="h-full w-auto select-none"
+                              className="h-full w-auto select-none light:grayscale"
                             />
                           </div>
                         )}
@@ -473,7 +476,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     required
                     value={enquiry}
                     onChange={(e) => setEnquiry(e.target.value)}
-                    className="w-full bg-white text-black rounded-xl px-4 py-2.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40 appearance-none"
+                    className="w-full bg-white text-black rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40 appearance-none"
                     style={{ borderColor: '#EA128B' }}
                   >
                     <option value="" disabled>
@@ -496,7 +499,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Name"
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40"
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40"
                     style={{ borderColor: '#EA128B' }}
                   />
 
@@ -510,7 +513,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40"
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40"
                     style={{ borderColor: '#EA128B' }}
                   />
 
@@ -524,12 +527,12 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Message"
                     rows={3}
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 outline-none focus:ring-2 focus:ring-ralph-pink/40 resize-y"
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40 resize-y"
                     style={{ borderColor: '#EA128B' }}
                   />
 
                   <div className="mt-2 flex items-center gap-4">
-                    <Button label="Submit" type="submit" pink minWidth={230} />
+                    <Button label="Submit" type="submit" pink={!isLight} minWidth={230} />
                   </div>
 
                   {/* Feedback for screen readers + everyone (WCAG 4.1.3). */}

@@ -15,11 +15,14 @@ function ShadowButton({
   variant = 'pink',
   type = 'submit',
   disabled = false,
+  onDark = false,
 }: {
   children: ReactNode
   variant?: 'white' | 'pink'
   type?: 'button' | 'submit'
   disabled?: boolean
+  // On a dark surface (join-ralph in light mode) the pink CTA fills white.
+  onDark?: boolean
 }) {
   const isPink = variant === 'pink'
   return (
@@ -32,7 +35,7 @@ function ShadowButton({
         type={type}
         disabled={disabled}
         className={`${disabled ? '' : 'btn-press'} relative w-full flex items-center justify-center gap-3 border-2 border-black py-3 text-base disabled:opacity-60 disabled:cursor-not-allowed ${
-          isPink ? 'bg-ralph-pink text-black' : 'bg-white text-black'
+          isPink ? `bg-ralph-pink text-black${onDark ? ' light:bg-white' : ''}` : 'bg-white text-black'
         }`}
         style={{ fontFamily: "var(--font-intro, 'Gooper Trial'), serif", fontWeight: 600 }}
       >
@@ -108,11 +111,17 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signupState])
 
+  // On /join-ralph the form is `bare` and sits on the dark #232323 sheet in
+  // light mode, so its chrome text/borders flip to white. /login keeps its
+  // white card (non-bare), so it stays black in both themes.
+  const dt = bare ? ' light:text-white' : ''
+  const db = bare ? ' light:border-white' : ''
+
   return (
     <div className={bare ? 'px-0 md:px-6 text-black' : 'bg-white rounded-2xl px-6 py-12 text-black'}>
       {heading && (
         <h2
-          className="text-center text-black mb-6"
+          className={`text-center text-black mb-6${dt}`}
           style={{
             fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
             fontWeight: 600,
@@ -161,7 +170,7 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
 
       {/* divider — just a centred "or" in black Gooper, no rules */}
       <div
-        className="text-center text-black my-5"
+        className={`text-center text-black my-5${dt}`}
         style={{
           fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
           fontWeight: 600,
@@ -173,14 +182,14 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
       </div>
 
       {/* Mode toggle */}
-      <div className="flex rounded-lg border-2 border-black p-1 mb-4 text-sm">
+      <div className={`flex rounded-lg border-2 border-black p-1 mb-4 text-sm${db}`}>
         <button
           type="button"
           onClick={() => setMode('signin')}
           className={`flex-1 py-1.5 rounded-md transition-colors ${
             mode === 'signin'
-              ? 'bg-ralph-pink text-black font-medium'
-              : 'text-black/60 hover:text-black'
+              ? `bg-ralph-pink text-black font-medium${bare ? ' light:bg-white' : ''}`
+              : `text-black/60 hover:text-black${bare ? ' light:text-white/60 light:hover:text-white' : ''}`
           }`}
           style={{ fontFamily: "var(--font-intro, 'Gooper Trial'), serif", fontWeight: 600 }}
         >
@@ -191,8 +200,8 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
           onClick={() => setMode('signup')}
           className={`flex-1 py-1.5 rounded-md transition-colors ${
             mode === 'signup'
-              ? 'bg-ralph-pink text-black font-medium'
-              : 'text-black/60 hover:text-black'
+              ? `bg-ralph-pink text-black font-medium${bare ? ' light:bg-white' : ''}`
+              : `text-black/60 hover:text-black${bare ? ' light:text-white/60 light:hover:text-white' : ''}`
           }`}
           style={{ fontFamily: "var(--font-intro, 'Gooper Trial'), serif", fontWeight: 600 }}
         >
@@ -225,14 +234,14 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
             </p>
           )}
           <div className="pt-1">
-            <ShadowButton type="submit" disabled={signinPending}>
+            <ShadowButton type="submit" disabled={signinPending} onDark={bare}>
               {signinPending ? 'Signing in…' : 'Sign in'}
             </ShadowButton>
           </div>
           <div className="text-center">
             <Link
               href="/reset-password"
-              className="text-xs text-black/50 hover:text-black transition-colors"
+              className={`text-xs text-black/50 hover:text-black transition-colors${bare ? ' light:text-white/50 light:hover:text-white' : ''}`}
             >
               Forgot your password?
             </Link>
@@ -284,14 +293,14 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
             </p>
           )}
           <div className="pt-1">
-            <ShadowButton type="submit" disabled={signupPending}>
+            <ShadowButton type="submit" disabled={signupPending} onDark={bare}>
               {signupPending ? 'Creating account…' : 'Create account'}
             </ShadowButton>
           </div>
         </form>
       )}
 
-      <p className="text-black text-xs mt-6 text-center">
+      <p className={`text-black text-xs mt-6 text-center${dt}`}>
         By {mode === 'signin' ? 'signing in' : 'creating an account'}, you
         agree to Ralph’s{' '}
         <Link href="/legal/terms" className="underline hover:opacity-70 transition-opacity">

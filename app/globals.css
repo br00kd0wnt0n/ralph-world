@@ -45,6 +45,27 @@
   stroke: #000;
 }
 
+/* Work-with-us expertise planet: inlined SVG fills its box (contain via the
+   SVG's own viewBox/preserveAspectRatio). In light mode only the white planet
+   body flips to off-black — the black + pink detail paths are left as-is. */
+.expertise-planet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Fill the box WIDTH (the old PNG was ~square and did the same); height auto +
+   centring keeps the planet the same diameter as before, overflowing top/bottom. */
+.expertise-planet svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* The planet path extends past the SVG viewBox; show it instead of clipping. */
+  overflow: visible;
+}
+:root[data-theme="light"] .expertise-planet svg path[fill="white"] {
+  fill: #232323;
+}
+
 /* ── Fonts ── */
 @font-face {
   font-family: 'Gooper Trial';
@@ -307,7 +328,7 @@ img {
   transition: background-color 0.2s ease;
 }
 .footer-icon-btn:hover {
-  background-color: #EA128B;
+  background-color: #fff;
 }
 .footer-icon {
   width: 24px;

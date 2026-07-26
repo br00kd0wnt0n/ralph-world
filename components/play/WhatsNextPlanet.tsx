@@ -66,10 +66,12 @@ export default function WhatsNextPlanet({
         {/* Shadow - positioned at right of planet */}
         {shadowY && (
           <motion.img
-            src="/imgs/planet_shadow.png"
+            src="/imgs/planet_shadow.svg"
             alt=""
             aria-hidden="true"
-            className="absolute pointer-events-none"
+            // Light mode: invert the black shadow to white (opacity preserved)
+            // so it reads as a highlight rather than a black smudge.
+            className="absolute pointer-events-none light:invert"
             style={{
               width: '50%',
               height: 'auto',

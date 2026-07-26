@@ -12,7 +12,7 @@ export default function NotFound() {
     // --color-background #000000) and the global starfield shows through.
     <section className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
       <p
-        className="text-ralph-pink"
+        className="text-ralph-pink light:text-black"
         style={{
           fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
           fontWeight: 600,
@@ -38,7 +38,33 @@ export default function NotFound() {
         dip into the magazine.
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-        <Button href="/" label="Back home" filled />
+        {/* Back home — a shadow button matching <Button>, but theme-flipped via
+            classes (which <Button>'s inline styles can't do): pink fill in dark
+            mode, off-black fill + white text in light mode. */}
+        <div className="relative inline-block" style={{ width: 'fit-content' }}>
+          <div
+            aria-hidden="true"
+            className="absolute bg-black pointer-events-none"
+            style={{ top: 4, left: 4, width: '100%', height: '100%' }}
+          />
+          <a
+            href="/"
+            className="btn-press relative inline-flex items-center justify-center border-2 border-black bg-ralph-pink light:bg-[#232323] text-black light:text-white"
+            style={{
+              height: 43,
+              minWidth: 170,
+              paddingLeft: 12,
+              paddingRight: 12,
+              fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+              fontWeight: 600,
+              fontSize: 16,
+              lineHeight: 1,
+              transition: 'transform 0.15s ease',
+            }}
+          >
+            Back home
+          </a>
+        </div>
         <Button href="/magazine" label="Read the magazine" />
       </div>
     </section>

@@ -68,7 +68,7 @@ export default function Globe() {
   const currentSign = GLOBE_ARRAY[signx].sign
 
   return (
-    <div style={{ position: 'relative', width: 120, height: 120 }}>
+    <div className="light:grayscale" style={{ position: 'relative', width: 120, height: 120 }}>
       {ALL_GLOBE_FRAMES.map((src, i) => (
         <img
           key={`globe-${i}`}

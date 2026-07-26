@@ -122,7 +122,7 @@ export default function JoinRalphClient({
         <div className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover light:brightness-[0.1373]"
               style={{
                 backgroundImage: 'url(/imgs/planet_background_creative.svg)',
                 backgroundPosition: 'top center',
@@ -145,7 +145,7 @@ export default function JoinRalphClient({
             />
           </div>
           <div
-            className="absolute bg-white"
+            className="absolute bg-white light:bg-[#232323]"
             style={{ top: 270, left: 0, right: 0, bottom: 0 }}
           />
         </div>
@@ -253,7 +253,7 @@ function Slide1({
         <img
           src="/imgs/text-join-ralph.svg"
           alt="Join Ralph"
-          className="relative z-10 block mx-auto w-full max-w-[180px] min-[992px]:max-w-[250px] h-auto"
+          className="relative z-10 block mx-auto w-full max-w-[180px] min-[992px]:max-w-[250px] h-auto light:brightness-0 light:invert"
         />
 
         {/* "Fun worth finding" badge — centred over the title, then nudged
@@ -262,7 +262,7 @@ function Slide1({
           src="/imgs/fun-worth-finding.svg"
           alt=""
           aria-hidden="true"
-          className="absolute left-1/2 -translate-x-1/2 ml-[120px] min-[992px]:ml-[150px] top-[-20px] z-20 block pointer-events-none select-none w-[100px] min-[992px]:w-[130px] h-auto"
+          className="absolute left-1/2 -translate-x-1/2 ml-[120px] min-[992px]:ml-[150px] top-[-20px] z-20 block pointer-events-none select-none w-[100px] min-[992px]:w-[130px] h-auto light:grayscale"
         />
 
         {/* Painter character — absolute so it doesn't add height; the column
@@ -272,7 +272,7 @@ function Slide1({
           src="/imgs/join-ralph-painter.svg"
           alt=""
           aria-hidden="true"
-          className="absolute top-full right-0 z-10 hidden min-[992px]:block pointer-events-none select-none"
+          className="absolute top-full right-0 z-10 hidden min-[992px]:block pointer-events-none select-none light:grayscale"
           style={{ width: 153, height: 'auto', transform: 'translate(20px, -168px)' }}
         />
       </div>
@@ -314,26 +314,26 @@ function TierSlide({
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-10 py-16 md:px-16 min-[992px]:p-0">
       <div className="relative">
-        <h2 className="text-center text-black" style={titleStyle}>
+        <h2 className="text-center text-black light:text-white" style={titleStyle}>
           Hey{firstName ? `, ${firstName}` : ''}. Select your subscription level
         </h2>
         <img
           src="/imgs/fun-worth-finding.svg"
           alt=""
           aria-hidden="true"
-          className="absolute -right-[100px] top-1/2 -translate-y-1/2 rotate-[15deg] hidden md:block pointer-events-none select-none w-[150px] h-auto"
+          className="absolute -right-[100px] top-1/2 -translate-y-1/2 rotate-[15deg] hidden md:block pointer-events-none select-none w-[150px] h-auto light:grayscale"
         />
       </div>
 
       {/* Digital (free) */}
       <div className="relative z-10">
-        <h2 className="text-black" style={titleStyle}>
+        <h2 className="text-black light:text-white" style={titleStyle}>
           Digital Ralph
         </h2>
-        <p className="text-black mb-3" style={titleStyle}>
+        <p className="text-black light:text-white mb-3" style={titleStyle}>
           £FREE
         </p>
-        <p className="text-black mb-5" style={bodyStyle}>
+        <p className="text-black light:text-white mb-5" style={bodyStyle}>
           Enjoy access to all our editorial content, buy tickets to one of our
           amazing IRL events and much more. Sounds good, right? Then
           what&apos;s stopping you?
@@ -347,13 +347,13 @@ function TierSlide({
 
       {/* Physical (paid) — right aligned */}
       <div className="relative z-10 text-right">
-        <h2 className="text-black" style={titleStyle}>
+        <h2 className="text-black light:text-white" style={titleStyle}>
           Physical Ralph
         </h2>
-        <p className="text-black mb-3" style={titleStyle}>
+        <p className="text-black light:text-white mb-3" style={titleStyle}>
           £3 per month
         </p>
-        <p className="text-black mb-5" style={bodyStyle}>
+        <p className="text-black light:text-white mb-5" style={bodyStyle}>
           Or for just £3 a month you&apos;ll also get everything Digital Ralph
           has to offer, plus our quarterly fun, glossy mag straight through
           your letterbox. If that wasn&apos;t enough we&apos;ll switch on our
@@ -411,7 +411,7 @@ function VerifySlide({
           {/* Title with the wave character to its left */}
           <div className="relative flex justify-center mb-2">
             <h2
-              className="relative text-2xl text-black"
+              className="relative text-2xl text-black light:text-white"
               style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
             >
               <img
@@ -425,7 +425,7 @@ function VerifySlide({
             </h2>
           </div>
           <p
-            className="mb-6"
+            className="mb-6 light:text-white!"
             style={{
               fontFamily: 'var(--font-body), Arial, sans-serif',
               fontWeight: 600,
@@ -439,22 +439,22 @@ function VerifySlide({
           </p>
 
           <h3
-            className="text-base text-black mb-3"
+            className="text-base text-black light:text-white mb-3"
             style={{ fontFamily: "'Gooper Trial', serif", fontWeight: 600 }}
           >
             Welcome to Ralph&apos;s World
           </h3>
-          <p className="mb-4" style={bodyCopyStyle}>
+          <p className="mb-4 light:text-white!" style={bodyCopyStyle}>
             Just one more step — we need to confirm your email, so you don&apos;t
             miss out on updates, offers, events and all the other good stuff.
           </p>
-          <p className="mb-6" style={bodyCopyStyle}>
+          <p className="mb-6 light:text-white!" style={bodyCopyStyle}>
             We&apos;ve already pinged you an email to the above address. Simply
             press the link in that email to verify.
           </p>
 
-          <p className="mb-2" style={bodyCopyStyle}>No email? Check spam.</p>
-          <p className="mb-6" style={bodyCopyStyle}>Still nothing?</p>
+          <p className="mb-2 light:text-white!" style={bodyCopyStyle}>No email? Check spam.</p>
+          <p className="mb-6 light:text-white!" style={bodyCopyStyle}>Still nothing?</p>
 
           <div className="flex justify-center">
             <Button

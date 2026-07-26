@@ -4,6 +4,48 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-26 — Light-mode pass: work-with-us, join-ralph, footer, cart, 404
+
+Continuation of the light-mode work — decorative art desaturated and remaining
+chrome/surfaces adapted for `[data-theme="light"]`.
+
+- **Monochrome decorative art in light mode** (`light:grayscale`): footer
+  `Globe`, the homepage footer-planet eyed alien (`FooterPlanet.tsx`), the
+  magazine planet-top `got-coin` sprite (`MagazineClient.tsx`), and on
+  `/join-ralph` the "fun worth finding" badge (both slides) + painter character.
+- **Magazine** (`ArticleGrid.tsx`): article-card category label (e.g. "COMEDY")
+  → white in light mode (pink in dark).
+- **Shop** (`ProductDetail.tsx`): "< Back" button → white in light mode.
+- **Work-with-us** (`components/play/*`):
+  - Case-study planets (`PlayPlanets.tsx`): removed the always-on title overlay;
+    it's now a hover tooltip that fills the whole planet circle — white bg/black
+    text in dark, `#232323`/white in light.
+  - Expertise planet (`ExpertisePlanet.tsx` + new `expertise_planet.svg`):
+    swapped the PNG for an inlined SVG so light mode recolours only the white
+    body to `#232323` (black + pink details kept); intro/bullet copy → white.
+    Sized to fill width + `overflow:visible` so it matches the old PNG.
+  - What's-next planet shadow (`WhatsNextPlanet.tsx`): swapped to
+    `planet_shadow.svg` and `light:invert` so it reads as white opacities.
+- **Join-ralph** (`JoinRalphClient.tsx`, `app/login/LoginForm.tsx`): planet
+  silhouette + content sheet → `#232323`; "JOIN RALPH" art → white; all copy →
+  white. The shared `LoginForm` gets a `bare`-scoped light treatment (so
+  `/login`'s white card is untouched): heading, "or", switcher (active fill →
+  white, border + inactive tabs → white), forgot-password, terms, and the
+  Sign in / Create account CTA fill → white.
+- **Footer** (`Footer.tsx`, `globals.css`): find-us panel → `#232323`; office
+  titles / dividers / close button → `light:grayscale`; contact-form field
+  borders → black and Submit → normal (non-pink) shadow button in light mode.
+  Social buttons now hover to a **white** bg and "Contact us" to off-white
+  (both themes). Footer border-tops kept true black.
+- **Cart drawer** (`CartDrawer.tsx`): light mode → `#232323` bg, white overlay
+  at the same opacity, monochrome close button, white dividers, white text
+  throughout, and a normal (white-fill) checkout shadow button.
+- **Mobile menu** (`MobileMenu.tsx`): close button → `light:grayscale`.
+- **404** (`app/not-found.tsx`): "404" → black and "Back home" → off-black fill
+  / white text in light mode.
+
+---
+
 ## 2026-07-26 — Light-mode subpage surfaces + panel reveal rewrite
 
 - **Homepage panel reveal animation** (`PlanetSection.tsx`): rewrote the

@@ -207,13 +207,13 @@ export default function MobileMenu() {
               src="/imgs/close_btn.svg"
               alt=""
               aria-hidden="true"
-              className="w-full h-full block group-hover:hidden select-none"
+              className="w-full h-full block group-hover:hidden select-none light:grayscale"
             />
             <img
               src="/imgs/close_btn_over.svg"
               alt=""
               aria-hidden="true"
-              className="w-full h-full hidden group-hover:block select-none"
+              className="w-full h-full hidden group-hover:block select-none light:grayscale"
             />
           </motion.button>
 

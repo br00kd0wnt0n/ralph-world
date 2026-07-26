@@ -38,7 +38,7 @@ export default function CartDrawer() {
         <>
       {/* z-300+ so the drawer sits above the footer, header and everything. */}
       <motion.div
-        className="fixed inset-0 z-[300] bg-[#000000B2]"
+        className="fixed inset-0 z-[300] bg-[#000000B2] light:bg-[#FFFFFFB2]"
         onClick={closeCart}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -51,7 +51,7 @@ export default function CartDrawer() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-drawer-title"
-        className="fixed top-0 right-0 bottom-0 z-[310] w-full max-w-md bg-white text-black border-l border-black/10 shadow-xl flex flex-col"
+        className="fixed top-0 right-0 bottom-0 z-[310] w-full max-w-md bg-white light:bg-[#232323] text-black light:text-white border-l border-black/10 light:border-white/10 shadow-xl flex flex-col"
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
@@ -60,7 +60,7 @@ export default function CartDrawer() {
         <div className="flex items-center justify-between p-4">
           <h2
             id="cart-drawer-title"
-            className="text-black"
+            className="text-black light:text-white"
             style={gooperTitle}
           >
             Your basket
@@ -74,20 +74,20 @@ export default function CartDrawer() {
               src="/imgs/closecircle_btn.svg"
               alt=""
               aria-hidden="true"
-              className="w-full h-full block group-hover:hidden select-none"
+              className="w-full h-full block group-hover:hidden select-none light:grayscale"
             />
             <img
               src="/imgs/closecircle_btn_over.svg"
               alt=""
               aria-hidden="true"
-              className="w-full h-full hidden group-hover:block select-none"
+              className="w-full h-full hidden group-hover:block select-none light:grayscale"
             />
           </button>
         </div>
         {/* Header divider */}
         <div
           aria-hidden="true"
-          className="w-full shrink-0"
+          className="w-full shrink-0 light:invert"
           style={{
             height: 8,
             backgroundImage: 'url(/imgs/divide_line_02.svg)',
@@ -98,7 +98,7 @@ export default function CartDrawer() {
 
         <div className="flex-1 overflow-y-auto p-4">
           {lines.length === 0 ? (
-            <p className="text-black/60 text-sm font-semibold text-center mt-8">
+            <p className="text-black/60 light:text-white/60 text-sm font-semibold text-center mt-8">
               Your basket is empty
             </p>
           ) : (
@@ -122,7 +122,7 @@ export default function CartDrawer() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p
-                        className="text-black line-clamp-2 mb-4"
+                        className="text-black light:text-white line-clamp-2 mb-4"
                         style={{
                           fontFamily: "'Gooper Trial', serif",
                           fontWeight: 600,
@@ -137,25 +137,25 @@ export default function CartDrawer() {
                           onClick={() =>
                             updateQty(line.id, Math.max(0, line.quantity - 1))
                           }
-                          className="w-6 h-6 rounded border border-black/20 text-black text-sm"
+                          className="w-6 h-6 rounded border border-black/20 light:border-white/30 text-black light:text-white text-sm"
                         >
                           &minus;
                         </button>
-                        <span className="text-sm text-black w-6 text-center">
+                        <span className="text-sm text-black light:text-white w-6 text-center">
                           {line.quantity}
                         </span>
                         <button
                           onClick={() => updateQty(line.id, line.quantity + 1)}
-                          className="w-6 h-6 rounded border border-black/20 text-black text-sm"
+                          className="w-6 h-6 rounded border border-black/20 light:border-white/30 text-black light:text-white text-sm"
                         >
                           +
                         </button>
-                        <span className="ml-auto text-black" style={gooperTitle}>
+                        <span className="ml-auto text-black light:text-white" style={gooperTitle}>
                           £{formatPrice(line.cost.totalAmount.amount)}
                         </span>
                         <button
                           onClick={() => removeItem(line.id)}
-                          className="text-black/50 hover:text-ralph-pink text-xs ml-2"
+                          className="text-black/50 light:text-white/50 hover:text-ralph-pink text-xs ml-2"
                           aria-label="Remove"
                         >
                           &#10005;
@@ -166,7 +166,7 @@ export default function CartDrawer() {
                   {i < lines.length - 1 && (
                     <div
                       aria-hidden="true"
-                      className="w-full"
+                      className="w-full light:invert"
                       style={{
                         height: 4,
                         backgroundImage: 'url(/imgs/divide_line_01.svg)',
@@ -182,11 +182,11 @@ export default function CartDrawer() {
           )}
         </div>
 
-        <div className="border-t border-black/10 p-4">
+        <div className="border-t border-black/10 light:border-white/20 p-4">
           {subtotal && (
             <div className="flex items-center justify-between mb-4">
-              <span className="text-black" style={gooperTitle}>Subtotal</span>
-              <span className="text-black" style={gooperTitle}>
+              <span className="text-black light:text-white" style={gooperTitle}>Subtotal</span>
+              <span className="text-black light:text-white" style={gooperTitle}>
                 £{formatPrice(subtotal.amount)}
               </span>
             </div>
@@ -209,7 +209,7 @@ export default function CartDrawer() {
                 />
                 <a
                   href={cart.checkoutUrl}
-                  className="btn-press relative w-full inline-flex items-center justify-center"
+                  className="btn-press relative w-full inline-flex items-center justify-center light:bg-white!"
                   style={{
                     height: 48,
                     border: '2px solid black',

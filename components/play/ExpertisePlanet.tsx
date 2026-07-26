@@ -1,5 +1,22 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
+
+// Inline the planet SVG (rather than an <img>) so CSS can recolour its white
+// body to off-black in light mode while leaving the black/pink details intact.
+// Fetched once, cached at module scope.
+const svgCache = new Map<string, Promise<string>>()
+function loadSvg(url: string): Promise<string> {
+  let p = svgCache.get(url)
+  if (!p) {
+    p = fetch(url, { cache: 'force-cache' })
+      .then((r) => (r.ok ? r.text() : ''))
+      .catch(() => '')
+    svgCache.set(url, p)
+  }
+  return p
+}
+
 interface ExpertiseBullet {
   heading: string
   body: string
@@ -24,6 +41,23 @@ function getBulletStar(index: number) {
 }
 
 export default function ExpertisePlanet({ intro, bullets }: ExpertisePlanetProps) {
+  const planetRef = useRef<HTMLDivElement>(null)
+  const [planetSvg, setPlanetSvg] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    loadSvg('/imgs/expertise_planet.svg').then((m) => {
+      if (!cancelled) setPlanetSvg(m)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (planetRef.current) planetRef.current.innerHTML = planetSvg
+  }, [planetSvg])
+
   return (
     <div className="relative flex items-center justify-center">
       {/* Planet background - absolutely positioned, height = content + 200px */}
@@ -33,18 +67,20 @@ export default function ExpertisePlanet({ intro, bullets }: ExpertisePlanetProps
           height: 'calc(100% + 200px)',
           width: 'auto',
           aspectRatio: '1 / 1',
+          // Nudge left: the SVG planet blob sits slightly right of its viewBox
+          // centre, so offset it back to sit behind the content.
+          marginLeft: -60,
         }}
       >
-        <img
-          src="/imgs/planet_creative.png"
-          alt=""
+        <div
+          ref={planetRef}
+          className="expertise-planet w-full h-full"
           aria-hidden="true"
-          className="w-full h-full object-contain"
         />
       </div>
 
       {/* Content */}
-      <div className="relative z-20 w-[380px] text-black py-8">
+      <div className="relative z-20 w-[380px] text-black light:text-white py-8">
         <p
           className="text-left mb-5"
           style={{
@@ -88,7 +124,7 @@ export default function ExpertisePlanet({ intro, bullets }: ExpertisePlanetProps
                   {b.heading}
                 </p>
                 <p
-                  className="text-black font-body mt-0.5"
+                  className="text-black light:text-white font-body mt-0.5"
                   style={{
                     fontWeight: 600,
                     fontSize: 16,

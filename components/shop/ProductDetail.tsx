@@ -61,7 +61,7 @@ export default function ProductDetail({
       <div className="min-[768px]:grid min-[768px]:grid-cols-2 min-[768px]:gap-12 min-[1200px]:block">
         <button
           onClick={onBack}
-          className="mb-[22px] inline-flex items-center justify-center text-ralph-pink hover:opacity-80 transition-opacity min-[768px]:justify-self-center min-[1200px]:justify-self-start"
+          className="mb-[22px] inline-flex items-center justify-center text-ralph-pink light:text-white hover:opacity-80 transition-opacity min-[768px]:justify-self-center min-[1200px]:justify-self-start"
           style={{
             fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
             fontWeight: 600,

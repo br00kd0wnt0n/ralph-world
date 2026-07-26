@@ -32,7 +32,34 @@ export default function RouteError({
           homepage.
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <Button label="Try again" onClick={() => reset()} filled />
+          {/* Try again — shadow button, theme-flipped via classes (which
+              <Button>'s inline styles can't do): pink fill in dark mode,
+              off-black fill + white text in light mode. */}
+          <div className="relative inline-block" style={{ width: 'fit-content' }}>
+            <div
+              aria-hidden="true"
+              className="absolute bg-black pointer-events-none"
+              style={{ top: 4, left: 4, width: '100%', height: '100%' }}
+            />
+            <button
+              type="button"
+              onClick={() => reset()}
+              className="btn-press relative inline-flex items-center justify-center border-2 border-black bg-ralph-pink light:bg-[#232323] text-black light:text-white"
+              style={{
+                height: 43,
+                minWidth: 170,
+                paddingLeft: 12,
+                paddingRight: 12,
+                fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
+                fontWeight: 600,
+                fontSize: 16,
+                lineHeight: 1,
+                transition: 'transform 0.15s ease',
+              }}
+            >
+              Try again
+            </button>
+          </div>
           <Button label="Go home" href="/" />
         </div>
         {error.digest && (

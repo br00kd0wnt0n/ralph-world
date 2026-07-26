@@ -7,7 +7,9 @@ import { registerTicker } from '@/lib/anim/sequencer'
 import { ANIMATIONS } from '@/lib/anim/animations'
 import { createSaucerShow } from '@/lib/anim/saucerShow'
 
-// Set true while tuning to shortcut the long start/hidden delays.
+// Set true while tuning to shortcut the long start/hidden delays AND bypass the
+// reduced-motion gate below (so the show is visible while previewing). Set back
+// to false before shipping.
 const DEBUG = false
 
 // Squad timing / feel
@@ -70,7 +72,8 @@ export default function CanvasStage() {
     if (!active) return
     if (!window.matchMedia('(min-width: 768px)').matches) return
     // Honour reduced-motion: skip the decorative squad/saucer animation.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    // (DEBUG bypasses this so the show can be previewed.)
+    if (!DEBUG && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const canvasEl = canvasRef.current
     if (!canvasEl) return
     const context = canvasEl.getContext('2d')

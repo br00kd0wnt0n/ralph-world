@@ -356,6 +356,10 @@ img {
   outline-offset: 2px;
   border-radius: 4px;
 }
+/* Light mode: mid grey instead of pink. */
+:root[data-theme="light"] :focus-visible {
+  outline-color: #a3a3a3;
+}
 
 /* ── Page transitions ── */
 /* Prevent layout shift during page transitions */

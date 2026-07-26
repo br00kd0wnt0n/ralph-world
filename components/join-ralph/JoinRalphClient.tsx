@@ -150,6 +150,21 @@ export default function JoinRalphClient({
           />
         </div>
 
+        {/* Spacecat on the planet's top edge — centred then nudged 300px right.
+            Hidden < 768. */}
+        <div
+          className="absolute z-[5] left-1/2 -top-[10px] min-[992px]:-top-[30px] hidden md:block pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/animations/spacecat.png"
+            alt=""
+            className="block light:grayscale"
+            style={{ width: 160, height: 'auto', transform: 'translateX(calc(-50% + 300px))' }}
+          />
+        </div>
+
         {/* Content */}
         <div
           className="relative z-10 pb-16 min-h-[60vh]"

@@ -115,6 +115,24 @@ export default function EventsClient({ activeEvents = [], copy, initialShowSlug 
           </div>
         </motion.div>
 
+        {/* Dinodog perched on the planet's top edge, centred then nudged 200px
+            left of middle. Hidden < 768. Fades in with the planet; the offset
+            lives on the inner img so framer's reveal transform doesn't clobber
+            it. */}
+        <motion.div
+          variants={sectionBgVariants}
+          className="absolute z-[5] left-1/2 -top-[40px] min-[992px]:-top-[60px] hidden md:block pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/animations/dinodog.png"
+            alt=""
+            className="block"
+            style={{ width: 120, height: 'auto', transform: 'translateX(calc(-50% - 300px))' }}
+          />
+        </motion.div>
+
         {/* Content layer - animates LAST.
             < 992: my-auto centres the characters block vertically so it sits
                    evenly between the top + bottom planets.

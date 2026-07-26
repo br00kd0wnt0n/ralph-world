@@ -170,12 +170,14 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
 
       {/* divider — just a centred "or" in black Gooper, no rules */}
       <div
-        className={`text-center text-black my-5${dt}`}
+        className={`text-center text-black${dt}`}
         style={{
           fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
           fontWeight: 600,
           fontSize: 16,
           lineHeight: 1,
+          paddingTop: 22,
+          paddingBottom: 22,
         }}
       >
         or
@@ -336,7 +338,7 @@ function Field({ label, name, type, autoComplete, required }: FieldProps) {
       placeholder={label}
       aria-label={label}
       aria-required={required}
-      className="w-full bg-[#D9D9D9] px-4 placeholder-[#000000BF] focus:outline-none focus:ring-2 focus:ring-ralph-pink/40"
+      className="w-full bg-[#D9D9D9] px-4 placeholder-[#000000BF] focus:outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40"
       style={{
         height: 43,
         borderRadius: 8,

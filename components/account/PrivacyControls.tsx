@@ -98,7 +98,7 @@ export default function PrivacyControls({
             aria-label="Toggle Ralph newsletter"
             onClick={toggleMarketing}
             disabled={marketingBusy}
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ralph-pink focus:ring-offset-2 focus:ring-offset-white ${
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ralph-pink light:focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-white ${
               marketingOptIn ? 'bg-ralph-pink' : 'bg-black/25 light:bg-white/25'
             } ${marketingBusy ? 'opacity-60' : ''}`}
           >

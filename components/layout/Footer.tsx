@@ -476,7 +476,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     required
                     value={enquiry}
                     onChange={(e) => setEnquiry(e.target.value)}
-                    className="w-full bg-white text-black rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40 appearance-none"
+                    className="w-full bg-white text-black rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40 appearance-none"
                     style={{ borderColor: '#EA128B' }}
                   >
                     <option value="" disabled>
@@ -499,7 +499,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Name"
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40"
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40"
                     style={{ borderColor: '#EA128B' }}
                   />
 
@@ -513,7 +513,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40"
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40"
                     style={{ borderColor: '#EA128B' }}
                   />
 
@@ -527,7 +527,7 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Message"
                     rows={3}
-                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40 resize-y"
+                    className="w-full bg-white text-black placeholder-gray-500 rounded-xl px-4 py-2.5 border-2 light:border-black! outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40 resize-y"
                     style={{ borderColor: '#EA128B' }}
                   />
 

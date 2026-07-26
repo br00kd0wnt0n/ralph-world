@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import FadeImage from './FadeImage'
 import { formatPrice } from '@/lib/shopify/format'
 import { useCart } from '@/context/CartContext'
 import type { ProductSummary } from '@/lib/shopify/types'
@@ -47,12 +47,11 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
             224 × 306 at half scale. */}
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: '448 / 612' }}>
           {product.imageUrl ? (
-            <Image
+            <FadeImage
               src={product.imageUrl}
               alt={product.title}
-              fill
               sizes="(max-width: 768px) 50vw, 224px"
-              className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+              className="object-cover group-hover:scale-105"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-muted text-xs bg-gray-100">

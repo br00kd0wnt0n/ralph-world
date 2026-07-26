@@ -105,7 +105,7 @@ function RequestForm() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ralph-pink/40"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40"
             placeholder="you@example.com"
           />
         </div>
@@ -184,7 +184,7 @@ function ConfirmForm({ email, token }: { email: string; token: string }) {
             required
             minLength={8}
             autoComplete="new-password"
-            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ralph-pink/40"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40"
             placeholder="At least 8 characters"
           />
         </div>
@@ -199,7 +199,7 @@ function ConfirmForm({ email, token }: { email: string; token: string }) {
             onChange={(e) => setConfirm(e.target.value)}
             required
             autoComplete="new-password"
-            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ralph-pink/40"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40"
             placeholder="Repeat password"
           />
         </div>

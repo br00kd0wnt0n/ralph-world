@@ -49,8 +49,10 @@ export default function ThemeToggle() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`text-header-btn flex items-center gap-2 mid:gap-0 rounded-full px-2 -mx-2 transition-colors light:hover:bg-black/20 ${
-          isOpen ? 'text-ralph-pink' : 'text-primary hover:text-ralph-pink'
+        className={`text-header-btn flex items-center gap-2 mid:gap-0 rounded-full px-2 -mx-2 transition ${
+          isOpen
+            ? 'text-ralph-pink light:text-primary light:opacity-60'
+            : 'text-primary hover:text-ralph-pink light:hover:text-primary light:hover:opacity-60'
         }`}
       >
         <span

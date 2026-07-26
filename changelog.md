@@ -4,6 +4,35 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-26 — Saucer fight, focus colours, shop loaders, planet characters
+
+- **Saucer show 2nd fighter → saucer_2** (`saucerShow.ts`, `saucer_2.png`): the
+  larger fighter now uses a 3-frame animated sprite (packed from saucer_2_1..3),
+  drawn 25% smaller. (The temporary preview DEBUG flags in `saucerShow.ts` and
+  `CanvasStage.tsx` are back to `false` — natural 1–5 min delay + reduced-motion
+  respect restored.)
+- **Theme-aware focus colour** (`globals.css` + input rings): keyboard
+  `:focus-visible` outline and the input focus rings/borders are **pink in dark
+  mode, mid-grey (`#a3a3a3` / neutral-400) in light mode** — across Footer,
+  LoginForm, reset-password, JP contact, and the account privacy toggle.
+- **Theme trigger light hover** (`ThemeToggle.tsx`): in light mode the toggle no
+  longer goes pink on hover/open — it dims to 0.6 opacity instead.
+- **Shop image loaders** (`FadeImage.tsx`, `ProductCard`, `ProductDetail`): a
+  shared component shows a theme-aware skeleton then fades the photo in on load,
+  used on the listings grid and the product-page gallery.
+- **Error page** (`app/error.tsx`): "Try again" is now a shadow button — pink in
+  dark, off-black (`#232323`) fill + white text in light.
+- **Planet characters**: dinodog on the events planet top edge (centred −300px,
+  responsive vertical, hidden < 768) and spacecat on the login/signup planet top
+  edge (centred +300px, hidden < 768, monochrome in light). Both PNG-rasterised
+  from SVG for reliable rendering.
+- **Login "or" divider** (`LoginForm.tsx`): restored vertical spacing via inline
+  padding (a Tailwind arbitrary class wasn't making it into the served CSS).
+- **Touch tap feedback** (`globals.css`): on no-hover devices, links/buttons dim
+  to 0.6 opacity while pressed (shadow `.btn-press` buttons opt out).
+
+---
+
 ## 2026-07-26 — Theme switcher, account light mode, nav + alien-burn saucer
 
 - **Theme switcher now visible** (`Nav.tsx`, `ThemeToggle.tsx`, `ThemeContext.tsx`):

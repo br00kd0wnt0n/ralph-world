@@ -359,7 +359,7 @@ function OptionCell({
 }
 
 const inputCls =
-  'w-full bg-white border-2 border-gray-300 rounded-sm px-4 py-3 text-sm text-black placeholder:text-gray-400 focus:border-ralph-pink focus:outline-none transition-colors'
+  'w-full bg-white border-2 border-gray-300 rounded-sm px-4 py-3 text-sm text-black placeholder:text-gray-400 focus:border-ralph-pink light:focus:border-neutral-400 focus:outline-none transition-colors'
 
 const eyebrowStyle: React.CSSProperties = {
   fontFamily: 'var(--font-body), Arial, sans-serif',

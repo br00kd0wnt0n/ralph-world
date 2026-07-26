@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import Image from 'next/image'
+import FadeImage from './FadeImage'
 import { formatPrice } from '@/lib/shopify/format'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperType } from 'swiper'
@@ -89,10 +89,9 @@ export default function ProductDetail({
               >
                 {slides.map((img, i) => (
                   <SwiperSlide key={i} className="relative">
-                    <Image
+                    <FadeImage
                       src={img.url}
                       alt={img.altText ?? product.title}
-                      fill
                       sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-cover"
                     />

@@ -13,6 +13,9 @@ type View = () => { vw: number; vh: number }
 const SAUCER = ANIMATIONS['saucer']
 const BULLET = ANIMATIONS['bullet']
 const EXPLOSION = ANIMATIONS['explosion']
+// saucer_2 — a 3-frame sprite sheet used for the 2nd fighter (frames rasterised
+// from saucer_2_1..3 at 374×175, aspect 175:82).
+const SAUCER2 = { src: '/animations/saucer_2.png', frameW: 374, frameH: 175, count: 3, fps: 6 }
 
 // Show pacing — first appearance 1–5 min after load, then repeats every 10 min.
 const FIRST_MIN = 60_000
@@ -20,6 +23,10 @@ const FIRST_MAX = 300_000
 const GAP_MIN = 600_000
 const GAP_MAX = 600_000
 const FIGHT_CHANCE = 0.35
+
+// PREVIEW: start the show instantly and always make it a fight, so saucer_2 is
+// on screen right away. Set back to false to restore the natural 1–5 min delay.
+const DEBUG = false
 
 // Saucer feel
 const SAUCER_SCALE = 0.55
@@ -71,6 +78,7 @@ interface Saucer {
   vx: number
   vy: number
   scale: number
+  variant: 1 | 2 // 1 = sprite saucer; 2 = saucer_2 (single image)
   tilt: number // current z-rotation (banks with horizontal movement)
   prevX: number
   frame: number // float; mod count when drawn
@@ -112,16 +120,18 @@ export function createSaucerShow(ctx: CanvasRenderingContext2D, view: View) {
   bulletImg.src = BULLET.src
   const explosionImg = new Image()
   explosionImg.src = EXPLOSION.src
+  const saucer2Img = new Image()
+  saucer2Img.src = SAUCER2.src
 
   let mode: 'idle' | 'solo' | 'fight' = 'idle'
-  let nextShowAt = rand(FIRST_MIN, FIRST_MAX)
+  let nextShowAt = DEBUG ? 0 : rand(FIRST_MIN, FIRST_MAX)
   let fightEndAt = 0
   let fighterBPendingAt = 0 // when to spawn the 2nd fighter (0 = none pending)
   const saucers: Saucer[] = []
   const bullets: Bullet[] = []
   const explosions: Explosion[] = []
 
-  function spawnSaucer(scale = SAUCER_SCALE): Saucer {
+  function spawnSaucer(scale = SAUCER_SCALE, variant: 1 | 2 = 1): Saucer {
     const { vw, vh } = view()
     const w = SAUCER.frameW * scale
     const tx = rand(vw * 0.18, vw * 0.82)
@@ -150,6 +160,7 @@ export function createSaucerShow(ctx: CanvasRenderingContext2D, view: View) {
       vx: 0,
       vy: 0,
       scale,
+      variant,
       tilt: 0,
       prevX: fromX,
       frame: rand(0, SAUCER.count),
@@ -206,7 +217,7 @@ export function createSaucerShow(ctx: CanvasRenderingContext2D, view: View) {
   }
 
   function startShow(elapsed: number) {
-    if (Math.random() < FIGHT_CHANCE) {
+    if (DEBUG || Math.random() < FIGHT_CHANCE) {
       mode = 'fight'
       saucers.push(spawnSaucer(SAUCER_SCALE * rand(0.82, 0.96))) // first (smaller)
       fighterBPendingAt = elapsed + FIGHTER_DELAY
@@ -230,8 +241,13 @@ export function createSaucerShow(ctx: CanvasRenderingContext2D, view: View) {
   }
 
   function updateSaucer(s: Saucer, dt: number, elapsed: number) {
-    // idle rotation (unless mid-360)
-    if (s.state !== 'spin') s.frame += (IDLE_SPIN_FPS * dt) / 1000
+    // Advance the sprite frame: saucer_2 loops its 3-frame sheet; the sprite
+    // saucer does its idle rotation (unless mid-360).
+    if (s.variant === 2) {
+      s.frame += (SAUCER2.fps * dt) / 1000
+    } else if (s.state !== 'spin') {
+      s.frame += (IDLE_SPIN_FPS * dt) / 1000
+    }
 
     if (s.state === 'enter') {
       s.enterT += dt
@@ -302,7 +318,7 @@ export function createSaucerShow(ctx: CanvasRenderingContext2D, view: View) {
 
     // spawn the 2nd fighter once the first is settling in
     if (mode === 'fight' && fighterBPendingAt && elapsed >= fighterBPendingAt) {
-      saucers.push(spawnSaucer(SAUCER_SCALE * rand(1.05, 1.2))) // second (larger)
+      saucers.push(spawnSaucer(SAUCER_SCALE * rand(1.05, 1.2), 2)) // second (larger) — saucer_2
       fighterBPendingAt = 0
       fightEndAt = elapsed + rand(FIGHT_MIN, FIGHT_MAX)
       // ensure the first saucer joins the fight even if still hovering
@@ -355,22 +371,30 @@ export function createSaucerShow(ctx: CanvasRenderingContext2D, view: View) {
       explosions.length === 0
     ) {
       mode = 'idle'
-      nextShowAt = elapsed + rand(GAP_MIN, GAP_MAX)
+      nextShowAt = elapsed + (DEBUG ? 4000 : rand(GAP_MIN, GAP_MAX))
     }
   }
 
   function draw() {
-    if (saucerImg.complete && saucerImg.naturalWidth > 0) {
-      for (const s of saucers) {
+    for (const s of saucers) {
+      ctx.save()
+      ctx.translate(s.x, s.y)
+      ctx.rotate(s.tilt)
+      if (s.variant === 2) {
+        // saucer_2 — 3-frame sprite, 25% smaller than a sprite saucer at scale.
+        if (saucer2Img.complete && saucer2Img.naturalWidth > 0) {
+          const w = SAUCER.frameW * s.scale * 0.75
+          const h = w * (SAUCER2.frameH / SAUCER2.frameW)
+          const f = ((Math.floor(s.frame) % SAUCER2.count) + SAUCER2.count) % SAUCER2.count
+          ctx.drawImage(saucer2Img, f * SAUCER2.frameW, 0, SAUCER2.frameW, SAUCER2.frameH, -w / 2, -h / 2, w, h)
+        }
+      } else if (saucerImg.complete && saucerImg.naturalWidth > 0) {
         const w = SAUCER.frameW * s.scale
         const h = SAUCER.frameH * s.scale
         const f = ((Math.floor(s.frame) % SAUCER.count) + SAUCER.count) % SAUCER.count
-        ctx.save()
-        ctx.translate(s.x, s.y)
-        ctx.rotate(s.tilt)
         ctx.drawImage(saucerImg, f * SAUCER.frameW, 0, SAUCER.frameW, SAUCER.frameH, -w / 2, -h / 2, w, h)
-        ctx.restore()
       }
+      ctx.restore()
     }
 
     if (bulletImg.complete && bulletImg.naturalWidth > 0) {

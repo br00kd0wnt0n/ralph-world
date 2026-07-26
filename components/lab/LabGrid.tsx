@@ -42,7 +42,7 @@ export default function LabGrid({ items, onItemClick }: LabGridProps) {
   if (items.length === 0) {
     return (
       <section className="px-6 py-16 text-center">
-        <p className="text-secondary">No experiments yet — check back soon.</p>
+        <p className="text-secondary light:text-white/70">No experiments yet — check back soon.</p>
       </section>
     )
   }

@@ -144,7 +144,7 @@ export default function ProductDetail({
         {/* Right column — title, tags, copy, price, CTA */}
         <div className="flex flex-col">
           <h1
-            className={product.dateMetafield?.value ? 'text-black mb-2' : 'text-black mb-8'}
+            className={product.dateMetafield?.value ? 'text-black light:text-white mb-2' : 'text-black light:text-white mb-8'}
             style={{
               fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
               fontWeight: 600,
@@ -158,7 +158,7 @@ export default function ProductDetail({
 
           {product.dateMetafield?.value && (
             <p
-              className="mb-8"
+              className="mb-8 light:text-white!"
               style={{
                 color: '#000',
                 fontFamily: 'var(--font-body), Arial, sans-serif',
@@ -189,7 +189,7 @@ export default function ProductDetail({
 
           {product.description && (
             <p
-              className="text-black mb-8 whitespace-pre-line"
+              className="text-black light:text-white mb-8 whitespace-pre-line"
               style={{
                 fontFamily: 'var(--font-body), Arial, sans-serif',
                 fontWeight: 600,
@@ -210,7 +210,7 @@ export default function ProductDetail({
               >
                 Buy now for £{formatPrice(price.amount)}
               </button>
-              <p className="text-xs text-black text-center">
+              <p className="text-xs text-black light:text-white text-center">
                 Shop is in demo mode. Checkout goes live once Shopify is connected.
               </p>
             </div>
@@ -247,7 +247,7 @@ export default function ProductDetail({
               32px between paragraph and CTA. */}
           <div className="mt-8">
             <p
-              className="mb-8"
+              className="mb-8 light:text-white!"
               style={{
                 color: '#000',
                 fontFamily: 'var(--font-body), Arial, sans-serif',

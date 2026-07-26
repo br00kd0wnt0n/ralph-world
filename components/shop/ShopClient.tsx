@@ -151,7 +151,7 @@ export default function ShopClient({
         <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover light:brightness-[0.1373]"
               style={{
                 backgroundImage: 'url(/imgs/planet_background_shop.svg)',
                 backgroundPosition: 'top center',
@@ -174,7 +174,7 @@ export default function ShopClient({
             />
           </div>
           <div
-            className="absolute bg-white"
+            className="absolute bg-white light:bg-[#232323]"
             style={{ top: 270, left: 0, right: 0, bottom: 0 }}
           />
         </motion.div>
@@ -223,7 +223,7 @@ export default function ShopClient({
                     src="/imgs/dashed_separator_top.svg"
                     alt=""
                     aria-hidden="true"
-                    className="w-full"
+                    className="w-full light:invert"
                   />
 
                   <div className="flex justify-center">
@@ -233,7 +233,7 @@ export default function ShopClient({
                         <button
                           key={cat.handle}
                           onClick={() => setActiveCollection(cat.handle)}
-                          className="relative text-intro transition-colors flex items-center justify-center text-black"
+                          className="relative text-intro transition-colors flex items-center justify-center text-black light:text-white"
                           style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: '33.333%', textAlign: 'center' }}
                         >
                           <span className="relative z-10">{cat.label}</span>
@@ -242,9 +242,10 @@ export default function ShopClient({
                               src="/imgs/underline_shop.svg"
                               alt=""
                               aria-hidden="true"
-                              className="absolute pointer-events-none left-1/2 -translate-x-1/2 z-0"
+                              className="absolute pointer-events-none left-1/2 -translate-x-1/2 z-0 light:brightness-0 light:invert"
                               style={{
-                                top: '50%',
+                                // +15px below centre so it reads as an underline, not a strikethrough.
+                                top: 'calc(50% + 15px)',
                                 width: 118,
                                 height: 11,
                                 maxWidth: 'none',
@@ -260,7 +261,7 @@ export default function ShopClient({
                     src="/imgs/dashed_separator_bottom.svg"
                     alt=""
                     aria-hidden="true"
-                    className="w-full"
+                    className="w-full light:invert"
                   />
                 </div>
 
@@ -268,8 +269,8 @@ export default function ShopClient({
                 <div className="px-6 pb-24 md:pb-8" style={{ paddingTop: 64 }}>
                   {products.length === 0 ? (
                     <div className="max-w-2xl mx-auto text-center py-16 space-y-3">
-                      <p className="text-gray-500 text-sm">Products coming soon.</p>
-                      <p className="text-gray-400 text-xs italic">
+                      <p className="text-gray-500 light:text-white/70 text-sm">Products coming soon.</p>
+                      <p className="text-gray-400 light:text-white/70 text-xs italic">
                         Content team: products appear here once their <strong>Category</strong>{' '}
                         in Shopify Admin matches this tab
                         {activeCategory ? ` (${activeCategory.hint})` : ''}.

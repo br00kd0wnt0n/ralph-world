@@ -51,7 +51,7 @@ export default function EventsClient({ activeEvents = [], copy, initialShowSlug 
         <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
           <div className="relative w-full" style={{ height: 270 }}>
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover light:brightness-[0.1373]"
               style={{
                 backgroundImage: 'url(/imgs/planet_background_events.svg)',
                 backgroundPosition: 'top center',
@@ -77,7 +77,7 @@ export default function EventsClient({ activeEvents = [], copy, initialShowSlug 
               < 992 so it doesn't show through the flipped planet's transparent
               area — mirrors the clean top:270 cut at the top planet. Fills to
               the bottom on >= 992 where there is no bottom planet. */}
-          <div className="absolute bg-white left-0 right-0 top-[270px] bottom-[270px] min-[992px]:bottom-0" />
+          <div className="absolute bg-white light:bg-[#232323] left-0 right-0 top-[270px] bottom-[270px] min-[992px]:bottom-0" />
 
           {/* Bottom planet — only < 992, flipped vertically so combined
               with the top planet it reads as a full planet. Sits inside the
@@ -89,7 +89,7 @@ export default function EventsClient({ activeEvents = [], copy, initialShowSlug 
             aria-hidden="true"
           >
             <div
-              className="absolute left-1/2 h-full planet-bg-cover"
+              className="absolute left-1/2 h-full planet-bg-cover light:brightness-[0.1373]"
               style={{
                 backgroundImage: 'url(/imgs/planet_background_events.svg)',
                 backgroundPosition: 'top center',

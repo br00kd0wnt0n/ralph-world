@@ -71,7 +71,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
             src="/imgs/shop_product_container.png"
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 w-full h-full pointer-events-none z-20"
+            className="absolute inset-0 w-full h-full pointer-events-none z-20 light:brightness-[0.1373]"
           />
 
           {/* Diagonal ribbon badge — top z so it overlays the frame */}
@@ -87,7 +87,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         {/* Title + date + price — below the framed image */}
         <div className="mt-3 flex-1 flex flex-col">
           <h3
-            className="text-black line-clamp-4 mb-1 text-[20px] md:text-[24px] leading-[1.3]"
+            className="text-black light:text-white line-clamp-4 mb-1 text-[20px] md:text-[24px] leading-[1.3]"
             style={{
               fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
               fontWeight: 600,
@@ -100,7 +100,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
           </h3>
           {product.date && (
             <p
-              className="mb-2 text-[14px] md:text-[16px] leading-[22px] md:leading-[26px]"
+              className="mb-2 light:text-white! text-[14px] md:text-[16px] leading-[22px] md:leading-[26px]"
               style={{
                 color: '#000',
                 fontFamily: 'var(--font-body), Arial, sans-serif',
@@ -112,7 +112,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
             </p>
           )}
           <p
-            className="text-black mt-auto text-[18px] md:text-[22px] leading-[28px] md:leading-[37px]"
+            className="text-black light:text-white mt-auto text-[18px] md:text-[22px] leading-[28px] md:leading-[37px]"
             style={{
               fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
               fontWeight: 600,

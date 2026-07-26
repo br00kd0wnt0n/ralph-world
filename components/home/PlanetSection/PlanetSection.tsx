@@ -362,7 +362,7 @@ export default function PlanetSection({
           height: PANEL_HEIGHT,
           // Vertically centred on the planet.
           top: planetCenterY - PANEL_HEIGHT / 2,
-          backgroundColor: isLightTheme ? '#000000' : accentColor,
+          backgroundColor: isLightTheme ? '#232323' : accentColor,
           borderRadius: 12,
           boxSizing: 'border-box',
           padding: PANEL_PADDING,
@@ -436,7 +436,7 @@ export default function PlanetSection({
                 {moduleCard.description}
               </p>
             </div>
-            <Button href={moduleCard.href} label={moduleCard.ctaLabel} onBlack={isLightTheme} />
+            <Button href={moduleCard.href} label={moduleCard.ctaLabel} />
           </motion.div>
 
           {/* Column 2: TV preview — broadcast still + subtitle + body */}

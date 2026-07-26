@@ -20,8 +20,6 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
   const articleAccessTier = (article.accessTier ?? 'everyone') as AccessTier
   const canRead = canAccess(userEntitlement, { accessTier: articleAccessTier })
 
-  // Get first tag for the ribbon (if available)
-  const ribbonTag = article.contentTags?.[0]
 
   return (
     <div className="w-full mx-auto px-6 pb-10" style={{ maxWidth: 1040 + 48 }}>
@@ -54,10 +52,10 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
               )
             })()}
 
-            {/* Corner ribbon: SVG band at top-left, label rotated along its diagonal */}
-            {ribbonTag && (
-              <div
-                className="absolute pointer-events-none"
+            {/* Corner ribbon: SVG band at top-left, fixed "JUICEE" label
+                rotated along its diagonal. */}
+            <div
+              className="absolute pointer-events-none"
                 style={{ top: -4, left: -4, width: 140, height: 140 }}
               >
                 <img
@@ -66,7 +64,7 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
                   className="absolute inset-0 w-full h-full"
                 />
                 <span
-                  className="absolute text-white uppercase whitespace-nowrap"
+                  className="absolute text-white light:text-black uppercase whitespace-nowrap"
                   style={{
                     top: '37.6%',
                     left: '37.6%',
@@ -78,10 +76,9 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
                     letterSpacing: 0,
                   }}
                 >
-                  {ribbonTag}
+                  JUICEE
                 </span>
               </div>
-            )}
           </div>
         </div>
 
@@ -90,7 +87,7 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
           {/* Category tags as pipe-separated list */}
           {article.contentTags && article.contentTags.length > 0 && (
             <p
-              className="uppercase text-black"
+              className="uppercase text-black light:text-white"
               style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 800, fontSize: 12, lineHeight: 1, letterSpacing: 0, marginBottom: 10 }}
             >
               {article.contentTags.join('  |  ')}
@@ -101,14 +98,14 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
               here — it lives on the article child page only (kept in bold
               there). The cover stays clean: title + kicker. */}
           <h3
-            className="text-black mb-1 text-[40px] min-[576px]:text-[48px]"
+            className="text-black light:text-white mb-1 text-[40px] min-[576px]:text-[48px]"
             style={{ lineHeight: 1, fontWeight: 600, fontFamily: "'Duffy Hand Letters', 'Gooper Trial', serif" }}
           >
             {article.title}
           </h3>
           {article.subtitle && (
             <p
-              className="text-intro text-black mb-6"
+              className="text-intro text-black light:text-white mb-6"
               style={{ fontSize: 18, lineHeight: 1 }}
             >
               {article.subtitle}

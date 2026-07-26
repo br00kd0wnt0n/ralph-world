@@ -142,7 +142,7 @@ export default function MagazineClient({
           {/* Planet - fixed height at the top of the bg container */}
           <div className="relative w-full" style={{ height: 270 }}>
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover"
+              className="absolute top-0 left-1/2 -translate-x-1/2 h-full planet-bg-cover light:brightness-[0.1373]"
               style={{
                 backgroundImage: 'url(/imgs/planet_background_magazine.svg)',
                 backgroundPosition: 'top center',
@@ -166,7 +166,7 @@ export default function MagazineClient({
           </div>
           {/* White bg fills below the planet */}
           <div
-            className="absolute bg-white"
+            className="absolute bg-white light:bg-[#232323]"
             style={{ top: 270, left: 0, right: 0, bottom: 0 }}
           />
         </motion.div>
@@ -199,6 +199,7 @@ export default function MagazineClient({
             <img
               src="/imgs/text_cover_story.svg"
               alt="Cover Story"
+              className="light:brightness-0 light:invert"
               style={{ width: 265, height: 76 }}
             />
           </h2>

@@ -402,7 +402,7 @@ export default function Nav() {
                       src={item.underline.src}
                       alt=""
                       aria-hidden="true"
-                      className="absolute pointer-events-none -translate-x-1/2 z-0"
+                      className="absolute pointer-events-none -translate-x-1/2 z-0 light:brightness-0"
                       style={{
                         left: '50%',
                         top: 'calc(50% + 15px)',
@@ -608,7 +608,7 @@ export default function Nav() {
                         src={item.underline.src}
                         alt=""
                         aria-hidden="true"
-                        className="absolute pointer-events-none -translate-x-1/2 z-0"
+                        className="absolute pointer-events-none -translate-x-1/2 z-0 light:brightness-0"
                         style={{
                           left: '50%',
                           top: 'calc(50% + 15px)',

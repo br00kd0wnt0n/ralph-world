@@ -15,9 +15,6 @@ interface ButtonProps {
   // stay black (unless `pink` is also set) — a solid pink button rather
   // than a pink-outlined white one.
   filled?: boolean
-  // If true, the "on black" style: black fill, white text, white border, and
-  // a white offset shadow. For shadow buttons sitting on a dark surface.
-  onBlack?: boolean
   // type for the rendered <button>. Defaults to "button" so it never
   // accidentally submits a parent form. Pass "submit" to use as a form
   // submit control.
@@ -69,7 +66,6 @@ export default function Button({
   minWidth,
   pink = false,
   filled = false,
-  onBlack = false,
   type = 'button',
   disabled = false,
   newTab = false,
@@ -80,14 +76,11 @@ export default function Button({
     ...(pink ? { border: `2px solid ${RALPH_PINK}` } : null),
     // Black text on pink for AA contrast (white on #EA128B is ~3.9:1).
     ...(filled ? { backgroundColor: RALPH_PINK, color: 'black' } : null),
-    // On-black: black fill, white text + border (white shadow set below).
-    ...(onBlack ? { backgroundColor: 'black', color: 'white', border: '2px solid white' } : null),
     ...(disabled ? { opacity: 0.55, cursor: 'not-allowed' } : null),
   }
   const mergedShadowStyles: React.CSSProperties = {
     ...shadowStyles,
     ...(pink ? { backgroundColor: RALPH_PINK } : null),
-    ...(onBlack ? { backgroundColor: 'white' } : null),
   }
   return (
     <div className={className} style={{ position: 'relative', display: 'inline-block', width: 'fit-content' }}>

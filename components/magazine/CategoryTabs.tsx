@@ -39,7 +39,7 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
         src="/imgs/dashed_separator_top.svg"
         alt=""
         aria-hidden="true"
-        className="w-full"
+        className="w-full light:invert"
       />
 
       <div className="flex justify-center">
@@ -49,7 +49,7 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
             <button
               key={cat.value}
               onClick={() => handleClick(cat.value)}
-              className={`relative transition-colors flex items-center justify-center text-black text-[14px] min-[576px]:text-[18px] ${
+              className={`relative transition-colors flex items-center justify-center text-black light:text-white text-[14px] min-[576px]:text-[18px] ${
                 !isActive ? 'hover:text-ralph-orange' : ''
               }`}
               style={{ fontFamily: 'var(--font-intro, "Gooper Trial"), serif', lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: TAB_WIDTH, textAlign: 'center' }}
@@ -60,9 +60,10 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
                   src="/imgs/underline_magazine.svg"
                   alt=""
                   aria-hidden="true"
-                  className="absolute pointer-events-none left-1/2 -translate-x-1/2 w-[68px] min-[576px]:w-[114px] h-auto"
+                  className="absolute pointer-events-none left-1/2 -translate-x-1/2 w-[68px] min-[576px]:w-[114px] h-auto light:brightness-0 light:invert"
                   style={{
-                    top: '50%',
+                    // +15px below centre so it reads as an underline, not a strikethrough.
+                    top: 'calc(50% + 15px)',
                     maxWidth: 'none',
                   }}
                 />
@@ -77,7 +78,7 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
         src="/imgs/dashed_separator_bottom.svg"
         alt=""
         aria-hidden="true"
-        className="w-full"
+        className="w-full light:invert"
       />
     </div>
   )

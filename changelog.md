@@ -4,6 +4,46 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-26 — Light-mode subpage surfaces + panel reveal rewrite
+
+- **Homepage panel reveal animation** (`PlanetSection.tsx`): rewrote the
+  clip-path reveal to animate a single numeric MotionValue (the inset px) and
+  rebuild the clip-path each frame with `useMotionTemplate`. Fixes two bugs:
+  the collapse snapped partway then vanished (framer can't reliably interpolate
+  a whole `inset()` string), and — with reduce-motion on — the expand was
+  instant (the global `prefers-reduced-motion` rule zeroes CSS
+  transition-duration; the MotionValue is JS-driven so it survives). `round
+  12px` is literal template text, so the rounded corners are kept.
+- **Panel vertical centring** (`PlanetSection.tsx`): panel is centred on the
+  planet at every breakpoint (`top = planetCenterY - PANEL_HEIGHT/2`), replacing
+  the desktop bottom-anchored offset that sat it slightly high.
+- **Light-mode dark surfaces on all five subpages** (magazine / tv / shop /
+  lab / events): the below-planet white "sheet" and the white planet-top
+  silhouette are recoloured to **`#232323`** in light mode. The silhouette is
+  the `fill:#fff` *background* SVG layer, darkened via `brightness(0.1373)`
+  (turns `#fff` → `#232323`); the **coloured foreground planet is left as-is**.
+  Content text sitting directly on the sheet flips to white; text inside image
+  tiles / coloured chips / self-contained cards is left alone.
+- **Magazine** (`MagazineClient.tsx`, `CoverStory.tsx`, `CategoryTabs.tsx`,
+  `ArticleGrid.tsx`): "Cover Story" title art → white (`brightness-0 invert`);
+  cover-story ribbon now a fixed **"JUICEE"** label (white / black in light
+  mode); nested article-grid section → `#232323`.
+- **Shop** (`ShopClient.tsx`, `ProductCard.tsx`, `ProductDetail.tsx`): the
+  white product-image frame PNG is darkened to `#232323` in light mode so it
+  blends into the sheet again (it previously blended into the white sheet);
+  product title/price/date + detail copy → white.
+- **Homepage expandable panels** (`PlanetSection.tsx`): light-mode panel
+  background is `#232323` (was true black) to match the subpage surfaces.
+- **Active underlines in light mode**: main-nav active underline → **black**
+  (`Nav.tsx`); magazine + shop category underlines → **white** and nudged to
+  `calc(50% + 15px)` so they read as an underline, not a strikethrough.
+- **Error page** (`app/error.tsx`): heading/body/ref text → black in light mode.
+- **Removed the short-lived `onBlack` Button variant** (`ui/Button.tsx` + call
+  sites): the `#232323` surfaces read fine with the normal white/black shadow
+  buttons, so the inverse variant was dropped site-wide.
+
+---
+
 ## 2026-07-25 — Homepage panel carousels, title SVGs & animation fixes
 
 - **Magazine + shop panel carousels** (`PlanetSection.tsx`, `homepage.ts`,

@@ -97,7 +97,7 @@ const PLACEHOLDER_ARTICLES: ArticleSummary[] = Array.from({ length: 6 }, (_, i) 
   title: 'Article Title Goes Here',
   subtitle: null,
   intro: 'Brief description of the article content.',
-  leadMediaUrl: '/imgs/article_lead.png',
+  leadMediaUrl: null,
   leadMediaType: null,
   cardImageUrl: null,
   articleType: null,
@@ -265,7 +265,8 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                     <div className="absolute inset-0">
                       {(() => {
                         const cardSrc =
-                          article.cardImageUrl || article.leadMediaUrl || '/imgs/article_lead.png'
+                          article.cardImageUrl || article.leadMediaUrl
+                        if (!cardSrc) return null
                         return cardSrc.startsWith('/') ? (
                           <Image
                             src={cardSrc}

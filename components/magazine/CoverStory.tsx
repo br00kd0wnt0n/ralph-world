@@ -31,7 +31,8 @@ export default function CoverStory({ article, onRead, onSubscribe }: CoverStoryP
             style={{ aspectRatio: 1.6290322581, borderRadius: 12 }}
           >
             {(() => {
-              const coverSrc = article.leadMediaUrl || '/imgs/article_lead.png'
+              const coverSrc = article.leadMediaUrl
+              if (!coverSrc) return null
               return coverSrc.startsWith('/') ? (
                 <Image
                   src={coverSrc}

@@ -9,6 +9,8 @@ import ArticleGrid from './ArticleGrid'
 import ArticleOverlay from './ArticleOverlay'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import SpriteAnimation from '@/components/anim/SpriteAnimation'
+import MagBubbleCarousel from './MagBubbleCarousel'
+import type { ShopifyImage } from '@/lib/shopify/types'
 import {
   sectionContainerVariants,
   sectionBgVariants,
@@ -23,6 +25,8 @@ interface MagazineClientProps {
   copy?: Partial<SiteCopy>
   /** Set by the /magazine/[slug] server route — opens that article overlay. */
   initialArticleSlug?: string
+  /** Latest magazine issue's gallery images for the planet-creature bubble carousel. */
+  magazineImages?: ShopifyImage[]
 }
 
 export default function MagazineClient({
@@ -30,7 +34,18 @@ export default function MagazineClient({
   coverStory,
   copy,
   initialArticleSlug,
+  magazineImages = [],
 }: MagazineClientProps) {
+  const [bubbleOpen, setBubbleOpen] = useState(false)
+  // >= 1200: nudge the planet creature up 20px and 40px further left.
+  const [wide1200, setWide1200] = useState(false)
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1200px)')
+    const sync = () => setWide1200(mql.matches)
+    sync()
+    mql.addEventListener('change', sync)
+    return () => mql.removeEventListener('change', sync)
+  }, [])
   const [overlayArticle, setOverlayArticle] = useState<ArticleFull | null>(null)
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
@@ -179,7 +194,7 @@ export default function MagazineClient({
             the inner element so framer's reveal transform doesn't clobber it. */}
         <motion.div
           variants={sectionBgVariants}
-          className="absolute z-[5] left-1/2 top-[-100px] pointer-events-none select-none hidden min-[576px]:block"
+          className="absolute z-[5] left-1/2 top-[-100px] min-[1200px]:top-[-115px] pointer-events-none select-none hidden min-[576px]:block"
         >
           <SpriteAnimation
             name="got-coin"
@@ -187,6 +202,32 @@ export default function MagazineClient({
             className="translate-x-[100px] min-[768px]:translate-x-[200px] rotate-[16deg] light:grayscale"
             style={{ transformOrigin: 'bottom center' }}
           />
+        </motion.div>
+
+        {/* Mag creature perched on the planet's top curve, left of centre.
+            Keeps its orange in dark mode; monochrome only in light. Fades in
+            with the planet via sectionBgVariants. */}
+        <motion.div
+          variants={sectionBgVariants}
+          className="absolute z-[5] left-1/2 select-none hidden min-[992px]:block"
+          style={{ top: wide1200 ? -85 : -70 }}
+        >
+          <button
+            type="button"
+            onClick={() => setBubbleOpen(true)}
+            aria-label="Peek at the latest magazine issues"
+            className="block cursor-pointer"
+            style={{ transform: `translateX(calc(-50% - ${wide1200 ? 420 : 380}px))` }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/animations/mag-creature.png"
+              alt=""
+              aria-hidden="true"
+              className="block light:grayscale mag-creature-bob"
+              style={{ width: 170, height: 'auto' }}
+            />
+          </button>
         </motion.div>
 
         {/* Content layer - animates LAST */}
@@ -258,6 +299,12 @@ export default function MagazineClient({
             ? `/magazine/${encodeURIComponent(overlayArticle.slug)}`
             : '/magazine'
         }
+      />
+
+      <MagBubbleCarousel
+        open={bubbleOpen}
+        onClose={() => setBubbleOpen(false)}
+        images={magazineImages}
       />
     </motion.div>
   )

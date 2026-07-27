@@ -4,6 +4,33 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-27 — Magazine bubble carousel + planet characters
+
+- **Magazine planet creature + bubble carousel** (`MagBubbleCarousel.tsx` new,
+  `MagazineClient.tsx`, `app/magazine/page.tsx`, `mag-creature.png`,
+  `mag_bubble.svg`): a creature perched on the magazine planet's top-left curve
+  (keeps its orange in dark, monochrome in light, feet-anchored breathing bob).
+  Clicking it opens a speech-bubble overlay — portalled to `document.body` so it
+  sits above the nav, with the page scroll locked. Inside `mag_bubble.svg`
+  (612 × 419, centred, near the top) it shows the **latest magazine issue's
+  product-page image gallery** in a Swiper carousel: homepage-panel-style
+  arrows, circular white-bordered pips, "Oi no peaking / Oh… go on then. This
+  issue is the nuts!" copy, and a shadow close button (SVG ✕). Light mode: bubble
+  recolours to off-black `#232323` (inline SVG), arrows flip to white/black. The
+  creature + overlay are gated to ≥ 992px.
+- **Midground parallax** (`MidgroundCanvas.tsx`): added `tenticle-flare.png` as a
+  third static prop alongside the moon/planet; nudged the moon up.
+- **Footer planet** (`FooterPlanet.tsx`): `ralph_flag.png` planted centrally on
+  the planet top, with the eyed-alien and `planet-feeder.png` flanking it
+  (hidden < 768). Responsive tuning — flag shrinks 20% < 576, more top padding
+  and tighter tagline padding on small screens.
+- **Events planet** (`EventsClient.tsx`): dinodog character now monochrome in
+  light mode.
+- **Scroll-in circle logo** (`globals.css`): inverts in light mode — cream disc +
+  black letters becomes a `#232323` disc with cream letters (pink hover kept).
+
+---
+
 ## 2026-07-26 — Work-with-us stacking, case-study carousel + light mode
 
 - **Work-with-us responsive stacking** (`ParallaxPlanets.tsx`, `WhatsNextPlanet.tsx`,

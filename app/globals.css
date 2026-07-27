@@ -320,6 +320,41 @@ img {
   }
 }
 
+/* Magazine bubble carousel — inline SVG sizes to its container; its orange
+   body recolours to off-black in light mode. */
+.mag-bubble svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+:root[data-theme="light"] .mag-bubble svg path[fill="#F26524"] {
+  fill: #232323;
+}
+
+/* Mag creature — subtle breathing bob, anchored at the feet (scales up/down a
+   few px from the bottom). Neutralised by the reduced-motion block below. */
+@keyframes mag-creature-bob {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.04); }
+}
+.mag-creature-bob {
+  transform-origin: bottom center;
+  animation: mag-creature-bob 1.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Scroll-in ralph circle logo — invert in light mode: cream disc + black
+   letters becomes a #232323 disc with cream letters (pink still on hover). */
+:root[data-theme="light"] .ralph-circle-logo circle {
+  fill: #232323;
+}
+:root[data-theme="light"] .ralph-circle-logo {
+  color: #e3e3db;
+}
+:root[data-theme="light"] .ralph-circle-logo:hover {
+  color: #ea128b;
+}
+
 /* ── Button press ── */
 .btn-press:hover {
   transform: translate(2px, 2px);

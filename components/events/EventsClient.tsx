@@ -128,7 +128,7 @@ export default function EventsClient({ activeEvents = [], copy, initialShowSlug 
           <img
             src="/animations/dinodog.png"
             alt=""
-            className="block"
+            className="block light:grayscale"
             style={{ width: 120, height: 'auto', transform: 'translateX(calc(-50% - 300px))' }}
           />
         </motion.div>

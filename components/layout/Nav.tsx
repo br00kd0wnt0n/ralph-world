@@ -265,7 +265,7 @@ export default function Nav() {
             <Link
               href="/account"
               aria-label="Your account"
-              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
+              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ralph-pink text-black light:bg-[#232323] light:text-white text-sm font-bold"
               style={{
                 marginLeft: buttonMargin,
                 transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -460,7 +460,7 @@ export default function Nav() {
               {user && (
                 <Link
                   href="/account"
-                  className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ralph-pink text-black text-sm font-bold"
+                  className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ralph-pink text-black light:bg-[#232323] light:text-white text-sm font-bold"
                   aria-label="Your account"
                 >
                   {user.email?.[0]?.toUpperCase() ?? 'R'}

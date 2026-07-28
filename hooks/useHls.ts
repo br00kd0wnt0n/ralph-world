@@ -24,8 +24,15 @@ export function useHls(streamUrl: string | null) {
     setError(null)
     setIsReady(false)
 
-    // Native HLS support (Safari)
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    // Prefer hls.js when the browser supports MSE — Chrome 149+ started
+    // reporting `canPlayType('application/vnd.apple.mpegurl') === "maybe"`
+    // for "native" HLS, but the built-in demuxer errors out with
+    // DEMUXER_ERROR_COULD_NOT_PARSE on our stream and the <video> ends
+    // up in error.code=4 with no playback. hls.js works fine there.
+    // Only fall back to native HLS in real Safari, where MSE-based
+    // hls.js can't work (Hls.isSupported() returns false) but native
+    // HLS actually plays.
+    if (!Hls.isSupported() && video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = streamUrl
       const onLoaded = () => {
         setIsReady(true)
@@ -42,7 +49,8 @@ export function useHls(streamUrl: string | null) {
       }
     }
 
-    // hls.js for everyone else — tuned for low-latency live
+    // hls.js for everything else (Chrome / Edge / Firefox) — tuned for
+    // low-latency live
     if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,

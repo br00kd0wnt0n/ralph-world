@@ -212,33 +212,35 @@ function cleanAssetName(filename: string): string {
   return filename.replace(/\.(mp4|mov|mkv|webm|m4v)$/i, '').trim()
 }
 
-interface BroadcasterStatus {
-  day?: string
-  index?: number
-  offsetSec?: number
-  ended?: boolean
-  item?: { assetId?: string; name?: string; durationSec?: number } | null
+// Ground-truth playback position from the broadcaster's /now-playing —
+// which itself proxies the streamer's real /status. Includes the actual
+// assetId being played and how many seconds into it the streamer is.
+//
+// We used to anchor off /status/:channel/:week/:day, which recomputes
+// the pointer via wall-clock maths against play_start. That works when
+// the stream and the pointer maths agree, but disagrees any time the
+// stream restarted, the encoder was late starting, or a playlist edit
+// landed mid-loop — and it disagrees with Show Info (which uses
+// /now-playing). Switching everyone to /now-playing means the Schedule
+// panel's "ON NOW" and the Show Info panel now always agree.
+interface RawNowPlaying {
+  streaming?: boolean
+  current?: {
+    assetId?: string
+    offsetSec?: number | null
+    durationSec?: number | null
+  } | null
 }
 
-// Ask the broadcaster where its own pointer actually is right now.
-// This is the source of truth — the broadcaster's stream is driven from
-// this same maths, so any positional derivation on our side that doesn't
-// use this will drift under real conditions (TZ mismatch, stream restart,
-// clock skew, playlist edits mid-loop). Returns null on any failure so
-// getSchedule can fall back to local computation.
-async function getBroadcasterStatus(
-  now: Date
-): Promise<BroadcasterStatus | null> {
+async function getBroadcasterNowPlaying(): Promise<RawNowPlaying | null> {
   const url = process.env.BROADCASTER_BACKEND_URL
   if (!url) return null
   try {
-    const day = DAY_NAMES[now.getDay()]
-    const res = await fetchWithTimeout(
-      `${url}/status/${CHANNEL}/${WEEK}/${day}`,
-      { headers: getAuthHeaders() }
-    )
+    const res = await fetchWithTimeout(`${url}/now-playing`, {
+      headers: getAuthHeaders(),
+    })
     if (!res.ok) return null
-    return (await res.json()) as BroadcasterStatus
+    return (await res.json()) as RawNowPlaying
   } catch {
     return null
   }
@@ -246,16 +248,16 @@ async function getBroadcasterStatus(
 
 /**
  * Get today's schedule from the Broadcaster, enriched with show names and
- * wall-clock times anchored to the broadcaster's own pointer. Returns an
- * ordered list starting with the currently-playing item. Empty array on
- * any error.
+ * wall-clock times anchored to whatever the streamer is actually playing
+ * right now. Empty array on any error.
  *
- * Anchoring off /status (not off local `computePointer` against playStart)
- * is what stops the schedule strip drifting against the actual stream.
- * The broadcaster resolves `play_start` in the container's local TZ (UTC
- * on Railway); we used to resolve it as Europe/London — a 60-min mismatch
- * mod loop-length in BST. Even without the TZ bug, local derivation
- * would drift across any stream restart or mid-loop playlist edit.
+ * We fetch /now-playing FIRST (that's the ground truth — proxied straight
+ * from the streamer), then load the playlist for whichever day the
+ * streamer says it's on. If the streamer is out-of-day (playing Friday
+ * on a Tuesday, say), ralph-world's schedule strip mirrors that instead
+ * of showing today's calendar-day playlist and disagreeing with the
+ * video. Falls back to wall-clock day + local pointer derivation only
+ * if /now-playing is unreachable.
  */
 export async function getSchedule(
   now: Date = new Date()
@@ -264,14 +266,29 @@ export async function getSchedule(
   if (!url) return []
 
   try {
-    const day = DAY_NAMES[now.getDay()]
-    const [playlistRes, assets, status] = await Promise.all([
+    // Ground-truth first: what's actually playing, on which day?
+    const nowPlaying = await getBroadcasterNowPlaying()
+    const streamerAssetId = nowPlaying?.current?.assetId
+    const streamerOffsetSec = nowPlaying?.current?.offsetSec
+
+    // Pick the playlist day from what the streamer is on; fall back to
+    // the viewer's local calendar day so an offline broadcaster doesn't
+    // give us an empty strip.
+    const wallClockDay = DAY_NAMES[now.getDay()]
+    const day = streamerAssetId ? undefined : wallClockDay
+    // We need the playlist to know which day the streamer's asset lives
+    // in. Try the streamer's playing day first via /now-playing.current.day
+    // if present on the response; else fall through to today.
+    const nowPlayingDay =
+      (nowPlaying?.current as { day?: string } | null | undefined)?.day
+    const playlistDay = nowPlayingDay || day || wallClockDay
+
+    const [playlistRes, assets] = await Promise.all([
       fetchWithTimeout(
-        `${url}/feed/${CHANNEL}/${WEEK}/${day}/playlist`,
+        `${url}/feed/${CHANNEL}/${WEEK}/${playlistDay}/playlist`,
         { headers: getAuthHeaders() }
       ),
       getAssets(),
-      getBroadcasterStatus(now),
     ])
 
     if (!playlistRes.ok) return []
@@ -282,20 +299,19 @@ export async function getSchedule(
     const assetById = new Map(assets.map((a) => [a.id, a]))
     const durations = items.map((it) => it.durationSec || 0)
 
-    // Prefer the broadcaster's authoritative pointer; fall back to local
-    // derivation if /status is unavailable (network error, older
-    // broadcaster build, missing token) so the strip stays populated
-    // rather than empty.
-    let currentIdx: number
-    let currentOffsetSec: number
-    if (
-      status &&
-      typeof status.index === 'number' &&
-      typeof status.offsetSec === 'number'
-    ) {
-      currentIdx = Math.max(0, Math.min(items.length - 1, status.index))
-      currentOffsetSec = Math.max(0, status.offsetSec)
-    } else {
+    // Find the current index by matching the streamer's current assetId
+    // against the playlist. This survives any wall-clock drift, restart,
+    // or day-mismatch bug on the broadcaster.
+    let currentIdx = -1
+    let currentOffsetSec = 0
+    if (streamerAssetId) {
+      currentIdx = items.findIndex((it) => it.assetId === streamerAssetId)
+      currentOffsetSec = Math.max(0, streamerOffsetSec ?? 0)
+    }
+    // Fallback: local pointer derivation when /now-playing can't tell us
+    // (broadcaster down, or streamer between clips). Keeps the strip
+    // populated at the cost of accepting some drift.
+    if (currentIdx < 0) {
       const ptr = computePointer(data.playbackMode, data.playStart, durations, now)
       currentIdx = ptr.index
       currentOffsetSec = ptr.offsetSec

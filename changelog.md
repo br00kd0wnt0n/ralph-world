@@ -4,6 +4,13 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-28 — TV status bar hidden, midground planet nudge
+
+- **Ralph TV** (`TVSet.tsx`): hid the "On now / Up next" status bar below the TV.
+- **Midground parallax** (`MidgroundCanvas.tsx`): moved the planet up 150px.
+
+---
+
 ## 2026-07-28 — Magazine grid: dividers, loaders, coin link, tap states
 
 - **Got-coin links to the shop** (`MagazineClient.tsx`): the spinning coin on the

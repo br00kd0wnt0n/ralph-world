@@ -83,7 +83,7 @@ interface StaticItem {
 
 const STATIC_ITEMS: StaticItem[] = [
   { src: '/imgs/item_moon.png', xPct: 12, baseY: 380, w: 288 / 2, h: 290 / 2, speed: 0.75 },
-  { src: '/imgs/item_planet.png', xPct: 70, baseY: 1200, w: 416 / 2, h: 280 / 2, speed: 0.7 },
+  { src: '/imgs/item_planet.png', xPct: 70, baseY: 1050, w: 416 / 2, h: 280 / 2, speed: 0.7 },
   { src: '/animations/tenticle-flare.png', xPct: 22, baseY: 1800, w: 264 / 2, h: 262 / 2, speed: 0.72 },
 ]
 

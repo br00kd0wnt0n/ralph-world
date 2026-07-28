@@ -667,23 +667,7 @@ export default function TVSet({
 
       {/* Controls + status — sit below the TV on every breakpoint */}
       <div className="w-full flex flex-col gap-3">
-        {/* Status bar — live state only */}
-        {screenState === 'live' && (
-          <div className="flex items-center justify-between text-xs text-white/60 px-2">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-ralph-pink animate-pulse" />
-              <span>
-                On now: <span className="text-white">{currentShow?.showName ?? 'Live'}</span>
-              </span>
-            </div>
-            {nextShow && (
-              <div>
-                Up next: <span className="text-white">{nextShow.showName}</span>
-              </div>
-            )}
-          </div>
-        )}
-
+        {/* "On now / Up next" status bar hidden per request. */}
       </div>
     </div>
   )

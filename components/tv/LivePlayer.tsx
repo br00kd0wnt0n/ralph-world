@@ -33,8 +33,9 @@ export default function LivePlayer({
   const runtimeRelayUrl = useRelayUrl()
   const streamUrl = relayUrl ?? runtimeRelayUrl
   const { videoRef, isReady, error } = useHls(streamUrl)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isMutedForAutoplay, setIsMutedForAutoplay] = useState(true)
+  // Muted starts true because browsers block unmuted autoplay. The
+  // Tap-to-unmute pill flips this on first user interaction.
+  const [isMuted, setIsMuted] = useState(true)
 
   // Apply volume when it changes
   useEffect(() => {
@@ -43,16 +44,22 @@ export default function LivePlayer({
     v.volume = volume
   }, [volume, videoRef])
 
-  // Sync isPlaying with real video element events (not our local guess)
+  // Ralph TV behaves like a real TV — it doesn't pause. If the browser
+  // pauses the video (tab hidden then visible, fullscreen change,
+  // media-session key press, HLS stall recovery), resume immediately.
+  // In muted state autoplay is always allowed; unmuted resumption also
+  // works because the user has interacted at least once by that point.
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
-    const onPlay = () => setIsPlaying(true)
-    const onPause = () => setIsPlaying(false)
-    v.addEventListener('play', onPlay)
+    const onPause = () => {
+      if (v.ended) return
+      v.play().catch(() => {
+        /* browser-blocked resume — nothing we can do without another user gesture */
+      })
+    }
     v.addEventListener('pause', onPause)
     return () => {
-      v.removeEventListener('play', onPlay)
       v.removeEventListener('pause', onPause)
     }
   }, [videoRef])
@@ -61,22 +68,18 @@ export default function LivePlayer({
     onLiveChange?.(isReady && !error)
   }, [isReady, error, onLiveChange])
 
-  async function handleClick() {
+  function toggleMute() {
     const v = videoRef.current
     if (!v) return
-    // First click unmutes (in case autoplay started muted)
-    if (isMutedForAutoplay) {
-      v.muted = false
-      setIsMutedForAutoplay(false)
-    }
-    try {
-      if (v.paused) {
-        await v.play()
-      } else {
-        v.pause()
-      }
-    } catch {
-      // Play blocked — leave state as-is
+    const next = !isMuted
+    v.muted = next
+    setIsMuted(next)
+    // First unmute after autoplay: ensure playback is running. Later
+    // toggles just flip the mute flag.
+    if (!next && v.paused) {
+      v.play().catch(() => {
+        /* nothing to do — video will retry on next auto-resume */
+      })
     }
   }
 
@@ -102,7 +105,7 @@ export default function LivePlayer({
         ref={videoRef}
         className="w-full h-full object-cover"
         playsInline
-        muted={isMutedForAutoplay || volume === 0}
+        muted={isMuted || volume === 0}
         autoPlay
       />
 
@@ -114,23 +117,25 @@ export default function LivePlayer({
         </div>
       )}
 
-      {/* Click-through overlay */}
+      {/* Click-through overlay — hover to show a mute/unmute icon.
+          Click toggles mute only; the stream never pauses (TV-style
+          continuous playback). */}
       {isReady && (
         <button
-          onClick={handleClick}
+          onClick={toggleMute}
           className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity"
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          aria-label={isMuted ? 'Unmute' : 'Mute'}
         >
           <div className="text-white text-4xl drop-shadow-lg">
-            {isPlaying ? '❚❚' : '▶'}
+            {isMuted ? '🔇' : '🔊'}
           </div>
         </button>
       )}
 
       {/* Persistent unmute pill until user interacts */}
-      {isReady && isMutedForAutoplay && (
+      {isReady && isMuted && (
         <button
-          onClick={handleClick}
+          onClick={toggleMute}
           className="absolute bottom-3 right-3 bg-black/70 border border-white/20 text-white text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur hover:bg-black/90 transition-colors"
         >
           🔇 Tap to unmute

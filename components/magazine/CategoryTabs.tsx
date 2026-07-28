@@ -49,7 +49,7 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
             <button
               key={cat.value}
               onClick={() => handleClick(cat.value)}
-              className={`relative transition-colors flex items-center justify-center text-black light:text-white text-[14px] min-[576px]:text-[18px] ${
+              className={`relative transition flex items-center justify-center text-black light:text-white light:hover:opacity-60 text-[14px] min-[576px]:text-[18px] ${
                 !isActive ? 'hover:text-ralph-orange' : ''
               }`}
               style={{ fontFamily: 'var(--font-intro, "Gooper Trial"), serif', lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: TAB_WIDTH, textAlign: 'center' }}

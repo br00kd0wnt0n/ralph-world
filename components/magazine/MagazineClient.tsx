@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import SectionIntro from '@/components/layout/SectionIntro'
 import CoverStory from './CoverStory'
@@ -194,14 +195,20 @@ export default function MagazineClient({
             the inner element so framer's reveal transform doesn't clobber it. */}
         <motion.div
           variants={sectionBgVariants}
-          className="absolute z-[5] left-1/2 top-[-100px] min-[1200px]:top-[-115px] pointer-events-none select-none hidden min-[576px]:block"
+          className="absolute z-[5] left-1/2 top-[-100px] min-[1200px]:top-[-115px] select-none hidden min-[576px]:block"
         >
-          <SpriteAnimation
-            name="got-coin"
-            width={174}
-            className="translate-x-[100px] min-[768px]:translate-x-[200px] rotate-[16deg] light:grayscale"
-            style={{ transformOrigin: 'bottom center' }}
-          />
+          <Link
+            href="/shop"
+            aria-label="Visit the shop"
+            className="block cursor-pointer"
+          >
+            <SpriteAnimation
+              name="got-coin"
+              width={174}
+              className="translate-x-[100px] min-[768px]:translate-x-[200px] rotate-[16deg] light:grayscale"
+              style={{ transformOrigin: 'bottom center' }}
+            />
+          </Link>
         </motion.div>
 
         {/* Mag creature perched on the planet's top curve, left of centre.

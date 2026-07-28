@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   gridContainerVariants,
@@ -116,6 +116,60 @@ const PLACEHOLDER_ARTICLES: ArticleSummary[] = Array.from({ length: 6 }, (_, i) 
   shopCalloutCta: null,
 }))
 
+// Grid card image with a loading spinner + fade-in. The loaded state resets
+// whenever `src` changes (e.g. switching categories) so the new image spins
+// then fades up. Handles both local (next/image) and remote (<img>) sources.
+function GridCardImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+  const isLocal = src.startsWith('/')
+
+  useEffect(() => {
+    setLoaded(false)
+    // Cached remote images may finish before onLoad attaches — catch that.
+    const img = imgRef.current
+    if (img && img.complete && img.naturalWidth > 0) setLoaded(true)
+  }, [src])
+
+  const fade = `transition-opacity duration-500 ease-out ${
+    loaded ? 'opacity-100' : 'opacity-0'
+  }`
+
+  return (
+    <>
+      {!loaded && (
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-ralph-orange z-[1]"
+          aria-hidden="true"
+        >
+          <div className="w-8 h-8 rounded-full border-2 border-black/15 border-t-black/70 animate-spin" />
+        </div>
+      )}
+      {isLocal ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          draggable={false}
+          sizes="(min-width: 1024px) 33vw, 50vw"
+          onLoad={() => setLoaded(true)}
+          className={`object-cover select-none ${fade}`}
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt}
+          draggable={false}
+          onLoad={() => setLoaded(true)}
+          className={`w-full h-full object-cover select-none ${fade}`}
+        />
+      )}
+    </>
+  )
+}
+
 export default function ArticleGrid({ articles, onArticleClick }: ArticleGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [isLargeViewport, setIsLargeViewport] = useState(true)
@@ -142,7 +196,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
   }
 
   return (
-    <section className="bg-white light:bg-[#232323] px-6 pt-0 pb-12" style={{ marginTop: 20 }}>
+    <section className="bg-white light:bg-[#232323] px-6 pt-0 pb-12" style={{ marginTop: 40 }}>
       <div className="relative mx-auto" style={{ maxWidth: 1168 }}>
         {/* Black grid background — lowest */}
         <div
@@ -150,7 +204,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
           style={{
             ...gridStyles,
             inset: 0,
-            border: '1px solid black',
+            border: '2px solid black',
             backgroundColor: 'black',
             zIndex: 0,
           }}
@@ -161,6 +215,40 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
               style={{ aspectRatio: 1.09604519774 }}
             />
           ))}
+        </div>
+
+        {/* Outer frame — surrounds the grid but sits BELOW the card entries, so
+            an exploding card rises above it. An outline draws just outside the
+            grid box, so the resting cards don't cover it. */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ outline: '2px solid black', zIndex: 1 }}
+        />
+
+        {/* Inner dividing lines — 2px black, drawn OVER the cards to segment the
+            grid. Only painted between adjacent cells (no outer edge here — that's
+            the frame above). */}
+        <div
+          className="absolute inset-0 grid grid-cols-2 lg:grid-cols-3 pointer-events-none"
+          style={{ ...gridStyles, zIndex: 20 }}
+        >
+          {displayArticles.slice(0, 6).map((article, i, arr) => {
+            const cols = isLargeViewport ? 3 : 2
+            return (
+              <div
+                key={`lines-${article.id}`}
+                style={{
+                  aspectRatio: 1.09604519774,
+                  borderRight:
+                    i % cols !== cols - 1 && i + 1 < arr.length
+                      ? '2px solid black'
+                      : undefined,
+                  borderBottom:
+                    i + cols < arr.length ? '2px solid black' : undefined,
+                }}
+              />
+            )
+          })}
         </div>
 
         {/* Extrusion faces layer — below cards.
@@ -243,7 +331,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
             return (
               <div
                 key={article.id}
-                className="relative"
+                className="mag-grid-card relative"
                 style={{ zIndex: isHovered ? 10 : 1 }}
                 onMouseEnter={() => setHoveredId(article.id)}
                 onMouseLeave={() => setHoveredId(null)}
@@ -267,22 +355,10 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                         const cardSrc =
                           article.cardImageUrl || article.leadMediaUrl
                         if (!cardSrc) return null
-                        return cardSrc.startsWith('/') ? (
-                          <Image
+                        return (
+                          <GridCardImage
                             src={cardSrc}
                             alt={article.title ?? ''}
-                            fill
-                            draggable={false}
-                            sizes="(min-width: 1024px) 33vw, 50vw"
-                            className="object-cover select-none"
-                          />
-                        ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={cardSrc}
-                            alt={article.title ?? ''}
-                            draggable={false}
-                            className="w-full h-full object-cover select-none"
                           />
                         )
                       })()}

@@ -4,6 +4,26 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-28 — Magazine grid: dividers, loaders, coin link, tap states
+
+- **Got-coin links to the shop** (`MagazineClient.tsx`): the spinning coin on the
+  magazine planet is now a link to `/shop`.
+- **Category → grid gap** (`ArticleGrid.tsx`): bumped the grid's top margin to 40px
+  so it matches the cover-story → categories gap.
+- **Grid segmenting lines** (`ArticleGrid.tsx`): 2px black gridlines. The outer
+  frame is an outline that sits *below* the card entries (so an exploding card
+  rises over it); the inner dividers draw *over* the cards, only between adjacent
+  cells.
+- **Grid image loaders** (`ArticleGrid.tsx`): each card shows a spinner on a
+  ralph-orange background, then fades the image in once loaded — the state resets
+  on category change so new images spin up (`GridCardImage`, handles local +
+  remote sources incl. cached).
+- **Category buttons** (`CategoryTabs.tsx`): 0.6-opacity hover in light mode.
+- **Grid entries** (`globals.css`, `.mag-grid-card`): 0.6-opacity active state on
+  touch screens while pressed.
+
+---
+
 ## 2026-07-27 — Magazine bubble carousel + planet characters
 
 - **Magazine planet creature + bubble carousel** (`MagBubbleCarousel.tsx` new,

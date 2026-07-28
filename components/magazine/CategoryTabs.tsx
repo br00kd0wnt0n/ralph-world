@@ -12,17 +12,26 @@ const CATEGORIES = [
   { value: 'fun', label: 'Fun' },
 ]
 
-// Each tab gets an equal slice of the container width. Computed so the row
-// still distributes evenly if categories are added/removed later.
-const TAB_WIDTH = `${100 / CATEGORIES.length}%`
-
 interface CategoryTabsProps {
   active: string
   onChange: (category: string) => void
+  /** Category slugs that have articles; others are hidden. Omit to show all. */
+  available?: string[]
 }
 
-export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
+export default function CategoryTabs({
+  active,
+  onChange,
+  available,
+}: CategoryTabsProps) {
   const pathname = usePathname()
+
+  // Hide categories with no articles. Each visible tab gets an equal slice of
+  // the container width.
+  const categories = available
+    ? CATEGORIES.filter((c) => available.includes(c.value))
+    : CATEGORIES
+  const TAB_WIDTH = `${100 / Math.max(categories.length, 1)}%`
 
   function handleClick(value: string) {
     const next = value === active ? '' : value
@@ -43,7 +52,7 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
       />
 
       <div className="flex justify-center">
-        {CATEGORIES.map((cat) => {
+        {categories.map((cat) => {
           const isActive = active === cat.value
           return (
             <button

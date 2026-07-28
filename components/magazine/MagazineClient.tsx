@@ -120,19 +120,30 @@ export default function MagazineClient({
     return () => window.removeEventListener('popstate', onPopState)
   }, [overlayOpen])
 
+  // Normalise a tag into a category slug (matches the CMS category values).
+  const normTag = (tag: string) =>
+    tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
+
   // Client-side category filtering — case-insensitive so editors can type
   // 'Comedy', 'comedy', 'Film & TV', or 'film-tv' and all will match.
   const filteredArticles = activeCategory
     ? articles.filter((a) =>
-        a.contentTags?.some(
-          (tag) => tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '') === activeCategory
-        )
+        a.contentTags?.some((tag) => normTag(tag) === activeCategory)
       )
     : articles
 
   const gridArticles = coverStory
     ? filteredArticles.filter((a) => a.id !== coverStory.id)
     : filteredArticles
+
+  // Only offer category tabs that actually have grid articles (the cover story
+  // always shows regardless, so it doesn't count towards a category's tab).
+  const gridEligible = coverStory
+    ? articles.filter((a) => a.id !== coverStory.id)
+    : articles
+  const availableCategories = Array.from(
+    new Set(gridEligible.flatMap((a) => a.contentTags?.map(normTag) ?? []))
+  )
 
   return (
     <motion.div
@@ -285,6 +296,7 @@ export default function MagazineClient({
             <CategoryTabs
               active={activeCategory}
               onChange={setActiveCategory}
+              available={availableCategories}
             />
           </Suspense>
           <ArticleGrid articles={gridArticles} onArticleClick={openArticle} />

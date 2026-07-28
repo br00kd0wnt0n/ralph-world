@@ -4,6 +4,15 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-28 — Hide empty magazine categories
+
+- **Magazine categories** (`MagazineClient.tsx`, `CategoryTabs.tsx`): category
+  tabs with no grid articles are now hidden. The available category slugs are
+  derived from articles' `contentTags` (cover story excluded, since it always
+  shows), and the visible tabs re-distribute the row width evenly.
+
+---
+
 ## 2026-07-28 — TV status bar hidden, midground planet nudge
 
 - **Ralph TV** (`TVSet.tsx`): hid the "On now / Up next" status bar below the TV.

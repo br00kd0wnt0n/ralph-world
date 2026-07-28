@@ -7,7 +7,6 @@ import {
   profiles,
   accounts,
   sessions,
-  consentLog,
   shopifyLinks,
   eventRsvps,
 } from '@/lib/db/schema'
@@ -61,10 +60,13 @@ export async function POST(_req: NextRequest) {
       source: 'portal',
     })
 
-    // Explicit pre-pass on consent_log so we can prove the linkage was
-    // severed even on databases where ON DELETE SET NULL isn't strict
-    // (shouldn't happen on Postgres + Drizzle, but defence in depth).
-    await db.update(consentLog).set({ userId: null }).where(eq(consentLog.userId, userId))
+    // consent_log severing is handled by the ON DELETE SET NULL on the
+    // consent_log.user_id FK — Postgres nulls the column automatically
+    // when the users row deletes. We used to also run a defensive
+    // UPDATE pass here, but the ralph_world DB role is INSERT-only on
+    // consent_log (append-only, per the GDPR audit-trail design in
+    // scripts/db-roles-phase-1.sql), so the UPDATE was rejected and
+    // took the whole delete pipeline down with it.
 
     // Best-effort orphan cleanup for tables where we have an explicit
     // user FK but might prefer hard delete (RSVPs are user-bound and

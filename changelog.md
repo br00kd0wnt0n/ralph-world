@@ -4,6 +4,38 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-30 — Case-study polish, shared close button, nav + misc
+
+- **Shared close button** (`ShadowCloseButton.tsx` new): the white shadow-press
+  button with a 2px black X is now one component, reused by the cart drawer,
+  mobile menu, article overlay, footer contact/location panel, and the magazine
+  bubble carousel (replaced their bespoke close buttons).
+- **Nav** (`Nav.tsx`): the logged-in account avatar moved to the right cluster —
+  it now takes the Login/Subscribe button's slot (button when logged out, avatar
+  when logged in). "Work with us" always carries the scroll margin.
+- **Theme** (`ThemeContext.tsx`): light theme relabelled **"Light burst"**.
+- **Mobile menu** (`MobileMenu.tsx`): removed the "Weren't you an agency?" link.
+- **Magazine grid** (`ArticleGrid.tsx`): larger body copy (18px), category tags
+  (12px) and title (`text-base`/`md:text-lg`), tighter line-height; on touch the
+  hover-explode is disabled and the title shows as a constant label.
+- **Case-study page** (`CaseStudyPage.tsx`, `CaseStudyCarousel.tsx`, `globals.css`):
+  - Hero subtitle + tags now black in light mode; client logo sits on an
+    off-black `#232323` chip in light mode so white logos stay legible.
+  - Carousel: fixed portrait media overflowing onto the copy (cards fill the
+    container); pips swapped to the product-page `bullet_on/off` svgs (monochrome
+    in light); arrows swapped to the bubble-carousel chevrons (white in dark,
+    black in light); removed the "n / total" counter.
+  - Footer divider swapped to the cart-drawer divider asset (white in dark, black
+    in light, max 400px). Back-to-Work-with-Ralph link moved to the foot of the
+    article, centred, Gooper 18px with a `<`, pink in dark / black in light,
+    0.6 hover/active.
+- **Hide parallax on case studies** (`MidgroundCanvas.tsx`, `ForegroundLayer.tsx`,
+  `ForegroundCanvas.tsx`): the moon/planet/tentacle/alien/saucer parallax layers
+  are hidden on `/case-studies/*` (also nudged the midground moon + planet
+  positions).
+
+---
+
 ## 2026-07-28 — Hide empty magazine categories
 
 - **Magazine categories** (`MagazineClient.tsx`, `CategoryTabs.tsx`): category

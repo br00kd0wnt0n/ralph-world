@@ -127,7 +127,7 @@ export default function CaseStudyCarousel({ items, anchorSide = 'right' }: Props
           return (
             <div
               key={item.id ?? `${i}-${item.url}`}
-              className="absolute inset-x-0 top-0 rounded-lg overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] will-change-transform"
+              className="absolute inset-0 rounded-lg overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] will-change-transform"
               style={{
                 transform: `translateX(${translateX}px) translateY(${translateY}px) scale(${scale}) rotate(${rotate}deg)`,
                 opacity,
@@ -146,7 +146,7 @@ export default function CaseStudyCarousel({ items, anchorSide = 'right' }: Props
                   loop
                   playsInline
                   autoPlay={isActive}
-                  className="block w-full h-auto object-cover pointer-events-none select-none"
+                  className="block w-full h-full object-cover pointer-events-none select-none"
                 />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -155,7 +155,7 @@ export default function CaseStudyCarousel({ items, anchorSide = 'right' }: Props
                   alt={item.alt ?? ''}
                   draggable={false}
                   onLoad={i === activeIndex ? onActiveImageLoad : undefined}
-                  className="block w-full h-auto object-cover pointer-events-none select-none"
+                  className="block w-full h-full object-cover pointer-events-none select-none"
                 />
               )}
             </div>
@@ -169,10 +169,13 @@ export default function CaseStudyCarousel({ items, anchorSide = 'right' }: Props
           type="button"
           onClick={() => canPrev && goTo(activeIndex - 1)}
           disabled={!canPrev}
-          className="w-9 h-9 flex items-center justify-center rounded-md border border-white/15 light:border-black/15 bg-white/5 light:bg-black/5 text-white/80 light:text-black/80 hover:text-white light:hover:text-black transition disabled:opacity-30 disabled:cursor-default"
+          className="bg-white text-black hover:bg-white/90 light:bg-black light:text-white light:hover:bg-black/80 flex items-center justify-center transition disabled:opacity-30 disabled:cursor-default"
+          style={{ width: 30, height: 30 }}
           aria-label="Previous"
         >
-          ←
+          <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
+            <path d="M8 1L2 7L8 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
         <div className="flex items-center gap-2">
           {safeItems.map((_, i) => (
@@ -181,26 +184,32 @@ export default function CaseStudyCarousel({ items, anchorSide = 'right' }: Props
               type="button"
               onClick={() => goTo(i)}
               aria-label={`Go to slide ${i + 1}`}
-              className={`w-2 h-2 rounded-full border transition ${
-                i === activeIndex
-                  ? 'bg-white/80 light:bg-black/80 border-white/40 light:border-black/40 scale-125'
-                  : 'bg-white/20 light:bg-black/20 border-white/15 light:border-black/15 hover:bg-white/40 light:hover:bg-black/40'
-              }`}
-            />
+              className="cursor-pointer"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={i === activeIndex ? '/imgs/bullet_on.svg' : '/imgs/bullet_off.svg'}
+                alt=""
+                aria-hidden="true"
+                width={16}
+                height={16}
+                className="block light:grayscale"
+              />
+            </button>
           ))}
         </div>
         <button
           type="button"
           onClick={() => canNext && goTo(activeIndex + 1)}
           disabled={!canNext}
-          className="w-9 h-9 flex items-center justify-center rounded-md border border-white/15 light:border-black/15 bg-white/5 light:bg-black/5 text-white/80 light:text-black/80 hover:text-white light:hover:text-black transition disabled:opacity-30 disabled:cursor-default"
+          className="bg-white text-black hover:bg-white/90 light:bg-black light:text-white light:hover:bg-black/80 flex items-center justify-center transition disabled:opacity-30 disabled:cursor-default"
+          style={{ width: 30, height: 30 }}
           aria-label="Next"
         >
-          →
+          <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
+            <path d="M2 1L8 7L2 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
-      </div>
-      <div className="mt-2 text-center text-[11px] tracking-widest text-white/40 light:text-black/40 font-mono">
-        {activeIndex + 1} / {total}
       </div>
     </div>
   )

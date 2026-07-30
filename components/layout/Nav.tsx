@@ -258,29 +258,8 @@ export default function Nav() {
               </svg>
             </Link>
           )}
-          {/* Logged in: account avatar sits on the LEFT (mirrors mobile),
-              nesting to the right of the circle logo as it scales in — same
-              buttonMargin shift the Subscribe button uses. */}
-          {user && (
-            <Link
-              href="/account"
-              aria-label="Your account"
-              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ralph-pink text-black light:bg-[#232323] light:text-white text-sm font-bold"
-              style={{
-                marginLeft: buttonMargin,
-                transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              }}
-            >
-              {user.email?.[0]?.toUpperCase() ?? 'R'}
-              {tier === 'paid' && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
-              )}
-            </Link>
-          )}
-          {/* Work with us — lives in the left cluster now. It shifts right to
-              clear the circle logo as it scales in on scroll: when logged out it
-              carries the buttonMargin itself; when logged in the account avatar
-              carries that shift and this just nests to the avatar's right. */}
+          {/* Work with us — lives in the left cluster. Shifts right to clear the
+              circle logo as it scales in on scroll. */}
           <Link
             href="/work-with-us"
             className={`text-header-btn border-2 px-4 transition-colors flex items-center justify-center ${
@@ -290,7 +269,7 @@ export default function Nav() {
             }`}
             style={{
               borderRadius: 22,
-              marginLeft: user ? 16 : buttonMargin,
+              marginLeft: buttonMargin,
               transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
           >
@@ -302,8 +281,9 @@ export default function Nav() {
         <div className="flex items-center gap-6 mid:gap-4 pointer-events-auto">
           <ThemeToggle />
           {/* <LanguageModal /> still hidden for launch — restore when i18n ships. */}
-          {/* Account avatar moved to the left cluster (mirrors mobile). */}
-          {!user && (
+          {/* Auth slot: logged out → Login/Subscribe button; logged in → account
+              avatar takes its place. */}
+          {!user ? (
             <Link
               href="/join-ralph"
               className={`text-header-btn border-2 px-4 transition-colors flex items-center justify-center ${
@@ -314,6 +294,17 @@ export default function Nav() {
               style={{ borderRadius: 22 }}
             >
               Login / Subscribe
+            </Link>
+          ) : (
+            <Link
+              href="/account"
+              aria-label="Your account"
+              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ralph-pink text-black light:bg-[#232323] light:text-white text-sm font-bold"
+            >
+              {user.email?.[0]?.toUpperCase() ?? 'R'}
+              {tier === 'paid' && (
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-ralph-green border-2 border-surface" />
+              )}
             </Link>
           )}
           <button

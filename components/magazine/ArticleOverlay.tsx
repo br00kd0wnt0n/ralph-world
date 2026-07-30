@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import BlockRenderer from './BlockRenderer'
 import ShopCalloutBadge from './ShopCalloutBadge'
 import Button from '@/components/ui/Button'
+import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
 import type { ArticleFull } from '@/lib/data/magazine'
 import { resolveTheme } from '@/lib/article-themes'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
@@ -180,28 +181,11 @@ export default function ArticleOverlay({
         className="fixed inset-0 z-[100] overflow-hidden shadow-2xl"
         style={{ backgroundColor: theme.bg }}
       >
-      {/* Close button — same image-swap (default + hover) as the footer
-          panel. Position tracks the responsive middle-container padding
-          so the button sits ~16px inside the visible inner edge. */}
-      <button
-        type="button"
-        onClick={onClose}
-        className="group absolute z-[101] w-8 h-8 min-[992px]:w-12 min-[992px]:h-12 top-9 right-9 min-[575px]:top-12 min-[575px]:right-12 md:top-16 md:right-16 min-[992px]:top-[86px] min-[992px]:right-[86px]"
-        aria-label="Close"
-      >
-        <img
-          src="/imgs/close_btn.svg"
-          alt=""
-          aria-hidden="true"
-          className="w-full h-full block group-hover:hidden select-none"
-        />
-        <img
-          src="/imgs/close_btn_over.svg"
-          alt=""
-          aria-hidden="true"
-          className="w-full h-full hidden group-hover:block select-none"
-        />
-      </button>
+      {/* Close button — shared shadow-X. Position tracks the responsive
+          middle-container padding so it sits ~16px inside the inner edge. */}
+      <div className="absolute z-[101] top-9 right-9 min-[575px]:top-12 min-[575px]:right-12 md:top-16 md:right-16 min-[992px]:top-[86px] min-[992px]:right-[86px]">
+        <ShadowCloseButton onClick={onClose} />
+      </div>
 
       {/* Scrollable content — the overlay frame + close button stay fixed
           (frame is overflow-hidden); only this inner wrapper scrolls. */}

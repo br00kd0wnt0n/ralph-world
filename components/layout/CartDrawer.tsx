@@ -5,6 +5,7 @@ import { formatPrice } from '@/lib/shopify/format'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
 
 // Gooper title face — shared by "Your basket", line totals, and the subtotal.
 const gooperTitle: React.CSSProperties = {
@@ -65,24 +66,11 @@ export default function CartDrawer() {
           >
             Your basket
           </h2>
-          <button
+          <ShadowCloseButton
             onClick={closeCart}
-            className="group relative w-9 h-9 shrink-0"
-            aria-label="Close cart"
-          >
-            <img
-              src="/imgs/closecircle_btn.svg"
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full block group-hover:hidden select-none light:grayscale"
-            />
-            <img
-              src="/imgs/closecircle_btn_over.svg"
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full hidden group-hover:block select-none light:grayscale"
-            />
-          </button>
+            ariaLabel="Close cart"
+            className="shrink-0"
+          />
         </div>
         {/* Header divider */}
         <div

@@ -8,6 +8,7 @@ import 'swiper/css'
 import Link from 'next/link'
 import Globe from './Globe'
 import Button from '@/components/ui/Button'
+import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
 import CookiePreferencesLink from '@/components/legal/CookiePreferencesLink'
 import { useMenu } from '@/context/MenuContext'
 import { useTheme } from '@/context/ThemeContext'
@@ -327,29 +328,11 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className="order-first md:order-none relative md:absolute md:left-0 md:right-0 md:bottom-full bg-black light:bg-[#232323] overflow-hidden border-t-4 border-[#EA128B] light:border-black"
       >
-        {/* Close button — its right inset mirrors the content container's left
-            padding (px-4 / px-6 / px-16) so it lines up with the "Contact" title.
-            Sits above the scrollable content via z-10. Default + hover states
-            swap via the `group` parent and group-hover. */}
-        <button
-          type="button"
-          onClick={handleClose}
-          className="group absolute top-4 right-4 min-[420px]:right-6 md:right-16 w-12 h-12 z-10"
-          aria-label="Close panel"
-        >
-          <img
-            src="/imgs/close_btn.svg"
-            alt=""
-            aria-hidden="true"
-            className="w-full h-full block group-hover:hidden select-none light:grayscale"
-          />
-          <img
-            src="/imgs/close_btn_over.svg"
-            alt=""
-            aria-hidden="true"
-            className="w-full h-full hidden group-hover:block select-none light:grayscale"
-          />
-        </button>
+        {/* Close button — shared shadow-X. Its right inset mirrors the content
+            container's left padding so it lines up with the "Contact" title. */}
+        <div className="absolute top-4 right-4 min-[420px]:right-6 md:right-16 z-10">
+          <ShadowCloseButton onClick={handleClose} ariaLabel="Close panel" />
+        </div>
 
         {/* Mobile: no cap → panel is as tall as the form (single page scroll).
             Desktop: cap to the viewport and scroll internally (overlay). */}

@@ -30,7 +30,10 @@ export default function ForegroundLayer() {
   const containerRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number>(0)
   // Runs on the dark (cosy-dynamics) and light themes; monochrome in light.
-  const active = theme === 'cosy-dynamics' || theme === 'light'
+  // Hidden on individual case-study pages (all parallax decoration is removed).
+  const active =
+    (theme === 'cosy-dynamics' || theme === 'light') &&
+    !pathname.startsWith('/case-studies')
 
   // Hide the alien rocket on the homepage for now.
   const items = useMemo(

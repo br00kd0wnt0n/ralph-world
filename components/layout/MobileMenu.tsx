@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
+import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
 import { useMenu } from '@/context/MenuContext'
 import { useLanguage, LANGUAGES } from '@/lib/useLanguage'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
@@ -24,7 +25,6 @@ const WORLDS = [
 // `panel` items open the footer's expanding panel instead of navigating.
 const ABOUT: { label: string; href?: string; panel?: 'find' | 'contact' }[] = [
   { label: 'Work with us', href: '/work-with-us' },
-  { label: "Weren't you an agency?", href: '/work-with-us' },
   { label: 'Find us', panel: 'find' },
   { label: 'Contact us', panel: 'contact' },
 ]
@@ -213,11 +213,8 @@ export default function MobileMenu() {
           {/* Close button — absolutely positioned so it lines up vertically
               with the nav utility bar's basket (60px bar, centred → ~30px)
               regardless of the logo height, and px-6 from the right edge. */}
-          <motion.button
-            type="button"
-            onClick={onClose}
-            className="group absolute top-[13px] right-6 z-20 w-10 h-10"
-            aria-label="Close menu"
+          <motion.div
+            className="absolute top-[13px] right-6 z-20"
             // Pop in once the menu has finished sliding in; pop straight back
             // out (no delay) when closing.
             initial={{ opacity: 0, scale: 0.4 }}
@@ -225,19 +222,8 @@ export default function MobileMenu() {
             exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.15, ease: 'easeIn' } }}
             transition={{ delay: 0.5, type: 'spring', stiffness: 520, damping: 20 }}
           >
-            <img
-              src="/imgs/close_btn.svg"
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full block group-hover:hidden select-none light:grayscale"
-            />
-            <img
-              src="/imgs/close_btn_over.svg"
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full hidden group-hover:block select-none light:grayscale"
-            />
-          </motion.button>
+            <ShadowCloseButton onClick={onClose} ariaLabel="Close menu" />
+          </motion.div>
 
           {/* Scrollable links */}
           <nav className="relative z-10 flex-1 overflow-y-auto px-6 pb-12 flex flex-col items-start gap-4">

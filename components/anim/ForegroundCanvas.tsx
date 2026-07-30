@@ -33,7 +33,7 @@ export default function ForegroundCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    if (theme !== 'cosy-dynamics') return
+    if (theme !== 'cosy-dynamics' || pathname.startsWith('/case-studies')) return
     if (!window.matchMedia('(min-width: 768px)').matches) return
     // Honour reduced-motion: skip the decorative foreground flyers.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -106,9 +106,9 @@ export default function ForegroundCanvas() {
       stopTicker()
       window.removeEventListener('resize', resize)
     }
-  }, [theme])
+  }, [theme, pathname])
 
-  if (theme !== 'cosy-dynamics') return null
+  if (theme !== 'cosy-dynamics' || pathname.startsWith('/case-studies')) return null
 
   return (
     <canvas

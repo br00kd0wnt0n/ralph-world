@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 import { registerTicker } from '@/lib/anim/sequencer'
 import { ANIMATIONS, type AnimationName } from '@/lib/anim/animations'
@@ -106,9 +107,13 @@ interface FlyerState {
 
 export default function MidgroundCanvas() {
   const { theme } = useTheme()
+  const pathname = usePathname()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  // Runs on the dark (cosy-dynamics) and light themes.
-  const active = theme === 'cosy-dynamics' || theme === 'light'
+  // Runs on the dark (cosy-dynamics) and light themes, but not on individual
+  // case-study pages (they hide all the parallax decoration).
+  const active =
+    (theme === 'cosy-dynamics' || theme === 'light') &&
+    !pathname.startsWith('/case-studies')
 
   useEffect(() => {
     if (!active) return

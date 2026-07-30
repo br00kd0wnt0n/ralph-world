@@ -6,6 +6,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperClass } from 'swiper/types'
 import 'swiper/css'
 import FadeImage from '@/components/shop/FadeImage'
+import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
 import type { ShopifyImage } from '@/lib/shopify/types'
 
 // Inline the bubble SVG (rather than an <img>) so CSS can recolour its orange
@@ -126,47 +127,7 @@ export default function MagBubbleCarousel({
 
         {/* Close shadow button, top-right */}
         <div className="absolute z-20" style={{ top: 46, right: 46 }}>
-          <div style={{ position: 'relative', display: 'inline-block' }}>
-            <div
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                top: 4,
-                left: 4,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'black',
-                pointerEvents: 'none',
-              }}
-            />
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="btn-press"
-              style={{
-                position: 'relative',
-                width: 44,
-                height: 43,
-                border: '2px solid black',
-                backgroundColor: 'white',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'transform 0.15s ease',
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <path
-                  d="M3 3L19 19M19 3L3 19"
-                  stroke="black"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
+          <ShadowCloseButton onClick={onClose} />
         </div>
 
         {/* Content sitting inside the bubble body (tail is at the bottom) */}

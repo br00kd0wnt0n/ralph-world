@@ -16,7 +16,7 @@ export interface ThemeOption {
 
 export const THEMES: ThemeOption[] = [
   { id: 'cosy-dynamics', label: 'Starfield', type: 'css-vars' },
-  { id: 'light', label: 'Light', type: 'css-vars' },
+  { id: 'light', label: 'Light burst', type: 'css-vars' },
   // Immersive themes iframe an external visual canvas that the CSP frame-src
   // blocks — disabled until the bundled canvas ships (see visual-canvas docs).
   { id: 'ralph-world', label: 'Ralph World', type: 'immersive', disabled: true },

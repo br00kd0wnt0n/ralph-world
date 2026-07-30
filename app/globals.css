@@ -343,6 +343,17 @@ img {
   will-change: transform;
 }
 
+/* Case study hero — subtitle + tags carry inline brand colours; in light mode
+   force them black (inline styles need !important to override). */
+:root[data-theme="light"] .cs-subtitle {
+  color: #000 !important;
+}
+:root[data-theme="light"] .cs-tag {
+  color: #000 !important;
+  border-color: #000 !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
 /* Scroll-in ralph circle logo — invert in light mode: cream disc + black
    letters becomes a #232323 disc with cream letters (pink still on hover). */
 :root[data-theme="light"] .ralph-circle-logo circle {

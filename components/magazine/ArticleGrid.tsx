@@ -173,6 +173,9 @@ function GridCardImage({ src, alt }: { src: string; alt: string }) {
 export default function ArticleGrid({ articles, onArticleClick }: ArticleGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [isLargeViewport, setIsLargeViewport] = useState(true)
+  // Touch devices skip the explode-on-hover interaction; they show the title
+  // as a constant and just tap through.
+  const [isTouch, setIsTouch] = useState(false)
   const { ref, isVisible } = useScrollReveal(0.05)
 
   // Use placeholder if no articles
@@ -182,6 +185,15 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
     if (typeof window === 'undefined') return
     const mq = window.matchMedia('(min-width: 1024px)')
     const update = () => setIsLargeViewport(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(hover: none)')
+    const update = () => setIsTouch(mq.matches)
     update()
     mq.addEventListener('change', update)
     return () => mq.removeEventListener('change', update)
@@ -333,8 +345,8 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                 key={article.id}
                 className="mag-grid-card relative"
                 style={{ zIndex: isHovered ? 10 : 1 }}
-                onMouseEnter={() => setHoveredId(article.id)}
-                onMouseLeave={() => setHoveredId(null)}
+                onMouseEnter={() => !isTouch && setHoveredId(article.id)}
+                onMouseLeave={() => !isTouch && setHoveredId(null)}
                 onClick={() => onArticleClick(article.slug)}
               >
                 <div
@@ -363,6 +375,15 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                         )
                       })()}
                     </div>
+
+                    {/* Touch: constant title (no hover reveal) */}
+                    {isTouch && (
+                      <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/90 via-black/70 to-transparent p-3 pt-10 pointer-events-none">
+                        <h3 className="text-sm font-bold text-white leading-tight line-clamp-2">
+                          {article.title}
+                        </h3>
+                      </div>
+                    )}
 
                     {/* Access tier badge — always visible, top-left */}
                     {article.accessTier === 'premium' && (
@@ -409,7 +430,7 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                             {article.contentTags.map((tag) => (
                               <span
                                 key={tag}
-                                className="text-[9px] font-bold uppercase tracking-wide text-ralph-pink light:text-white"
+                                className="text-[12px] font-bold uppercase tracking-wide text-ralph-pink light:text-white"
                               >
                                 {tag}
                               </span>
@@ -417,12 +438,12 @@ export default function ArticleGrid({ articles, onArticleClick }: ArticleGridPro
                           </div>
                         )}
 
-                        <h3 className="text-sm md:text-base font-bold text-white leading-tight mb-1">
+                        <h3 className="text-base md:text-lg font-bold text-white leading-tight mb-1">
                           {article.title}
                         </h3>
 
                         {article.subtitle && (
-                          <p className="text-[11px] text-white/70 line-clamp-2 leading-relaxed">
+                          <p className="text-[18px] text-white/70 line-clamp-2 leading-snug">
                             {article.subtitle}
                           </p>
                         )}

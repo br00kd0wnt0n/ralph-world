@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import LabGrid from './LabGrid'
 import LabOverlay from './LabOverlay'
+import SpriteAnimation from '@/components/anim/SpriteAnimation'
 import SectionIntro from '@/components/layout/SectionIntro'
 import SubscribeModal from '@/components/layout/SubscribeModal'
 import {
@@ -23,6 +25,15 @@ export default function LabClient({ items, copy }: LabClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [openItem, setOpenItem] = useState<LabItem | null>(null)
   const [overlayOpen, setOverlayOpen] = useState(false)
+  // < 1200px: drop the planet saucer 15px further down.
+  const [belowXl, setBelowXl] = useState(false)
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 1199px)')
+    const sync = () => setBelowXl(mql.matches)
+    sync()
+    mql.addEventListener('change', sync)
+    return () => mql.removeEventListener('change', sync)
+  }, [])
 
   function handleItemClick(item: LabItem) {
     setOpenItem(item)
@@ -85,6 +96,23 @@ export default function LabClient({ items, copy }: LabClientProps) {
             className="absolute bg-white light:bg-[#232323]"
             style={{ top: 270, left: 0, right: 0, bottom: 0 }}
           />
+        </motion.div>
+
+        {/* Constantly-animating saucer perched on the planet's top edge, right
+            of centre. Fades in with the planet. */}
+        <motion.div
+          variants={sectionBgVariants}
+          className="absolute z-[5] left-1/2 top-0 hidden min-[992px]:block pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          <Link
+            href="/space-invaders"
+            aria-label="Play Space Invaders"
+            className="inline-block leading-none pointer-events-auto cursor-pointer light:grayscale"
+            style={{ transform: `translate(calc(-50% + 350px), calc(-70% + ${belowXl ? 25 : 10}px)) rotate(8deg)` }}
+          >
+            <SpriteAnimation name="saucer" mode="loop" width={140} className="pointer-events-none" />
+          </Link>
         </motion.div>
 
         {/* Content layer - cloud-jar carousel, animates after bg */}

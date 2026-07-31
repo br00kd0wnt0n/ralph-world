@@ -36,6 +36,36 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-07-31 — Space Invaders game + Lab revamp
+
+- **Space Invaders** (`/space-invaders`, `components/games/space-invaders/*`):
+  refactored the old JS prototype into a typed canvas game — ship with
+  velocity/friction + dual-side fire, alien waves that march/drop/speed up and
+  fire back, AABB collisions, explosions, win/lose. Added a 2s row-cascade intro
+  (aliens drop in top-first, ship rises from below, both centred), a bottom-right
+  3-digit score in the Gooper title font (1pt/alien, 5pt/flyer), a "Play" shadow
+  button as the only start trigger, chevron-key instructions, and a "< Back" link
+  to `/lab`. Assets via one manifest (`/imgs/game` + `/sfx`), exhaust sliced from
+  the site's sprite sheet. Canvas monochrome + text black in light mode; blast
+  pink in dark / off-black in light; redirects to `/lab` below 992.
+- **Shoot the background flyers** (`lib/bg-flyer-targets.ts`, `MidgroundCanvas.tsx`):
+  the global satellite/chaser publish their live screen boxes; a player bullet
+  hitting one fires a 200px blast that clears invaders in radius (+5pts). The moon
+  is hidden on this route.
+- **Route chrome**: the nav stays but is pinned collapsed (circle logo) on
+  `/space-invaders`; footer hidden; page scroll locked; navigating in slides the
+  outgoing page out to the left (`PageTransitionWrapper`).
+- **Lab revamp** (`LabClient.tsx`, `LabGrid.tsx`, `LabOverlay.tsx`): grid reworked
+  into tight magazine-style cards (2px borders, square corners, 4:3 image on
+  ralph-yellow, "Read more >"), each extruding a solid ralph-yellow 3D side on
+  hover (direction from grid position; disabled on touch; image fades to 0.6).
+  Below 768 it's a full-bleed equal-height Swiper carousel with the case-study
+  arrows + pips. Overlay now uses the shared shadow close button, square corners,
+  scroll lock, sits over the nav, with monochrome tags + a shadow "Launch project"
+  button. The planet character is a looping saucer linking to the game.
+
+---
+
 ## 2026-07-28 — Hide empty magazine categories
 
 - **Magazine categories** (`MagazineClient.tsx`, `CategoryTabs.tsx`): category

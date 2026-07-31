@@ -78,6 +78,17 @@ export default function Nav() {
 
   // Handle route changes
   useEffect(() => {
+    // Space Invaders doesn't scroll — pin the header in its collapsed
+    // (circle-logo) state.
+    if (pathname === '/space-invaders') {
+      isFirstLoad.current = false
+      prevPathname.current = pathname
+      setScrollProgress(1)
+      setNavFixed(true)
+      navState.progress = 1
+      navState.fixed = true
+      return
+    }
     if (isFirstLoad.current) {
       // First load - check actual scroll position
       isFirstLoad.current = false

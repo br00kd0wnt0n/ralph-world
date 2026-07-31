@@ -174,6 +174,9 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
     setMessage('')
   }
 
+  // Hidden on the space-invaders route (bare starfield/parallax canvas).
+  if (pathname === '/space-invaders') return null
+
   if (variant === 'light') {
     return (
       <footer className="relative z-10 bg-surface py-8 px-4 min-[420px]:px-6 md:px-16 border-t border-border/30">

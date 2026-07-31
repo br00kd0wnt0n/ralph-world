@@ -50,15 +50,23 @@ export default function PageTransitionWrapper({ children }: PageTransitionWrappe
   // ready before the panel slides it in) OR when the user requests reduced
   // motion — both become an instant cut. In-site links otherwise keep the fade.
   const instant = instantNav || prefersReducedMotion
+  // Navigating INTO /space-invaders slides the outgoing page fully out to the
+  // left (a "launch" transition) rather than the usual fade.
+  const goingToInvaders = pathname === '/space-invaders'
   const pageVariants: Variants = {
-    initial: { opacity: instant ? 1 : 0 },
+    initial: { opacity: instant ? 1 : 0, x: 0 },
     animate: {
       opacity: 1,
+      x: 0,
       transition: { duration: instant ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] },
     },
     exit: {
       opacity: instant ? 1 : 0,
-      transition: { duration: instant ? 0 : 0.35, ease: [0.4, 0, 1, 1] },
+      x: !instant && goingToInvaders ? '-100%' : 0,
+      transition: {
+        duration: instant ? 0 : goingToInvaders ? 0.5 : 0.35,
+        ease: [0.4, 0, 1, 1],
+      },
     },
   }
   const [minHeight, setMinHeight] = useState<number | undefined>(undefined)

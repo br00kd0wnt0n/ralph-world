@@ -5,6 +5,11 @@ import { usePathname } from 'next/navigation'
 import { useTheme } from '@/context/ThemeContext'
 import { registerTicker } from '@/lib/anim/sequencer'
 import { ANIMATIONS, type AnimationName } from '@/lib/anim/animations'
+import {
+  publishBgTargets,
+  setBgTargetHitHandler,
+  type BgTarget,
+} from '@/lib/bg-flyer-targets'
 
 // Midground canvas — sits at z-[1] (same depth as item_mid_spaceship), behind
 // page content, with parallax (drawn at worldY − scrollY × parallax). Hosts
@@ -109,6 +114,11 @@ export default function MidgroundCanvas() {
   const { theme } = useTheme()
   const pathname = usePathname()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Live pathname for the draw loop (avoids restarting the canvas on nav).
+  const pathnameRef = useRef(pathname)
+  useEffect(() => {
+    pathnameRef.current = pathname
+  }, [pathname])
   // Runs on the dark (cosy-dynamics) and light themes, but not on individual
   // case-study pages (they hide all the parallax decoration).
   const active =
@@ -209,14 +219,28 @@ export default function MidgroundCanvas() {
       const scrollY = window.scrollY
 
       // Static parallax props (moon / planet) — behind the flyers
+      const hideMoon = pathnameRef.current === '/space-invaders'
       for (let i = 0; i < STATIC_ITEMS.length; i++) {
         const s = STATIC_ITEMS[i]
+        if (hideMoon && s.src.includes('item_moon')) continue
         const img = staticImgs[i]
         if (!img.complete || img.naturalWidth === 0) continue
         const top = s.baseY - scrollY * s.speed
         if (top > vh || top + s.h < 0) continue
         ctx.drawImage(img, (vw * s.xPct) / 100, top, s.w, s.h)
       }
+
+      // Publish each active flyer's screen box so the Space Invaders game can
+      // shoot them (inert everywhere else).
+      const pub: (BgTarget | null)[] = FLYERS.map((f, i) => {
+        const st = states[i]
+        if (!st.active) return null
+        const sheet = ANIMATIONS[f.name]
+        const w = sheet.frameW * f.scale
+        const h = sheet.frameH * f.scale
+        return { x: st.x, y: st.worldY - scrollY * f.parallax, w, h }
+      })
+      publishBgTargets(pub)
 
       for (let i = 0; i < FLYERS.length; i++) {
         const f = FLYERS[i]
@@ -237,13 +261,28 @@ export default function MidgroundCanvas() {
       }
     }
 
+    let lastElapsed = 0
+
+    // The game knocks a flyer out when a bullet connects — deactivate it and
+    // reschedule its next crossing.
+    setBgTargetHitHandler((i) => {
+      const st = states[i]
+      const f = FLYERS[i]
+      if (!st || !f) return
+      st.active = false
+      st.nextAt = lastElapsed + rand(f.gapMin, f.gapMax)
+    })
+
     const stopTicker = registerTicker((dt, elapsed) => {
+      lastElapsed = elapsed
       update(dt, elapsed)
       draw()
     })
     window.addEventListener('resize', resize)
     return () => {
       stopTicker()
+      setBgTargetHitHandler(null)
+      publishBgTargets([])
       window.removeEventListener('resize', resize)
     }
   }, [theme, active])

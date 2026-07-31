@@ -9,6 +9,8 @@ import BlockRenderer from '@/components/magazine/BlockRenderer'
 import { isSafeUrl } from '@/lib/safe-url'
 import { sanitizeArticleHtml } from '@/lib/sanitize'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
+import Button from '@/components/ui/Button'
 import {
   canAccess,
   isPremiumContent,
@@ -56,10 +58,13 @@ export default function LabOverlay({
 
   useEffect(() => {
     if (isOpen) {
+      // The page scrolls on <html>, so lock both it and <body>.
+      document.documentElement.style.overflow = 'hidden'
       document.body.style.overflow = 'hidden'
       window.addEventListener('keydown', handleEsc)
     }
     return () => {
+      document.documentElement.style.overflow = ''
       document.body.style.overflow = ''
       window.removeEventListener('keydown', handleEsc)
     }
@@ -87,7 +92,7 @@ export default function LabOverlay({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[60] bg-black/70 overflow-y-auto"
+          className="fixed inset-0 z-[9999] bg-black/70 overflow-y-auto"
           onClick={onClose}
           role="dialog"
           aria-modal="true"
@@ -97,23 +102,12 @@ export default function LabOverlay({
             <div
               ref={trapRef}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[920px] bg-white border-2 border-black rounded-2xl overflow-hidden"
+              className="relative w-full max-w-[920px] bg-white border-2 border-black overflow-hidden"
             >
               {/* Close */}
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-ralph-pink transition-colors"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path
-                    d="M1 1L13 13M13 1L1 13"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
+              <div className="absolute top-4 right-4 z-10">
+                <ShadowCloseButton onClick={onClose} />
+              </div>
 
               <motion.div
                 variants={overlayContentVariants}
@@ -141,7 +135,7 @@ export default function LabOverlay({
                         return (
                           <li
                             key={`${tag.label}-${i}`}
-                            className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                            className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider light:grayscale"
                             style={{
                               backgroundColor: swatch.bg,
                               color: swatch.text,
@@ -152,7 +146,7 @@ export default function LabOverlay({
                         )
                       })}
                       {isPremium && (
-                        <li className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-ralph-yellow/90 text-black border border-black/20">
+                        <li className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-ralph-yellow/90 text-black border border-black/20 light:grayscale">
                           ★ Premium
                         </li>
                       )}
@@ -161,7 +155,7 @@ export default function LabOverlay({
 
                   {/* Subtitle eyebrow */}
                   {item.subtitle && (
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-ralph-pink mb-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-ralph-pink light:text-black mb-3">
                       {item.subtitle}
                     </p>
                   )}
@@ -228,14 +222,11 @@ export default function LabOverlay({
                         Subscribe to access →
                       </button>
                     ) : launchAvailable ? (
-                      <a
+                      <Button
+                        label="Launch project"
                         href={item.externalUrl!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-full bg-ralph-pink text-black px-6 py-2.5 text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
-                      >
-                        Launch project →
-                      </a>
+                        newTab
+                      />
                     ) : null}
                   </div>
                 </div>

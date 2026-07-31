@@ -331,6 +331,16 @@ img {
   fill: #232323;
 }
 
+/* Lab carousel — equal-height slides. Swiper sets `.swiper-slide { height:100% }`
+   which collapses auto-height content; force height:auto so the flex wrapper
+   stretches every slide to the tallest. */
+.lab-carousel .swiper-wrapper {
+  align-items: stretch;
+}
+.lab-carousel .swiper-slide {
+  height: auto;
+}
+
 /* Mag creature — subtle breathing bob, anchored at the feet (scales up/down a
    few px from the bottom). Neutralised by the reduced-motion block below. */
 @keyframes mag-creature-bob {

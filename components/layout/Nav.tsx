@@ -75,9 +75,12 @@ export default function Nav() {
   const [navFixed, setNavFixed] = useState(navState.fixed)
   const isFirstLoad = useRef(true)
   const prevPathname = useRef(pathname)
+  // Live pathname for the (mount-once) scroll handler.
+  const pathnameRef = useRef(pathname)
 
   // Handle route changes
   useEffect(() => {
+    pathnameRef.current = pathname
     // Space Invaders doesn't scroll — pin the header in its collapsed
     // (circle-logo) state.
     if (pathname === '/space-invaders') {
@@ -113,6 +116,10 @@ export default function Nav() {
 
   useEffect(() => {
     const handleScroll = () => {
+      // Space Invaders keeps the header pinned collapsed — ignore scroll
+      // events (e.g. the scroll-to-top on navigation) that would re-expand it.
+      if (pathnameRef.current === '/space-invaders') return
+
       const scrollY = window.scrollY
 
       // If nav is locked (after navigation with fixed nav),

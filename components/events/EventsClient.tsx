@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import SectionIntro from '@/components/layout/SectionIntro'
 import MinglingCharacters from './MinglingCharacters'
@@ -22,8 +22,65 @@ interface EventsClientProps {
 
 export default function EventsClient({ activeEvents = [], copy, initialShowSlug }: EventsClientProps) {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // On this page (>= 992):
+  //  1. Give the body a full-viewport min-height so its flex-col + `main flex-1`
+  //     push the footer to the bottom of the screen.
+  //  2. Grow the events section to meet the footer, so its white background
+  //     fills the blank space between the content and the footer on tall
+  //     displays (the content is only ~500px tall).
+  // Scoped to the events route — the cleanup restores the defaults when
+  // navigating away or dropping below 992.
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 992px)')
+    let raf = 0
+    const apply = () => {
+      raf = 0
+      const section = sectionRef.current
+      if (!section) return
+      if (!mql.matches) {
+        document.body.style.minHeight = ''
+        section.style.minHeight = ''
+        return
+      }
+      document.body.style.minHeight = '100svh'
+      // Measure the section at its natural height, then stretch it down to the
+      // footer. The footer is anchored to the bottom of the 100svh body, so its
+      // top doesn't move as the section grows — one pass converges.
+      const prev = section.style.minHeight
+      section.style.minHeight = ''
+      const footer = document.querySelector('footer')
+      const rect = section.getBoundingClientRect()
+      const footerTop = footer
+        ? footer.getBoundingClientRect().top
+        : rect.bottom
+      const gap = footerTop - rect.bottom
+      const next = gap > 1 ? `${Math.round(rect.height + gap)}px` : ''
+      section.style.minHeight = next === prev ? prev : next
+    }
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(apply)
+    }
+    schedule()
+    const ro = new ResizeObserver(schedule)
+    if (rootRef.current) ro.observe(rootRef.current)
+    window.addEventListener('resize', schedule)
+    mql.addEventListener('change', schedule)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', schedule)
+      mql.removeEventListener('change', schedule)
+      if (raf) cancelAnimationFrame(raf)
+      document.body.style.minHeight = ''
+      if (sectionRef.current) sectionRef.current.style.minHeight = ''
+    }
+  }, [])
+
   return (
     <motion.div
+      ref={rootRef}
       variants={sectionContainerVariants}
       initial="initial"
       animate="animate"
@@ -38,14 +95,12 @@ export default function EventsClient({ activeEvents = [], copy, initialShowSlug 
         ]}
       />
 
-      {/* Planet + white bg layered with content.
-          flex flex-col + min-height keeps the section as tall as the
-          remaining viewport on big screens. The content layer below uses
-          mt-auto so the characters/hands block anchors to the bottom of
-          the section (just above the footer) instead of leaving a gap. */}
+      {/* Planet + white bg layered with content. On >= 992 the effect above
+          stretches this section down to the footer so the white bg fills any
+          blank space on tall displays (see the min-height it sets). */}
       <section
+        ref={sectionRef}
         className="relative flex flex-col mb-[80px] min-[992px]:mb-0"
-        style={{ minHeight: 'calc(100svh - 200px)' }}
       >
         {/* Background - animates SECOND */}
         <motion.div variants={sectionBgVariants} className="absolute inset-0 z-0">
@@ -133,14 +188,10 @@ export default function EventsClient({ activeEvents = [], copy, initialShowSlug 
           />
         </motion.div>
 
-        {/* Content layer - animates LAST.
-            < 992: my-auto centres the characters block vertically so it sits
-                   evenly between the top + bottom planets.
-            >= 992: mt-auto anchors it to the section bottom (flush with the
-                    footer; white bg fills the gap above). */}
+        {/* Content layer - animates LAST. */}
         <motion.div
           variants={sectionContentVariants}
-          className="relative z-10 w-full my-auto min-[992px]:mb-0"
+          className="relative z-10 w-full"
         >
           <MinglingCharacters
             events={activeEvents}

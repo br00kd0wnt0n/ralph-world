@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLiveStatus } from '@/hooks/useLiveStatus'
 import { useAuth } from '@/context/AuthContext'
 import { screenStateVariants } from '@/lib/animation/tv'
+import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
 import LivePlayer from './LivePlayer'
 import TeletextShowInfo from './TeletextShowInfo'
 import TeletextSchedule from './TeletextSchedule'
@@ -48,6 +50,17 @@ export default function TVSet({
   const [previewSecondsLeft, setPreviewSecondsLeft] = useState(previewSeconds)
   const [volume, setVolume] = useState(0.7)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  // Mobile (<768) watching: the ornate set can't be operated at phone size, so
+  // it becomes a "tap to watch" poster that opens an immersive full-bleed video.
+  // null until measured on the client, so the live cutout renders neither the
+  // desktop player nor the mobile poster until we know which — avoids a flash of
+  // the desktop HLS player mounting on phones before the breakpoint settles.
+  const [isMobile, setIsMobile] = useState<boolean | null>(null)
+  const [immersive, setImmersive] = useState(false)
+  const [isPortrait, setIsPortrait] = useState(false)
+  // Immersive playback starts muted (guaranteed autoplay); the user unmutes with
+  // the mute control. Reset each time immersive opens.
+  const [immersiveMuted, setImmersiveMuted] = useState(true)
   const [schedule, setSchedule] = useState<ScheduleItem[]>([])
   // Authoritative now-playing (what the streamer is ACTUALLY playing). Preferred over
   // the time-based schedule pointer for the "On now / Up next" readout so it matches
@@ -76,6 +89,61 @@ export default function TVSet({
     document.addEventListener('fullscreenchange', onChange)
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
+
+  // Track the mobile breakpoint (<768) and viewport orientation. Orientation
+  // drives the "rotate to landscape" prompt inside immersive mode.
+  useEffect(() => {
+    const mqMobile = window.matchMedia('(max-width: 767px)')
+    const mqPortrait = window.matchMedia('(orientation: portrait)')
+    const sync = () => {
+      setIsMobile(mqMobile.matches)
+      setIsPortrait(mqPortrait.matches)
+    }
+    sync()
+    mqMobile.addEventListener('change', sync)
+    mqPortrait.addEventListener('change', sync)
+    return () => {
+      mqMobile.removeEventListener('change', sync)
+      mqPortrait.removeEventListener('change', sync)
+    }
+  }, [])
+
+  // Leave immersive mode if we grow past mobile, or if the screen stops being
+  // live (preview gate / offline) — those states show in the poster/cutout.
+  useEffect(() => {
+    if (!isMobile) setImmersive(false)
+  }, [isMobile])
+
+  // While immersive: lock page scroll and best-effort lock to landscape
+  // (Android honours it; iOS ignores the rejection harmlessly).
+  useEffect(() => {
+    if (!immersive) return
+    const html = document.documentElement
+    const prevHtml = html.style.overflow
+    const prevBody = document.body.style.overflow
+    html.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    const orientation = (
+      screen as unknown as { orientation?: { lock?: (o: string) => Promise<void>; unlock?: () => void } }
+    ).orientation
+    orientation?.lock?.('landscape').catch(() => {})
+    return () => {
+      html.style.overflow = prevHtml
+      document.body.style.overflow = prevBody
+      orientation?.unlock?.()
+    }
+  }, [immersive])
+
+  function enterImmersive() {
+    setImmersiveMuted(true)
+    setOverlay('none')
+    setImmersive(true)
+  }
+
+  function exitImmersive() {
+    setImmersive(false)
+    setOverlay('none')
+  }
 
   function playSfx(state: 'on' | 'off') {
     const audio = state === 'on' ? sfxOn.current : sfxOff.current
@@ -272,13 +340,37 @@ export default function TVSet({
     screenState = 'subscribe-gate'
   }
 
+  // Immersive mode only makes sense while live — if the stream drops or the
+  // preview gate closes, drop back to the poster/cutout so those states show.
+  const notLive = screenState !== 'live'
+  useEffect(() => {
+    if (immersive && notLive) setImmersive(false)
+  }, [immersive, notLive])
+
   return (
     <div className="flex flex-col items-center gap-4 max-w-5xl mx-auto">
       {/* TV SET — graphic from public/imgs with the live screen positioned over its cutout */}
-      <div ref={containerRef} className="relative w-full">
+      <div
+        ref={containerRef}
+        className={`relative w-full ${
+          isFullscreen ? 'flex items-center justify-center bg-black' : ''
+        }`}
+      >
         <div
           className="relative w-full mx-auto"
-          style={{ aspectRatio: '976.297 / 676.934' }}
+          style={{
+            aspectRatio: '976.297 / 676.934',
+            // In fullscreen the container fills the screen; size the fixed-aspect
+            // TV to the binding dimension (min of screen width vs the width that
+            // fills screen height) so the whole set stays visible, centered both
+            // axes by the flex parent. R = 976.297 / 676.934.
+            ...(isFullscreen
+              ? {
+                  width: 'min(100vw, calc(100vh * 976.297 / 676.934))',
+                  maxWidth: 'none',
+                }
+              : {}),
+          }}
         >
           {/* Ground — sits behind the TV, centered, slightly wider than the chrome
               so it extends past the TV's left/right edges (ground SVG viewBox is
@@ -304,9 +396,12 @@ export default function TVSet({
               height: '69.6%',
             }}
           >
-            {/* LivePlayer stays mounted whenever we have a live stream, so */}
-            {/* HLS isn't torn down when overlays open or status blips */}
-            {screenState === 'live' && (
+            {/* Live: desktop plays inline in the cutout; mobile shows a
+                tap-to-watch poster that opens the immersive full-bleed view
+                (the set's tiny on-TV controls can't be operated at phone size).
+                LivePlayer stays mounted so HLS isn't torn down on overlay/status
+                blips. */}
+            {screenState === 'live' && isMobile === false && (
               <div className="absolute inset-0">
                 <LivePlayer
                   volume={volume}
@@ -315,6 +410,34 @@ export default function TVSet({
                   offlineMessage={offlineMessage}
                 />
               </div>
+            )}
+
+            {screenState === 'live' && isMobile === true && (
+              <button
+                type="button"
+                onClick={enterImmersive}
+                className="absolute inset-0 bg-black flex flex-col items-center justify-center gap-2 text-white"
+                aria-label="Tap to watch Ralph TV"
+              >
+                <span
+                  className="flex items-center justify-center rounded-full bg-white"
+                  style={{ width: '18%', aspectRatio: '1', minWidth: 36 }}
+                >
+                  <svg viewBox="0 0 24 24" fill="black" style={{ width: '45%' }}>
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                    fontWeight: 600,
+                    fontSize: 'clamp(13px, 4.2vw, 20px)',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Tap to watch
+                </span>
+              </button>
             )}
 
             {/* Subscribe gate also stays mounted when active */}
@@ -393,9 +516,10 @@ export default function TVSet({
               </>
             )}
 
-            {/* Overlays render ON TOP of the player — don't replace it */}
+            {/* Overlays render ON TOP of the player — don't replace it. In
+                immersive mode they render in the overlay instead (see below). */}
             <AnimatePresence>
-              {overlay === 'show-info' && (
+              {!immersive && overlay === 'show-info' && (
                 <motion.div
                   key="show-info"
                   variants={screenStateVariants}
@@ -408,7 +532,7 @@ export default function TVSet({
                 </motion.div>
               )}
 
-              {overlay === 'schedule' && (
+              {!immersive && overlay === 'schedule' && (
                 <motion.div
                   key="schedule"
                   variants={screenStateVariants}
@@ -435,9 +559,14 @@ export default function TVSet({
           {/* TV side panel — sits inside the TV's right-hand decorative area
               (the speaker/control zone between ~73% and ~99% of the TV width).
               Panel SVG viewBox is 169 × 380; rendered at ~17.3% of TV width
-              to match the TV's natural scale. Buttons overlay on top of it. */}
+              to match the TV's natural scale. Buttons overlay on top of it.
+              On mobile these on-TV controls are too small to operate, so they
+              stay as decoration only (pointer-events-none) — watching happens
+              in the immersive view instead. */}
           <div
-            className="absolute [container-type:inline-size]"
+            className={`absolute [container-type:inline-size] ${
+              isMobile ? 'pointer-events-none' : ''
+            }`}
             style={{
               right: '2%',
               top: '5.4%',
@@ -662,6 +791,29 @@ export default function TVSet({
               </div>
             </div>
           </div>
+
+          {/* TV junkies flanking the set's base — coloured in dark mode,
+              monochrome (grayscale) in light mode. Decorative + non-interactive.
+              Positions are %-based so they scale with the TV; nudge to taste.
+              Hidden in fullscreen so only the TV set shows. */}
+          {!isFullscreen && (
+            <>
+              <img
+                src="/animations/tv-junkie-2.png"
+                alt=""
+                aria-hidden
+                className="absolute z-20 pointer-events-none select-none light:grayscale"
+                style={{ left: '-4%', bottom: '-2%', width: '15%', maxWidth: 'none' }}
+              />
+              <img
+                src="/animations/tv-junkie.png"
+                alt=""
+                aria-hidden
+                className="absolute z-20 pointer-events-none select-none light:grayscale"
+                style={{ right: '-4%', bottom: '-2%', width: '12%', maxWidth: 'none' }}
+              />
+            </>
+          )}
         </div>
       </div>
 
@@ -669,6 +821,152 @@ export default function TVSet({
       <div className="w-full flex flex-col gap-3">
         {/* "On now / Up next" status bar hidden per request. */}
       </div>
+
+      {/* ── Mobile immersive view ────────────────────────────────────────────
+          A CSS fixed overlay (not the Fullscreen API — iPhone Safari can't
+          fullscreen arbitrary elements) holding just the full-bleed video plus
+          minimal touch controls and a rotate-to-landscape prompt. */}
+      {immersive &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] bg-black"
+            style={{ width: '100dvw', height: '100dvh' }}
+          >
+            <div className="absolute inset-0">
+              <LivePlayer
+                volume={volume}
+                onVolumeChange={setVolume}
+                muted={immersiveMuted}
+                onMutedChange={setImmersiveMuted}
+                fit="contain"
+                hideMuteUi
+                offlineLabel={offlineLabel}
+                offlineMessage={offlineMessage}
+              />
+            </div>
+
+            {/* Schedule / Show Info overlays over the immersive video */}
+            <AnimatePresence>
+              {overlay === 'show-info' && (
+                <motion.div
+                  key="im-show-info"
+                  variants={screenStateVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="absolute inset-0 z-10"
+                >
+                  <TeletextShowInfo current={currentShow} />
+                </motion.div>
+              )}
+              {overlay === 'schedule' && (
+                <motion.div
+                  key="im-schedule"
+                  variants={screenStateVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="absolute inset-0 z-10"
+                >
+                  <TeletextSchedule schedule={schedule} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Exit — top-right, shared shadow-press close button */}
+            <div className="absolute top-4 right-4 z-30">
+              <ShadowCloseButton onClick={exitImmersive} ariaLabel="Exit full screen" />
+            </div>
+
+            {/* Schedule / Show Info / Mute — bottom-right. Simple white blocks
+                with black text/icons; toggled-open state inverts to black. */}
+            <div className="absolute bottom-4 right-4 z-30 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setOverlay(overlay === 'schedule' ? 'none' : 'schedule')}
+                aria-pressed={overlay === 'schedule'}
+                className={`px-4 text-sm font-semibold transition active:scale-95 ${
+                  overlay === 'schedule' ? 'bg-black text-white' : 'bg-white text-black'
+                }`}
+                style={{ height: 44 }}
+              >
+                Schedule
+              </button>
+              <button
+                type="button"
+                onClick={() => setOverlay(overlay === 'show-info' ? 'none' : 'show-info')}
+                aria-pressed={overlay === 'show-info'}
+                className={`px-4 text-sm font-semibold transition active:scale-95 ${
+                  overlay === 'show-info' ? 'bg-black text-white' : 'bg-white text-black'
+                }`}
+                style={{ height: 44 }}
+              >
+                Info
+              </button>
+              <button
+                type="button"
+                onClick={() => setImmersiveMuted((m) => !m)}
+                aria-label={immersiveMuted ? 'Unmute' : 'Mute'}
+                className="flex items-center justify-center bg-white text-black transition active:scale-95"
+                style={{ width: 44, height: 44 }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M11 5 6 9H3v6h3l5 4V5z" fill="black" />
+                  {immersiveMuted ? (
+                    <path d="M16 9l5 6M21 9l-5 6" stroke="black" strokeWidth="2" strokeLinecap="round" />
+                  ) : (
+                    <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12" stroke="black" strokeWidth="2" strokeLinecap="round" />
+                  )}
+                </svg>
+              </button>
+            </div>
+
+            {/* Rotate-to-landscape prompt — covers the video in portrait
+                (video keeps playing behind so audio continues). */}
+            {isPortrait && (
+              <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center gap-4 px-8 text-center text-white">
+                <div className="text-5xl" aria-hidden>
+                  ↻
+                </div>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                    fontWeight: 600,
+                    fontSize: 26,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Rotate your device
+                </p>
+                <p
+                  className="text-white"
+                  style={{
+                    fontFamily: 'var(--font-body), Roboto, sans-serif',
+                    fontWeight: 600,
+                    fontSize: 15,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Ralph TV is best in landscape
+                </p>
+                <button
+                  type="button"
+                  onClick={exitImmersive}
+                  className="mt-2 text-white hover:opacity-60 active:opacity-60 transition-opacity"
+                  style={{
+                    fontFamily: 'var(--font-intro, "Gooper Trial"), serif',
+                    fontWeight: 600,
+                    fontSize: 18,
+                    lineHeight: 1,
+                  }}
+                >
+                  &lt; Exit
+                </button>
+              </div>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

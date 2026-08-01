@@ -4,6 +4,50 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-08-01 — Events crowd + footer fill, TV mobile viewing
+
+### Events (`EventsClient.tsx`, `MinglingCharacters.tsx`, `PageShift.tsx`)
+- **Footer fill on tall displays**: on the events route (≥992) the body gets
+  `min-height: 100svh` so `main flex-1` pins the footer to the bottom (no empty
+  space below it on an iMac), and the events section stretches down to meet the
+  footer so its white background fills the gap. Both driven by a scroll/resize +
+  `ResizeObserver` effect that measures the section against the footer.
+- **Dense foreground crowd**: 40 mingling characters render IN FRONT of the arms
+  and the sparse back row, spread evenly across the width and gently bobbing, so
+  it reads as a packed crowd. One shared rAF loop now drives both rows; the front
+  crowd sits 300px lower and at `z-50` so it stays the true foreground even when a
+  clicked arm (`z-40`) + panel (`z-39`) lift.
+- **No clipping above / clean clip below**: the desktop arms container no longer
+  clips vertically (arms overflow freely), and the front crowd container's
+  `overflow-hidden` was dropped so it can hang below the set. To stop it poking
+  out under the footer, `PageShift` (which wraps main + footer) now clips with
+  `overflow: clip` at the page bottom.
+- **Mobile single event**: the `<992` card container gets an 800px min-height
+  floor and centres a lone event vertically.
+
+### Ralph TV (`TVSet.tsx`, `LivePlayer.tsx`, `SCHEDULE.png`, `tv-junkie*.png`)
+- **Transparent schedule title**: `SCHEDULE.png` had its black background keyed
+  out (pink text + purple bar on transparent).
+- **TV junkies**: `tv-junkie-2` (bottom-left) and `tv-junkie` (bottom-right)
+  flank the set's base — coloured in dark mode, grayscale in light, hidden in
+  fullscreen.
+- **Contained fullscreen** (desktop): the fullscreened set is now flex-centred
+  and sized to `min(100vw, 100vh × ratio)` so the whole TV fits the screen,
+  centred both axes.
+- **Mobile viewing (`<768`)**: the ornate set becomes a **"Tap to watch"** poster
+  (Gooper title, white play circle + black arrow); the on-TV controls go inactive
+  (too small to tap). Tapping opens an **immersive CSS fixed overlay** (works on
+  iPhone, where element-fullscreen doesn't) with the full-bleed `object-contain`
+  video, page-scroll lock, and a best-effort landscape orientation lock. Portrait
+  shows a **"Rotate your device"** prompt (Gooper title, Roboto-semibold subtitle,
+  `< Exit`). Controls: simple white/black **Schedule / Info / Mute** blocks
+  bottom-right and the shared **`ShadowCloseButton`** top-right.
+- **LivePlayer** gained backward-compatible optional props — controlled mute
+  (`muted` / `onMutedChange`), `fit` (`cover`|`contain`), and `hideMuteUi` — used
+  only by the immersive view; the homepage teaser and desktop set are unchanged.
+
+---
+
 ## 2026-07-30 — Case-study polish, shared close button, nav + misc
 
 - **Shared close button** (`ShadowCloseButton.tsx` new): the white shadow-press

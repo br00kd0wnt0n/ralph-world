@@ -21,6 +21,11 @@ const CHARACTERS = [
   '/imgs/event_character_04.png',
 ]
 
+// A dense foreground crowd rendered IN FRONT of the arms + back row, cycling
+// the same eight sprites. Evenly spread across the full width so they read as a
+// packed, mingling crowd. Desktop only.
+const FRONT_CHAR_COUNT = 40
+
 // Arm art is a single canonical /imgs/arm.svg whose sleeve fill uses
 // `currentColor`, so the wrapper's `color` drives it. Any accent hex
 // works — palette in lib/event-themes.ts can grow freely and doubling
@@ -109,6 +114,7 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
   const { user } = useAuth()
   const eventCount = events.length
   const containerRef = useRef<HTMLDivElement>(null)
+  const frontContainerRef = useRef<HTMLDivElement>(null)
   const [activeArm, setActiveArm] = useState<number | null>(null)
   // Per-event RSVP status, keyed by event id
   const [rsvpStatus, setRsvpStatus] = useState<Record<string, RsvpStatus>>({})
@@ -169,38 +175,52 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
     }
   }, [expandedArm, isMobile])
 
-  // Background characters: fixed, evenly spread across x (no horizontal
-  // motion); only a gentle up/down bob, recomputed on resize.
+  // Characters: fixed, evenly spread across x (no horizontal motion); only a
+  // gentle up/down bob, recomputed each frame off the live width. Drives both
+  // the sparse back row (containerRef) and the dense front crowd
+  // (frontContainerRef) — each spread evenly across the full width on its own.
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const wrappers = container.querySelectorAll('[data-character-wrapper]')
-    const n = wrappers.length
+    const containers = [containerRef.current, frontContainerRef.current].filter(
+      Boolean,
+    ) as HTMLElement[]
+    if (!containers.length) return
     const BASE_Y = 100 // pushed down, clipped by overflow-hidden
-    const CHAR_W = 220 // displayed character width (matches the img width below)
+    const CHAR_W = 220 // nominal character width used for the spread maths
     const OVERHANG = 90 // first/last sit slightly off-screen so the row reads edge-to-edge
-    // per-character (deterministic) bob phase/speed + facing
-    const params = Array.from(wrappers).map((_, i) => ({
-      phase: (i / n) * Math.PI * 2,
-      speed: 0.0016 + (i % 4) * 0.0004, // rad/ms
-      scaleX: i % 2 === 0 ? 1 : -1,
-    }))
+
+    const groups = containers.map((container) => {
+      const wrappers = Array.from(
+        container.querySelectorAll('[data-character-wrapper]'),
+      ) as HTMLElement[]
+      const n = wrappers.length
+      // The dense front crowd sits 300px lower than the back row.
+      const baseY = container === frontContainerRef.current ? BASE_Y + 300 : BASE_Y
+      // per-character (deterministic) bob phase/speed + facing
+      const params = wrappers.map((_, i) => ({
+        phase: (i / n) * Math.PI * 2,
+        speed: 0.0016 + (i % 4) * 0.0004, // rad/ms
+        scaleX: i % 2 === 0 ? 1 : -1,
+      }))
+      return { container, wrappers, n, params, baseY }
+    })
 
     let raf = 0
     const animate = (time: number) => {
       // Read the live width first (it can be 0 on the first frame before
       // layout settles), then write transforms — read-before-write avoids
       // layout thrash and keeps the spread based on the real container width.
-      const width = container.offsetWidth
-      // spread fixed positions evenly from just off the left edge to just off
-      // the right edge; only the vertical bob animates per frame.
-      const span = width + OVERHANG * 2 - CHAR_W
-      wrappers.forEach((wrapper, i) => {
-        const el = wrapper as HTMLElement
-        const p = params[i]
-        const x = n > 1 ? -OVERHANG + (span / (n - 1)) * i : (width - CHAR_W) / 2
-        const bobY = Math.sin(time * p.speed + p.phase) * 6
-        el.style.transform = `translateX(${x}px) translateY(${BASE_Y + bobY}px) scaleX(${p.scaleX})`
+      groups.forEach(({ container, wrappers, n, params, baseY }) => {
+        const width = container.offsetWidth
+        // spread fixed positions evenly from just off the left edge to just off
+        // the right edge; only the vertical bob animates per frame.
+        const span = width + OVERHANG * 2 - CHAR_W
+        wrappers.forEach((el, i) => {
+          const p = params[i]
+          const x =
+            n > 1 ? -OVERHANG + (span / (n - 1)) * i : (width - CHAR_W) / 2
+          const bobY = Math.sin(time * p.speed + p.phase) * 6
+          el.style.transform = `translateX(${x}px) translateY(${baseY + bobY}px) scaleX(${p.scaleX})`
+        })
       })
       raf = requestAnimationFrame(animate)
     }
@@ -464,18 +484,23 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
   const MOBILE_CARD_W = isWide ? 460 : isTablet ? 360 : 260 // 768–991: 460, 576–767: 360, else 260
   const MOBILE_CARD_H = 290
   const MOBILE_CARD_GAP = 36
-  const MOBILE_PAD_TOP = 100
-  const MOBILE_PAD_BOTTOM = 100
+  const MOBILE_PAD = 100 // minimum padding above/below the card stack
+  const MOBILE_MIN_H = 800 // floor so a lone event still gets a generous stage
   // Expanded (full-screen) card sits this far from the top so the arm can reach
   // down from off-screen and grip the top edge of the card.
   const MOBILE_EXPANDED_TOP = 100
-  const mobileContainerHeight =
-    MOBILE_PAD_TOP +
-    MOBILE_PAD_BOTTOM +
-    eventCount * MOBILE_CARD_H +
-    Math.max(0, eventCount - 1) * MOBILE_CARD_GAP
+  const mobileStackHeight =
+    eventCount * MOBILE_CARD_H + Math.max(0, eventCount - 1) * MOBILE_CARD_GAP
+  const mobileContainerHeight = Math.max(
+    mobileStackHeight + MOBILE_PAD * 2,
+    MOBILE_MIN_H,
+  )
+  // Centre the stack vertically in the container — resolves to MOBILE_PAD for
+  // the multi-event case, and to a larger value when the min-height floor kicks
+  // in (e.g. a single event on a short stack), keeping it vertically central.
+  const mobilePadTop = (mobileContainerHeight - mobileStackHeight) / 2
   const mobileCardTop = (i: number) =>
-    MOBILE_PAD_TOP + i * (MOBILE_CARD_H + MOBILE_CARD_GAP)
+    mobilePadTop + i * (MOBILE_CARD_H + MOBILE_CARD_GAP)
   const mobileCardCenter = (i: number) => mobileCardTop(i) + MOBILE_CARD_H / 2
 
   return (
@@ -902,17 +927,17 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
       })}
 
       {/* Arms container.
-          Desktop (>=992): clip vertically so arm bases hide, allow horizontal overflow.
+          Desktop (>=992): no clipping — arms overflow freely.
           Mobile (<992):   clip horizontally so arm bases hide, allow vertical overflow. */}
       <div
         // No z-index here (would trap arm z-indices in one layer): individual
         // arm z lives in the root context so the active arm can rise above its
-        // panel while the others stay below it. overflow still clips the bases.
+        // panel while the others stay below it.
         className="absolute inset-0 pointer-events-none"
         style={
           isMobile
             ? { overflowX: 'clip', overflowY: 'visible' }
-            : { overflowX: 'visible', overflowY: 'clip' }
+            : { overflowX: 'visible', overflowY: 'visible' }
         }
       >
         {mounted && arms.map((arm, i) => {
@@ -1086,6 +1111,39 @@ export default function MinglingCharacters({ events = [], onSubscribe, initialSh
                 // Deterministic per index (400–520px) to stay SSR-safe.
                 width: 'auto',
                 height: 400 + ((i * 37) % 121),
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Dense foreground crowd — sits IN FRONT of everything else, including a
+          clicked arm (z-40) and its open panel (z-39), so it stays the true
+          foreground even mid-interaction. Sprites cycling the same art, spread
+          evenly across the full width so it reads as a packed crowd. Decorative
+          + non-interactive, so arm clicks pass straight through. */}
+      <div
+        ref={frontContainerRef}
+        aria-hidden="true"
+        className="absolute bottom-0 left-0 right-0 z-[50] hidden min-[992px]:block pointer-events-none"
+        style={{ height: 500 }}
+      >
+        {Array.from({ length: FRONT_CHAR_COUNT }, (_, i) => (
+          <div
+            key={i}
+            data-character-wrapper
+            className="absolute bottom-0"
+            style={{ willChange: 'transform' }}
+          >
+            <img
+              src={CHARACTERS[i % CHARACTERS.length]}
+              alt=""
+              className="pointer-events-none"
+              style={{
+                // auto width (aspect preserved); height varied deterministically
+                // (400–520px) per index so the crowd doesn't look uniform.
+                width: 'auto',
+                height: 400 + ((i * 53) % 121),
               }}
             />
           </div>

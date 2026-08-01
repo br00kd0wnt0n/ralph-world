@@ -17,6 +17,12 @@ export default function PageShift({ children }: { children: ReactNode }) {
       // sits above the midground/foreground parallax layers (z-1 / z-5).
       className="relative z-10 flex-1 flex flex-col"
       style={{
+        // Clip at the page bottom (this box wraps main + footer, so its bottom
+        // edge is the footer's bottom). Stops decorative content that overflows
+        // downward — e.g. the events foreground crowd — from poking out below
+        // the footer. `clip` (not `hidden`) avoids creating a scroll container /
+        // containing block, so fixed + portalled descendants are unaffected.
+        overflow: 'clip',
         transform: open ? 'translateX(100%)' : 'none',
         opacity: open ? 0 : 1,
         transition:

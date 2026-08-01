@@ -45,6 +45,13 @@ All notable changes documented here, organised by session. Most recent on top.
 - **LivePlayer** gained backward-compatible optional props — controlled mute
   (`muted` / `onMutedChange`), `fit` (`cover`|`contain`), and `hideMuteUi` — used
   only by the immersive view; the homepage teaser and desktop set are unchanged.
+- `RALPHTV.png` wordmark downscaled 1414×290 → 720×141 (still transparent).
+
+### Shop (`ShopClient.tsx`)
+- **Dynamic category tabs**: The Mag / Merch / Random S\*\*t only appear when the
+  category has ≥1 product; the default active tab is the first non-empty
+  category, and tab widths distribute evenly across whatever's shown (mirrors the
+  magazine dynamic categories).
 
 ---
 

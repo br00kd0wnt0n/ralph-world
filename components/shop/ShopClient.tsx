@@ -58,7 +58,9 @@ export default function ShopClient({
   initialProduct,
 }: ShopClientProps) {
   const [activeCollection, setActiveCollection] = useState<ShopCategory>(
-    CATEGORIES[0].handle
+    () =>
+      CATEGORIES.find((c) => (collections[c.handle]?.length ?? 0) > 0)?.handle ??
+      CATEGORIES[0].handle,
   )
   const activeCategory = CATEGORIES.find((c) => c.handle === activeCollection)
   // selectedProduct drives the inline view swap — when non-null, the
@@ -70,6 +72,11 @@ export default function ShopClient({
   const [subscribeOpen, setSubscribeOpen] = useState(false)
 
   const products = collections[activeCollection] ?? []
+
+  // Only offer category tabs that actually have products.
+  const visibleCategories = CATEGORIES.filter(
+    (c) => (collections[c.handle]?.length ?? 0) > 0,
+  )
 
   async function fetchProduct(handle: string): Promise<ShopifyProduct | null> {
     const res = await fetch(`/api/shop/${handle}`)
@@ -227,14 +234,14 @@ export default function ShopClient({
                   />
 
                   <div className="flex justify-center">
-                    {CATEGORIES.map((cat) => {
+                    {visibleCategories.map((cat) => {
                       const isActive = activeCollection === cat.handle
                       return (
                         <button
                           key={cat.handle}
                           onClick={() => setActiveCollection(cat.handle)}
                           className="relative text-intro transition-colors flex items-center justify-center text-black light:text-white"
-                          style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: '33.333%', textAlign: 'center' }}
+                          style={{ fontSize: 18, lineHeight: 1, fontWeight: isActive ? 700 : 600, height: 50, padding: 0, width: `${100 / Math.max(visibleCategories.length, 1)}%`, textAlign: 'center' }}
                         >
                           <span className="relative z-10">{cat.label}</span>
                           {isActive && (

@@ -365,7 +365,8 @@ img {
 }
 
 /* Scroll-in ralph circle logo — invert in light mode: cream disc + black
-   letters becomes a #232323 disc with cream letters (pink still on hover). */
+   letters becomes a #232323 disc with cream letters. On hover it flips back to
+   a light-grey disc with black letters. */
 :root[data-theme="light"] .ralph-circle-logo circle {
   fill: #232323;
 }
@@ -373,7 +374,10 @@ img {
   color: #e3e3db;
 }
 :root[data-theme="light"] .ralph-circle-logo:hover {
-  color: #ea128b;
+  color: #000;
+}
+:root[data-theme="light"] .ralph-circle-logo:hover circle {
+  fill: #e3e3db;
 }
 
 /* ── Button press ── */

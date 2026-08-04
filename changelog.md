@@ -4,6 +4,18 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-08-04 — Light-mode polish: circle logo hover + planet pips
+
+- **Circle logo hover** (`globals.css`): in light mode the scroll-in ralph
+  circle logo now flips on hover from the `#232323` disc + cream letters to a
+  light-grey (`#e3e3db`) disc with black letters. Dark mode unchanged (pink
+  letters on hover).
+- **Planet panel carousel pips** (`PlanetSection.tsx`): the active/current pip on
+  the homepage planet expanding-panel carousel is now white in light mode
+  (`bg-ralph-pink light:bg-white`) — still pink in dark mode.
+
+---
+
 ## 2026-08-01 — Events crowd + footer fill, TV mobile viewing
 
 ### Events (`EventsClient.tsx`, `MinglingCharacters.tsx`, `PageShift.tsx`)

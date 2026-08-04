@@ -568,7 +568,8 @@ export default function PlanetSection({
                         </svg>
                       </button>
                       {/* Pips — bottom-centre, on a subtle pill so they read
-                          over any thumbnail. Active pip elongates in pink. */}
+                          over any thumbnail. Active pip elongates — pink in dark
+                          mode, white in light mode. */}
                       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-black/40 px-2 py-1">
                         {moduleCard.items.map((item, i) => (
                           <button
@@ -582,7 +583,7 @@ export default function PlanetSection({
                             aria-current={i === swiperIndex ? 'true' : undefined}
                             className={`h-1.5 rounded-full transition-all ${
                               i === swiperIndex
-                                ? 'w-4 bg-ralph-pink'
+                                ? 'w-4 bg-ralph-pink light:bg-white'
                                 : 'w-1.5 bg-white/60 hover:bg-white'
                             }`}
                           />

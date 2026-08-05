@@ -49,27 +49,36 @@ export function useHls(streamUrl: string | null) {
       }
     }
 
-    // hls.js for everything else (Chrome / Edge / Firefox) — tuned for
-    // low-latency live
+    // hls.js for everything else (Chrome / Edge / Firefox).
     if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
-        lowLatencyMode: true,
+        // lowLatencyMode is for LL-HLS streams (with EXT-X-PART / EXT-X-
+        // SERVER-CONTROL markers). Bunny serves standard HLS v3 with
+        // 2s segments — no LL support. Enabling LL mode on a non-LL
+        // stream made hls.js chase the live edge so aggressively it
+        // exhausted its buffer on any network micro-stall and froze
+        // 5-10s in. Explicitly false.
+        lowLatencyMode: false,
         liveDurationInfinity: true,
-        // Buffer targets — 2s segments. Raised from the initial aggressive
-        // low-latency values (sync=4/max=10/buffer=30) after London testers
-        // reported intermittent freezes. Bigger buffer costs ~10s of extra
-        // wall-clock delay behind the encoder but survives slow-network
-        // moments without stalling — for a passive-viewing TV loop that's
-        // the right trade.
+        // Buffer targets — comfortable for a passive-viewing TV loop.
+        // We accept ~10s wall-clock delay behind the encoder to survive
+        // slow-network moments cleanly.
         liveSyncDuration: 8,
         liveMaxLatencyDuration: 20,
         maxBufferLength: 60,
         maxMaxBufferLength: 120,
-        // Retry network blips
-        manifestLoadingMaxRetry: 6,
-        levelLoadingMaxRetry: 6,
-        fragLoadingMaxRetry: 6,
+        // Retry counts — bumped after freezing reports. CDN edges
+        // occasionally 5xx a single .ts; more retries survive it.
+        manifestLoadingMaxRetry: 10,
+        levelLoadingMaxRetry: 10,
+        fragLoadingMaxRetry: 10,
+        // When the video element stalls at a specific timestamp
+        // (missing frame, decoder blip), hls.js nudges the currentTime
+        // forward to unstick it. Defaults are low; bump so a stall
+        // gets more chances to auto-recover before giving up.
+        nudgeOffset: 0.5,
+        nudgeMaxRetry: 10,
       })
       hlsRef.current = hls
 
@@ -85,17 +94,31 @@ export function useHls(streamUrl: string | null) {
       })
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (!data.fatal) return
+        // Non-fatal buffer stalls: hls.js emits these when playback is
+        // stuck because the buffer went empty. Not usually recoverable
+        // via startLoad (loader is often already trying), but nudging
+        // playback past the stall point can free it. hls.js already
+        // does this via nudgeOffset/nudgeMaxRetry above — nothing to
+        // do here beyond logging for observability.
+        if (!data.fatal) {
+          if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
+            console.warn('[hls] buffer stalled — hls.js will nudge')
+          }
+          return
+        }
 
-        // Auto-recover on fatal errors before giving up
+        // Fatal errors: attempt recovery before giving up.
         switch (data.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
+            console.warn('[hls] fatal network error — reloading source', data.details)
             hls.startLoad()
             break
           case Hls.ErrorTypes.MEDIA_ERROR:
+            console.warn('[hls] fatal media error — recovering', data.details)
             hls.recoverMediaError()
             break
           default:
+            console.error('[hls] fatal error, giving up', data.type, data.details)
             setError(data.type)
             hls.destroy()
         }

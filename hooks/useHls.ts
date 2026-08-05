@@ -56,11 +56,16 @@ export function useHls(streamUrl: string | null) {
         enableWorker: true,
         lowLatencyMode: true,
         liveDurationInfinity: true,
-        // Buffer targets for 1s segments
-        liveSyncDuration: 4,
-        liveMaxLatencyDuration: 10,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
+        // Buffer targets — 2s segments. Raised from the initial aggressive
+        // low-latency values (sync=4/max=10/buffer=30) after London testers
+        // reported intermittent freezes. Bigger buffer costs ~10s of extra
+        // wall-clock delay behind the encoder but survives slow-network
+        // moments without stalling — for a passive-viewing TV loop that's
+        // the right trade.
+        liveSyncDuration: 8,
+        liveMaxLatencyDuration: 20,
+        maxBufferLength: 60,
+        maxMaxBufferLength: 120,
         // Retry network blips
         manifestLoadingMaxRetry: 6,
         levelLoadingMaxRetry: 6,

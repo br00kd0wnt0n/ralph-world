@@ -261,7 +261,11 @@ export default function TVSet({
     }
 
     fetchSchedule()
-    const interval = setInterval(fetchSchedule, 30_000)
+    // Poll every 15s (was 30s). Halves the worst-case gap between "show
+    // just ended, next one on the stream" and "Schedule strip updates".
+    // Endpoint is lightweight (no DB — hits broadcaster + returns JSON)
+    // so 2× request rate is trivial.
+    const interval = setInterval(fetchSchedule, 15_000)
 
     // Refetch immediately when the tab becomes visible — otherwise a user
     // who switches tabs for a minute comes back to the show that was on

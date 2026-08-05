@@ -93,6 +93,37 @@ export function useHls(streamUrl: string | null) {
         })
       })
 
+      // Live-resync: if the player has drifted far behind the live edge
+      // (typically because the tab was hidden / laptop was asleep / OS
+      // paused the video for a long time), snap forward to live on the
+      // next resume or visibility flip. Otherwise auto-resume plays
+      // content from wherever currentTime was — for a long-idle tab
+      // that can be hours behind the actual broadcast.
+      //
+      // liveSyncPosition is hls.js's canonical "where live is right
+      // now" — a few seconds behind the newest segment. Threshold 30s
+      // is well above the buffer target (~8s sync) so we only snap on
+      // genuine drift, not normal live latency.
+      const LIVE_DRIFT_THRESHOLD_SEC = 30
+      const v = video // narrow — video is guaranteed non-null in this branch
+      function syncToLiveIfDrifted() {
+        const target = hls.liveSyncPosition
+        if (typeof target !== 'number' || Number.isNaN(target)) return
+        if (target - v.currentTime > LIVE_DRIFT_THRESHOLD_SEC) {
+          console.warn(
+            '[hls] far behind live edge, snapping forward',
+            { was: v.currentTime, to: target }
+          )
+          v.currentTime = target
+        }
+      }
+      const onPlayAttempt = () => syncToLiveIfDrifted()
+      v.addEventListener('play', onPlayAttempt)
+      const onVisible = () => {
+        if (document.visibilityState === 'visible') syncToLiveIfDrifted()
+      }
+      document.addEventListener('visibilitychange', onVisible)
+
       hls.on(Hls.Events.ERROR, (_event, data) => {
         // Non-fatal buffer stalls: hls.js emits these when playback is
         // stuck because the buffer went empty. Not usually recoverable
@@ -125,6 +156,8 @@ export function useHls(streamUrl: string | null) {
       })
 
       return () => {
+        v.removeEventListener('play', onPlayAttempt)
+        document.removeEventListener('visibilitychange', onVisible)
         hls.destroy()
         hlsRef.current = null
       }

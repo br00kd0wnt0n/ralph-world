@@ -333,6 +333,18 @@ export default function TVSet({
   const currentShow = nowPlaying.current ?? schedule[0]
   const nextShow = nowPlaying.next ?? schedule[1]
 
+  // Sync the Schedule strip's "ON NOW" line to the same nowPlaying source
+  // Show Info reads. Otherwise the two panels can transiently disagree
+  // during clip transitions (they poll different endpoints on different
+  // cadences). Finding the streamer's current assetId inside the schedule
+  // array gives us the accurate slot regardless of which fetch is fresher.
+  const scheduleCurrentIndex = (() => {
+    const id = nowPlaying.current?.assetId
+    if (!id) return 0
+    const idx = schedule.findIndex((s) => s.assetId === id)
+    return idx >= 0 ? idx : 0
+  })()
+
   // Determine screen state.
   // When previewEnabled is false, guests watch freely with no expiry.
   // When previewEnabled is true, guests are gated once previewExpired flips.
@@ -545,7 +557,7 @@ export default function TVSet({
                   exit="exit"
                   className="absolute inset-0 z-10"
                 >
-                  <TeletextSchedule schedule={schedule} />
+                  <TeletextSchedule schedule={schedule} currentIndex={scheduleCurrentIndex} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -872,7 +884,7 @@ export default function TVSet({
                   exit="exit"
                   className="absolute inset-0 z-10"
                 >
-                  <TeletextSchedule schedule={schedule} />
+                  <TeletextSchedule schedule={schedule} currentIndex={scheduleCurrentIndex} />
                 </motion.div>
               )}
             </AnimatePresence>

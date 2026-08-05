@@ -55,6 +55,18 @@ export const metadata: Metadata = {
     title: 'Ralph — The Entertainment People',
     description:
       'Pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
+    // Default share card. 1200×630 (1.91:1) is the standard OG size and also
+    // serves as the Twitter summary_large_image (Twitter falls back to og:image).
+    // Relative path resolves against metadataBase. Pages that set their own
+    // openGraph.images (article/product/event) override this.
+    images: [
+      {
+        url: '/imgs/ralph_meta_1200x630.png',
+        width: 1200,
+        height: 630,
+        alt: 'Ralph — The Entertainment People',
+      },
+    ],
   },
   twitter: {
     // Only the card type is set globally. Title/description/image are left

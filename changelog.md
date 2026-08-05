@@ -4,6 +4,16 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-08-05 — Default social share image
+
+- **Default OG image** (`layout.tsx`, `public/imgs/ralph_meta_1200x630.png`): the
+  site now ships a default `openGraph.images` card (1200×630, 1.91:1). It doubles
+  as the Twitter `summary_large_image` (Twitter falls back to `og:image`), and
+  per-page `openGraph.images` (article/product/event) still override it. Relative
+  path resolves against `metadataBase`.
+
+---
+
 ## 2026-08-04 — Light-mode polish: circle logo hover + planet pips
 
 - **Circle logo hover** (`globals.css`): in light mode the scroll-in ralph

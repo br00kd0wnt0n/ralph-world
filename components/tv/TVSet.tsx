@@ -661,13 +661,12 @@ export default function TVSet({
               (the speaker/control zone between ~73% and ~99% of the TV width).
               Panel SVG viewBox is 169 × 380; rendered at ~17.3% of TV width
               to match the TV's natural scale. Buttons overlay on top of it.
-              On mobile these on-TV controls are too small to operate, so they
-              stay as decoration only (pointer-events-none) — watching happens
-              in the immersive view instead. */}
+              Interactive on every breakpoint: Show Info / Schedule toggle their
+              teletext overlay on the TV screen; Fullscreen opens the immersive
+              view on mobile (same as "Tap to watch") or native fullscreen on
+              desktop. */}
           <div
-            className={`absolute [container-type:inline-size] ${
-              isMobile ? 'pointer-events-none' : ''
-            }`}
+            className="absolute [container-type:inline-size]"
             style={{
               right: '2%',
               top: '5.4%',
@@ -760,8 +759,11 @@ export default function TVSet({
                 <button
                   type="button"
                   onClick={() => {
-                    playSfx(isFullscreen ? 'off' : 'on')
-                    handleFullscreen()
+                    playSfx('on')
+                    // Mobile: same as "Tap to watch" — open the immersive
+                    // (true-fullscreen) player. Desktop: native fullscreen set.
+                    if (isMobile) enterImmersive()
+                    else handleFullscreen()
                   }}
                   className="flex items-center gap-1 group"
                 >

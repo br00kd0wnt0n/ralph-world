@@ -4,6 +4,16 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-08-05 — Mobile TV on-set controls
+
+- **On-set panel works on mobile** (`TVSet.tsx`): removed the mobile
+  `pointer-events-none` on the TV's side panel. **Show Info / Schedule** now
+  toggle their teletext overlay on the TV-screen cutout (confined to the set),
+  and the on-set **Fullscreen** button opens the immersive true-fullscreen player
+  on mobile (same as "Tap to watch"); desktop keeps native fullscreen.
+
+---
+
 ## 2026-08-05 — Mobile TV true fullscreen
 
 - **True device fullscreen** on the mobile "Tap to watch" immersive view

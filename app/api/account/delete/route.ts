@@ -4,7 +4,6 @@ import { auth, signOut } from '@/lib/auth'
 import { getDb } from '@/lib/db'
 import {
   users,
-  profiles,
   accounts,
   sessions,
   shopifyLinks,
@@ -81,8 +80,13 @@ export async function POST(_req: NextRequest) {
     await db.delete(sessions).where(eq(sessions.userId, userId))
     await db.delete(accounts).where(eq(accounts.userId, userId))
 
-    // Profile row, then user.
-    await db.delete(profiles).where(eq(profiles.id, userId))
+    // The profiles row is NOT deleted explicitly: ralph_world has
+    // SELECT/INSERT + column-level UPDATE on profiles and no DELETE
+    // (scripts/db-roles-phase-1.sql §7 — the no-self-promotion grant),
+    // so an explicit delete fails with insufficient_privilege and takes
+    // the whole pipeline down. profiles.id is a FK to users.id with
+    // ON DELETE CASCADE, and Postgres runs that RI trigger with the
+    // table owner's privileges, so the row goes with the user anyway.
     await db.delete(users).where(eq(users.id, userId))
   } catch (err) {
     // Any DB step throwing here previously bubbled up as a bare 500 and the

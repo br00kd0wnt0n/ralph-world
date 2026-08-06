@@ -14,6 +14,13 @@ All notable changes documented here, organised by session. Most recent on top.
     unchanged).
   - Title image margin-bottom set to a flat 8px (`mb-2`).
   - "SCROLL FOR MORE ▾" hint hidden on mobile (`hidden md:block`).
+  - **Schedule body kept on mobile**: the ON NOW / UP NEXT list's `max-height`
+    reserve is now responsive (`4.5rem` mobile / `12rem` desktop) with tighter
+    mobile header + row spacing, so the listings stay visible on the small
+    TV-set screen instead of collapsing under the fixed 12rem reserve. On mobile
+    each row is a single line — the show name truncates with an ellipsis
+    (`truncate` + `min-w-0`); desktop reverts to normal wrapping
+    (`md:whitespace-normal md:overflow-visible`), showing full names.
   - **Show Info on mobile**: keeps the RALPH TV header + show-name title; the
     time/timezone line + playback bar are hidden and the description is
     truncated to a 75-char teaser. Desktop still shows everything.

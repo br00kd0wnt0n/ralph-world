@@ -68,7 +68,7 @@ export default function TeletextSchedule({
         variants={teletextHeaderVariants}
         initial="hidden"
         animate="visible"
-        className="flex items-center justify-between text-[8px] md:text-xs mb-4 text-ralph-pink"
+        className="flex items-center justify-between text-[8px] md:text-xs mb-2 md:mb-4 text-ralph-pink"
       >
         <span className="font-bold tracking-wider">
           RALPHFAX&nbsp;&nbsp;&nbsp;101
@@ -90,7 +90,7 @@ export default function TeletextSchedule({
       {schedule.length === 0 ? (
         <p className="text-white/60 text-[10px] md:text-sm">Schedule unavailable</p>
       ) : (
-        <div className="space-y-4 overflow-y-auto max-h-[calc(100%-12rem)] pr-1">
+        <div className="space-y-2 md:space-y-4 overflow-y-auto max-h-[calc(100%-4.5rem)] md:max-h-[calc(100%-12rem)] pr-1">
           {/* ON NOW */}
           {current && (
             <div>
@@ -102,13 +102,13 @@ export default function TeletextSchedule({
                   </span>
                 )}
               </div>
-              <div className="text-ralph-pink text-[10px] md:text-sm flex gap-3 pb-1 border-b-2 border-ralph-purple">
+              <div className="text-ralph-pink text-[10px] md:text-sm flex gap-3 pb-1 border-b-2 border-ralph-purple min-w-0">
                 <span className="shrink-0 tabular-nums">
                   {pairs[currentIndex]?.start ?? current.startTime}
                   -
                   {pairs[currentIndex]?.end ?? current.endTime}
                 </span>
-                <span className="uppercase tracking-wide font-bold">
+                <span className="uppercase tracking-wide font-bold truncate min-w-0 md:whitespace-normal md:overflow-visible">
                   {current.showName}
                 </span>
               </div>
@@ -128,12 +128,14 @@ export default function TeletextSchedule({
                   return (
                     <div
                       key={i}
-                      className="flex gap-3 text-[9px] md:text-sm text-white"
+                      className="flex gap-3 text-[9px] md:text-sm text-white min-w-0"
                     >
                       <span className="shrink-0 tabular-nums">
                         {pair?.start ?? item.startTime}-{pair?.end ?? item.endTime}
                       </span>
-                      <span className="uppercase tracking-wide">{item.showName}</span>
+                      <span className="uppercase tracking-wide truncate min-w-0 md:whitespace-normal md:overflow-visible">
+                        {item.showName}
+                      </span>
                     </div>
                   )
                 })}

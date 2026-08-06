@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { MIN_PASSWORD_LENGTH } from '@/lib/auth/password-policy'
 
 /**
  * Password reset page — Task 3.7.
@@ -134,8 +135,10 @@ function ConfirmForm({ email, token }: { email: string; token: string }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    // Must match the server floor in lib/auth/passwords.ts — a shorter
+    // client gate just turns into an opaque 400 from /api/auth/set-password.
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`)
       return
     }
     if (password !== confirm) {
@@ -154,8 +157,14 @@ function ConfirmForm({ email, token }: { email: string; token: string }) {
         const data = await res.json().catch(() => ({}))
         if (data?.error === 'expired') {
           setError('This reset link has expired. Please request a new one.')
-        } else if (data?.error === 'not_found') {
+        } else if (data?.error === 'not_found' || data?.error === 'no_user') {
           setError('This reset link is invalid. Please request a new one.')
+        } else if (data?.error === 'password_too_short') {
+          // Surface the server's own reason rather than the generic
+          // fallback — otherwise a policy mismatch reads as a server fault.
+          setError(data?.message ?? `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`)
+        } else if (data?.error === 'rate_limited') {
+          setError('Too many attempts. Please wait a few minutes and try again.')
         } else {
           setError('Something went wrong. Please try again.')
         }
@@ -182,10 +191,10 @@ function ConfirmForm({ email, token }: { email: string; token: string }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={8}
+            minLength={MIN_PASSWORD_LENGTH}
             autoComplete="new-password"
             className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ralph-pink/40 light:focus:ring-neutral-400/40"
-            placeholder="At least 8 characters"
+            placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
           />
         </div>
         <div>

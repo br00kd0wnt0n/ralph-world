@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import { MIN_PASSWORD_LENGTH } from './password-policy'
 
 /**
  * Password hashing for the Credentials provider — Task 1.3.
@@ -9,8 +10,8 @@ import bcrypt from 'bcryptjs'
  */
 const BCRYPT_COST = 12
 
-/** Minimum password length. Matches member-portal copy. */
-export const MIN_PASSWORD_LENGTH = 10
+/** Re-exported so existing server-side importers keep their import path. */
+export { MIN_PASSWORD_LENGTH }
 
 export interface PasswordValidationResult {
   ok: boolean

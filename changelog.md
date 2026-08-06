@@ -4,13 +4,32 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
-## 2026-08-05 — Default social share image
+## 2026-08-05 — Social meta + SEO fixes
 
-- **Default OG image** (`layout.tsx`, `public/imgs/ralph_meta_1200x630.png`): the
-  site now ships a default `openGraph.images` card (1200×630, 1.91:1). It doubles
-  as the Twitter `summary_large_image` (Twitter falls back to `og:image`), and
-  per-page `openGraph.images` (article/product/event) still override it. Relative
-  path resolves against `metadataBase`.
+- **Default OG image → static file convention** (`app/opengraph-image.png` new,
+  `app/opengraph-image.tsx` removed): replaced the runtime-generated OG card with
+  the supplied static 1200×630 PNG. As a file-convention image it's inherited by
+  every route (even ones that set their own `openGraph`) and doubles as the
+  Twitter `summary_large_image`. Reverted the earlier `openGraph.images` in
+  `layout.tsx` (redundant with the file convention).
+- **`og:type` / `og:site_name` restored** (`app/page.tsx`): the home page
+  re-declared `openGraph`, and Next does NOT deep-merge it across segments — so
+  the root's `siteName`/`type`/`locale` were being dropped (Facebook flagged
+  `og:type` missing). Removed the redundant page-level block so it inherits the
+  root layout's openGraph. (Section pages that set their own openGraph still need
+  the same treatment — follow-up.)
+- **Single H1 on home** (`components/home/Hero.tsx`): the page had two H1s (the
+  `sr-only` descriptive one + the hero title image). Demoted the hero title-image
+  wrapper from `<h1>` to `<div>` (keeps its `alt` + animation); the `sr-only`
+  text is now the sole H1.
+- **Asset cleanup**: removed ~40 unused source SVGs / source frames / sample
+  files from `public/` (e.g. `alien burn #N.*`, `saucer_2_*`, `*.svg` sources,
+  Duffy web-test files, unused sfx) — the app uses their rasterised/converted
+  siblings, which are untouched.
+
+> Note: absolute share URLs resolve from `NEXT_PUBLIC_APP_URL` (`ralph.world`).
+> Validators can't fetch the image until that host actually serves (DNS cutover)
+> or the env points at the Railway host.
 
 ---
 

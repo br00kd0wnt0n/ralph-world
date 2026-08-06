@@ -42,7 +42,10 @@ export default function Hero({ heading, line1, line2, line3, themeKey }: HeroPro
         animate="visible"
         className="relative z-10 max-w-2xl"
       >
-        <motion.h1
+        {/* Title art is decorative branding, not the document h1 — the page's
+            single h1 is the descriptive sr-only heading in app/page.tsx (avoids
+            two h1s). The alt still conveys the wording. */}
+        <motion.div
           variants={heroChildVariants}
           className="mb-8"
         >
@@ -52,7 +55,7 @@ export default function Hero({ heading, line1, line2, line3, themeKey }: HeroPro
             className="mx-auto max-w-full h-auto md:h-[126px] light:brightness-0"
             style={{ width: 1126 / 2 }}
           />
-        </motion.h1>
+        </motion.div>
 
         <motion.p
           variants={heroChildVariants}

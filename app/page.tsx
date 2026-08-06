@@ -15,12 +15,10 @@ export const metadata: Metadata = {
   description:
     'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
   alternates: { canonical: '/' },
-  openGraph: {
-    title: 'Ralph — The Entertainment People',
-    description:
-      'Pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
-    url: '/',
-  },
+  // No page-level openGraph: Next does NOT deep-merge openGraph across segments,
+  // so re-declaring it here dropped the root's siteName/type/locale (→ og:site_name
+  // was missing). Inheriting the root layout's openGraph keeps them, and the
+  // title/description/url are identical anyway.
 }
 
 export default async function Home() {

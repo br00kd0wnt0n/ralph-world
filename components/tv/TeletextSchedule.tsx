@@ -68,7 +68,7 @@ export default function TeletextSchedule({
         variants={teletextHeaderVariants}
         initial="hidden"
         animate="visible"
-        className="flex items-center justify-between text-[10px] md:text-xs mb-4 text-ralph-pink"
+        className="flex items-center justify-between text-[8px] md:text-xs mb-4 text-ralph-pink"
       >
         <span className="font-bold tracking-wider">
           RALPHFAX&nbsp;&nbsp;&nbsp;101
@@ -78,23 +78,23 @@ export default function TeletextSchedule({
       </motion.div>
 
       {/* "Schedule" title — pixel asset (purple highlight bar is baked in) */}
-      <h2 className="mb-5 md:mb-6">
+      <h2 className="mb-2">
         <img
           src="/illustrations/SCHEDULE.png"
           alt="Schedule"
-          className="block h-10 md:h-16 w-auto"
+          className="block h-5 md:h-16 w-auto"
           style={{ imageRendering: 'pixelated' }}
         />
       </h2>
 
       {schedule.length === 0 ? (
-        <p className="text-white/60 text-sm">Schedule unavailable</p>
+        <p className="text-white/60 text-[10px] md:text-sm">Schedule unavailable</p>
       ) : (
         <div className="space-y-4 overflow-y-auto max-h-[calc(100%-12rem)] pr-1">
           {/* ON NOW */}
           {current && (
             <div>
-              <div className="text-white/80 text-[10px] md:text-xs mb-1 tracking-wider flex items-center gap-2">
+              <div className="text-white/80 text-[8px] md:text-xs mb-1 tracking-wider flex items-center gap-2">
                 <span>ON NOW:</span>
                 {tzLabel && (
                   <span className="text-white/50 normal-case tracking-normal">
@@ -102,7 +102,7 @@ export default function TeletextSchedule({
                   </span>
                 )}
               </div>
-              <div className="text-ralph-pink text-xs md:text-sm flex gap-3 pb-1 border-b-2 border-ralph-purple">
+              <div className="text-ralph-pink text-[10px] md:text-sm flex gap-3 pb-1 border-b-2 border-ralph-purple">
                 <span className="shrink-0 tabular-nums">
                   {pairs[currentIndex]?.start ?? current.startTime}
                   -
@@ -118,7 +118,7 @@ export default function TeletextSchedule({
           {/* UP NEXT */}
           {upcoming.length > 0 && (
             <div>
-              <div className="text-white/80 text-[10px] md:text-xs mb-1 tracking-wider">
+              <div className="text-white/80 text-[8px] md:text-xs mb-1 tracking-wider">
                 UP NEXT:
               </div>
               <div className="space-y-1">
@@ -128,7 +128,7 @@ export default function TeletextSchedule({
                   return (
                     <div
                       key={i}
-                      className="flex gap-3 text-[11px] md:text-sm text-white"
+                      className="flex gap-3 text-[9px] md:text-sm text-white"
                     >
                       <span className="shrink-0 tabular-nums">
                         {pair?.start ?? item.startTime}-{pair?.end ?? item.endTime}
@@ -144,7 +144,7 @@ export default function TeletextSchedule({
       )}
 
       {/* Scroll hint — bottom-left */}
-      <div className="absolute bottom-3 left-4 md:left-6 text-[10px] text-white/60 tracking-wider">
+      <div className="absolute bottom-3 left-4 md:left-6 text-[8px] md:text-[10px] text-white/60 tracking-wider hidden md:block">
         SCROLL FOR MORE ▾
       </div>
     </div>

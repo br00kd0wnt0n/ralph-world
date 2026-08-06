@@ -63,46 +63,56 @@ export default function TeletextShowInfo({ current }: TeletextShowInfoProps) {
   return (
     <div className="absolute inset-0 bg-black/70 font-mono p-2.5 md:p-6 overflow-hidden flex flex-col">
       {/* RALPH TV CEEFAX block letters — pixel asset */}
-      <div className="mb-5 md:mb-6">
+      <div className="mb-2">
         <img
           src="/illustrations/RALPHTV.png"
           alt="Ralph TV"
-          className="block h-8 md:h-12 w-auto"
+          className="block h-4 md:h-12 w-auto"
           style={{ imageRendering: 'pixelated' }}
         />
       </div>
 
       {current ? (
         <div className="flex-1 min-h-0">
-          <div className="text-white/80 text-xs md:text-sm mb-1 tabular-nums flex items-center gap-2">
+          {/* Time + timezone — body text, hidden on mobile (title only). */}
+          <div className="hidden md:flex text-white/80 text-[10px] md:text-sm mb-1 tabular-nums items-center gap-2">
             <span>
               {displayStart}-{displayEnd}
             </span>
             {tzLabel && (
-              <span className="text-white/50 text-[10px] md:text-[11px]">
+              <span className="text-white/50 text-[8px] md:text-[11px]">
                 {tzLabel}
               </span>
             )}
           </div>
-          <h3 className="text-white text-xl md:text-3xl font-bold uppercase tracking-wide mb-3">
+          {/* Show name — this is the title, kept on mobile. */}
+          <h3 className="text-white text-sm md:text-3xl font-bold uppercase tracking-wide mb-3">
             {current.showName}
           </h3>
           {current.description && (
-            <p className="text-white/80 text-xs md:text-sm leading-relaxed">
-              {current.description}
-            </p>
+            <>
+              {/* Mobile: short teaser (first 75 chars). Desktop: full text. */}
+              <p className="md:hidden text-white/80 text-[10px] leading-relaxed">
+                {current.description.length > 75
+                  ? `${current.description.slice(0, 75).trimEnd()}…`
+                  : current.description}
+              </p>
+              <p className="hidden md:block text-white/80 text-sm leading-relaxed">
+                {current.description}
+              </p>
+            </>
           )}
         </div>
       ) : (
-        <div className="flex-1 text-white/60 text-xs">Schedule unavailable</div>
+        <div className="hidden md:block flex-1 text-white/60 text-[10px] md:text-xs">Schedule unavailable</div>
       )}
 
-      {/* Playback bar */}
-      <div className="relative pt-5 mt-3">
+      {/* Playback bar — hidden on mobile (title-only on the small screen) */}
+      <div className="hidden md:block relative pt-5 mt-3">
         {/* Floating current-time marker on the bar */}
         {startMin !== null && endMin !== null && (
           <div
-            className="absolute top-0 -translate-x-1/2 text-white text-[10px] md:text-xs font-bold tabular-nums whitespace-nowrap"
+            className="absolute top-0 -translate-x-1/2 text-white text-[8px] md:text-xs font-bold tabular-nums whitespace-nowrap"
             style={{ left: `${progressPct}%` }}
           >
             {timeStr}
@@ -118,7 +128,7 @@ export default function TeletextShowInfo({ current }: TeletextShowInfoProps) {
         </div>
 
         {/* Start / end labels under bar */}
-        <div className="flex justify-between text-[10px] md:text-xs text-white/70 mt-1 font-mono tabular-nums">
+        <div className="flex justify-between text-[8px] md:text-xs text-white/70 mt-1 font-mono tabular-nums">
           <span>{displayStart}</span>
           <span>{displayEnd}</span>
         </div>

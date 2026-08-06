@@ -4,6 +4,22 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-08-05 — Teletext screens: compact on mobile
+
+- **Schedule / Show Info teletext screens** (`TeletextSchedule.tsx`,
+  `TeletextShowInfo.tsx`) sized down for the small TV-set screen on mobile:
+  - Title images much smaller on mobile — `SCHEDULE.png` `h-10 → h-5`,
+    `RALPHTV.png` `h-8 → h-4` (desktop `md:` sizes unchanged).
+  - Body/label/show-name text dropped a step on the base breakpoint (desktop
+    unchanged).
+  - Title image margin-bottom set to a flat 8px (`mb-2`).
+  - "SCROLL FOR MORE ▾" hint hidden on mobile (`hidden md:block`).
+  - **Show Info on mobile**: keeps the RALPH TV header + show-name title; the
+    time/timezone line + playback bar are hidden and the description is
+    truncated to a 75-char teaser. Desktop still shows everything.
+
+---
+
 ## 2026-08-05 — Mobile TV on-set controls
 
 - **On-set panel works on mobile** (`TVSet.tsx`): removed the mobile

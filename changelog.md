@@ -4,6 +4,27 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-08-05 — Mobile TV true fullscreen
+
+- **True device fullscreen** on the mobile "Tap to watch" immersive view
+  (`TVSet.tsx`), replacing the browser-window CSS overlay:
+  - **Android / element-FS browsers**: `requestFullscreen()` on the overlay
+    element (fired inside the tap gesture, overlay mounted synchronously via
+    `flushSync`). Our Schedule / Info / Mute controls live inside the overlay, so
+    they render **over the video** in fullscreen. Leaving fullscreen closes the
+    immersive view.
+  - **iPhone Safari** (no element fullscreen): native `<video>` fullscreen
+    (`webkitEnterFullscreen`) for a genuine full-device player. Driven by an
+    effect so it fires in-gesture when the stream is ready and re-fires if the
+    stream URL resolves just after the tap. **Schedule/Info + the rotate prompt
+    are hidden** on this path (can't overlay Apple's player); dismissing the
+    native player closes the immersive view.
+- **LivePlayer** gained an optional `onVideoEl` prop to surface its `<video>`
+  element (used to trigger iOS native fullscreen). Backward compatible — the
+  homepage teaser and desktop set are unaffected.
+
+---
+
 ## 2026-08-05 — Social meta + SEO fixes
 
 - **Default OG image → static file convention** (`app/opengraph-image.png` new,

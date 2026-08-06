@@ -23,6 +23,10 @@ interface LivePlayerProps {
   /** Hide the built-in hover-mute button + "tap to unmute" pill (the immersive
       view supplies its own control). */
   hideMuteUi?: boolean
+  /** Surfaces the underlying <video> element to the parent (used by the mobile
+      immersive view to trigger iOS native fullscreen). Called with null on
+      unmount / when offline. */
+  onVideoEl?: (el: HTMLVideoElement | null) => void
 }
 
 export default function LivePlayer({
@@ -37,6 +41,7 @@ export default function LivePlayer({
   onMutedChange,
   fit = 'cover',
   hideMuteUi = false,
+  onVideoEl,
 }: LivePlayerProps) {
   // Prop wins (used by tests / homepage teaser overrides). Otherwise pull
   // the URL at runtime from /api/broadcaster/relay-url — reading
@@ -98,6 +103,12 @@ export default function LivePlayer({
   useEffect(() => {
     onLiveChange?.(isReady && !error)
   }, [isReady, error, onLiveChange])
+
+  // Surface the <video> to the parent (iOS native-fullscreen trigger).
+  useEffect(() => {
+    onVideoEl?.(videoRef.current)
+    return () => onVideoEl?.(null)
+  }, [onVideoEl, videoRef, isReady, streamUrl, error])
 
   function toggleMute() {
     const v = videoRef.current

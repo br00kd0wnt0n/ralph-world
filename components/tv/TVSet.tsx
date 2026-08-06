@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { createPortal, flushSync } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLiveStatus } from '@/hooks/useLiveStatus'
 import { useAuth } from '@/context/AuthContext'
@@ -58,6 +58,15 @@ export default function TVSet({
   const [isMobile, setIsMobile] = useState<boolean | null>(null)
   const [immersive, setImmersive] = useState(false)
   const [isPortrait, setIsPortrait] = useState(false)
+  // Whether the browser supports element fullscreen (Android/desktop). iPhone
+  // Safari does not, so it uses native <video> fullscreen instead. null until
+  // measured on the client. Drives which fullscreen path + whether the custom
+  // Schedule/Info controls can overlay the video (only when element FS is used).
+  const [supportsElementFs, setSupportsElementFs] = useState<boolean | null>(null)
+  // Flips true once the immersive <video> element is mounted, so the iPhone
+  // native-fullscreen effect can fire even if the stream URL resolves after the
+  // tap (first open).
+  const [immersiveVideoReady, setImmersiveVideoReady] = useState(false)
   // Immersive playback starts muted (guaranteed autoplay); the user unmutes with
   // the mute control. Reset each time immersive opens.
   const [immersiveMuted, setImmersiveMuted] = useState(true)
@@ -67,6 +76,9 @@ export default function TVSet({
   // the live stream.
   const [nowPlaying, setNowPlaying] = useState<{ current: ScheduleItem | null; next: ScheduleItem | null }>({ current: null, next: null })
   const containerRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const immersiveVideoRef = useRef<HTMLVideoElement | null>(null)
+  const iosFsDoneRef = useRef(false)
   const volumeMeterRef = useRef<HTMLDivElement>(null)
   const isDraggingVolume = useRef(false)
   const sfxOn = useRef<HTMLAudioElement | null>(null)
@@ -99,6 +111,7 @@ export default function TVSet({
       setIsMobile(mqMobile.matches)
       setIsPortrait(mqPortrait.matches)
     }
+    setSupportsElementFs(Boolean(document.fullscreenEnabled))
     sync()
     mqMobile.addEventListener('change', sync)
     mqPortrait.addEventListener('change', sync)
@@ -114,8 +127,9 @@ export default function TVSet({
     if (!isMobile) setImmersive(false)
   }, [isMobile])
 
-  // While immersive: lock page scroll and best-effort lock to landscape
-  // (Android honours it; iOS ignores the rejection harmlessly).
+  // While immersive: lock page scroll, best-effort lock to landscape (Android
+  // honours it; iOS ignores harmlessly), and — if we entered true fullscreen —
+  // close immersive when the user leaves fullscreen (Android back/swipe).
   useEffect(() => {
     if (!immersive) return
     const html = document.documentElement
@@ -127,7 +141,15 @@ export default function TVSet({
       screen as unknown as { orientation?: { lock?: (o: string) => Promise<void>; unlock?: () => void } }
     ).orientation
     orientation?.lock?.('landscape').catch(() => {})
+    const onFsChange = () => {
+      if (!document.fullscreenElement) {
+        setImmersive(false)
+        setOverlay('none')
+      }
+    }
+    document.addEventListener('fullscreenchange', onFsChange)
     return () => {
+      document.removeEventListener('fullscreenchange', onFsChange)
       html.style.overflow = prevHtml
       document.body.style.overflow = prevBody
       orientation?.unlock?.()
@@ -135,12 +157,39 @@ export default function TVSet({
   }, [immersive])
 
   function enterImmersive() {
-    setImmersiveMuted(true)
+    const useElementFs = Boolean(document.fullscreenEnabled) // Android/desktop
+    iosFsDoneRef.current = false
     setOverlay('none')
-    setImmersive(true)
+    // Element-FS (Android): start muted, user unmutes via the overlay button.
+    // Native-FS (iPhone): start unmuted — Apple's player owns audio and the tap
+    // is a valid gesture for sound.
+    setImmersiveMuted(useElementFs)
+    // Mount the overlay + video synchronously so fullscreen can trigger within
+    // this tap gesture (both APIs require a user gesture; flushSync also flushes
+    // the effects, so the iPhone native-FS effect below runs in-gesture too).
+    flushSync(() => setImmersive(true))
+
+    if (useElementFs) {
+      // TRUE device fullscreen on the overlay element → our custom Schedule/
+      // Info/Mute controls sit inside it and render over the video.
+      const el = overlayRef.current as
+        | (HTMLElement & { webkitRequestFullscreen?: () => Promise<void> })
+        | null
+      const req = el?.requestFullscreen ?? el?.webkitRequestFullscreen
+      if (el && req) req.call(el).catch(() => {})
+    }
+    // iPhone native <video> fullscreen is handled by the effect below (it can
+    // also fire once the stream resolves if the video wasn't ready at tap).
   }
 
   function exitImmersive() {
+    const doc = document as Document & {
+      webkitExitFullscreen?: () => void
+      webkitFullscreenElement?: Element | null
+    }
+    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+      ;(doc.exitFullscreen ?? doc.webkitExitFullscreen)?.call(document)
+    }
     setImmersive(false)
     setOverlay('none')
   }
@@ -362,6 +411,42 @@ export default function TVSet({
   useEffect(() => {
     if (immersive && notLive) setImmersive(false)
   }, [immersive, notLive])
+
+  // iPhone path: no element fullscreen, so immersive uses native <video>
+  // fullscreen (Apple's player). Custom overlays can't sit over that, so the
+  // Schedule/Info controls + rotate prompt are hidden on this path.
+  const iosNativeFs = isMobile === true && supportsElementFs === false
+
+  // Drive the iPhone native <video> fullscreen. Runs once the overlay video is
+  // mounted — via flushSync's effect flush this fires inside the tap gesture in
+  // the common case, and also covers the video resolving slightly later.
+  useEffect(() => {
+    if (!immersive || !iosNativeFs || !immersiveVideoReady) return
+    if (iosFsDoneRef.current) return
+    const v = immersiveVideoRef.current as
+      | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
+      | null
+    if (!v?.webkitEnterFullscreen) return
+    iosFsDoneRef.current = true
+    const go = () => {
+      try {
+        v.webkitEnterFullscreen!()
+      } catch {
+        /* not ready / unsupported — the CSS overlay remains as a fallback */
+      }
+    }
+    if (v.readyState >= 1) go()
+    else v.addEventListener('loadedmetadata', go, { once: true })
+    const onEnd = () => {
+      setImmersive(false)
+      setOverlay('none')
+    }
+    v.addEventListener('webkitendfullscreen', onEnd, { once: true })
+    return () => {
+      v.removeEventListener('loadedmetadata', go)
+      v.removeEventListener('webkitendfullscreen', onEnd)
+    }
+  }, [immersive, iosNativeFs, immersiveVideoReady])
 
   return (
     <div className="flex flex-col items-center gap-4 max-w-5xl mx-auto">
@@ -839,12 +924,15 @@ export default function TVSet({
       </div>
 
       {/* ── Mobile immersive view ────────────────────────────────────────────
-          A CSS fixed overlay (not the Fullscreen API — iPhone Safari can't
-          fullscreen arbitrary elements) holding just the full-bleed video plus
-          minimal touch controls and a rotate-to-landscape prompt. */}
+          Full-bleed video + minimal touch controls + rotate prompt. On Android
+          this element is put into TRUE device fullscreen (see enterImmersive),
+          so the controls/overlay screens sit inside the fullscreen element and
+          render over the video. iPhone Safari can't element-fullscreen, so it
+          degrades to this CSS fixed overlay filling the browser viewport. */}
       {immersive &&
         createPortal(
           <div
+            ref={overlayRef}
             className="fixed inset-0 z-[9999] bg-black"
             style={{ width: '100dvw', height: '100dvh' }}
           >
@@ -856,6 +944,10 @@ export default function TVSet({
                 onMutedChange={setImmersiveMuted}
                 fit="contain"
                 hideMuteUi
+                onVideoEl={(el) => {
+                  immersiveVideoRef.current = el
+                  setImmersiveVideoReady(Boolean(el))
+                }}
                 offlineLabel={offlineLabel}
                 offlineMessage={offlineMessage}
               />
@@ -895,30 +987,36 @@ export default function TVSet({
             </div>
 
             {/* Schedule / Show Info / Mute — bottom-right. Simple white blocks
-                with black text/icons; toggled-open state inverts to black. */}
+                with black text/icons; toggled-open state inverts to black.
+                Schedule/Info are hidden on the iPhone native-fullscreen path
+                (they can't overlay Apple's player). */}
             <div className="absolute bottom-4 right-4 z-30 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setOverlay(overlay === 'schedule' ? 'none' : 'schedule')}
-                aria-pressed={overlay === 'schedule'}
-                className={`px-4 text-sm font-semibold transition active:scale-95 ${
-                  overlay === 'schedule' ? 'bg-black text-white' : 'bg-white text-black'
-                }`}
-                style={{ height: 44 }}
-              >
-                Schedule
-              </button>
-              <button
-                type="button"
-                onClick={() => setOverlay(overlay === 'show-info' ? 'none' : 'show-info')}
-                aria-pressed={overlay === 'show-info'}
-                className={`px-4 text-sm font-semibold transition active:scale-95 ${
-                  overlay === 'show-info' ? 'bg-black text-white' : 'bg-white text-black'
-                }`}
-                style={{ height: 44 }}
-              >
-                Info
-              </button>
+              {!iosNativeFs && (
+                <button
+                  type="button"
+                  onClick={() => setOverlay(overlay === 'schedule' ? 'none' : 'schedule')}
+                  aria-pressed={overlay === 'schedule'}
+                  className={`px-4 text-sm font-semibold transition active:scale-95 ${
+                    overlay === 'schedule' ? 'bg-black text-white' : 'bg-white text-black'
+                  }`}
+                  style={{ height: 44 }}
+                >
+                  Schedule
+                </button>
+              )}
+              {!iosNativeFs && (
+                <button
+                  type="button"
+                  onClick={() => setOverlay(overlay === 'show-info' ? 'none' : 'show-info')}
+                  aria-pressed={overlay === 'show-info'}
+                  className={`px-4 text-sm font-semibold transition active:scale-95 ${
+                    overlay === 'show-info' ? 'bg-black text-white' : 'bg-white text-black'
+                  }`}
+                  style={{ height: 44 }}
+                >
+                  Info
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setImmersiveMuted((m) => !m)}
@@ -938,8 +1036,9 @@ export default function TVSet({
             </div>
 
             {/* Rotate-to-landscape prompt — covers the video in portrait
-                (video keeps playing behind so audio continues). */}
-            {isPortrait && (
+                (video keeps playing behind so audio continues). Skipped on the
+                iPhone native-FS path — Apple's player handles rotation itself. */}
+            {!iosNativeFs && isPortrait && (
               <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center gap-4 px-8 text-center text-white">
                 <div className="text-5xl" aria-hidden>
                   ↻

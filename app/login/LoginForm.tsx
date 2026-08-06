@@ -100,6 +100,17 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
     FormData
   >(signupAction, null)
 
+  // Successful sign-in navigates with a full document load so the root
+  // layout re-runs and re-seeds SessionProvider with the now-authenticated
+  // session. A soft navigation would leave the header in its guest state
+  // (see the note in actions.ts).
+  const isRedirecting = !!(signinState?.ok && signinState.redirectTo)
+  useEffect(() => {
+    if (signinState?.ok && signinState.redirectTo) {
+      window.location.assign(signinState.redirectTo)
+    }
+  }, [signinState])
+
   // Captured from the last signup submit so the host callback can use them.
   const signupFieldsRef = useRef({ email: '', name: '' })
   const signupFiredRef = useRef(false)
@@ -236,8 +247,8 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
             </p>
           )}
           <div className="pt-1">
-            <ShadowButton type="submit" disabled={signinPending} onDark={bare}>
-              {signinPending ? 'Signing in…' : 'Sign in'}
+            <ShadowButton type="submit" disabled={signinPending || isRedirecting} onDark={bare}>
+              {signinPending || isRedirecting ? 'Signing in…' : 'Sign in'}
             </ShadowButton>
           </div>
           <div className="text-center">

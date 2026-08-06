@@ -28,6 +28,13 @@ export interface SigninResult {
     | 'CredentialsSignin'
     | 'Unknown'
   message?: string
+  /**
+   * Where the client should send the browser after a successful sign-in.
+   * The form performs a FULL document navigation to this URL rather than
+   * letting signIn() issue a server redirect — see the note on the
+   * `redirect: false` call below.
+   */
+  redirectTo?: string
 }
 
 export async function signinWithCredentials(
@@ -43,13 +50,23 @@ export async function signinWithCredentials(
   }
 
   try {
+    // `redirect: false` still sets the session cookie (Auth.js writes the
+    // cookie jar before it decides whether to redirect) — it just hands the
+    // navigation back to us. We want that: a server-action redirect is a
+    // SOFT navigation, so the root layout never re-runs, and the
+    // SessionProvider it seeded with `session={null}` keeps that null
+    // forever (next-auth's _getSession bails out early whenever the cached
+    // session is null, so neither the mount fetch, the window-focus refetch,
+    // nor polling will correct it). Result: cookie set, /account renders
+    // signed-in, but the header still shows "Login / Subscribe" until a
+    // manual reload. The client does a full document load instead — same
+    // reason SignOutButton uses the client-side signOut.
     await signIn('credentials', {
       email,
       password,
-      redirectTo: callbackUrl,
+      redirect: false,
     })
-    // signIn throws a NEXT_REDIRECT on success — we never reach here.
-    return { ok: true }
+    return { ok: true, redirectTo: callbackUrl }
   } catch (err) {
     // Re-throw Next.js redirect signals so the framework can handle them.
     // (next-auth wraps signIn in a way that throws to redirect on success.)

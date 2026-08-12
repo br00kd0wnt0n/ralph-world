@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { initSentryClient } from '@/lib/sentry-client-init'
+import { initGTM } from '@/lib/gtm-client-init'
 import Button from '@/components/ui/Button'
 
 const STORAGE_KEY = 'ralph-cookie-consent'
@@ -43,16 +44,16 @@ function readStored(raw: string | null): StoredConsentRecord | null {
  * Sits at the bottom of every page until the visitor chooses. Two
  * buttons, equally weighted (no dark patterns) — GDPR / UK PECR
  * compliance:
- *   - Accept all       → 'cookies_all'        (enables Sentry / analytics)
+ *   - Accept all       → 'cookies_all'        (enables Sentry / GTM / analytics)
  *   - Necessary only   → 'cookies_necessary'  (no analytics; only auth + session)
  *
  * On accept:
  *   1. POST /api/consent — server-side consent_log row (binding record)
  *   2. localStorage cache so banner doesn't reappear
- *   3. If 'cookies_all' → initSentryClient()
+ *   3. If 'cookies_all' → initSentryClient() + initGTM()
  *
- * Returning visitors with a stored 'cookies_all' get Sentry initialised
- * automatically on mount.
+ * Returning visitors with a stored 'cookies_all' get Sentry and GTM
+ * initialised automatically on mount.
  *
  * The "Cookie preferences" link in the footer clears storage + triggers
  * a `ralph-cookie-reset` window event that this component listens for,
@@ -75,6 +76,7 @@ export default function CookieBanner({
       const versionMatches = stored?.version === currentPolicyVersion
       if (stored?.choice === 'cookies_all' && versionMatches) {
         initSentryClient()
+        initGTM()
       }
       if (!stored || !versionMatches) {
         setOpen(true)
@@ -122,6 +124,7 @@ export default function CookieBanner({
 
     if (choice === 'cookies_all') {
       initSentryClient()
+      initGTM()
     }
     setOpen(false)
     setBusy(false)

@@ -8,13 +8,19 @@ import type { NextConfig } from 'next'
 // the CSP's job here is clickjacking (frame-ancestors), MIME-sniffing,
 // base-uri/object-src lockdown, and scoping which third parties can be framed
 // / loaded. frame-src allows the YouTube/Vimeo article embeds + Stripe.
+// script-src also allows googletagmanager.com for the consent-gated GTM
+// loader (lib/gtm-client-init.ts). connect-src/img-src are already broad
+// (any https:), so tags GTM loads at runtime (GA4, etc.) don't need CSP
+// changes here UNLESS one injects an iframe — then frame-src needs its host
+// added too, and that can only be caught by testing, since GTM's tag config
+// lives outside this repo.
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",

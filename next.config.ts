@@ -9,18 +9,21 @@ import type { NextConfig } from 'next'
 // base-uri/object-src lockdown, and scoping which third parties can be framed
 // / loaded. frame-src allows the YouTube/Vimeo article embeds + Stripe.
 // script-src also allows googletagmanager.com for the consent-gated GTM
-// loader (lib/gtm-client-init.ts). connect-src/img-src are already broad
-// (any https:), so tags GTM loads at runtime (GA4, etc.) don't need CSP
-// changes here UNLESS one injects an iframe — then frame-src needs its host
-// added too, and that can only be caught by testing, since GTM's tag config
-// lives outside this repo.
+// loader (lib/gtm-client-init.ts), plus one entry per script-loading tag
+// added inside the GTM container since (each needs its own script-src host
+// — connect-src/img-src are already broad (any https:), so most GTM tags
+// don't need CSP changes, but anything that injects a <script> or <iframe>
+// does). Confirmed happening in practice, not just theoretical:
+//   - connect.facebook.net — Meta/Facebook Pixel (fbevents.js)
+// GTM's tag config lives outside this repo, so a new CSP violation after
+// adding a tag there is expected — add the blocked host here when it shows up.
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",

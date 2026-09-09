@@ -248,3 +248,79 @@ export async function updateCustomerAddress(args: {
   }
   return { addressId: String(res.customer_address.id) }
 }
+
+// ── Default address read (magazine fulfilment) ─────────────────────
+
+/**
+ * Shipping address in the shape Shopify's Admin REST `orders.json`
+ * expects under `shipping_address`. Field names match the API.
+ */
+export interface ShopifyOrderShippingAddress {
+  first_name: string
+  last_name: string
+  address1: string
+  address2: string
+  city: string
+  province: string
+  zip: string
+  country_code: string
+  phone: string
+  company: string
+}
+
+interface ShopifyCustomerGetResponse {
+  customer?: {
+    id: number | string
+    default_address?: {
+      first_name?: string | null
+      last_name?: string | null
+      address1?: string | null
+      address2?: string | null
+      city?: string | null
+      province?: string | null
+      zip?: string | null
+      country_code?: string | null
+      phone?: string | null
+      company?: string | null
+    } | null
+  }
+}
+
+/**
+ * Fetch a customer's default address, shaped for an order's
+ * `shipping_address`. Returns null when the customer has no default
+ * address or the address is missing a field Newsstand can't ship
+ * without (street, city, postcode, country).
+ *
+ * Why this exists: Shopify does NOT copy the customer's default address
+ * onto an order created via the Admin API when `shipping_address` is
+ * omitted. The fulfilment job used to rely on that, and the resulting
+ * orders had no address at all (order #1565, 2026-06-22). The caller
+ * must pass this explicitly.
+ */
+export async function getCustomerDefaultAddress(args: {
+  shopifyCustomerId: string
+  fetchImpl?: FetchLike
+}): Promise<ShopifyOrderShippingAddress | null> {
+  const res = await shopifyAdminFetch<ShopifyCustomerGetResponse>({
+    method: 'GET',
+    path: `/customers/${encodeURIComponent(args.shopifyCustomerId)}.json`,
+    query: { fields: 'id,default_address' },
+    fetchImpl: args.fetchImpl,
+  })
+  const a = res.customer?.default_address
+  if (!a) return null
+  if (!a.address1 || !a.city || !a.zip || !a.country_code) return null
+  return {
+    first_name: a.first_name ?? '',
+    last_name: a.last_name ?? '',
+    address1: a.address1,
+    address2: a.address2 ?? '',
+    city: a.city,
+    province: a.province ?? '',
+    zip: a.zip,
+    country_code: a.country_code,
+    phone: a.phone ?? '',
+    company: a.company ?? '',
+  }
+}

@@ -1,12 +1,18 @@
 import 'server-only'
-import { shopifyAdminFetch, type FetchLike } from './admin-client'
+import { shopifyAdminFetch, ShopifyAdminError, type FetchLike } from './admin-client'
+import type { ShopifyOrderShippingAddress } from './customer'
 
 /**
  * Shopify Admin REST helpers for order creation — Task 3.9.
  *
+ * `resolveIssueVariant()` turns whatever ID an editor pasted into the CMS
+ * (product ID from the admin URL, or a variant ID) into a verified variant
+ * with a non-empty SKU. Newsstand identifies the issue by the EAN in the
+ * SKU, so an order without one is unfulfillable — better to refuse the run
+ * than to create orders Newsstand can't act on.
+ *
  * `createMagazineOrder()` posts an order against a (customer, variant)
- * pair with price = 0 and shipping pulled from the Shopify customer's
- * default address. Used by the magazine fulfilment batch job.
+ * pair with price = 0 and an explicit shipping address.
  *
  * The caller is responsible for IDEMPOTENCY: this function does not
  * check whether an order already exists. The DB-side
@@ -18,11 +24,179 @@ import { shopifyAdminFetch, type FetchLike } from './admin-client'
  * row 'failed' so retries are explicit.
  */
 
+/**
+ * Strip a Shopify global ID prefix to leave just the numeric id, since
+ * the REST API expects the numeric form in path parameters but editors
+ * may paste either form in the CMS. Tolerates both `gid://shopify/X/123`
+ * and `123` inputs.
+ */
+function bareNumericId(id: string): string {
+  const m = id.match(/(\d+)\s*$/)
+  return m ? m[1] : id
+}
+
+// ── Variant resolution ───────────────────────────────────────────────
+
+export interface ResolvedVariant {
+  variantId: string
+  productId: string
+  productTitle: string
+  sku: string
+  price: string
+  /** Which lookup succeeded — surfaced to the CMS so the editor knows. */
+  resolvedFrom: 'variant' | 'product'
+}
+
+interface ShopifyVariantGetResponse {
+  variant?: {
+    id: number | string
+    product_id: number | string
+    sku?: string | null
+    price?: string
+    title?: string
+  }
+}
+
+interface ShopifyProductGetResponse {
+  product?: {
+    id: number | string
+    title?: string
+    variants?: Array<{
+      id: number | string
+      sku?: string | null
+      price?: string
+      title?: string
+    }>
+  }
+}
+
+interface ShopifyProductTitleResponse {
+  product?: { title?: string }
+}
+
+function isNotFound(err: unknown): boolean {
+  return err instanceof ShopifyAdminError && err.status === 404
+}
+
+/**
+ * Resolve the ID stored on a magazine issue to a concrete, SKU-bearing
+ * variant. Accepts either a variant ID or a product ID (the number in
+ * the Shopify admin URL, which is what editors naturally copy).
+ *
+ * Throws with an editor-readable message when:
+ *   - neither a variant nor a product exists with that ID
+ *   - the product has more than one variant (ambiguous — use the variant ID)
+ *   - the resolved variant has an empty SKU (no EAN → Newsstand can't fulfil)
+ */
+export async function resolveIssueVariant(args: {
+  id: string
+  fetchImpl?: FetchLike
+}): Promise<ResolvedVariant> {
+  const id = bareNumericId(args.id)
+
+  // 1. Try as a variant.
+  let asVariant: ShopifyVariantGetResponse['variant'] | undefined
+  try {
+    const res = await shopifyAdminFetch<ShopifyVariantGetResponse>({
+      method: 'GET',
+      path: `/variants/${encodeURIComponent(id)}.json`,
+      fetchImpl: args.fetchImpl,
+      maxRetries: 1,
+    })
+    asVariant = res.variant
+  } catch (err) {
+    if (!isNotFound(err)) throw err
+  }
+
+  if (asVariant) {
+    const sku = (asVariant.sku ?? '').trim()
+    if (!sku) {
+      throw new Error(
+        `Shopify variant ${id} has an empty SKU. Newsstand needs the issue EAN in the SKU field — set it in Shopify before fulfilling.`
+      )
+    }
+    let productTitle = ''
+    try {
+      const p = await shopifyAdminFetch<ShopifyProductTitleResponse>({
+        method: 'GET',
+        path: `/products/${encodeURIComponent(String(asVariant.product_id))}.json`,
+        query: { fields: 'title' },
+        fetchImpl: args.fetchImpl,
+        maxRetries: 1,
+      })
+      productTitle = p.product?.title ?? ''
+    } catch {
+      // Title is cosmetic — don't fail the run over it.
+    }
+    return {
+      variantId: String(asVariant.id),
+      productId: String(asVariant.product_id),
+      productTitle,
+      sku,
+      price: asVariant.price ?? '',
+      resolvedFrom: 'variant',
+    }
+  }
+
+  // 2. Fall back to treating it as a product ID.
+  let product: ShopifyProductGetResponse['product'] | undefined
+  try {
+    const res = await shopifyAdminFetch<ShopifyProductGetResponse>({
+      method: 'GET',
+      path: `/products/${encodeURIComponent(id)}.json`,
+      query: { fields: 'id,title,variants' },
+      fetchImpl: args.fetchImpl,
+      maxRetries: 1,
+    })
+    product = res.product
+  } catch (err) {
+    if (!isNotFound(err)) throw err
+  }
+
+  if (!product) {
+    throw new Error(
+      `Shopify has no variant or product with ID ${id}. Check the issue's Shopify ID — copy it from the product's admin URL.`
+    )
+  }
+  const variants = product.variants ?? []
+  if (variants.length === 0) {
+    throw new Error(`Shopify product ${id} ("${product.title ?? ''}") has no variants.`)
+  }
+  if (variants.length > 1) {
+    throw new Error(
+      `Shopify product ${id} ("${product.title ?? ''}") has ${variants.length} variants. Magazine issues must be single-variant products, or store the specific variant ID on the issue.`
+    )
+  }
+  const v = variants[0]
+  const sku = (v.sku ?? '').trim()
+  if (!sku) {
+    throw new Error(
+      `Shopify product ${id} ("${product.title ?? ''}") has an empty SKU. Newsstand needs the issue EAN in the SKU field — set it in Shopify before fulfilling.`
+    )
+  }
+  return {
+    variantId: String(v.id),
+    productId: String(product.id),
+    productTitle: product.title ?? '',
+    sku,
+    price: v.price ?? '',
+    resolvedFrom: 'product',
+  }
+}
+
+// ── Order creation ───────────────────────────────────────────────────
+
 export interface CreateMagazineOrderInput {
   /** Shopify customer ID (just the numeric part, no gid:// prefix) */
   shopifyCustomerId: string
-  /** Shopify variant ID for this magazine issue */
+  /** VERIFIED Shopify variant ID — from resolveIssueVariant(), not the raw CMS value */
   shopifyVariantId: string
+  /**
+   * Shipping address, explicit. Shopify does not copy the customer's
+   * default address onto API-created orders, so omitting this produces
+   * an order Newsstand cannot ship.
+   */
+  shippingAddress: ShopifyOrderShippingAddress
   /** Issue number — used in the order note */
   issueNumber: number
   /** Internal shipment id — written to order note for cross-reference */
@@ -33,17 +207,6 @@ export interface CreateMagazineOrderInput {
 
 export interface CreateMagazineOrderResult {
   shopifyOrderId: string
-}
-
-/**
- * Strip a Shopify global ID prefix to leave just the numeric id, since
- * the REST API expects the numeric form in path parameters but editors
- * may paste either form in the CMS. Tolerates both `gid://shopify/X/123`
- * and `123` inputs.
- */
-function bareNumericId(id: string): string {
-  const m = id.match(/(\d+)\s*$/)
-  return m ? m[1] : id
 }
 
 interface ShopifyOrderCreateResponse {
@@ -78,11 +241,13 @@ export async function createMagazineOrder(
           quantity: 1,
           // Price 0 — the subscriber has already paid via Stripe; this
           // order exists purely to drive Shopify's fulfilment pipeline.
+          // Newsstand substitutes the cover price for customs on £0 lines.
           price: '0.00',
           title: lineItemTitle,
           name: lineItemTitle,
         },
       ],
+      shipping_address: input.shippingAddress,
       // Mark as paid so Shopify doesn't try to charge the customer.
       financial_status: 'paid',
       // Respect inventory policy (oversell = false). If Newsstand
@@ -95,9 +260,6 @@ export async function createMagazineOrder(
       // order is created.
       send_receipt: false,
       send_fulfillment_receipt: false,
-      // Use the customer's default shipping address. Shopify pulls
-      // this when we don't supply `shipping_address` on the order.
-      // (Default address synced in Task 2.4.)
       // Tag so the Shopify admin UI can filter to subscriber orders.
       tags: 'subscription, magazine-fulfilment',
       note: `Ralph subscription fulfilment — issue ${input.issueNumber} — shipment ${input.shipmentId}`,

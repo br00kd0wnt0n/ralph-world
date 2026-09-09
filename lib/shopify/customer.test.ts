@@ -29,6 +29,7 @@ import {
   findOrCreateCustomer,
   mapStripeAddressToShopify,
   updateCustomerAddress,
+  getCustomerDefaultAddress,
 } from './customer'
 
 interface FetchCall {
@@ -445,5 +446,69 @@ describe('updateCustomerAddress', () => {
       fetchImpl: fn,
     })
     expect(calls[0].url).toContain('/customers/weird%2Fid/addresses.json')
+  })
+})
+
+describe('getCustomerDefaultAddress', () => {
+  it('returns the default address shaped for an order shipping_address', async () => {
+    const { fn, calls } = fakeFetch(() => ({
+      status: 200,
+      body: {
+        customer: {
+          id: 258791866369,
+          default_address: {
+            first_name: 'Josh',
+            last_name: 'Jones',
+            address1: '1 Example Street',
+            address2: null,
+            city: 'London',
+            province: null,
+            zip: 'N1 1AA',
+            country_code: 'GB',
+            phone: null,
+            company: null,
+          },
+        },
+      },
+    }))
+
+    const a = await getCustomerDefaultAddress({ shopifyCustomerId: '258791866369', fetchImpl: fn })
+
+    expect(a).toEqual({
+      first_name: 'Josh',
+      last_name: 'Jones',
+      address1: '1 Example Street',
+      address2: '',
+      city: 'London',
+      province: '',
+      zip: 'N1 1AA',
+      country_code: 'GB',
+      phone: '',
+      company: '',
+    })
+    expect(calls[0].method).toBe('GET')
+    expect(calls[0].url).toContain('/customers/258791866369.json')
+    expect(calls[0].url).toContain('fields=id%2Cdefault_address')
+  })
+
+  it('returns null when the customer has no default address', async () => {
+    const { fn } = fakeFetch(() => ({
+      status: 200,
+      body: { customer: { id: 1, default_address: null } },
+    }))
+    expect(await getCustomerDefaultAddress({ shopifyCustomerId: '1', fetchImpl: fn })).toBeNull()
+  })
+
+  it('returns null when the default address is missing a field Newsstand needs', async () => {
+    const { fn } = fakeFetch(() => ({
+      status: 200,
+      body: {
+        customer: {
+          id: 1,
+          default_address: { address1: '1 Street', city: 'London', zip: null, country_code: 'GB' },
+        },
+      },
+    }))
+    expect(await getCustomerDefaultAddress({ shopifyCustomerId: '1', fetchImpl: fn })).toBeNull()
   })
 })

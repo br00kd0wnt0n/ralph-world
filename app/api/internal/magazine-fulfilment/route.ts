@@ -16,7 +16,8 @@ export const maxDuration = 300
  * specific issue. Auth via shared bearer token in `Authorization`
  * header — env var INTERNAL_API_TOKEN must match on both services.
  *
- * POST { issueId, dryRun?, actorId? } → run summary
+ * POST { issueId, dryRun?, actorId?, onlyEmails? } → run summary
+ *   onlyEmails: optional test-run restriction, ≤20 account emails
  * GET ?issueId=... → { queued, shopifyOrderCreated, fulfilled, failed, total }
  *
  * 401 — missing/wrong token
@@ -35,7 +36,13 @@ export const maxDuration = 300
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const MAX_BODY_BYTES = 2_048
+// Room for issueId + actorId + a short onlyEmails list for test runs.
+const MAX_BODY_BYTES = 4_096
+// Test-run restriction is for a handful of internal accounts, not a
+// segmentation feature. Cap it so the body stays small and a leaked
+// token can't use it to enumerate the subscriber base.
+const MAX_ONLY_EMAILS = 20
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}$/
 
 // ── In-memory per-IP rate limiter (fixed window) ──────────────────────
 // Backstop only — defends against a leaked token being scripted against
@@ -103,7 +110,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Body too large' }, { status: 400 })
   }
 
-  let body: { issueId?: unknown; dryRun?: unknown; actorId?: unknown }
+  let body: {
+    issueId?: unknown
+    dryRun?: unknown
+    actorId?: unknown
+    onlyEmails?: unknown
+  }
   try {
     body = await req.json()
   } catch {
@@ -122,12 +134,38 @@ export async function POST(req: NextRequest) {
     }
     actorId = body.actorId
   }
+  // onlyEmails is optional: a short list of account emails to restrict a
+  // test run to. Validate shape and size; the job lowercases + matches.
+  let onlyEmails: string[] | undefined
+  if (body.onlyEmails != null) {
+    if (!Array.isArray(body.onlyEmails)) {
+      return NextResponse.json({ error: 'onlyEmails must be an array' }, { status: 400 })
+    }
+    if (body.onlyEmails.length > MAX_ONLY_EMAILS) {
+      return NextResponse.json(
+        { error: `onlyEmails may list at most ${MAX_ONLY_EMAILS} addresses` },
+        { status: 400 }
+      )
+    }
+    const cleaned: string[] = []
+    for (const e of body.onlyEmails) {
+      if (typeof e !== 'string' || !EMAIL_RE.test(e.trim())) {
+        return NextResponse.json(
+          { error: 'onlyEmails must contain only email addresses' },
+          { status: 400 }
+        )
+      }
+      cleaned.push(e.trim())
+    }
+    onlyEmails = cleaned.length > 0 ? cleaned : undefined
+  }
 
   try {
     const result = await fulfilIssue({
       issueId: body.issueId,
       dryRun: body.dryRun === true,
       actorId,
+      onlyEmails,
     })
     return NextResponse.json(result, { status: result.ok ? 200 : 400 })
   } catch (err) {

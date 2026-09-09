@@ -2,13 +2,19 @@ import 'server-only'
 import { eq, and, inArray, sql } from 'drizzle-orm'
 import { getDb } from '@/lib/db'
 import {
+  users,
   profiles,
   shopifyLinks,
   magazineIssues,
   magazineShipments,
   magazineFulfilmentRuns,
 } from '@/lib/db/schema'
-import { createMagazineOrder } from '@/lib/shopify/orders'
+import {
+  createMagazineOrder,
+  resolveIssueVariant,
+  type ResolvedVariant,
+} from '@/lib/shopify/orders'
+import { getCustomerDefaultAddress } from '@/lib/shopify/customer'
 import { ShopifyAdminError } from '@/lib/shopify/admin-client'
 import { logAction } from '@/lib/audit'
 
@@ -25,19 +31,27 @@ const RUN_LOCK_TTL_MS = 5 * 60_000
  *
  * Flow:
  *   1. Load issue. Require status='published' + shopifyVariantId.
+ *   1b. PREFLIGHT the Shopify ID: resolve it to a real variant with a
+ *      non-empty SKU (accepts a product ID or a variant ID). Newsstand
+ *      identifies the issue by the EAN in the SKU, so a bad ID or empty
+ *      SKU means every order would be unfulfillable — refuse the run.
  *   2. SELECT paid subscribers — profiles.tier='paid' AND a
  *      shopify_links row exists (gives us shopify_customer_id).
+ *      If `onlyEmails` is given, restrict to those accounts (test runs).
  *   3. Filter out subscribers who already have a shipment row for this
  *      issue (idempotency via UNIQUE(user_id, issue_id)).
  *   4. For each remaining subscriber:
  *      a. INSERT magazine_shipments row (status='queued').
- *      b. POST to Shopify Admin /orders.json.
- *      c. UPDATE row → status='shopify_order_created' + shopify_order_id.
- *      d. On Shopify error → UPDATE row → status='failed' + error.
+ *      b. GET the customer's default address from Shopify. None → mark
+ *         the row 'failed' (Shopify does NOT copy it onto API orders).
+ *      c. POST to Shopify Admin /orders.json with the address.
+ *      d. UPDATE row → status='shopify_order_created' + shopify_order_id.
+ *      e. On Shopify error → UPDATE row → status='failed' + error.
  *   5. Return summary counts.
  *
- * DRY RUN: pass `dryRun: true` to skip steps 4a–d entirely. Returns the
- * eligible-subscriber count so admins can preview before committing.
+ * DRY RUN: pass `dryRun: true` to skip steps 4a–e entirely. Still runs
+ * the preflight, so an editor learns about a bad SKU before the real run.
+ * Returns the eligible-subscriber count and the resolved variant.
  *
  * NOT exposed via auth(). Internal-only — call from
  * /api/internal/magazine-fulfilment with the INTERNAL_API_TOKEN header.
@@ -54,6 +68,13 @@ export interface FulfilIssueInput {
   dryRun?: boolean
   /** Who triggered the run — threaded from the CMS for the audit trail. */
   actorId?: string | null
+  /**
+   * Test-run restriction: only subscribers whose account email is in
+   * this list are processed. Everyone else is left untouched (no
+   * shipment row, so they're still eligible for a later full run).
+   * Empty/undefined = no restriction.
+   */
+  onlyEmails?: string[]
 }
 
 export interface FulfilIssueResult {
@@ -70,6 +91,18 @@ export interface FulfilIssueResult {
   failures: Array<{ userId: string; error: string }>
   dryRun: boolean
   error?: string
+  /** The Shopify variant the run resolved to. Present once preflight passes. */
+  variant?: {
+    variantId: string
+    productTitle: string
+    sku: string
+    price: string
+    resolvedFrom: 'variant' | 'product'
+  }
+  /** Set when `onlyEmails` was given: how many of them matched a paid, linked account. */
+  restrictedTo?: number
+  /** Emails from `onlyEmails` that matched nobody eligible — so a typo is visible. */
+  unmatchedEmails?: string[]
 }
 
 export async function fulfilIssue(
@@ -118,22 +151,64 @@ export async function fulfilIssue(
     }
   }
 
+  // ── 1b. Preflight the Shopify ID ─────────────────────────────
+  // Editors paste the number from the product's admin URL, which is the
+  // PRODUCT id, not the variant id. Shopify silently accepts an unknown
+  // variant_id on order create and produces a custom line item with no
+  // SKU — which Newsstand can't fulfil. Resolve up front and refuse if
+  // there's no SKU (= no EAN).
+  let resolved: ResolvedVariant
+  try {
+    resolved = await resolveIssueVariant({ id: issue.shopifyVariantId })
+  } catch (err) {
+    return {
+      ...empty,
+      issueNumber: issue.issueNumber,
+      error: err instanceof Error ? err.message : 'Shopify variant check failed',
+    }
+  }
+  const variantSummary: NonNullable<FulfilIssueResult['variant']> = {
+    variantId: resolved.variantId,
+    productTitle: resolved.productTitle,
+    sku: resolved.sku,
+    price: resolved.price,
+    resolvedFrom: resolved.resolvedFrom,
+  }
+
   // ── 2. SELECT eligible subscribers ──────────────────────────
   // Paid tier AND have a Shopify customer link.
-  const eligible = await db
+  const allEligible = await db
     .select({
       userId: profiles.id,
+      email: users.email,
       shopifyCustomerId: shopifyLinks.shopifyCustomerId,
     })
     .from(profiles)
+    .innerJoin(users, eq(users.id, profiles.id))
     .innerJoin(shopifyLinks, eq(shopifyLinks.userId, profiles.id))
     .where(eq(profiles.tier, 'paid'))
+
+  // Optional test-run restriction to named accounts.
+  const wanted = new Set(
+    (input.onlyEmails ?? []).map((e) => e.trim().toLowerCase()).filter(Boolean)
+  )
+  const restricted = wanted.size > 0
+  const eligible = restricted
+    ? allEligible.filter((e) => wanted.has((e.email ?? '').toLowerCase()))
+    : allEligible
+  const unmatchedEmails = restricted
+    ? [...wanted].filter(
+        (w) => !allEligible.some((e) => (e.email ?? '').toLowerCase() === w)
+      )
+    : undefined
 
   if (eligible.length === 0) {
     return {
       ...empty,
       ok: true,
       issueNumber: issue.issueNumber,
+      variant: variantSummary,
+      ...(restricted ? { restrictedTo: 0, unmatchedEmails } : {}),
     }
   }
 
@@ -160,10 +235,13 @@ export async function fulfilIssue(
     failed: 0,
     failures: [],
     dryRun: Boolean(input.dryRun),
+    variant: variantSummary,
+    ...(restricted ? { restrictedTo: eligible.length, unmatchedEmails } : {}),
   }
 
-  // Short-circuit on dry run — no DB writes, no Shopify calls, no lock.
-  // (Dry runs are metered by the route's per-IP backstop instead.)
+  // Short-circuit on dry run — no DB writes, no order creation, no lock.
+  // (The variant preflight above is the only Shopify call a dry run makes;
+  // dry runs are metered by the route's per-IP backstop.)
   if (input.dryRun) {
     return result
   }
@@ -226,6 +304,9 @@ export async function fulfilIssue(
       issue_number: issue.issueNumber,
       eligible: result.eligibleCount,
       to_process: toProcess.length,
+      variant_id: resolved.variantId,
+      sku: resolved.sku,
+      ...(restricted ? { restricted_to: [...wanted] } : {}),
     },
     source: 'system',
   })
@@ -267,11 +348,25 @@ export async function fulfilIssue(
       continue
     }
 
-    // 4b–c. Shopify order create + mark row.
+    // 4b–d. Address lookup, Shopify order create, mark row.
     try {
+      // Shopify does not copy the customer's default address onto an
+      // API-created order. Fetch it and send it explicitly; no address
+      // means Newsstand has nowhere to ship, so fail the row now with a
+      // reason the CMS can show, rather than creating an unshippable order.
+      const shippingAddress = await getCustomerDefaultAddress({
+        shopifyCustomerId: sub.shopifyCustomerId,
+      })
+      if (!shippingAddress) {
+        throw new Error(
+          'Shopify customer has no default shipping address (or it is missing street/city/postcode/country). Add one in Shopify, then retry.'
+        )
+      }
+
       const order = await createMagazineOrder({
         shopifyCustomerId: sub.shopifyCustomerId,
-        shopifyVariantId: issue.shopifyVariantId,
+        shopifyVariantId: resolved.variantId,
+        shippingAddress,
         issueNumber: issue.issueNumber,
         shipmentId,
       })
@@ -326,6 +421,9 @@ export async function fulfilIssue(
       skipped_existing: result.skippedExisting,
       orders_created: result.ordersCreated,
       failed: result.failed,
+      variant_id: resolved.variantId,
+      sku: resolved.sku,
+      ...(restricted ? { restricted_to: [...wanted] } : {}),
     },
     source: 'system',
   })

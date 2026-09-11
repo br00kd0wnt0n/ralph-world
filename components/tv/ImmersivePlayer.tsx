@@ -68,6 +68,15 @@ export default function ImmersivePlayer({
   const [portraitHintDismissed, setPortraitHintDismissed] = useState(false)
   const immersiveVideoRef = useRef<HTMLVideoElement | null>(null)
   const iosFsDoneRef = useRef(false)
+  // TVSet re-renders often (schedule/now-playing polls) and passes a new
+  // `onExit` closure each time. Read the latest value through a ref rather
+  // than depending on the prop directly, so the one-shot effect below
+  // doesn't re-run (and, guarded by iosFsDoneRef, fail to re-arm its
+  // webkitendfullscreen listener) every time the parent re-renders.
+  const onExitRef = useRef(onExit)
+  useEffect(() => {
+    onExitRef.current = onExit
+  }, [onExit])
 
   // Scroll lock + best-effort landscape lock + Android back/swipe detection.
   // Runs for the lifetime of this component (mounted only while immersive).
@@ -96,7 +105,7 @@ export default function ImmersivePlayer({
       } else {
         // Android back gesture / swipe-down exits fullscreen without going
         // through our Exit button.
-        onExit()
+        onExitRef.current()
       }
     }
     document.addEventListener('fullscreenchange', onFsChange)
@@ -132,14 +141,17 @@ export default function ImmersivePlayer({
     else v.addEventListener('loadedmetadata', go, { once: true })
     const onEnd = () => {
       setIosFsOpen(false)
-      onExit()
+      onExitRef.current()
     }
     v.addEventListener('webkitendfullscreen', onEnd, { once: true })
     return () => {
       v.removeEventListener('loadedmetadata', go)
       v.removeEventListener('webkitendfullscreen', onEnd)
     }
-  }, [isIphone, immersiveVideoReady, onExit])
+    // onExit intentionally excluded — see onExitRef above. Including it here
+    // re-triggers this effect on every parent re-render, and iosFsDoneRef's
+    // guard means the re-run bails out without re-arming the listener.
+  }, [isIphone, immersiveVideoReady])
 
   // Hide Schedule/Info + the rotate hint only once Apple's native player has
   // actually taken over — until then this CSS overlay is the whole UI.

@@ -4,6 +4,31 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-09-11 — iPhone immersive controls: don't flash-then-vanish
+
+Found live by Brook testing an iPhone 17 Pro Max after the mobile TV player
+fix below: tapping "Tap to watch" briefly showed the Schedule/Info/Mute
+buttons and the landscape hint, then the screen snapped to Apple's native
+fullscreen player before any of them could be tapped — pointless UI that
+appears only to be yanked away.
+
+**Fixed — `components/tv/ImmersivePlayer.tsx`:** on iPhone,
+`webkitEnterFullscreen()` usually fires within a beat of the video's
+metadata loading, often too fast to interact with anything first. Added a
+1.5s grace period (`iosFallbackReady`) before the fallback controls (and
+portrait hint) render at all — if native fullscreen opens within that
+window (the common case), they never appear; if it's slow or fails, they
+become the real, usable fallback UI. Android/desktop are unaffected
+(fallback controls were never gated by this — they still show immediately).
+Also hid the Mute button once native fullscreen is active (it wasn't gated
+before, same "shown but unusable" issue).
+
+No manual steps, no new tests needed — covered by the same
+`e2e/tv-mobile-immersive.spec.ts` suite (Android/desktop path, unaffected by
+this change) plus manual verification on the reporting device.
+
+---
+
 ## 2026-09-11 — Fix mobile Ralph TV player (build prompt 01)
 
 **Session goal:** Make watching Ralph TV on a phone work reliably — tap to

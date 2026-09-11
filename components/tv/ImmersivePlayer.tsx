@@ -118,6 +118,20 @@ export default function ImmersivePlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // On iPhone, webkitEnterFullscreen() usually fires within a beat of the
+  // video's metadata loading — often too fast for anyone to tap Schedule/
+  // Info/Mute before Apple's native player takes the screen. Showing
+  // controls that vanish before they can be used is worse than showing
+  // nothing, so hold them back until either native fullscreen is confirmed
+  // NOT to be happening quickly (this timer) or it opens (which hides them
+  // anyway via nativePlayerActive below).
+  const [iosFallbackReady, setIosFallbackReady] = useState(!isIphone)
+  useEffect(() => {
+    if (!isIphone) return
+    const timer = setTimeout(() => setIosFallbackReady(true), 1500)
+    return () => clearTimeout(timer)
+  }, [isIphone])
+
   // Drive the iPhone native <video> fullscreen. Runs once the video is
   // mounted so it can still fire in-gesture if the stream resolves late.
   useEffect(() => {
@@ -153,10 +167,13 @@ export default function ImmersivePlayer({
     // guard means the re-run bails out without re-arming the listener.
   }, [isIphone, immersiveVideoReady])
 
-  // Hide Schedule/Info + the rotate hint only once Apple's native player has
-  // actually taken over — until then this CSS overlay is the whole UI.
+  // Hide Schedule/Info + the rotate hint once Apple's native player has
+  // actually taken over — and, on iPhone, also hold them back until we're
+  // past the iosFallbackReady grace period (see above) so they're never
+  // shown just to be yanked away a moment later.
   const nativePlayerActive = isIphone && iosFsOpen
-  const showPortraitHint = !nativePlayerActive && isPortrait
+  const showFallbackControls = !nativePlayerActive && iosFallbackReady
+  const showPortraitHint = showFallbackControls && isPortrait
 
   return createPortal(
     <div
@@ -215,11 +232,12 @@ export default function ImmersivePlayer({
       </div>
 
       {/* Schedule / Show Info / Mute — bottom-right. Simple white blocks
-          with black text/icons; toggled-open state inverts to black.
-          Schedule/Info are hidden once Apple's native player owns the
-          screen (they can't overlay it). */}
-      <div className="absolute bottom-4 right-4 z-30 flex items-center gap-2">
-        {!nativePlayerActive && (
+          with black text/icons; toggled-open state inverts to black. Hidden
+          once Apple's native player owns the screen (they can't overlay it),
+          and on iPhone also held back during the pre-native-fullscreen grace
+          period — see showFallbackControls above. */}
+      {showFallbackControls && (
+        <div className="absolute bottom-4 right-4 z-30 flex items-center gap-2">
           <button
             type="button"
             onClick={() => setOverlay(overlay === 'schedule' ? 'none' : 'schedule')}
@@ -231,8 +249,6 @@ export default function ImmersivePlayer({
           >
             Schedule
           </button>
-        )}
-        {!nativePlayerActive && (
           <button
             type="button"
             onClick={() => setOverlay(overlay === 'show-info' ? 'none' : 'show-info')}
@@ -244,35 +260,35 @@ export default function ImmersivePlayer({
           >
             Info
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => {
-            const next = !immersiveMuted
-            // Flip the element's flag synchronously inside the click gesture
-            // (needed for iOS-style unmute rules) — the sync effect in
-            // LivePlayer also picks up the state change for any later drift.
-            const v = immersiveVideoRef.current
-            if (v) {
-              v.muted = next || volume === 0
-              if (!next && v.paused) v.play().catch(() => {})
-            }
-            setImmersiveMuted(next)
-          }}
-          aria-label={immersiveMuted ? 'Unmute' : 'Mute'}
-          className="flex items-center justify-center bg-white text-black transition active:scale-95"
-          style={{ width: 44, height: 44 }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M11 5 6 9H3v6h3l5 4V5z" fill="black" />
-            {immersiveMuted ? (
-              <path d="M16 9l5 6M21 9l-5 6" stroke="black" strokeWidth="2" strokeLinecap="round" />
-            ) : (
-              <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12" stroke="black" strokeWidth="2" strokeLinecap="round" />
-            )}
-          </svg>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !immersiveMuted
+              // Flip the element's flag synchronously inside the click gesture
+              // (needed for iOS-style unmute rules) — the sync effect in
+              // LivePlayer also picks up the state change for any later drift.
+              const v = immersiveVideoRef.current
+              if (v) {
+                v.muted = next || volume === 0
+                if (!next && v.paused) v.play().catch(() => {})
+              }
+              setImmersiveMuted(next)
+            }}
+            aria-label={immersiveMuted ? 'Unmute' : 'Mute'}
+            className="flex items-center justify-center bg-white text-black transition active:scale-95"
+            style={{ width: 44, height: 44 }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M11 5 6 9H3v6h3l5 4V5z" fill="black" />
+              {immersiveMuted ? (
+                <path d="M16 9l5 6M21 9l-5 6" stroke="black" strokeWidth="2" strokeLinecap="round" />
+              ) : (
+                <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12" stroke="black" strokeWidth="2" strokeLinecap="round" />
+              )}
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Portrait: 'wall' covers the picture entirely (old behaviour, video
           keeps playing behind so audio continues); 'letterbox' (default)

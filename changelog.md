@@ -4,6 +4,124 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-09-11 — Fix mobile Ralph TV player (build prompt 01)
+
+**Session goal:** Make watching Ralph TV on a phone work reliably — tap to
+watch, rotate freely, sound toggles, exit returns to the page. Average TV
+page engagement was 23s (GA, 171 views since 2026-08-16); the mobile
+immersive path was the leading suspect.
+
+### Repro findings (Chrome DevTools device mode, `/tv`, relay-status mocked live)
+
+- **Confirmed hypothesis 1 — rotation closed the player.** `isMobile` was a
+  live `matchMedia('(max-width: 767px)')` query. Rotating a phone to
+  landscape crosses 767px on almost every device (iPhone 15: 852×393, Pixel
+  8: 915×412), which flipped `isMobile` to `false` and an effect immediately
+  called `setImmersive(false)`. The user rotated (exactly what the "Rotate
+  your device" prompt asked for) and the player closed under them —
+  repro'd tap → rotate → player vanishes, on every device width tested.
+- **Confirmed hypothesis 2 — orientation lock fired too early.**
+  `screen.orientation.lock('landscape')` ran in an effect keyed on
+  `immersive` becoming true, which fires (via `flushSync`) before
+  `requestFullscreen()` even resolves. `orientation.lock()` only succeeds
+  once element fullscreen is actually active, so on Android this always
+  rejected silently — the lock never engaged.
+- **Hypothesis 4 partly confirmed — iPhone fallback UI was wrong.**
+  `iosNativeFs` was a static capability flag (`isMobile && !supportsElementFs`),
+  not whether Apple's native player had actually opened. If
+  `webkitEnterFullscreen` was unsupported or threw, the CSS overlay became
+  the de facto UI but still hid Schedule/Info/rotate-hint as if native
+  fullscreen owned the screen — leaving no way to reach those controls.
+- Hypothesis 5 (100dvh / address bar clipping) — not reproduced; `dvh` +
+  `fit="contain"` measured correctly in DevTools at every toolbar state
+  tried.
+
+### Fixed — `components/tv/TVSet.tsx`, new `components/tv/ImmersivePlayer.tsx`
+
+- **`isMobile` is now decided once at mount** (`pointer: coarse` OR
+  `min(innerWidth, innerHeight) < 768`), never re-derived from live viewport
+  width. Rotating no longer closes immersive mode. Orientation is still
+  tracked live (via its own `matchMedia('(orientation: portrait)')`
+  listener) — it only drives the rotate hint now, not the mobile/desktop
+  classification.
+- **Orientation lock now waits for `fullscreenchange`** before calling
+  `.lock('landscape')`, instead of firing on `immersive` becoming true. Also
+  used to detect the Android back/swipe exit (unchanged behaviour, just
+  relocated).
+- **iPhone fallback UI fixed**: added `iosFsOpen` state, set only once
+  `webkitEnterFullscreen()` is actually invoked without throwing, and
+  cleared on `webkitendfullscreen`. Schedule/Info/rotate-hint now hide only
+  while Apple's native player has genuinely taken over — the CSS-overlay
+  fallback keeps full controls.
+- **Immersive mute button now flips `video.muted` synchronously inside the
+  click handler** (matching `LivePlayer`'s own `toggleMute`), rather than
+  only updating React state and relying on an effect to sync the element a
+  tick later — more robust under iOS's stricter unmute-needs-a-gesture rule.
+- **Portrait wall replaced with a dismissible letterbox hint by default**
+  (hypothesis 3): the picture now plays full-bleed/letterboxed in portrait
+  with a small dismissible "Ralph TV is best in landscape" banner instead of
+  a full-screen block. Gated behind a `portraitBehavior: 'letterbox' | 'wall'`
+  prop (currently hardcoded to `'letterbox'` in `TVSet.tsx`) so it's a
+  one-line revert if the wall is preferred — **needs Brook's confirmation**;
+  the wall previously existed because the set's SVG/on-screen furniture
+  can't be operated at phone size, but with the picture visible dwell time
+  should improve rather than the user seeing a black screen.
+- Added `Sentry.addBreadcrumb` (category `tv-immersive`, level `debug`) on
+  `requestFullscreen`/`orientation.lock`/`webkitEnterFullscreen` rejections —
+  first breadcrumb convention in the codebase (no prior `addBreadcrumb`
+  calls existed to match against).
+- **Extracted `components/tv/ImmersivePlayer.tsx`** — the mobile immersive
+  overlay (video, Schedule/Info/mute controls, exit, portrait hint) is now
+  its own component instead of inline JSX in `TVSet.tsx`, which dropped from
+  ~1090 to 884 lines. `TVSet` still owns `enterImmersive`/`exitImmersive`
+  (needs `overlayRef` for `requestFullscreen`) and the overlay/schedule data
+  shared with the non-immersive teletext screens; everything immersive-only
+  (video ref, iOS fullscreen state, portrait-hint dismissal) is now local to
+  `ImmersivePlayer`.
+
+### Added
+
+- `e2e/tv-mobile-immersive.spec.ts` — Playwright coverage using the iPhone
+  14 device profile (viewport/touch/coarse-pointer emulation, Chromium
+  engine): poster shown at 390px, tap opens immersive, viewport rotate to
+  844×390 and back keeps immersive mounted, exit returns to the poster with
+  no orphaned overlay, and tapping while already in landscape opens
+  immersive directly. `/api/broadcaster/relay-status` etc. are mocked at the
+  network layer since no broadcaster backend runs locally.
+  `HTMLElement.prototype.requestFullscreen` is stubbed in the test — real
+  Chromium fullscreen makes `page.setViewportSize()` fail with "resize
+  minimized/maximized/fullscreen window" mid-test, which is a test-harness
+  limitation, not something the fix depends on (the `immersive` React state
+  already flips regardless of whether the browser's fullscreen request
+  actually succeeds).
+- `playwright.config.ts` — no device projects existed to "use" as the build
+  prompt assumed; added device emulation via `test.use()` inside the new
+  spec instead of a shared project, since a `Mobile Chrome`
+  (`devices['Pixel 7']`) project hit the same real-fullscreen/viewport-resize
+  conflict as a shared config.
+
+### Not done
+
+- **Optional part B** (`~/ralphTV` embed player iOS fullscreen fallback) —
+  skipped; out of scope for this repo/session, and part A took the full
+  session.
+- **Analytics events** (`ralphtv_immersive_enter`/`_exit`, build prompt 04
+  Phase A) — not wired. Searched the codebase for any `ralphtv_*` event or
+  analytics helper (gtag/PostHog/etc.) and found none, so prompt 04 Phase A
+  hasn't landed yet.
+
+### Manual steps
+
+None — no new env vars, no migrations.
+
+### Decisions needing Brook's confirmation
+
+- **Portrait: letterbox vs. wall.** Shipped defaulting to letterbox (picture
+  visible + dismissible hint) since it directly targets the 23s dwell-time
+  problem. Revert to the old full-screen "Rotate your device" wall by
+  changing the `portraitBehavior` prop TVSet passes to `ImmersivePlayer`
+  from `'letterbox'` to `'wall'` (one line, `components/tv/TVSet.tsx`).
+
 ## 2026-08-05 — Teletext screens: compact on mobile
 
 - **Schedule / Show Info teletext screens** (`TeletextSchedule.tsx`,

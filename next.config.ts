@@ -13,23 +13,29 @@ import type { NextConfig } from 'next'
 // added inside the GTM container since (each needs its own script-src host
 // — connect-src/img-src are already broad (any https:), so most GTM tags
 // don't need CSP changes, but anything that injects a <script> or <iframe>
-// does). Confirmed happening in practice, not just theoretical:
-//   - connect.facebook.net — Meta/Facebook Pixel (fbevents.js)
+// does). Confirmed happening in practice, not just theoretical — the Meta
+// Pixel needed three separate directives, not just script-src, because it
+// falls back to an HTML form POST and a hidden iframe when its normal beacon
+// delivery is blocked (ad blockers, cookie restrictions):
+//   - script-src:  connect.facebook.net  (fbevents.js)
+//   - form-action: www.facebook.com      (tr/ beacon delivered as a form POST)
+//   - frame-src:   www.facebook.com      (tr/ beacon delivered via hidden iframe)
 // GTM's tag config lives outside this repo, so a new CSP violation after
-// adding a tag there is expected — add the blocked host here when it shows up.
+// adding a tag there is expected — add the blocked host to whichever
+// directive the browser console names, don't assume script-src is the only one.
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
-  "form-action 'self'",
+  "form-action 'self' https://www.facebook.com",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "media-src 'self' blob: https:",
   "connect-src 'self' https:",
-  "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://js.stripe.com https://*.stripe.com",
+  "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://js.stripe.com https://*.stripe.com https://www.facebook.com",
   'upgrade-insecure-requests',
 ].join('; ')
 

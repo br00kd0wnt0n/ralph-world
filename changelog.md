@@ -27,7 +27,13 @@ already shipped on 2026-09-11 (below); this session is Part C only.
   3x phone (~2.9x upscale). Framing is fixed below; sharpness needs a second
   stream (scoped, not built — see "Not done").
 
-### Built — `feat/vertical-content` (unmerged, awaiting deploy)
+### Shipped — `375c07c`, deployed 21:06 UTC (broadcaster half `56c5d2a` at 20:55)
+
+Post-deploy check: the production proxy `/api/broadcaster/now-playing` returns
+`aspect: landscape, srcWidth 1920, srcHeight 1080` for the clip on air — the
+new client code is serving and the broadcaster metadata is flowing. Brook is
+checking sharpness on a real phone with a portrait clip; the second-stream
+decision waits on that.
 
 - Metadata path (primary): the broadcaster now probes rotation-aware source
   dimensions at transcode and backfills older assets; `/now-playing` carries

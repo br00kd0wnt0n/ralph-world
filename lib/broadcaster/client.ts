@@ -45,6 +45,8 @@ function toScheduleItem(s: unknown): ScheduleItem | null {
   if (!s || typeof s !== 'object') return null
   const o = s as Record<string, unknown>
   if (!o.showName) return null
+  const w = typeof o.srcWidth === 'number' && o.srcWidth > 0 ? o.srcWidth : null
+  const h = typeof o.srcHeight === 'number' && o.srcHeight > 0 ? o.srcHeight : null
   return {
     startTime: '',
     endTime: '',
@@ -52,6 +54,9 @@ function toScheduleItem(s: unknown): ScheduleItem | null {
     description: o.description != null ? String(o.description) : undefined,
     assetId: o.assetId != null ? String(o.assetId) : undefined,
     thumbnailUrl: (o.thumbnailUrl as string | null | undefined) ?? null,
+    aspect: o.aspect === 'portrait' || o.aspect === 'landscape' ? o.aspect : null,
+    srcWidth: w,
+    srcHeight: h,
   }
 }
 

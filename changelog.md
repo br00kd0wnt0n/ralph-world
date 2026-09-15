@@ -4,6 +4,94 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-09-15 — Vertical clips on phones (build prompt 01 Part C)
+
+**Session goal:** Brook's priority from 2026-09-15 — portrait clips looked wrong
+on phones: a small picture with black on every side. Parts A/B of prompt 01 had
+already shipped on 2026-09-11 (below); this session is Part C only.
+
+### What was actually happening (verified in both repos)
+
+- The broadcaster's transcoder pads every source into 1280x720
+  (`scale=…:force_original_aspect_ratio=decrease,pad=1280:720:…:color=black`).
+  A 1080x1920 clip becomes a **405x720 strip** — 32% of the frame, downscaled
+  from 1080 wide. Every player receives that frame; nothing recorded the source
+  shape (`norm_width/height` are the output dims; the only ffprobe ran on the
+  audio stream).
+- `ImmersivePlayer` used `fit="contain"` on that frame. On a portrait phone that
+  fits the whole 16:9 frame into a 9:16 viewport — the strip is ~1/3 of the
+  screen width. That is the black Brook saw.
+- The pixel-sampling auto-zoom existed only in ralphTV's `/embed` player, not
+  here.
+- Resolution is a ceiling no zoom can lift: 405px wide at source vs 1170px on a
+  3x phone (~2.9x upscale). Framing is fixed below; sharpness needs a second
+  stream (scoped, not built — see "Not done").
+
+### Built — `feat/vertical-content` (unmerged, awaiting deploy)
+
+- Metadata path (primary): the broadcaster now probes rotation-aware source
+  dimensions at transcode and backfills older assets; `/now-playing` carries
+  `aspect`, `srcWidth`, `srcHeight` (ralphTV branch `feat/asset-source-dims`).
+  `ScheduleItem` gained the same fields; `TVSet` passes them to `ImmersivePlayer`.
+- Zoom to the strip: portrait clip + portrait phone → the contain-fitted frame is
+  scaled by `frameAspect / stripAspect` (3.16 for 9:16) inside an overflow-hidden
+  stage, so the strip fills the width exactly with no crop of the clip itself.
+  Landscape orientation keeps contain. Frame aspect is read from the decoded
+  `<video>`, not assumed.
+- Orientation follows the content: lock targets portrait for a vertical clip; the
+  rotate hint says "best in portrait" when the phone is landscape and disappears
+  in the matching orientation.
+- iPhone keeps our CSS overlay for a portrait clip (Apple's native player can't
+  be styled and would show the padded frame), decided once at mount.
+- `hooks/useContentAspect` — pixel fallback while `aspect` is null (backfill
+  pending): 64x36 canvas sample every 2s; portrait = columns at 25%/75% black
+  while 40%/60% carry picture; three agreeing samples; dark frames ignored; gives
+  up quietly on a tainted canvas. `<video>` now sets `crossOrigin="anonymous"`
+  for Safari's native-HLS path; Bunny returns `Access-Control-Allow-Origin: *`
+  on segments (checked on a live one).
+- Fixed alongside: `onVideoEl` was an inline closure → every parent poll
+  re-render flapped the `<video>` null→el and restarted the sampler. Stable
+  `useCallback` now.
+
+### Verified
+
+- `e2e/tv-mobile-immersive.spec.ts` +2 scenarios (zoom 3.16 in portrait, 1.00
+  + "best in portrait" hint in landscape; landscape clip unchanged): 4/4.
+- `e2e/tv-vertical-detector.spec.ts` (opt-in via `SYNTH_HLS_BASE`): real Chrome
+  decoding real synthetic pillarboxed/landscape HLS
+  (`e2e/fixtures/synth-hls/make.sh` + `serve.mjs`). Portrait detected from
+  pixels in ~5s and zoomed; landscape never false-positives: 2/2. Needs
+  `bypassCSP` — `connect-src 'self' https:` is right for production and blocks
+  an `http://localhost` fixture (first run failed silently on exactly that:
+  `requestfailed … csp`, hls.js `manifestLoadError`).
+- Screenshots of the zoomed stage vs. the landscape control taken from the
+  debug harness during the session.
+
+### Not done / scoped
+
+- **Full-resolution vertical** is impossible inside one 16:9 stream. It needs
+  the transcoder to also write a 720x1280 copy for portrait sources, the
+  streamer to publish a second `_vert` RTMP stream (its copy-mode concat needs
+  uniform params per stream), a second HLS playlist, and player selection —
+  effectively a second channel, with its own egress. Worth doing only if
+  vertical content becomes a real share of the schedule.
+- **Blur-fill instead of black pillars at transcode** (the social-media look):
+  cosmetic win on the desktop TV set, would defeat the pixel detector, does
+  nothing for phone resolution. Product call; not done.
+- Desktop TV cutout still shows the strip with pillars (cover-fit in a ~1.32
+  box). Acceptable; blur-fill is the fix if wanted.
+
+### Manual steps
+
+- Deploy order: broadcaster `feat/asset-source-dims` first (Backend +
+  Transcoder — migration `0009` runs on backend boot; the transcoder backfills
+  existing assets while idle, one per poll), then this branch. Shipping this
+  first is safe too — the pixel fallback covers `aspect: null`.
+- No env vars. New broadcaster dependency: `@aws-sdk/s3-request-presigner`
+  pinned `3.920.0` (same as its backend).
+
+---
+
 ## 2026-09-11 — iPhone immersive controls: don't flash-then-vanish
 
 Found live by Brook testing an iPhone 17 Pro Max after the mobile TV player

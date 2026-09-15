@@ -91,6 +91,66 @@ test('poster at 390px opens immersive on tap and survives rotation both ways', a
   await expect(exitButton).toBeHidden()
 })
 
+/**
+ * Vertical clips (build prompt 01 Part C). The broadcaster pads a portrait
+ * source into its 16:9 stream — a 9:16 clip becomes a 405x720 strip between
+ * black pillars. With `aspect: 'portrait'` on /now-playing the immersive view
+ * must zoom to that strip on a portrait phone (scale = (16/9) / (9/16) = 3.16),
+ * drop the zoom in landscape, and flip the rotate hint to ask for portrait.
+ */
+test('portrait clip: zooms to the strip in portrait, hints for portrait in landscape', async ({ page }) => {
+  await page.route('**/api/broadcaster/now-playing*', (route) =>
+    route.fulfill({
+      json: {
+        streaming: true,
+        current: { showName: 'Vertical Test', assetId: 'v1', aspect: 'portrait', srcWidth: 1080, srcHeight: 1920 },
+        next: null,
+      },
+    }),
+  )
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/tv')
+  await dismissCookieBanner(page)
+
+  await page.getByRole('button', { name: 'Tap to watch Ralph TV' }).click()
+  const stage = page.getByTestId('immersive-stage')
+  await expect(stage).toHaveAttribute('data-aspect', 'portrait')
+  await expect(stage).toHaveAttribute('data-zoom', '3.16')
+  await expect(page.getByText(/best in portrait/)).toBeHidden()
+  await expect(page.getByText(/best in landscape/)).toBeHidden()
+
+  // Landscape: no zoom (the strip is pillarboxed by nature), hint asks for portrait.
+  await page.setViewportSize({ width: 844, height: 390 })
+  await expect(stage).toHaveAttribute('data-zoom', '1.00')
+  await expect(page.getByText(/best in portrait/)).toBeVisible()
+
+  // Back to portrait: zoom returns, hint goes.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(stage).toHaveAttribute('data-zoom', '3.16')
+  await expect(page.getByText(/best in portrait/)).toBeHidden()
+})
+
+test('landscape clip: no zoom in portrait, landscape hint as before', async ({ page }) => {
+  await page.route('**/api/broadcaster/now-playing*', (route) =>
+    route.fulfill({
+      json: {
+        streaming: true,
+        current: { showName: 'Wide Test', assetId: 'w1', aspect: 'landscape', srcWidth: 1920, srcHeight: 1080 },
+        next: null,
+      },
+    }),
+  )
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/tv')
+  await dismissCookieBanner(page)
+
+  await page.getByRole('button', { name: 'Tap to watch Ralph TV' }).click()
+  const stage = page.getByTestId('immersive-stage')
+  await expect(stage).toHaveAttribute('data-aspect', 'landscape')
+  await expect(stage).toHaveAttribute('data-zoom', '1.00')
+  await expect(page.getByText(/best in landscape/)).toBeVisible()
+})
+
 test('tapping in landscape opens immersive directly', async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 })
   await page.goto('/tv')

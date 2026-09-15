@@ -3,6 +3,8 @@ export interface RelayStatus {
   available: boolean
 }
 
+export type ContentAspect = 'portrait' | 'landscape'
+
 export interface ScheduleItem {
   startTime: string
   endTime: string
@@ -10,6 +12,12 @@ export interface ScheduleItem {
   description?: string
   assetId?: string
   thumbnailUrl?: string | null
+  /** Source orientation of the clip (rotation-aware, probed by the broadcaster's
+   *  transcoder). Portrait clips are pillarboxed into the 16:9 stream, so the
+   *  player zooms to the strip on a portrait phone. null = not probed yet. */
+  aspect?: ContentAspect | null
+  srcWidth?: number | null
+  srcHeight?: number | null
 }
 
 // Shape returned by GET /assets on the broadcaster backend. Field names

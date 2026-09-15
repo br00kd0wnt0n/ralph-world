@@ -151,6 +151,11 @@ export default function LivePlayer({
         playsInline
         muted={isMuted || volume === 0}
         autoPlay
+        // Lets the orientation detector (useContentAspect) read frames on Safari's
+        // native HLS path without tainting the canvas; the relay/CDN send
+        // Access-Control-Allow-Origin: * on manifests and segments. hls.js (MSE)
+        // is unaffected either way.
+        crossOrigin="anonymous"
       />
 
       {!isReady && (

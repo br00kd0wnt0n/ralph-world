@@ -876,6 +876,12 @@ export default function TVSet({
           schedule={schedule}
           scheduleCurrentIndex={scheduleCurrentIndex}
           portraitBehavior="letterbox"
+          contentAspect={nowPlaying.current?.aspect ?? null}
+          contentDims={
+            nowPlaying.current?.srcWidth && nowPlaying.current?.srcHeight
+              ? { width: nowPlaying.current.srcWidth, height: nowPlaying.current.srcHeight }
+              : null
+          }
           onExit={exitImmersive}
         />
       )}

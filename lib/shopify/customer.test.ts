@@ -374,11 +374,14 @@ describe('mapStripeAddressToShopify', () => {
 })
 
 describe('updateCustomerAddress', () => {
-  it('POSTs the address to Shopify with default: true and returns the new id', async () => {
-    const { fn, calls } = fakeFetch(() => ({
-      status: 201,
-      body: { customer_address: { id: 7890 } },
-    }))
+  it('POSTs the address, then PUTs it as default, and returns the new id', async () => {
+    // Shopify 422s on a `default: true` key at create time ("Unexpected keys
+    // given: default"), so the default flag has to be a second call.
+    const { fn, calls } = fakeFetch(({ method }) =>
+      method === 'PUT'
+        ? { status: 200, body: { customer: { id: 12345, default_address: { id: 7890 } } } }
+        : { status: 201, body: { customer_address: { id: 7890 } } }
+    )
 
     const result = await updateCustomerAddress({
       shopifyCustomerId: '12345',
@@ -396,7 +399,7 @@ describe('updateCustomerAddress', () => {
     })
 
     expect(result.addressId).toBe('7890')
-    expect(calls.length).toBe(1)
+    expect(calls.length).toBe(2)
     expect(calls[0].method).toBe('POST')
     expect(calls[0].url).toContain('/customers/12345/addresses.json')
     expect(calls[0].body).toEqual({
@@ -411,9 +414,11 @@ describe('updateCustomerAddress', () => {
         country_code: 'GB',
         phone: '',
         company: '',
-        default: true,
       },
     })
+    expect(calls[0].body.address).not.toHaveProperty('default')
+    expect(calls[1].method).toBe('PUT')
+    expect(calls[1].url).toContain('/customers/12345/addresses/7890/default.json')
   })
 
   it('throws when Shopify returns no customer_address.id', async () => {

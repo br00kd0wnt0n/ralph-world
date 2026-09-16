@@ -207,12 +207,14 @@ export function mapStripeAddressToShopify(
  * the Stripe `checkout.session.completed` webhook handler to mirror
  * the shipping address Stripe collected.
  *
- * Implementation: POST a new address to /customers/{id}/addresses.json
- * with `default: true`. Shopify accepts the default flag on creation
- * and atomically makes it the customer's default — no second PUT call
- * needed. Side effect: existing addresses stay on the customer
- * record, which is fine for our use case (the cache + Newsstand only
- * read the default).
+ * Implementation: POST a new address to /customers/{id}/addresses.json,
+ * then PUT /customers/{id}/addresses/{addressId}/default.json to make it
+ * the default. Two calls, because Shopify rejects a `default: true` key
+ * on create with 422 "Unexpected keys given: default" — which is what
+ * this function used to send, so it had never succeeded (found
+ * 2026-09-16 while backfilling addresses). Side effect: existing
+ * addresses stay on the customer record, which is fine for our use case
+ * (the cache + Newsstand only read the default).
  *
  * Errors propagate. The webhook handler treats this as best-effort
  * via try/catch — see lib/stripe/webhook-handlers.ts onShippingAddress.
@@ -222,6 +224,7 @@ export async function updateCustomerAddress(args: {
   address: ShopifyAddressInput
   fetchImpl?: FetchLike
 }): Promise<{ addressId: string }> {
+  const customer = encodeURIComponent(args.shopifyCustomerId)
   const body = {
     address: {
       first_name: args.address.firstName ?? '',
@@ -234,19 +237,24 @@ export async function updateCustomerAddress(args: {
       country_code: args.address.country,
       phone: args.address.phone ?? '',
       company: args.address.company ?? '',
-      default: true,
     },
   }
   const res = await shopifyAdminFetch<{ customer_address?: { id: number | string } }>({
     method: 'POST',
-    path: `/customers/${encodeURIComponent(args.shopifyCustomerId)}/addresses.json`,
+    path: `/customers/${customer}/addresses.json`,
     body,
     fetchImpl: args.fetchImpl,
   })
   if (!res.customer_address?.id) {
     throw new Error('Shopify POST /customers/{id}/addresses.json returned no id')
   }
-  return { addressId: String(res.customer_address.id) }
+  const addressId = String(res.customer_address.id)
+  await shopifyAdminFetch({
+    method: 'PUT',
+    path: `/customers/${customer}/addresses/${encodeURIComponent(addressId)}/default.json`,
+    fetchImpl: args.fetchImpl,
+  })
+  return { addressId }
 }
 
 // ── Default address read (magazine fulfilment) ─────────────────────

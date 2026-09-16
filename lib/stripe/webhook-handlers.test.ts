@@ -102,6 +102,74 @@ describe('handleCheckoutSessionCompleted', () => {
     expect(logActionMock).toHaveBeenCalledTimes(1)
   })
 
+  it('reads the address from collected_information.shipping_details (current Stripe API shape)', async () => {
+    // Every real checkout.session.completed we'd stored carried the address
+    // ONLY here, and the handler used to read shipping_details — so nothing
+    // was ever cached or synced to Shopify. Regression guard.
+    const upd = stubUpdate()
+    const onShippingAddress = vi.fn().mockResolvedValue(undefined)
+    const result = await handleCheckoutSessionCompleted(
+      asEvent({
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            metadata: { user_id: 'user-1' },
+            customer: 'cus_abc',
+            subscription: 'sub_xyz',
+            collected_information: {
+              shipping_details: {
+                name: 'Helen Rutherford',
+                address: {
+                  line1: '35 Orchid Drive',
+                  line2: 'Heighington Village',
+                  city: 'NEWTON AYCLIFFE',
+                  state: null,
+                  postal_code: 'DL5 6AN',
+                  country: 'GB',
+                },
+              },
+            },
+            customer_details: { address: { line1: 'BILLING, must not win' } },
+          },
+        },
+      }),
+      { onShippingAddress }
+    )
+
+    expect(result).toEqual(expect.objectContaining({ ok: true, userId: 'user-1' }))
+    const setArg = upd.set.mock.calls[0][0]
+    expect(setArg.shippingAddressCached).toEqual({
+      line1: '35 Orchid Drive',
+      line2: 'Heighington Village',
+      city: 'NEWTON AYCLIFFE',
+      state: null,
+      postal_code: 'DL5 6AN',
+      country: 'GB',
+    })
+    expect(onShippingAddress).toHaveBeenCalledWith({
+      userId: 'user-1',
+      shippingAddressCached: setArg.shippingAddressCached,
+    })
+  })
+
+  it('falls back to customer_details.address when no shipping address was collected', async () => {
+    const upd = stubUpdate()
+    await handleCheckoutSessionCompleted(
+      asEvent({
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            metadata: { user_id: 'user-1' },
+            customer: 'cus_abc',
+            customer_details: { address: { line1: '9 Billing Rd', city: 'Leeds', postal_code: 'LS1', country: 'GB' } },
+          },
+        },
+      })
+    )
+    const setArg = upd.set.mock.calls[0][0]
+    expect(setArg.shippingAddressCached).toEqual({ line1: '9 Billing Rd', city: 'Leeds', postal_code: 'LS1', country: 'GB' })
+  })
+
   it('falls back to customer lookup when metadata.user_id is missing', async () => {
     stubSelectByCustomer([{ id: 'user-from-customer' }])
     const upd = stubUpdate()

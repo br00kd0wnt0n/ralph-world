@@ -117,13 +117,24 @@ export async function handleCheckoutSessionCompleted(
   }
   const stripeSubscriptionId = extractId(session.subscription)
 
-  // Stripe Checkout puts the shipping address on session.shipping_details
-  // (newer API) or customer_details.address (older paths). We accept
-  // either and store the address jsonb as-is.
-  const shipping =
-    (session as unknown as { shipping_details?: { name?: string | null; address?: unknown } })
-      .shipping_details ?? null
-  const shippingAddressCached: unknown = shipping?.address ?? null
+  // Where Stripe puts the shipping address depends on API version:
+  //   - session.collected_information.shipping_details.address  (current)
+  //   - session.shipping_details.address                         (older)
+  //   - session.customer_details.address                         (billing, last resort)
+  // Every checkout.session.completed event we'd stored up to 2026-09-16 had
+  // the address ONLY under collected_information, and this code read only
+  // shipping_details — so no Stripe address ever reached profiles or
+  // Shopify, and fulfilment had nowhere to ship. Accept all three, in order.
+  const s = session as unknown as {
+    collected_information?: { shipping_details?: { name?: string | null; address?: unknown } | null } | null
+    shipping_details?: { name?: string | null; address?: unknown } | null
+    customer_details?: { address?: unknown } | null
+  }
+  const shippingAddressCached: unknown =
+    s.collected_information?.shipping_details?.address ??
+    s.shipping_details?.address ??
+    s.customer_details?.address ??
+    null
 
   const db = getDb()
   await db

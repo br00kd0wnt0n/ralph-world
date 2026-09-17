@@ -78,6 +78,22 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
+  // ralphandco.com is the old company domain. It used to be a redirect-only
+  // project on Vercel; it's attached to this Railway service instead so the
+  // Vercel subscription can go. Everything lands on the ralph.world homepage,
+  // matching what Vercel did — the old site's paths don't exist here, so
+  // preserving the path would turn old links into 404s rather than a welcome.
+  // Inert until the domain is attached in Railway and DNS is repointed.
+  // NOTE: that domain's DNS zone also carries company email (Google Workspace
+  // MX, SPF, DKIM). Only the apex and www web records should ever change.
+  async redirects() {
+    return ['ralphandco.com', 'www.ralphandco.com'].map((host) => ({
+      source: '/:path*',
+      has: [{ type: 'host' as const, value: host }],
+      destination: 'https://ralph.world/',
+      permanent: true,
+    }))
+  },
 }
 
 export default withSentryConfig(nextConfig, {

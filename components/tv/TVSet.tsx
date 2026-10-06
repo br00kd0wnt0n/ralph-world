@@ -105,10 +105,20 @@ export default function TVSet({
   // exactly what the "Rotate your device" prompt was asking the user to do.
   // Orientation is tracked separately below and still updates live (it only
   // drives the rotate hint, not the mobile/desktop classification).
+  //
+  // WIDTH only for the small-screen test, never height. The set is sized by
+  // the page width (max-w-5xl) and the page scrolls, so a short window doesn't
+  // shrink the on-TV controls. Height used to be in here via
+  // min(innerWidth, innerHeight) < 768, which put 13" laptops on the line:
+  // a MacBook Air in Chrome has ~830px of page height, and a visible Dock, a
+  // bookmarks bar or 110% zoom each drop it under 768 — so the same laptop
+  // autoplayed for one person and showed "tap to watch" for another. Phones
+  // in landscape (the case the height check was covering) are coarse-pointer
+  // and are still caught by the first test.
   useEffect(() => {
     const coarsePointer = window.matchMedia('(pointer: coarse)').matches
-    const smallScreen = Math.min(window.innerWidth, window.innerHeight) < 768
-    setIsMobile(coarsePointer || smallScreen)
+    const narrowWindow = window.innerWidth < 768
+    setIsMobile(coarsePointer || narrowWindow)
     setSupportsElementFs(Boolean(document.fullscreenEnabled))
 
     const mqPortrait = window.matchMedia('(orientation: portrait)')

@@ -255,9 +255,12 @@ export async function createMagazineOrder(
       // job will record 'failed' and an admin can adjust stock and
       // retry.
       inventory_behaviour: 'decrement_obeying_policy',
-      // No email — subscribers get the magazine-shipped Resend
-      // template when the fulfillment webhook fires, not when the
-      // order is created.
+      // No order-confirmation email: the subscriber didn't buy this
+      // order, it's a fulfilment vehicle. The shipping confirmation
+      // comes later from Shopify itself when Newsstand's write-back
+      // app creates the fulfilment ("Email the customer" ON in the
+      // Newsstand portal). send_fulfillment_receipt here only governs
+      // fulfilments created at order time, of which there are none.
       send_receipt: false,
       send_fulfillment_receipt: false,
       // Tag so the Shopify admin UI can filter to subscriber orders.

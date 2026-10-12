@@ -18,10 +18,10 @@ export function getIssue9Mode(now: Date = new Date()): Issue9Mode {
   return now.getTime() >= ISSUE9_LAUNCH_AT.getTime() ? 'order' : 'preorder'
 }
 
-// Handle of the existing Issue 9 product in Shopify. PLACEHOLDER default —
-// set ISSUE9_PRODUCT_HANDLE in Railway once Vicky confirms the product.
+// Handle of the existing Issue 9 product in Shopify (admin id 11185704730967,
+// shop.ralph.world/products/ralph-mag-9). ISSUE9_PRODUCT_HANDLE overrides.
 export function getIssue9ProductHandle(): string {
-  return process.env.ISSUE9_PRODUCT_HANDLE || 'ralph-magazine-issue-9'
+  return process.env.ISSUE9_PRODUCT_HANDLE || 'ralph-mag-9'
 }
 
 interface Issue9BuyCopy {

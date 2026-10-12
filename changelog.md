@@ -39,7 +39,8 @@ or deployed. Image, copy and product handle are placeholders.
   decision (see the scope one-pager sent to Dave + Vicky).
 
 ### Manual steps
-- Railway: set `ISSUE9_PRODUCT_HANDLE` before deploy.
+- Shopify: Issue 9 product (`ralph-mag-9`) must be Active and published to
+  the headless sales channel before the buy button enables.
 
 ---
 

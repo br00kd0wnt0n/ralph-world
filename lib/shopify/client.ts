@@ -4,6 +4,7 @@ import {
   GET_ALL_PRODUCTS,
   GET_PRODUCT_BY_HANDLE,
   CREATE_CART,
+  CREATE_CART_WITH_ATTRIBUTES,
   CREATE_SUBSCRIPTION_CART,
   GET_VARIANT_SELLING_PLANS,
   ADD_CART_LINES,
@@ -137,6 +138,25 @@ export async function createCart(variantId?: string): Promise<ShopifyCart | null
     cartCreate: { cart: ShopifyCart | null; userErrors: unknown[] }
   }>(CREATE_CART, { lines }, false)
   return data?.cartCreate?.cart ?? null
+}
+
+// One-line cart with order attributes, for buy-now flows that skip the cart
+// drawer. Returns the Shopify-hosted checkoutUrl, or null on failure.
+export async function createCheckoutUrl(
+  variantId: string,
+  attributes: Record<string, string>
+): Promise<string | null> {
+  const data = await storefront<{
+    cartCreate: { cart: { id: string; checkoutUrl: string } | null; userErrors: unknown[] }
+  }>(
+    CREATE_CART_WITH_ATTRIBUTES,
+    {
+      lines: [{ merchandiseId: variantId, quantity: 1 }],
+      attributes: Object.entries(attributes).map(([key, value]) => ({ key, value })),
+    },
+    false
+  )
+  return data?.cartCreate?.cart?.checkoutUrl ?? null
 }
 
 export async function addCartLines(

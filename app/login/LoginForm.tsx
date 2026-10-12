@@ -69,6 +69,11 @@ interface Props {
    * white page). Default keeps the white card for /login's dark background.
    */
   bare?: boolean
+  /**
+   * Optional extra hidden inputs on the signup form. Used by campaign landing
+   * pages (/issue9) to pass `landing` + utm_* tags through to signupAction.
+   */
+  signupHiddenFields?: Record<string, string>
 }
 
 export type BannerState =
@@ -86,7 +91,7 @@ export type BannerState =
  * The email/password path uses useActionState so we can render inline
  * errors without a page reload.
  */
-export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSignupSuccess, heading, bare }: Props) {
+export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSignupSuccess, heading, bare, signupHiddenFields }: Props) {
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode)
   const [isGooglePending, startGoogleTransition] = useTransition()
 
@@ -274,6 +279,10 @@ export function LoginForm({ callbackUrl, initialMode, banner, googleAction, onSi
           }}
           className="space-y-3"
         >
+          {signupHiddenFields &&
+            Object.entries(signupHiddenFields).map(([name, value]) => (
+              <input key={name} type="hidden" name={name} value={value} />
+            ))}
           <Field
             label="Name"
             name="name"

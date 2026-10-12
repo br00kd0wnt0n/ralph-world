@@ -121,6 +121,18 @@ export const CREATE_CART = `
   }
 `
 
+// Single-purpose cart for campaign landing pages (/issue9): one line plus
+// cart attributes, which Shopify copies onto the order as "Additional
+// details" — that's how campaign source + the pre-order flag reach the order.
+export const CREATE_CART_WITH_ATTRIBUTES = `
+  mutation CreateCartWithAttributes($lines: [CartLineInput!], $attributes: [AttributeInput!]) {
+    cartCreate(input: { lines: $lines, attributes: $attributes }) {
+      cart { id checkoutUrl }
+      userErrors { field message }
+    }
+  }
+`
+
 // Subscription carts pre-fill buyerIdentity.email so the Shopify checkout
 // doesn't ask a logged-in Ralph user to retype the email they just used.
 // Line must include sellingPlanId — without it, Shopify treats the cart as

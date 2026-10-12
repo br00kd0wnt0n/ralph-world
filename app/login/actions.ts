@@ -3,6 +3,8 @@
 import { signIn } from '@/lib/auth'
 import { AuthError } from 'next-auth'
 import { signupWithPassword } from '@/lib/auth/signup'
+import { pickAttribution } from '@/lib/attribution'
+import { recordSignupAttribution } from '@/lib/attribution-server'
 
 /**
  * Server actions for the /login page email/password forms.
@@ -93,6 +95,9 @@ export async function signinWithCredentials(
   }
 }
 
+// Landing pages allowed to attribute a signup to themselves.
+const LANDINGS = new Set(['issue9'])
+
 export interface SignupResult {
   ok: boolean
   error?:
@@ -115,6 +120,8 @@ export async function signupAction(
   const marketingRaw = formData.get('marketing_opt_in')
   const marketingOptIn = marketingRaw === 'on' || marketingRaw === 'true' || marketingRaw === '1'
 
+  const landing = String(formData.get('landing') ?? '')
+
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.AUTH_URL ??
@@ -123,6 +130,16 @@ export async function signupAction(
   try {
     const result = await signupWithPassword({ email, password, name, marketingOptIn, appUrl })
     if (result.ok) {
+      // Campaign landing pages (/issue9) pass `landing` + utm_* as hidden
+      // fields. Best-effort; never blocks the signup response.
+      if (LANDINGS.has(landing)) {
+        void recordSignupAttribution({
+          userId: result.userId,
+          landing,
+          attribution: pickAttribution(formData),
+          knownNew: true,
+        })
+      }
       return { ok: true, message: 'Check your inbox — we’ve sent you a verification link.' }
     }
     if (

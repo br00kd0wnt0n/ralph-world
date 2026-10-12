@@ -174,8 +174,10 @@ export default function Footer({ variant = 'dark', copy }: FooterProps) {
     setMessage('')
   }
 
-  // Hidden on the space-invaders route (bare starfield/parallax canvas).
-  if (pathname === '/space-invaders') return null
+  // Hidden on the space-invaders route (bare starfield/parallax canvas) and
+  // on the /issue9 campaign landing page (brief: no offices/contact form —
+  // the page renders its own legal links).
+  if (pathname === '/space-invaders' || pathname === '/issue9') return null
 
   if (variant === 'light') {
     return (

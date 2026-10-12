@@ -4,6 +4,46 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-10-12 — Issue 9 landing page (`/issue9`), placeholder build
+
+**Session goal:** Dave's Issue 09 web brief — one campaign page that sells
+Issue 9 and signs people up. Branch `feat/issue9-landing`, not yet committed
+or deployed. Image, copy and product handle are placeholders.
+
+### Added
+- `app/issue9/page.tsx` + `components/issue9/Issue9Client.tsx` — buy block on
+  top, join block (existing `LoginForm`) below. Mobile-first; global footer
+  hidden on this route (`Footer.tsx`), page renders its own legal links.
+- `lib/issue9.ts` — pre-order → order switch by date (Mon 26 Oct 00:00 UK),
+  `ISSUE9_MODE` override, placeholder copy. `?preview=order|preorder` shows
+  the other state's wording.
+- `app/api/checkout/issue9/route.ts` + `createCheckoutUrl()` in
+  `lib/shopify/client.ts` — one-line cart straight to Shopify checkout with
+  cart attributes `landing`, `preorder`, `utm_*` (land on the order).
+- `lib/attribution.ts` (+ test), `lib/attribution-server.ts`,
+  `app/api/attribution/signup/route.ts` — sign-ups by source as
+  `signup_attributed` audit_log rows; no schema change. `LoginForm` gained
+  `signupHiddenFields`; `signupAction` records attribution.
+- `trackEvent()` in `lib/gtm-client-init.ts` (consent-gated).
+
+### Decisions made
+- Existing Issue 9 Shopify product, no pre-order app (theme widgets don't
+  render on the headless front end). Pre-orders identified by the
+  `preorder: true` order attribute.
+- UTM tags travel in the URL / request only — nothing stored on the device.
+
+### Not done
+- Verified in Shopify demo mode only: no real checkout, Google round trip or
+  DB attribution write exercised yet. Desktop layout not checked.
+- Awaiting: hero image, join copy, URL, product handle, marketing opt-in
+  decision (see the scope one-pager sent to Dave + Vicky).
+
+### Manual steps
+- Shopify: Issue 9 product (`ralph-mag-9`) must be Active and published to
+  the headless sales channel before the buy button enables.
+
+---
+
 ## 2026-09-15 — Vertical clips on phones (build prompt 01 Part C)
 
 **Session goal:** Brook's priority from 2026-09-15 — portrait clips looked wrong

@@ -29,3 +29,13 @@ export function initGTM(): void {
 
   initialised = true
 }
+
+/**
+ * Push a custom event to the GTM dataLayer. No-op until initGTM() has run,
+ * i.e. until the visitor has accepted analytics cookies.
+ */
+export function trackEvent(event: string, params: Record<string, string> = {}): void {
+  if (!initialised || typeof window === 'undefined') return
+  const w = window as unknown as { dataLayer?: Record<string, unknown>[] }
+  w.dataLayer?.push({ event, ...params })
+}

@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { getIssue9Product } from '@/lib/data/issue9'
-import { getIssue9Mode } from '@/lib/issue9'
+import { getIssue9Mode, isIssue9Open } from '@/lib/issue9'
 import { formatPrice } from '@/lib/shopify/format'
 import Issue9Client from '@/components/issue9/Issue9Client'
 
-// Also bounds how long after launch midnight the pre-order → order switch
-// takes to show (the mode is computed at render).
+// Also bounds how long after midnight the opening (19 Oct) and the
+// pre-order → order switch (26 Oct) take to show — both computed at render.
 export const revalidate = 300
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,6 +39,7 @@ export default async function Issue9Page() {
     <Suspense>
       <Issue9Client
         mode={getIssue9Mode()}
+        open={isIssue9Open()}
         product={
           product && variant
             ? {

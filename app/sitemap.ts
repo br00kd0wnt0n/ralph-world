@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { getPublishedArticles } from '@/lib/data/magazine'
 import { getActiveEvents } from '@/lib/data/events'
 import { getAllProducts } from '@/lib/shopify/client'
+import { getIssue9ProductHandle } from '@/lib/issue9'
 
 const BASE_URL = (
   process.env.NEXT_PUBLIC_APP_URL || 'https://ralph.world'
@@ -69,8 +70,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
+  // Issue 9's product URL redirects to /issue9 (already a static route).
+  const issue9Handle = getIssue9ProductHandle()
   const productEntries: MetadataRoute.Sitemap = products
-    .filter((p) => p.handle)
+    .filter((p) => p.handle && p.handle !== issue9Handle)
     .map((p) => ({
       url: `${BASE_URL}/shop/${p.handle}`,
       lastModified: now,

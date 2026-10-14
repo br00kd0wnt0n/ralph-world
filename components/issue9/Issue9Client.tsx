@@ -22,6 +22,8 @@ const LANDING = 'issue9'
 
 interface Issue9ClientProps {
   mode: Issue9Mode
+  /** False before ISSUE9_OPENS_AT — the button stays closed. */
+  open: boolean
   product: {
     price: string
     imageUrl: string | null
@@ -36,7 +38,7 @@ const gooper: React.CSSProperties = {
   letterSpacing: 0,
 }
 
-export default function Issue9Client({ mode: liveMode, product }: Issue9ClientProps) {
+export default function Issue9Client({ mode: liveMode, open, product }: Issue9ClientProps) {
   const params = useSearchParams()
   const router = useRouter()
   const { user, tier } = useAuth()
@@ -69,7 +71,7 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
       const res = await fetch('/api/checkout/issue9', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attribution }),
+        body: JSON.stringify({ attribution, testToken }),
       })
       const data = (await res.json().catch(() => ({}))) as {
         checkoutUrl?: string
@@ -110,7 +112,11 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
     router.replace(withAttribution('/issue9', attribution), { scroll: false })
   }, [joined, optedIn, user, attribution, router])
 
-  const canBuy = Boolean(product?.available)
+  // ?test=<token> opens the button early for a test order; the checkout
+  // route checks the token, so a wrong one just gets the not-open message.
+  const testToken = params.get('test')
+  const isOpen = open || Boolean(testToken)
+  const canBuy = isOpen && Boolean(product?.available)
 
   return (
     <motion.div variants={sectionPageVariants} initial="initial" animate="animate">
@@ -186,8 +192,10 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
                 <div className="flex justify-center min-[992px]:justify-start">
                   <Button
                     label={
-                      !canBuy
-                        ? copy.unavailable
+                      !isOpen
+                        ? copy.notOpenYet
+                        : !canBuy
+                          ? copy.unavailable
                         : buying
                           ? 'One sec…'
                           : copy.cta.replace('{price}', product?.price ?? '')

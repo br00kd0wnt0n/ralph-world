@@ -18,6 +18,22 @@ export function getIssue9Mode(now: Date = new Date()): Issue9Mode {
   return now.getTime() >= ISSUE9_LAUNCH_AT.getTime() ? 'order' : 'preorder'
 }
 
+// Mon 19 Oct 2026, 00:00 UK time (still BST, so 23:00 UTC the day before).
+// Until then the buy button stays closed even if the product is published in
+// Shopify, so it can be published early for the image + a test order.
+export const ISSUE9_OPENS_AT = new Date('2026-10-18T23:00:00Z')
+
+export function isIssue9Open(now: Date = new Date()): boolean {
+  return getIssue9Mode(now) === 'order' || now.getTime() >= ISSUE9_OPENS_AT.getTime()
+}
+
+// Server-only. Lets a test order through before opening: the buy request
+// carries ?test=<ISSUE9_TEST_TOKEN> from the page URL. Unset = no bypass.
+export function isIssue9TestToken(token: unknown): boolean {
+  const expected = process.env.ISSUE9_TEST_TOKEN
+  return Boolean(expected) && typeof token === 'string' && token === expected
+}
+
 // Handle of the existing Issue 9 product in Shopify (admin id 11185704730967,
 // shop.ralph.world/products/ralph-mag-9). ISSUE9_PRODUCT_HANDLE overrides.
 export function getIssue9ProductHandle(): string {
@@ -30,6 +46,8 @@ interface Issue9BuyCopy {
   body: string
   /** `{price}` is replaced with the formatted Shopify price. */
   cta: string
+  /** Button label before ISSUE9_OPENS_AT. */
+  notOpenYet: string
   note: string
   unavailable: string
 }
@@ -42,6 +60,7 @@ export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
     heading: 'Ralph Issue 09',
     body: "50 years of Aardman, plus hats, ice hockey and collective nouns.\nPre-order now and it'll land on your doormat first.",
     cta: 'Pre-order for £{price}',
+    notOpenYet: 'Pre-orders open Monday 19 October',
     note: 'Ships from Monday 26 October. You pay today.',
     unavailable: 'Pre-orders open soon',
   },
@@ -50,6 +69,7 @@ export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
     heading: 'Ralph Issue 09',
     body: '50 years of Aardman, plus hats, ice hockey and collective nouns.\nOut now.',
     cta: 'Buy now for £{price}',
+    notOpenYet: 'Pre-orders open Monday 19 October',
     note: 'Shipping now.',
     unavailable: 'Sold out',
   },

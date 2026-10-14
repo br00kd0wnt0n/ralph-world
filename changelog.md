@@ -35,6 +35,17 @@ or deployed. Image, copy and product handle are placeholders.
 - Paid subscribers (`tier === 'paid'`) see a note that Issue 09 is already
   coming to them. Six active Stripe subscriptions as of 2026-10-12.
 
+### Opening date gate (branch `feat/issue9-date-gate`)
+- Buy button stays closed ("Pre-orders open Monday 19 October") until
+  00:00 UK Mon 19 Oct (`ISSUE9_OPENS_AT`), even if the product is published —
+  so Shopify can publish early for the image and a test order. Enforced in
+  the checkout route too, not just the button.
+- Test orders before then: `/issue9?test=<ISSUE9_TEST_TOKEN>`; the order gets
+  a `test_order: true` attribute. No token set in Railway = no bypass.
+- `lib/issue9.test.ts` covers both date boundaries (BST/GMT) and the token.
+- Issue 9 is sold only via /issue9: `/shop/ralph-mag-9` redirects there, the
+  shop overlay API answers `{ redirect: '/issue9' }`, and the sitemap skips it.
+
 ### Decisions made
 - Existing Issue 9 Shopify product, no pre-order app (theme widgets don't
   render on the headless front end). Pre-orders identified by the

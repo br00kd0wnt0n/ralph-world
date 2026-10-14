@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createCheckoutUrl } from '@/lib/shopify/client'
 import { isShopifyConfigured } from '@/lib/shopify/mock'
 import { getIssue9Product } from '@/lib/data/issue9'
-import { getIssue9Mode } from '@/lib/issue9'
+import { getIssue9Mode, isIssue9Open, isIssue9TestToken } from '@/lib/issue9'
 import { pickAttribution } from '@/lib/attribution'
 
 /**
@@ -16,6 +16,18 @@ import { pickAttribution } from '@/lib/attribution'
  * details": `landing`, `preorder` (before launch) and any utm_* tags.
  */
 export async function POST(request: Request) {
+  const body = (await request.json().catch(() => ({}))) as {
+    attribution?: unknown
+    testToken?: unknown
+  }
+  // Closed until ISSUE9_OPENS_AT, except for a test order carrying the token.
+  const isTest = isIssue9TestToken(body.testToken)
+  if (!isIssue9Open() && !isTest) {
+    return NextResponse.json(
+      { error: 'not_open', message: 'Pre-orders open on Monday 19 October.' },
+      { status: 409 }
+    )
+  }
   if (!isShopifyConfigured()) {
     return NextResponse.json(
       {
@@ -26,7 +38,6 @@ export async function POST(request: Request) {
     )
   }
 
-  const body = (await request.json().catch(() => ({}))) as { attribution?: unknown }
   const attribution = pickAttribution(
     body.attribution && typeof body.attribution === 'object'
       ? (body.attribution as Record<string, unknown>)
@@ -44,6 +55,7 @@ export async function POST(request: Request) {
 
   const attributes: Record<string, string> = { landing: 'issue9', ...attribution }
   if (getIssue9Mode() === 'preorder') attributes.preorder = 'true'
+  if (isTest) attributes.test_order = 'true'
 
   const checkoutUrl = await createCheckoutUrl(variant.id, attributes)
   if (!checkoutUrl) {

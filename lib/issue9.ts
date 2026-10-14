@@ -34,12 +34,13 @@ interface Issue9BuyCopy {
   unavailable: string
 }
 
-// PLACEHOLDER copy throughout — final wording to come from Dave.
+// Pre-order heading/body supplied 2026-10-13. The `order` body reuses the
+// first line + "Out now." until its own wording arrives; notes are ours.
 export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
   preorder: {
     eyebrow: 'Pre-order',
     heading: 'Ralph Issue 09',
-    body: 'The new issue of Ralph is nearly here. Pre-order now and it lands on your doormat first.',
+    body: "50 years of Aardman, plus hats, ice hockey and collective nouns.\nPre-order now and it'll land on your doormat first.",
     cta: 'Pre-order for £{price}',
     note: 'Ships from Monday 26 October. You pay today.',
     unavailable: 'Pre-orders open soon',
@@ -47,7 +48,7 @@ export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
   order: {
     eyebrow: 'Out now',
     heading: 'Ralph Issue 09',
-    body: 'The new issue of Ralph is out now.',
+    body: '50 years of Aardman, plus hats, ice hockey and collective nouns.\nOut now.',
     cta: 'Buy now for £{price}',
     note: 'Shipping now.',
     unavailable: 'Sold out',
@@ -55,10 +56,16 @@ export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
 }
 
 export const ISSUE9_JOIN_COPY = {
-  heading: 'Join Ralph World',
-  // PLACEHOLDER — the "what you get for joining" promise is an open question.
-  // Borrowed from the Digital Ralph tier copy on /join-ralph for now.
-  body: "It's free. Enjoy access to all our editorial content, buy tickets to one of our amazing IRL events and much more.",
+  // Supplied 2026-10-13.
+  heading: 'Fun worth finding',
+  body: 'Subscribe to Ralph World, free, for our weekly newsletter, first dibs on event tickets and a heads-up on new issues before they land.',
+  // PLACEHOLDER wording for the marketing opt-in tick box (unticked by default).
+  optIn: 'Email me Ralph news, new issues and events. Unsubscribe any time.',
   signedInHeading: "You're in",
   signedInBody: 'Welcome to Ralph World. Have a look around.',
 }
+
+// Shown under the buy button to paid subscribers (tier 'paid'), whose copy is
+// sent through the CMS fulfilment run. PLACEHOLDER wording.
+export const ISSUE9_SUBSCRIBER_NOTE =
+  "You're a subscriber, so Issue 09 is already coming to you. This would be an extra copy."

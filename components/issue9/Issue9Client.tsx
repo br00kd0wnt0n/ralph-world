@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { motion } from 'framer-motion'
 import { sectionPageVariants } from '@/lib/animation/page-transitions'
@@ -11,7 +11,12 @@ import Button from '@/components/ui/Button'
 import { LoginForm } from '@/app/login/LoginForm'
 import { pickAttribution, withAttribution } from '@/lib/attribution'
 import { trackEvent } from '@/lib/gtm-client-init'
-import { ISSUE9_BUY_COPY, ISSUE9_JOIN_COPY, type Issue9Mode } from '@/lib/issue9'
+import {
+  ISSUE9_BUY_COPY,
+  ISSUE9_JOIN_COPY,
+  ISSUE9_SUBSCRIBER_NOTE,
+  type Issue9Mode,
+} from '@/lib/issue9'
 
 const LANDING = 'issue9'
 
@@ -33,7 +38,8 @@ const gooper: React.CSSProperties = {
 
 export default function Issue9Client({ mode: liveMode, product }: Issue9ClientProps) {
   const params = useSearchParams()
-  const { user } = useAuth()
+  const router = useRouter()
+  const { user, tier } = useAuth()
 
   // ?preview=order|preorder shows the other state's wording for review. The
   // pre-order flag on real orders is still decided server-side by date.
@@ -42,7 +48,14 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
   const copy = ISSUE9_BUY_COPY[mode]
 
   const attribution = useMemo(() => pickAttribution(params), [params])
-  const callbackUrl = withAttribution('/issue9?joined=1', attribution)
+
+  // Marketing opt-in — unticked by default. Email sign-up submits it with the
+  // form; Google carries it through the OAuth round trip as ?optin=1.
+  const [optIn, setOptIn] = useState(false)
+  const callbackUrl = withAttribution(
+    optIn ? '/issue9?joined=1&optin=1' : '/issue9?joined=1',
+    attribution
+  )
 
   const [buying, setBuying] = useState(false)
   const [buyError, setBuyError] = useState<string | null>(null)
@@ -73,22 +86,29 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
     setBuying(false)
   }
 
-  // Back from sign-in (?joined=1): bring the join section into view and, for
-  // a brand-new Google account, record where the sign-up came from.
+  // Back from sign-in (?joined=1): bring the join section into view, record
+  // where a brand-new Google account came from and, if the box was ticked
+  // (?optin=1), save the marketing opt-in. Then drop the one-shot params so a
+  // reload doesn't repeat any of it.
   const joined = params.get('joined') === '1'
+  const optedIn = params.get('optin') === '1'
   const joinRef = useRef<HTMLElement | null>(null)
-  const attributedRef = useRef(false)
+  const handledRef = useRef(false)
   useEffect(() => {
     if (!joined) return
     joinRef.current?.scrollIntoView({ block: 'start' })
-    if (!user || attributedRef.current) return
-    attributedRef.current = true
-    void fetch('/api/attribution/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ landing: LANDING, attribution }),
-    }).catch(() => {})
-  }, [joined, user, attribution])
+    if (!user || handledRef.current) return
+    handledRef.current = true
+    const post = (url: string, body: unknown) =>
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).catch(() => {})
+    void post('/api/attribution/signup', { landing: LANDING, attribution })
+    if (optedIn) void post('/api/account/marketing-opt-in', { granted: true })
+    router.replace(withAttribution('/issue9', attribution), { scroll: false })
+  }, [joined, optedIn, user, attribution, router])
 
   const canBuy = Boolean(product?.available)
 
@@ -127,13 +147,14 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
           />
         </div>
 
-        {/* Tighter top padding + smaller cover below 992 so the buy button
-            sits in the first screen on a phone. */}
+        {/* Below 992 the heading + buy button come first and the cover
+            follows, so the button is in the first screen on a short phone or
+            in Instagram's in-app browser whatever the cover's shape. */}
         <div className="relative z-10 pb-12 pt-[70px] min-[992px]:pt-[100px]">
           <div className="max-w-5xl mx-auto px-6">
             {/* 1 — Buy Issue 9 */}
             <div className="grid min-[992px]:grid-cols-2 gap-5 min-[992px]:gap-16 items-center">
-              <div className="mx-auto w-full max-w-[190px] min-[992px]:max-w-[400px]">
+              <div className="order-2 min-[992px]:order-1 mx-auto w-full max-w-[220px] min-[992px]:max-w-[400px]">
                 {product?.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -153,7 +174,7 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
                 )}
               </div>
 
-              <div className="text-center min-[992px]:text-left">
+              <div className="order-1 min-[992px]:order-2 text-center min-[992px]:text-left">
                 <p className="text-tag uppercase text-ralph-pink mb-2">{copy.eyebrow}</p>
                 <h1
                   className="text-black light:text-white mb-3"
@@ -161,7 +182,7 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
                 >
                   {copy.heading}
                 </h1>
-                <p className="text-body text-black light:text-white mb-5">{copy.body}</p>
+                <p className="text-body whitespace-pre-line text-black light:text-white mb-5">{copy.body}</p>
                 <div className="flex justify-center min-[992px]:justify-start">
                   <Button
                     label={
@@ -179,6 +200,11 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
                 </div>
                 {canBuy && (
                   <p className="text-body-sm text-black light:text-white mt-4">{copy.note}</p>
+                )}
+                {tier === 'paid' && (
+                  <p className="text-body-sm text-black light:text-white mt-3">
+                    {ISSUE9_SUBSCRIBER_NOTE}
+                  </p>
                 )}
                 {buyError && (
                   <p className="text-sm text-red-600 mt-3" role="alert">
@@ -214,6 +240,15 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
 
                 {!user && (
                   <div className="w-full max-w-[408px] mx-auto min-[992px]:max-w-none min-[992px]:mx-0">
+                    <label className="mb-5 flex cursor-pointer items-start gap-3 text-left text-body-sm text-black light:text-white md:px-6">
+                      <input
+                        type="checkbox"
+                        checked={optIn}
+                        onChange={(e) => setOptIn(e.target.checked)}
+                        className="mt-0.5 h-5 w-5 shrink-0 accent-ralph-pink"
+                      />
+                      <span>{ISSUE9_JOIN_COPY.optIn}</span>
+                    </label>
                     <LoginForm
                       bare
                       callbackUrl={callbackUrl}
@@ -223,7 +258,11 @@ export default function Issue9Client({ mode: liveMode, product }: Issue9ClientPr
                         trackEvent('issue9_join_click', { method: 'google', ...attribution })
                         await signIn('google', { callbackUrl })
                       }}
-                      signupHiddenFields={{ landing: LANDING, ...attribution }}
+                      signupHiddenFields={{
+                        landing: LANDING,
+                        ...attribution,
+                        ...(optIn ? { marketing_opt_in: 'on' } : null),
+                      }}
                     />
                   </div>
                 )}

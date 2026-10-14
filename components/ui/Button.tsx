@@ -76,14 +76,24 @@ export default function Button({
     ...(pink ? { border: `2px solid ${RALPH_PINK}` } : null),
     // Black text on pink for AA contrast (white on #EA128B is ~3.9:1).
     ...(filled ? { backgroundColor: RALPH_PINK, color: 'black' } : null),
-    ...(disabled ? { opacity: 0.55, cursor: 'not-allowed' } : null),
+    ...(disabled ? { cursor: 'not-allowed' } : null),
   }
   const mergedShadowStyles: React.CSSProperties = {
     ...shadowStyles,
     ...(pink ? { backgroundColor: RALPH_PINK } : null),
   }
   return (
-    <div className={className} style={{ position: 'relative', display: 'inline-block', width: 'fit-content' }}>
+    // Disabled fades the whole unit. Fading only the button face let the
+    // black shadow show through it, so it read as a black box in front.
+    <div
+      className={className}
+      style={{
+        position: 'relative',
+        display: 'inline-block',
+        width: 'fit-content',
+        ...(disabled ? { opacity: 0.55 } : null),
+      }}
+    >
       {/* Shadow — stays in place */}
       <div style={mergedShadowStyles} />
       {/* Button — moves on hover/active */}

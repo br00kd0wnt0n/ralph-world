@@ -26,6 +26,15 @@ or deployed. Image, copy and product handle are placeholders.
   `signupHiddenFields`; `signupAction` records attribution.
 - `trackEvent()` in `lib/gtm-client-init.ts` (consent-gated).
 
+### Follow-up, same day (branch `feat/issue9-optin`)
+- Marketing opt-in tick box above the sign-up form (unticked by default).
+  Email sign-up submits `marketing_opt_in`; Google carries `?optin=1` through
+  the round trip and posts to `/api/account/marketing-opt-in` on return.
+- Below 992px the heading + buy button now come before the cover, so the
+  button is in the first screen on short phones / in-app browsers.
+- Paid subscribers (`tier === 'paid'`) see a note that Issue 09 is already
+  coming to them. Six active Stripe subscriptions as of 2026-10-12.
+
 ### Decisions made
 - Existing Issue 9 Shopify product, no pre-order app (theme widgets don't
   render on the headless front end). Pre-orders identified by the

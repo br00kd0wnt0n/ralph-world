@@ -59,8 +59,9 @@ export const ISSUE9_JOIN_COPY = {
   // Supplied 2026-10-13.
   heading: 'Fun worth finding',
   body: 'Subscribe to Ralph World, free, for our weekly newsletter, first dibs on event tickets and a heads-up on new issues before they land.',
-  // PLACEHOLDER wording for the marketing opt-in tick box (unticked by default).
-  optIn: 'Email me Ralph news, new issues and events. Unsubscribe any time.',
+  // Marketing opt-in tick box (unticked by default) — matches the newsletter
+  // promise in `body`.
+  optIn: 'Send me the weekly Ralph World newsletter. Unsubscribe any time.',
   signedInHeading: "You're in",
   signedInBody: 'Welcome to Ralph World. Have a look around.',
 }

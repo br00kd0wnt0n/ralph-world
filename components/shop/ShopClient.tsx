@@ -80,7 +80,12 @@ export default function ShopClient({
 
   async function fetchProduct(handle: string): Promise<ShopifyProduct | null> {
     const res = await fetch(`/api/shop/${handle}`)
-    if (!res.ok) return null
+    if (!res.ok) {
+      // Products sold only through a campaign page (Issue 9 → /issue9).
+      const body = (await res.json().catch(() => null)) as { redirect?: string } | null
+      if (body?.redirect?.startsWith('/')) window.location.assign(body.redirect)
+      return null
+    }
     return (await res.json()) as ShopifyProduct
   }
 

@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getProductByHandle } from '@/lib/shopify/client'
 import { getShopPageData } from '@/lib/data/shop'
 import { formatPrice } from '@/lib/shopify/format'
 import ShopClient from '@/components/shop/ShopClient'
+import { getIssue9ProductHandle } from '@/lib/issue9'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const revalidate = 300
@@ -42,6 +43,9 @@ export async function generateMetadata({
 
 export default async function ShopHandlePage({ params }: ShopHandlePageProps) {
   const { handle } = await params
+  // Issue 9 is sold only through its campaign page (opening date gate,
+  // pre-order flag, campaign tracking) — never via the generic product page.
+  if (handle === getIssue9ProductHandle()) redirect('/issue9')
   const [{ collections, copy }, product] = await Promise.all([
     getShopPageData(),
     getProductByHandle(handle),

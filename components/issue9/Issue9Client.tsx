@@ -159,7 +159,7 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
         <div className="relative z-10 pb-12 pt-[70px] min-[992px]:pt-[100px]">
           <div className="max-w-5xl mx-auto px-6">
             {/* 1 — Buy Issue 9 */}
-            <div className="grid min-[992px]:grid-cols-2 gap-5 min-[992px]:gap-16 items-center">
+            <div className="grid min-[992px]:grid-cols-[3fr_2fr] gap-5 min-[992px]:gap-12 items-center">
               {/* Full column width: the Shopify image is a wide product mockup on
                   white, so it needs the room and no frame of its own. */}
               <div className="order-2 min-[992px]:order-1 mx-auto w-full max-w-[420px] min-[992px]:max-w-none">

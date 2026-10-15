@@ -188,7 +188,15 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
                 >
                   {copy.heading}
                 </h1>
-                <p className="text-body whitespace-pre-line text-black light:text-white mb-5">{copy.body}</p>
+                {/* Each line of the body is its own paragraph, with a gap
+                    between them (the issue line, then the call to action). */}
+                <div className="mb-5 space-y-3">
+                  {copy.body.split('\n').map((line) => (
+                    <p key={line} className="text-body text-black light:text-white">
+                      {line}
+                    </p>
+                  ))}
+                </div>
                 <div className="flex justify-center min-[992px]:justify-start">
                   <Button
                     label={

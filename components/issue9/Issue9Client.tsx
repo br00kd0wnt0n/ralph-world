@@ -160,19 +160,21 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
           <div className="max-w-5xl mx-auto px-6">
             {/* 1 — Buy Issue 9 */}
             <div className="grid min-[992px]:grid-cols-2 gap-5 min-[992px]:gap-16 items-center">
-              <div className="order-2 min-[992px]:order-1 mx-auto w-full max-w-[220px] min-[992px]:max-w-[400px]">
+              {/* Full column width: the Shopify image is a wide product mockup on
+                  white, so it needs the room and no frame of its own. */}
+              <div className="order-2 min-[992px]:order-1 mx-auto w-full max-w-[420px] min-[992px]:max-w-none">
                 {product?.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={product.imageUrl}
                     alt={product.imageAlt ?? 'Ralph magazine Issue 09'}
-                    className="block w-full h-auto border-2 border-black bg-white"
+                    className="block w-full h-auto"
                     fetchPriority="high"
                   />
                 ) : (
                   // Placeholder until the hero image / Shopify product lands.
                   <div
-                    className="flex aspect-[3/4] w-full items-center justify-center border-2 border-black bg-ralph-pink text-black text-3xl"
+                    className="mx-auto flex aspect-[3/4] w-full max-w-[220px] items-center justify-center border-2 border-black bg-ralph-pink text-black text-3xl"
                     style={gooper}
                   >
                     Issue 09

@@ -46,6 +46,14 @@ or deployed. Image, copy and product handle are placeholders.
 - Issue 9 is sold only via /issue9: `/shop/ralph-mag-9` redirects there, the
   shop overlay API answers `{ redirect: '/issue9' }`, and the sitemap skips it.
 
+### After the 15 Oct call (branch `feat/issue9-call-changes`)
+- Order version (from 26 Oct): body is the first line only; button
+  "Pay today, £10"; note "Available now". Whole-pound prices drop ".00" on
+  this page, so the pre-order button reads "Pre-order for £10".
+- Newsletter tick box removed (Mailchimp not set up; Substack to replace it).
+  The `/api/account/marketing-opt-in` route and `signupAction` opt-in handling
+  are untouched.
+
 ### Decisions made
 - Existing Issue 9 Shopify product, no pre-order app (theme widgets don't
   render on the headless front end). Pre-orders identified by the

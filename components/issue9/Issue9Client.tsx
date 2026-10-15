@@ -32,6 +32,11 @@ interface Issue9ClientProps {
   } | null
 }
 
+// "10.00" → "10", "10.50" stays "10.50" (button reads "Pay today, £10").
+function displayPrice(price: string | undefined): string {
+  return (price ?? '').replace(/\.00$/, '')
+}
+
 const gooper: React.CSSProperties = {
   fontFamily: "var(--font-intro, 'Gooper Trial'), serif",
   fontWeight: 600,
@@ -51,13 +56,8 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
 
   const attribution = useMemo(() => pickAttribution(params), [params])
 
-  // Marketing opt-in — unticked by default. Email sign-up submits it with the
-  // form; Google carries it through the OAuth round trip as ?optin=1.
-  const [optIn, setOptIn] = useState(false)
-  const callbackUrl = withAttribution(
-    optIn ? '/issue9?joined=1&optin=1' : '/issue9?joined=1',
-    attribution
-  )
+  // No newsletter opt-in for now (removed 2026-10-15 pending Substack).
+  const callbackUrl = withAttribution('/issue9?joined=1', attribution)
 
   const [buying, setBuying] = useState(false)
   const [buyError, setBuyError] = useState<string | null>(null)
@@ -88,12 +88,10 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
     setBuying(false)
   }
 
-  // Back from sign-in (?joined=1): bring the join section into view, record
-  // where a brand-new Google account came from and, if the box was ticked
-  // (?optin=1), save the marketing opt-in. Then drop the one-shot params so a
-  // reload doesn't repeat any of it.
+  // Back from sign-in (?joined=1): bring the join section into view and
+  // record where a brand-new Google account came from. Then drop the one-shot
+  // param so a reload doesn't repeat it.
   const joined = params.get('joined') === '1'
-  const optedIn = params.get('optin') === '1'
   const joinRef = useRef<HTMLElement | null>(null)
   const handledRef = useRef(false)
   useEffect(() => {
@@ -108,9 +106,8 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
         body: JSON.stringify(body),
       }).catch(() => {})
     void post('/api/attribution/signup', { landing: LANDING, attribution })
-    if (optedIn) void post('/api/account/marketing-opt-in', { granted: true })
     router.replace(withAttribution('/issue9', attribution), { scroll: false })
-  }, [joined, optedIn, user, attribution, router])
+  }, [joined, user, attribution, router])
 
   // ?test=<token> opens the button early for a test order; the checkout
   // route checks the token, so a wrong one just gets the not-open message.
@@ -208,7 +205,7 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
                           ? copy.unavailable
                         : buying
                           ? 'One sec…'
-                          : copy.cta.replace('{price}', product?.price ?? '')
+                          : copy.cta.replace('{price}', displayPrice(product?.price))
                     }
                     onClick={handleBuy}
                     disabled={!canBuy || buying}
@@ -258,15 +255,6 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
 
                 {!user && (
                   <div className="w-full max-w-[408px] mx-auto min-[992px]:max-w-none min-[992px]:mx-0">
-                    <label className="mb-5 flex cursor-pointer items-start gap-3 text-left text-body-sm text-black light:text-white md:px-6">
-                      <input
-                        type="checkbox"
-                        checked={optIn}
-                        onChange={(e) => setOptIn(e.target.checked)}
-                        className="mt-0.5 h-5 w-5 shrink-0 accent-ralph-pink"
-                      />
-                      <span>{ISSUE9_JOIN_COPY.optIn}</span>
-                    </label>
                     <LoginForm
                       bare
                       callbackUrl={callbackUrl}
@@ -276,11 +264,7 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
                         trackEvent('issue9_join_click', { method: 'google', ...attribution })
                         await signIn('google', { callbackUrl })
                       }}
-                      signupHiddenFields={{
-                        landing: LANDING,
-                        ...attribution,
-                        ...(optIn ? { marketing_opt_in: 'on' } : null),
-                      }}
+                      signupHiddenFields={{ landing: LANDING, ...attribution }}
                     />
                   </div>
                 )}

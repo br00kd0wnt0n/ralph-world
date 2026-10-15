@@ -52,8 +52,9 @@ interface Issue9BuyCopy {
   unavailable: string
 }
 
-// Pre-order heading/body supplied 2026-10-13. The `order` body reuses the
-// first line + "Out now." until its own wording arrives; notes are ours.
+// Pre-order heading/body supplied 2026-10-13. Order-version body, button and
+// note agreed on the 2026-10-15 call (second line dropped, "Pay today",
+// "Available now").
 export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
   preorder: {
     eyebrow: 'Pre-order',
@@ -67,10 +68,10 @@ export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
   order: {
     eyebrow: 'Out now',
     heading: 'Ralph Issue 09',
-    body: '50 years of Aardman, plus hats, ice hockey and collective nouns.\nOut now.',
-    cta: 'Buy now for £{price}',
+    body: '50 years of Aardman, plus hats, ice hockey and collective nouns.',
+    cta: 'Pay today, £{price}',
     notOpenYet: 'Pre-orders open Monday 19 October',
-    note: 'Shipping now.',
+    note: 'Available now',
     unavailable: 'Sold out',
   },
 }
@@ -79,9 +80,6 @@ export const ISSUE9_JOIN_COPY = {
   // Supplied 2026-10-13.
   heading: 'Fun worth finding',
   body: 'Subscribe to Ralph World, free, for our weekly newsletter, first dibs on event tickets and a heads-up on new issues before they land.',
-  // Marketing opt-in tick box (unticked by default) — matches the newsletter
-  // promise in `body`.
-  optIn: 'Send me the weekly Ralph World newsletter. Unsubscribe any time.',
   signedInHeading: "You're in",
   signedInBody: 'Welcome to Ralph World. Have a look around.',
 }

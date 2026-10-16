@@ -79,7 +79,8 @@ export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
 export const ISSUE9_JOIN_COPY = {
   // Supplied 2026-10-13.
   heading: 'Fun worth finding',
-  body: 'Subscribe to Ralph World, free, for our weekly newsletter, first dibs on event tickets and a heads-up on new issues before they land.',
+  // Newsletter mention dropped 2026-10-16 (Dave) while there's no list to join.
+  body: 'Subscribe to Ralph World, free, for first dibs on event tickets and a heads-up on new issues before they land.',
   signedInHeading: "You're in",
   signedInBody: 'Welcome to Ralph World. Have a look around.',
 }

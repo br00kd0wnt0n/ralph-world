@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { screenStateVariants } from '@/lib/animation/tv'
 import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
 import LivePlayer from './LivePlayer'
+import SpeakerIcon from './SpeakerIcon'
 import TeletextShowInfo from './TeletextShowInfo'
 import TeletextSchedule from './TeletextSchedule'
 import { useContentAspect } from '@/hooks/useContentAspect'
@@ -371,14 +372,7 @@ export default function ImmersivePlayer({
             className="flex items-center justify-center bg-white text-black transition active:scale-95"
             style={{ width: 44, height: 44 }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M11 5 6 9H3v6h3l5 4V5z" fill="black" />
-              {immersiveMuted ? (
-                <path d="M16 9l5 6M21 9l-5 6" stroke="black" strokeWidth="2" strokeLinecap="round" />
-              ) : (
-                <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12" stroke="black" strokeWidth="2" strokeLinecap="round" />
-              )}
-            </svg>
+            <SpeakerIcon muted={immersiveMuted} />
           </button>
         </div>
       )}

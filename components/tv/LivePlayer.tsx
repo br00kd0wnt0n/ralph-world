@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useHls } from '@/hooks/useHls'
 import { useRelayUrl } from '@/hooks/useRelayUrl'
+import SpeakerIcon from './SpeakerIcon'
 
 interface LivePlayerProps {
   relayUrl?: string
@@ -176,8 +177,13 @@ export default function LivePlayer({
           className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity"
           aria-label={isMuted ? 'Unmute' : 'Mute'}
         >
-          <div className="text-white text-4xl drop-shadow-lg">
-            {isMuted ? '🔇' : '🔊'}
+          {/* Same white block + black glyph as the fullscreen player's
+              mute control, so the two views read as one system. */}
+          <div
+            className="flex items-center justify-center bg-white text-black shadow-lg"
+            style={{ width: 56, height: 56 }}
+          >
+            <SpeakerIcon muted={isMuted} size={28} />
           </div>
         </button>
       )}
@@ -186,9 +192,10 @@ export default function LivePlayer({
       {isReady && isMuted && !hideMuteUi && (
         <button
           onClick={toggleMute}
-          className="absolute bottom-3 right-3 bg-black/70 border border-white/20 text-white text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur hover:bg-black/90 transition-colors"
+          className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/70 border border-white/20 text-white text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur hover:bg-black/90 transition-colors"
         >
-          🔇 Tap to unmute
+          <SpeakerIcon muted size={13} />
+          Tap to unmute
         </button>
       )}
 

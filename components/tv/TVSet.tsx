@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { flushSync } from 'react-dom'
 import * as Sentry from '@sentry/nextjs'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -54,6 +54,15 @@ export default function TVSet({
   const [previewExpired, setPreviewExpired] = useState(false)
   const [previewSecondsLeft, setPreviewSecondsLeft] = useState(previewSeconds)
   const [volume, setVolume] = useState(0.7)
+  // Desktop in-set player's mute state, lifted here (LivePlayer runs in
+  // controlled mode) so the set's volume slider can unmute it. Starts muted
+  // because browsers block unmuted autoplay. The hover button and "Tap to
+  // unmute" pill inside LivePlayer still toggle it via onMutedChange.
+  const [desktopMuted, setDesktopMuted] = useState(true)
+  const desktopVideoRef = useRef<HTMLVideoElement | null>(null)
+  const handleDesktopVideoEl = useCallback((el: HTMLVideoElement | null) => {
+    desktopVideoRef.current = el
+  }, [])
   const [isFullscreen, setIsFullscreen] = useState(false)
   // Mobile (<768) watching: the ornate set can't be operated at phone size, so
   // it becomes a "tap to watch" poster that opens an immersive full-bleed video.
@@ -340,12 +349,29 @@ export default function TVSet({
     }
   }
 
-  function updateVolumeFromPointer(clientY: number) {
+  function updateVolumeFromPointer(clientY: number): number | null {
     const rect = volumeMeterRef.current?.getBoundingClientRect()
-    if (!rect) return
+    if (!rect) return null
     const y = clientY - rect.top
-    const next = 1 - y / rect.height
-    setVolume(Math.max(0, Math.min(1, next)))
+    const next = Math.max(0, Math.min(1, 1 - y / rect.height))
+    setVolume(next)
+    return next
+  }
+
+  // Touching the volume slider means "I want sound", so it unmutes the
+  // desktop player. Done synchronously inside the pointerdown gesture —
+  // Safari only lets a muted video gain sound during a user gesture, so
+  // leaving it to LivePlayer's sync effect (which runs after render) could
+  // be refused. Setting volume to 0 still silences it via the existing
+  // `muted || volume === 0` rule.
+  function unmuteDesktopForVolume(nextVolume: number) {
+    if (!desktopMuted || nextVolume <= 0) return
+    const v = desktopVideoRef.current
+    if (v) {
+      v.muted = false
+      if (v.paused) v.play().catch(() => {})
+    }
+    setDesktopMuted(false)
   }
 
   // Prefer the authoritative now-playing; fall back to the schedule pointer only if
@@ -382,6 +408,13 @@ export default function TVSet({
   useEffect(() => {
     if (immersive && notLive) setImmersive(false)
   }, [immersive, notLive])
+
+  // The desktop LivePlayer unmounts whenever we leave 'live' (offline, gate).
+  // It used to own its mute flag, so coming back always started muted, which
+  // browsers require for autoplay. Keep that behaviour now the flag lives here.
+  useEffect(() => {
+    if (notLive) setDesktopMuted(true)
+  }, [notLive])
 
   // iPhone path: no element fullscreen, so immersive uses native <video>
   // fullscreen (Apple's player) instead — handled inside ImmersivePlayer.
@@ -448,6 +481,9 @@ export default function TVSet({
                   onVolumeChange={setVolume}
                   offlineLabel={offlineLabel}
                   offlineMessage={offlineMessage}
+                  muted={desktopMuted}
+                  onMutedChange={setDesktopMuted}
+                  onVideoEl={handleDesktopVideoEl}
                 />
               </div>
             )}
@@ -749,7 +785,8 @@ export default function TVSet({
                 onPointerDown={(e) => {
                   e.currentTarget.setPointerCapture(e.pointerId)
                   isDraggingVolume.current = true
-                  updateVolumeFromPointer(e.clientY)
+                  const next = updateVolumeFromPointer(e.clientY)
+                  if (next != null) unmuteDesktopForVolume(next)
                 }}
                 onPointerMove={(e) => {
                   if (!isDraggingVolume.current) return
@@ -758,6 +795,11 @@ export default function TVSet({
                 onPointerUp={(e) => {
                   isDraggingVolume.current = false
                   e.currentTarget.releasePointerCapture(e.pointerId)
+                  // A drag that started at the bottom (volume 0) and was pulled
+                  // up didn't unmute on pointerdown; pointerup is also a user
+                  // gesture, so catch it here.
+                  const next = updateVolumeFromPointer(e.clientY)
+                  if (next != null) unmuteDesktopForVolume(next)
                 }}
                 onPointerCancel={() => {
                   isDraggingVolume.current = false

@@ -56,8 +56,9 @@ export default function TVSet({
   const [volume, setVolume] = useState(0.7)
   // Desktop in-set player's mute state, lifted here (LivePlayer runs in
   // controlled mode) so the set's volume slider can unmute it. Starts muted
-  // because browsers block unmuted autoplay. The hover button and "Tap to
-  // unmute" pill inside LivePlayer still toggle it via onMutedChange.
+  // because browsers block unmuted autoplay. The hover button inside
+  // LivePlayer still toggles it via onMutedChange. (There used to be a "Tap
+  // to unmute" pill too; removed once the slider could unmute.)
   const [desktopMuted, setDesktopMuted] = useState(true)
   const desktopVideoRef = useRef<HTMLVideoElement | null>(null)
   const handleDesktopVideoEl = useCallback((el: HTMLVideoElement | null) => {

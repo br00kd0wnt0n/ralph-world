@@ -21,7 +21,7 @@ interface LivePlayerProps {
   /** Video object-fit. Default 'cover' (fills the TV cutout); 'contain' for the
       full-bleed immersive overlay so nothing is cropped. */
   fit?: 'cover' | 'contain'
-  /** Hide the built-in hover-mute button + "tap to unmute" pill (the immersive
+  /** Hide the built-in hover-mute button (the immersive
       view supplies its own control). */
   hideMuteUi?: boolean
   /** Surfaces the underlying <video> element to the parent (used by the mobile
@@ -54,9 +54,9 @@ export default function LivePlayer({
   const runtimeRelayUrl = useRelayUrl()
   const streamUrl = relayUrl ?? runtimeRelayUrl
   const { videoRef, isReady, error } = useHls(streamUrl)
-  // Muted starts true because browsers block unmuted autoplay. The
-  // Tap-to-unmute pill flips this on first user interaction. When the parent
-  // controls mute (mutedProp), that wins over the internal flag.
+  // Muted starts true because browsers block unmuted autoplay. The hover
+  // button flips it; on the desktop set the parent controls mute (mutedProp)
+  // so its volume slider can unmute too, and that wins over this flag.
   const [internalMuted, setInternalMuted] = useState(true)
   const isMuted = mutedProp ?? internalMuted
 
@@ -185,17 +185,6 @@ export default function LivePlayer({
           >
             <SpeakerIcon muted={isMuted} size={28} />
           </div>
-        </button>
-      )}
-
-      {/* Persistent unmute pill until user interacts */}
-      {isReady && isMuted && !hideMuteUi && (
-        <button
-          onClick={toggleMute}
-          className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/70 border border-white/20 text-white text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur hover:bg-black/90 transition-colors"
-        >
-          <SpeakerIcon muted size={13} />
-          Tap to unmute
         </button>
       )}
 

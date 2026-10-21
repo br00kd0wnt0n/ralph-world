@@ -4,7 +4,7 @@
  * controls instead of the platform's colour emoji speakers (🔇 🔊), which
  * rendered differently per OS and didn't match the theme.
  *
- * Shared by LivePlayer (desktop hover + "tap to unmute" pill) and
+ * Shared by LivePlayer (desktop hover control) and
  * ImmersivePlayer (fullscreen control bar) so the two never drift apart.
  */
 export default function SpeakerIcon({

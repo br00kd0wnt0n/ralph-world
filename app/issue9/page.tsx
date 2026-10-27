@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { getIssue9Product } from '@/lib/data/issue9'
 import { getIssue9Mode, isIssue9Open } from '@/lib/issue9'
-import { formatPrice } from '@/lib/shopify/format'
+import { descriptionToText, formatPrice } from '@/lib/shopify/format'
 import Issue9Client from '@/components/issue9/Issue9Client'
 
 // Also bounds how long after midnight the opening (19 Oct) and the
@@ -46,7 +46,10 @@ export default async function Issue9Page() {
                 price: formatPrice(product.priceRange.minVariantPrice.amount),
                 imageUrl: product.featuredImage?.url ?? null,
                 imageAlt: product.featuredImage?.altText ?? null,
-                description: product.description?.trim() || null,
+                description:
+                  descriptionToText(product.descriptionHtml) ||
+                  product.description?.trim() ||
+                  null,
                 available: product.availableForSale && variant.availableForSale,
               }
             : null

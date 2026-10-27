@@ -4,7 +4,7 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
-## 2026-10-27 — Shopify descriptions on /issue9 + shop, old-shop redirect
+## 2026-10-27 — Shopify descriptions on /issue9 + shop, old-shop redirect, refund policy
 
 **Session goal:** fix the checkout logo sending shoppers to the old shop, and
 give /issue9 the same issue copy as the other issue pages. All deployed.
@@ -32,9 +32,12 @@ give /issue9 the same issue copy as the other issue pages. All deployed.
   on ralph.world/shop. Checked: basket → checkout still works, checkout
   logo → ralph.world/shop, sign-in and privacy policy unaffected. To undo,
   delete the snippet at the top of `<head>`.
-- No refund policy is set in Shopify (`/policies/refund-policy` 404s). A
-  draft was written; it still needs the contact inbox, returns address and
-  a legal check before it goes into Settings → Policies.
+- Refund policy added in Settings → Policies (there was none before) and
+  checked live at `shop.ralph.world/policies/refund-policy`. Covers
+  damaged/lost orders, 14-day change of mind on merch (single magazine
+  issues exempt), subscription cancellation and 14-day first-issue refund,
+  returns to Ralph Magazine, 27-33 Bethnal Green Rd, E1 6LA. Contact
+  hello@ralph.world, 2 working day reply. Still worth a legal check.
 
 ---
 

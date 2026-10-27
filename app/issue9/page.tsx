@@ -46,6 +46,7 @@ export default async function Issue9Page() {
                 price: formatPrice(product.priceRange.minVariantPrice.amount),
                 imageUrl: product.featuredImage?.url ?? null,
                 imageAlt: product.featuredImage?.altText ?? null,
+                description: product.description?.trim() || null,
                 available: product.availableForSale && variant.availableForSale,
               }
             : null

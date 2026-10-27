@@ -28,6 +28,8 @@ interface Issue9ClientProps {
     price: string
     imageUrl: string | null
     imageAlt: string | null
+    /** The Shopify product description, edited in Shopify. */
+    description: string | null
     available: boolean
   } | null
 }
@@ -224,6 +226,23 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
                 {buyError && (
                   <p className="text-sm text-red-600 mt-3" role="alert">
                     {buyError}
+                  </p>
+                )}
+                {/* What's in the issue, from the Shopify product description
+                    (same styling as the shop's product pages). Sits below the
+                    button so the button stays in the first screen on phones. */}
+                {product?.description && (
+                  <p
+                    className="mt-6 text-left text-black light:text-white whitespace-pre-line"
+                    style={{
+                      fontFamily: 'var(--font-body), Arial, sans-serif',
+                      fontWeight: 600,
+                      fontSize: 16,
+                      lineHeight: '23px',
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {product.description}
                   </p>
                 )}
               </div>

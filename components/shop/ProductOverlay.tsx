@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
-import { formatPrice } from '@/lib/shopify/format'
+import { descriptionToText, formatPrice } from '@/lib/shopify/format'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import type { ShopifyProduct } from '@/lib/shopify/types'
@@ -61,6 +61,8 @@ export default function ProductOverlay({
   const firstVariant = product.variants.edges[0]?.node
   const price = product.priceRange.minVariantPrice
   const isAvailable = product.availableForSale
+  // From the HTML so paragraph breaks survive (plain `description` drops them).
+  const description = descriptionToText(product.descriptionHtml) || product.description
   // Mock products come from lib/shopify/mock.ts when Shopify isn't configured.
   // Disable Buy Now for them to avoid the cart create 503.
   const isDemoMode = product.id.startsWith('gid://mock/')
@@ -165,9 +167,9 @@ export default function ProductOverlay({
 
               {/* Left content */}
               <div className="md:order-1 flex flex-col">
-                {product.description && (
+                {description && (
                   <p className="text-gray-700 text-sm md:text-base mb-6 leading-relaxed whitespace-pre-line">
-                    {product.description}
+                    {description}
                   </p>
                 )}
 

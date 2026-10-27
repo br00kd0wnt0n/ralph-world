@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import FadeImage from './FadeImage'
-import { formatPrice } from '@/lib/shopify/format'
+import { descriptionToText, formatPrice } from '@/lib/shopify/format'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
@@ -45,6 +45,8 @@ export default function ProductDetail({
   const firstVariant = product.variants.edges[0]?.node
   const price = product.priceRange.minVariantPrice
   const isAvailable = product.availableForSale
+  // From the HTML so paragraph breaks survive (plain `description` drops them).
+  const description = descriptionToText(product.descriptionHtml) || product.description
   // Mock products come from lib/shopify/mock.ts when Shopify isn't configured.
   const isDemoMode = product.id.startsWith('gid://mock/')
 
@@ -186,7 +188,7 @@ export default function ProductDetail({
             </div>
           )}
 
-          {product.description && (
+          {description && (
             <p
               className="text-black light:text-white mb-8 whitespace-pre-line"
               style={{
@@ -197,7 +199,7 @@ export default function ProductDetail({
                 letterSpacing: 0,
               }}
             >
-              {product.description}
+              {description}
             </p>
           )}
 

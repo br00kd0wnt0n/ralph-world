@@ -4,6 +4,40 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-10-27 — Shopify descriptions on /issue9 + shop, old-shop redirect
+
+**Session goal:** fix the checkout logo sending shoppers to the old shop, and
+give /issue9 the same issue copy as the other issue pages. All deployed.
+
+### Changed
+- `/issue9` shows the Shopify product description under the buy button
+  (`7a30889`), styled like the shop's product pages. It sits below the
+  button so the button stays in the first screen on phones. Editing the
+  description in Shopify updates the page (5-minute revalidate). The fixed
+  strapline in `lib/issue9.ts` is unchanged.
+- New `descriptionToText()` in `lib/shopify/format.ts` (+ `format.test.ts`):
+  builds plain text from `descriptionHtml`, keeping `<br>`/`<p>` breaks and
+  decoding entities. Shopify's plain `description` drops those breaks, so
+  paragraphs ran together ("…and Morph.We also…").
+- Used on `/issue9` (`87c1bc8`) and in the shop's `ProductDetail` and
+  `ProductOverlay` (`9866d8b`). Falls back to the plain description.
+
+### Shopify (admin config, not in this repo)
+- Old Online Store theme (`layout/theme.liquid`) now redirects storefront
+  pages on `shop.ralph.world` to ralph.world: home and collections →
+  `/shop`, products → `/shop/{handle}` (Issue 9 → `/issue9`). Excluded:
+  `/cart`, `/checkouts`, `/orders`, `/account`, `/policies`, `/apps`,
+  `/password`, `/challenge`, and the theme editor. Shopify's checkout logo
+  links to the store home page and can't be changed, so this makes it land
+  on ralph.world/shop. Checked: basket → checkout still works, checkout
+  logo → ralph.world/shop, sign-in and privacy policy unaffected. To undo,
+  delete the snippet at the top of `<head>`.
+- No refund policy is set in Shopify (`/policies/refund-policy` 404s). A
+  draft was written; it still needs the contact inbox, returns address and
+  a legal check before it goes into Settings → Policies.
+
+---
+
 ## 2026-10-12 — Issue 9 landing page (`/issue9`), placeholder build
 
 **Session goal:** Dave's Issue 09 web brief — one campaign page that sells

@@ -23,13 +23,15 @@ import type { NextConfig } from 'next'
 // GTM's tag config lives outside this repo, so a new CSP violation after
 // adding a tag there is expected — add the blocked host to whichever
 // directive the browser console names, don't assume script-src is the only one.
+// cdn.shopify.com: Shopify's Customer Privacy API (lib/shopify-consent-client.ts),
+// which passes the cookie banner choice to Shopify checkout.
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self' https://www.facebook.com",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://connect.facebook.net",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://connect.facebook.net https://cdn.shopify.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { initSentryClient } from '@/lib/sentry-client-init'
 import { initGTM } from '@/lib/gtm-client-init'
+import { syncShopifyConsent } from '@/lib/shopify-consent-client'
 import Button from '@/components/ui/Button'
 
 const STORAGE_KEY = 'ralph-cookie-consent'
@@ -61,10 +62,13 @@ function readStored(raw: string | null): StoredConsentRecord | null {
  */
 export default function CookieBanner({
   currentPolicyVersion,
+  shopifyStorefrontToken,
 }: {
   /** Live policy version passed down from the root layout (server-fetched).
    *  When a stored consent record's version doesn't match, we re-prompt. */
   currentPolicyVersion: string
+  /** Public Storefront API token, used to pass the choice to Shopify checkout. */
+  shopifyStorefrontToken?: string
 }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -77,6 +81,15 @@ export default function CookieBanner({
       if (stored?.choice === 'cookies_all' && versionMatches) {
         initSentryClient()
         initGTM()
+      }
+      // Returning visitors who chose before this was wired up: copy their
+      // existing choice to Shopify checkout (no-op if it already has it).
+      if (stored && versionMatches) {
+        void syncShopifyConsent(
+          stored.choice === 'cookies_all',
+          shopifyStorefrontToken,
+          { onlyIfDifferent: true }
+        )
       }
       if (!stored || !versionMatches) {
         setOpen(true)
@@ -97,7 +110,7 @@ export default function CookieBanner({
     }
     window.addEventListener('ralph-cookie-reset', onReset)
     return () => window.removeEventListener('ralph-cookie-reset', onReset)
-  }, [currentPolicyVersion])
+  }, [currentPolicyVersion, shopifyStorefrontToken])
 
   async function choose(choice: StoredConsent) {
     if (busy) return
@@ -121,6 +134,10 @@ export default function CookieBanner({
       // Don't await — the banner closes instantly. If the request fails
       // the localStorage record still suppresses the banner on next mount.
     }).catch(() => {})
+
+    // Shopify checkout has no banner of its own, so it needs this choice
+    // to decide whether pixels (e.g. Meta Purchase) may fire.
+    void syncShopifyConsent(choice === 'cookies_all', shopifyStorefrontToken)
 
     if (choice === 'cookies_all') {
       initSentryClient()

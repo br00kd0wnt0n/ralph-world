@@ -35,6 +35,14 @@ const roboto = Roboto({
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://ralph.world'
 
+// The Storefront API token is Shopify's public kind (sent as
+// X-Shopify-Storefront-Access-Token), made for use in the browser. Only pass
+// it down if it has the public format (32 hex chars), never an Admin token.
+function publicStorefrontToken(): string | undefined {
+  const token = process.env.SHOPIFY_STOREFRONT_TOKEN
+  return token && /^[0-9a-f]{32}$/i.test(token) ? token : undefined
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -157,7 +165,10 @@ export default async function RootLayout({
             </MenuFade>
             <CartDrawer />
             <MobileMenu />
-            <CookieBanner currentPolicyVersion={policyVersion} />
+            <CookieBanner
+              currentPolicyVersion={policyVersion}
+              shopifyStorefrontToken={publicStorefrontToken()}
+            />
           </SiteCopyProvider>
         </Providers>
       </body>

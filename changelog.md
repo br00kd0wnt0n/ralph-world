@@ -4,6 +4,48 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-02 — Cookie consent passed to Shopify checkout (Meta Purchase events)
+
+**Session goal:** Meta was receiving very few Purchase events (19 between
+2 and 29 Oct). Shopify support and Meta both traced it to consent: checkout
+on shop.ralph.world has no cookie banner, nothing from ralph.world reached
+it, so Shopify treated UK buyers as "not allowed" for analytics and
+marketing and blocked the Meta app pixel's `checkout_completed`.
+
+### Changed
+- New `lib/shopify-consent-client.ts`: loads Shopify's Customer Privacy API
+  (`consent-tracking-api` v0.1) and calls `setTrackingConsent` in headless
+  mode (`checkoutRootDomain: shop.ralph.world`, `storefrontRootDomain:
+  ralph.world`, public Storefront token), the same call Hydrogen makes. This
+  sets `_tracking_consent` on ralph.world for checkout to read. Only runs on
+  ralph.world hosts.
+- `CookieBanner`: "Accept all" sends yes and "Necessary only" sends no to
+  Shopify for analytics, marketing, preferences and sale of data. Returning
+  visitors' stored choice is synced on load, but only if Shopify doesn't
+  already have it.
+- `app/layout.tsx` passes the public Storefront token to the banner, and
+  only when it has the public format (32 hex characters).
+- CSP `script-src` allows `https://cdn.shopify.com`.
+- Commit `7dc999e`. Railway's build servers failed it twice ("build daemon
+  returned an error… buildkitd.sock", part of their 21 Oct incident
+  recovery). It went live via Redeploy in the dashboard, so GitHub still
+  shows those deploys as failed.
+
+### Verified live (US visitor)
+- The consent script loads with no CSP errors. "Accept all" gives Shopify
+  `analytics/marketing: yes` and sets the cookie.
+- Checkout's consent record has the same ID as the one set on ralph.world;
+  before the fix checkout made its own default.
+- Not yet verified for a UK buyer. Vicky to make a test purchase (accept
+  cookies first) and send the time to Shopify support and Meta.
+
+### Known
+- CSP blocks two scripts added in GTM: LinkedIn Insight
+  (`snap.licdn.com`) and the TikTok pixel (`analytics.tiktok.com`). Neither
+  runs on ralph.world. Allow them in `next.config.ts` if they're wanted.
+
+---
+
 ## 2026-10-27 — Shopify descriptions on /issue9 + shop, old-shop redirect, refund policy
 
 **Session goal:** fix the checkout logo sending shoppers to the old shop, and

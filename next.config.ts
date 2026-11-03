@@ -25,13 +25,15 @@ import type { NextConfig } from 'next'
 // directive the browser console names, don't assume script-src is the only one.
 // cdn.shopify.com: Shopify's Customer Privacy API (lib/shopify-consent-client.ts),
 // which passes the cookie banner choice to Shopify checkout.
+// snap.licdn.com: LinkedIn Insight tag. analytics.tiktok.com: TikTok pixel.
+// Both are loaded by GTM, so they only run after "Accept all".
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self' https://www.facebook.com",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://connect.facebook.net https://cdn.shopify.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://connect.facebook.net https://cdn.shopify.com https://snap.licdn.com https://analytics.tiktok.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",

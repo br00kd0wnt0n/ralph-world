@@ -57,6 +57,8 @@ function toScheduleItem(s: unknown): ScheduleItem | null {
     aspect: o.aspect === 'portrait' || o.aspect === 'landscape' ? o.aspect : null,
     srcWidth: w,
     srcHeight: h,
+    offsetSec: typeof o.offsetSec === 'number' ? o.offsetSec : null,
+    durationSec: typeof o.durationSec === 'number' ? o.durationSec : null,
   }
 }
 

@@ -2,6 +2,7 @@
 
 import { useHls } from '@/hooks/useHls'
 import { useRelayUrl } from '@/hooks/useRelayUrl'
+import { useTvTracking, TV_VIDEO_ATTR } from '@/hooks/useTvTracking'
 
 /**
  * Compact live-feed preview for the homepage TV panel.
@@ -31,6 +32,8 @@ export default function HomepageTvTeaser({
   const runtimeRelayUrl = useRelayUrl()
   const streamUrl = relayUrl ?? runtimeRelayUrl
   const { videoRef, isReady, error } = useHls(streamUrl)
+  // Anonymous analytics: counts the teaser as the 'home' surface on /stats.
+  useTvTracking({ surface: 'home', isLive: isReady && !error })
 
   if (!streamUrl || error) {
     return (
@@ -65,6 +68,7 @@ export default function HomepageTvTeaser({
         // container / CTA link.
         className="w-full h-full object-cover pointer-events-none"
         aria-hidden="true"
+        {...{ [TV_VIDEO_ATTR]: '' }}
       />
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center bg-black pointer-events-none">

@@ -4,6 +4,55 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-03 — Ralph TV player analytics (feeds broadcaster.ralph.world/stats)
+
+**Session goal:** instrument the TV page so the new Ralph TV stats page can
+answer why engagement is ~39s and bounce is high: did people get a picture,
+turn the sound on, tap to watch on mobile, hit the subscribe gate, and when
+did they leave. Built from the ralphTV repo session (its changelog has the
+backend + dashboard half). Branch `feat/viewer-analytics`, not merged.
+
+### Added
+- `lib/analytics/tv-tracker.ts` (+ test): batches events to
+  `/api/broadcaster/events` via `sendBeacon`. Anonymous: a random session id
+  held in memory for one page load, nothing in cookies or storage, no user
+  id/email/IP; `is_guest` is the only identity. Silent in automated browsers
+  (`navigator.webdriver`). Mirrors each event to GTM as `ralphtv_<name>`
+  (consent-gated as before; heartbeats thinned to one a minute).
+- `hooks/useTvTracking.ts`: finds the playing `<video data-ralphtv-video>`,
+  counts watch seconds only while playing and the tab is visible, sends
+  play_start, a heartbeat every 15 watched seconds (on-air asset + offset,
+  extrapolated from the 10s now-playing poll), mute/unmute, stalls (3s of
+  buffering), show changes, page_view (referrer host + UTM via
+  `pickAttribution`), offline_view, and `hidden`/`visible` (the last hidden =
+  the exit).
+- `app/api/broadcaster/events/route.ts`: same-origin proxy to the broadcaster
+  `/analytics/events`, forwarding the viewer UA (coarse device split) and IP
+  (rate limit only — the backend stores neither). Always 204s.
+
+### Changed
+- `TVSet`: tracks tap_to_watch, immersive_exit, overlay_open (info/schedule,
+  desktop and immersive), fullscreen_enter, gate_shown with `on_arrival`
+  (gate up within 8s of load = a returning guest whose stored free-view
+  expiry had already passed — a suspected bounce driver) and subscribe_click.
+- `LivePlayer`: tags its video, dispatches `ralphtv:error` when HLS gives up.
+- `HomepageTvTeaser`: tagged and tracked as the `home` surface.
+- `lib/broadcaster` `toScheduleItem` keeps `offsetSec`/`durationSec` from
+  now-playing (optional fields on `ScheduleItem`).
+
+### Verified
+- `vitest lib/analytics` 7/7; `tsc` clean; eslint: no new warnings in touched files.
+- Local dev against the live now-playing, cookies declined: events arrived in
+  a local broadcaster DB with UTM, asset and advancing offsets (see ralphTV
+  changelog).
+
+### Open
+- Privacy policy: add a line for the anonymous, cookie-less player stats.
+- GTM: optional trigger `^ralphtv_` -> GA4 event tag if GA should get them
+  (prompt 04 Phase A manual steps); nothing happens until then.
+
+---
+
 ## 2026-11-02 — Cookie consent passed to Shopify checkout (Meta Purchase events)
 
 **Session goal:** Meta was receiving very few Purchase events (19 between

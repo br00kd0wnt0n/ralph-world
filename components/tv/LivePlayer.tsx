@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useHls } from '@/hooks/useHls'
 import { useRelayUrl } from '@/hooks/useRelayUrl'
 import SpeakerIcon from './SpeakerIcon'
+import { TV_ERROR_EVENT, TV_VIDEO_ATTR } from '@/hooks/useTvTracking'
 
 interface LivePlayerProps {
   relayUrl?: string
@@ -105,6 +106,11 @@ export default function LivePlayer({
     onLiveChange?.(isReady && !error)
   }, [isReady, error, onLiveChange])
 
+  // Tell the page's analytics tracker the player gave up (offline fallback shown).
+  useEffect(() => {
+    if (error) window.dispatchEvent(new CustomEvent(TV_ERROR_EVENT, { detail: { kind: 'hls' } }))
+  }, [error])
+
   // Surface the <video> to the parent (iOS native-fullscreen trigger).
   useEffect(() => {
     onVideoEl?.(videoRef.current)
@@ -157,6 +163,7 @@ export default function LivePlayer({
         // Access-Control-Allow-Origin: * on manifests and segments. hls.js (MSE)
         // is unaffected either way.
         crossOrigin="anonymous"
+        {...{ [TV_VIDEO_ATTR]: '' }}
       />
 
       {!isReady && (

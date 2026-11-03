@@ -14,6 +14,7 @@ import SubscribeGate from './SubscribeGate'
 import ImmersivePlayer from './ImmersivePlayer'
 import type { ScheduleItem } from '@/lib/broadcaster/types'
 import { safeGet, safeSet } from '@/lib/safe-storage'
+import { useTvTracking } from '@/hooks/useTvTracking'
 
 export type TVOverlayState = 'none' | 'show-info' | 'schedule'
 
@@ -139,6 +140,7 @@ export default function TVSet({
   }, [])
 
   function enterImmersive() {
+    trackTv('tap_to_watch')
     setOverlay('none')
     // Mount the overlay + video synchronously so fullscreen can trigger within
     // this tap gesture (both APIs require a user gesture; flushSync also flushes
@@ -173,6 +175,7 @@ export default function TVSet({
     }
     setImmersive(false)
     setOverlay('none')
+    trackTv('immersive_exit')
   }
 
   function playSfx(state: 'on' | 'off') {
@@ -403,6 +406,27 @@ export default function TVSet({
     screenState = 'subscribe-gate'
   }
 
+  // ── Analytics (anonymous, see lib/analytics/tv-tracker.ts) ──
+  const trackTv = useTvTracking({ surface: 'tv', current: nowPlaying.current, isGuest, isLive })
+  const mountedAt = useRef(0)
+  useEffect(() => { mountedAt.current = Date.now() }, [])
+  useEffect(() => {
+    if (overlay !== 'none') trackTv('overlay_open', { props: { kind: overlay === 'show-info' ? 'info' : 'schedule' } })
+  }, [overlay, trackTv])
+  useEffect(() => {
+    if (isFullscreen && !immersive) trackTv('fullscreen_enter')
+  }, [isFullscreen, immersive, trackTv])
+  // "On arrival" = the gate was up within a few seconds of the page opening, i.e.
+  // a returning guest whose stored free-view expiry had already passed.
+  useEffect(() => {
+    if (screenState !== 'subscribe-gate') return
+    trackTv('gate_shown', { props: { on_arrival: Date.now() - mountedAt.current < 8_000 } })
+  }, [screenState, trackTv])
+  const handleSubscribe = useCallback(() => {
+    trackTv('subscribe_click')
+    onSubscribe()
+  }, [trackTv, onSubscribe])
+
   // Immersive mode only makes sense while live — if the stream drops or the
   // preview gate closes, drop back to the poster/cutout so those states show.
   const notLive = screenState !== 'live'
@@ -521,7 +545,7 @@ export default function TVSet({
             {screenState === 'subscribe-gate' && (
               <div className="absolute inset-0">
                 <SubscribeGate
-                  onSubscribe={onSubscribe}
+                  onSubscribe={handleSubscribe}
                   heading={subscribeHeading}
                   body={subscribeBody}
                 />

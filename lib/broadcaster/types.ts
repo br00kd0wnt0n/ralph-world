@@ -18,6 +18,10 @@ export interface ScheduleItem {
   aspect?: ContentAspect | null
   srcWidth?: number | null
   srcHeight?: number | null
+  /** now-playing only: seconds into the clip when the broadcaster answered. */
+  offsetSec?: number | null
+  /** now-playing only: clip length in seconds. */
+  durationSec?: number | null
 }
 
 // Shape returned by GET /assets on the broadcaster backend. Field names

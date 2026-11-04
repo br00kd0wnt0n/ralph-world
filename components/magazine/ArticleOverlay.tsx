@@ -140,13 +140,15 @@ export default function ArticleOverlay({
 
   // Access gating via entitlements module (§8).
   //
-  // Three content tiers:
+  // Four content tiers:
   //   everyone        — open to all, no badge
   //   premium         — open to all, but badged as subscriber content
+  //   members         — signed-in (free or paid); ~200-word preview for guests
   //   paid_subscribers — hard gate; ~200-word preview then CTA
   //
   // Gate reasons drive which CTA copy we show:
-  //   'guest'   — not signed in → "Sign up to read"
+  //   'guest'   — not signed in → "Sign up to read" (members) or
+  //               "Subscribe to keep reading" (paid_subscribers)
   //   'upgrade' — signed in but not paid → "Upgrade to paid"
   //   null      — full access
   const articleAccessTier = (article.accessTier ?? 'everyone') as AccessTier
@@ -427,7 +429,29 @@ export default function ArticleOverlay({
           <div className="relative mt-8">
             <div className="absolute inset-x-0 -top-24 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
             <div className="text-center py-12 px-6 rounded-2xl bg-white shadow-lg border border-ralph-pink/20">
-              {gateReason === 'guest' ? (
+              {gateReason === 'guest' && articleAccessTier === 'paid_subscribers' ? (
+                // Signed out on a paid-only piece: a free account won't
+                // unlock it, so don't promise that.
+                <>
+                  <span className="inline-block text-[10px] font-bold text-ralph-pink uppercase tracking-widest mb-3 px-2 py-0.5 rounded-full border border-ralph-pink/40">
+                    Subscriber story
+                  </span>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Subscribe to keep reading
+                  </h3>
+                  <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto">
+                    This piece is for Physical Ralph subscribers. Join for £3 a
+                    month to read the whole thing and get the print magazine
+                    through your letterbox.
+                  </p>
+                  <button
+                    onClick={onSubscribe}
+                    className="rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
+                  >
+                    See the options
+                  </button>
+                </>
+              ) : gateReason === 'guest' ? (
                 <>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     Sign up to keep reading

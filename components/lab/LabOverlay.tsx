@@ -219,7 +219,7 @@ export default function LabOverlay({
                         onClick={onSubscribe}
                         className="inline-flex items-center justify-center rounded-full bg-ralph-pink text-black px-6 py-2.5 text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
                       >
-                        Subscribe to access →
+                        {itemAccessTier === 'members' ? 'Sign up free to access →' : 'Subscribe to access →'}
                       </button>
                     ) : launchAvailable ? (
                       <Button

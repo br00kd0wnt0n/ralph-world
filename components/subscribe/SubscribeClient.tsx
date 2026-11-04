@@ -209,7 +209,7 @@ function TierCard({
             {name}
           </h2>
           {badge && (
-            <span className="shrink-0 text-tag uppercase px-2.5 py-1 rounded-full bg-ralph-teal text-black">
+            <span className="shrink-0 text-tag uppercase px-2.5 py-1 rounded-full bg-ralph-blue text-black">
               {badge}
             </span>
           )}

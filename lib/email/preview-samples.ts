@@ -20,6 +20,19 @@ export const PREVIEW_SAMPLES: SampleProps = {
     amount: '£3.00',
     periodEnd: 'Tuesday, 22 July 2026',
     manageUrl: 'https://ralph.world/account/billing',
+    firstIssue: {
+      issueNumber: 10,
+      eta: null,
+      previousIssueNumber: 9,
+      previousSentOn: '22 October',
+      returning: false,
+    },
+  },
+  'welcome-free': {
+    recipientName: 'Joshua King',
+    magazineUrl: 'https://ralph.world/magazine',
+    tvUrl: 'https://ralph.world/tv',
+    subscribeUrl: 'https://ralph.world/subscribe',
   },
   'payment-failed': {
     recipientName: 'Joshua King',

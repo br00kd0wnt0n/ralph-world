@@ -5,6 +5,8 @@ import { getDb } from '@/lib/db'
 import { profiles, users } from '@/lib/db/schema'
 import { logAction } from '@/lib/audit'
 import { sendTemplate } from '@/lib/email/send'
+import { getFirstIssueForSubscriber } from '@/lib/magazine/first-issue-server'
+import type { ReceiptFirstIssue } from '@/components/emails/SubscriptionReceipt'
 
 /**
  * Stripe webhook event handlers — Task 2.3, arch doc §9.
@@ -65,6 +67,31 @@ function appUrl(path: string): string {
     process.env.AUTH_URL ??
     'http://localhost:3000'
   return `${base.replace(/\/$/, '')}${path}`
+}
+
+/**
+ * First-issue details for the subscription receipt. Best-effort: a lookup
+ * failure drops the section rather than the receipt.
+ */
+async function loadReceiptFirstIssue(userId: string): Promise<ReceiptFirstIssue | null> {
+  try {
+    const fi = await getFirstIssueForSubscriber(userId)
+    if (!fi) return null
+    return {
+      issueNumber: fi.issueNumber,
+      eta: fi.eta,
+      previousIssueNumber: fi.previous?.issueNumber ?? null,
+      previousSentOn: fi.previous
+        ? fi.previous.fulfilledAt.toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'long', timeZone: 'Europe/London',
+          })
+        : null,
+      returning: fi.returning,
+    }
+  } catch (err) {
+    console.error('[stripe-webhook] first-issue lookup failed:', err)
+    return null
+  }
 }
 
 /**
@@ -490,6 +517,9 @@ export async function handleInvoicePaid(
             }),
             amount: '£3.00',
             manageUrl: appUrl('/account'),
+            // Which print issue they'll get first (joining between issues
+            // left people guessing). Null → the section is left out.
+            firstIssue: await loadReceiptFirstIssue(userId),
           },
         })
       }

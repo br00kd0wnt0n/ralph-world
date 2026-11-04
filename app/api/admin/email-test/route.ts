@@ -38,6 +38,7 @@ export const dynamic = 'force-dynamic'
 const KNOWN_TEMPLATES: readonly TemplateId[] = [
   'email-verification',
   'subscription-receipt',
+  'welcome-free',
   'subscription-cancelled',
   'subscription-cancel-scheduled',
   'payment-failed',

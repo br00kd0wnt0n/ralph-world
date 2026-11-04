@@ -142,6 +142,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // failed link on the next reconciliation pass.
       if (user.email) {
         void scheduleShopifyLink({ userId: user.id, email: user.email, name: user.name ?? null })
+        // Google accounts arrive verified: send the free welcome now.
+        // (Email/password accounts get it on verification instead.)
+        const userId = user.id
+        void import('@/lib/email/welcome').then(({ sendFreeWelcome }) => sendFreeWelcome(userId))
       }
     },
   },

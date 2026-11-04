@@ -122,3 +122,5 @@ picks up changes to `RESEND_API_KEY` between tests.
 | templateId | Component | Props | Used by |
 |---|---|---|---|
 | `email-verification` | `components/emails/EmailVerification.tsx` | `{ verificationUrl, recipientName? }` | Credentials provider signup + email change (Task 1.3) |
+| `subscription-receipt` | `components/emails/SubscriptionReceipt.tsx` | `{ recipientName?, periodEnd, amount, manageUrl, firstIssue? }` | Stripe `invoice.paid` with `billing_reason = subscription_create`. `firstIssue` (from `lib/magazine/first-issue-server.ts`) names the first print issue: the lowest issue above the last Fulfil run, or last + 1; timing from CMS Site Copy `magazine_next_issue_eta`. Lookup failure drops the section, never the receipt. |
+| `welcome-free` | `components/emails/WelcomeFree.tsx` | `{ recipientName?, magazineUrl, tvUrl, subscribeUrl }` | `lib/email/welcome.ts` `sendFreeWelcome`: on email verification (`/api/auth/verify-email`) and Google account creation (Auth.js `createUser`). Skips paid members. |

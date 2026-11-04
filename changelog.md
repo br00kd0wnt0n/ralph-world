@@ -4,13 +4,70 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
-## 2026-11-04 — /subscribe landing page + join flow fixes
+## 2026-11-04 — /subscribe page, join flow fixes, members tier, article join prompt, first-issue email
 
-**Session goal:** a single page Vicky can point ads and emails at (the
-campaign KPI is registrations), and fix why sign-ups weren't finishing.
-Branch `feat/subscribe-and-welcome`.
+**Session goal:** four subscription asks from Josh and Vicky: a single
+page to point ads and emails at (the campaign KPI is registrations), a
+"free account required" option for articles, a join nudge on articles,
+and telling new subscribers which issue they'll get first. Branch
+`feat/subscribe-and-welcome` (ralph-world) + `feat/members-tier`
+(ralph-cms).
 
-### Found
+### Members tier (ralph-cms + site)
+- CMS: "Free account required — sign in to read" (`members`) in the
+  Article and Lab editors. The site already enforced it (`canAccess` +
+  the server-side article gate).
+- Magazine grid: "Members" badge. Article gate: a guest on a paid-only
+  piece was told a free account would unlock it; now says it's for
+  subscribers. Lab: members-only items say "Sign up free to access".
+- Taskmaster ("All the information is on the task") is on
+  `paid_subscribers`, not Premium, so it's already locked. To make it
+  free-account: CMS → article → Access → "Free account required". Not
+  changed.
+- Lab gating is client-side only (full content reaches the browser);
+  all 9 Lab items are open today, so left as is.
+- `ralph-teal` isn't a defined colour token (used on /account, TV,
+  mobile home); new badges use `ralph-blue`.
+
+### Article join prompt
+- `components/magazine/ArticleJoinPrompt.tsx`, inside `ArticleOverlay`:
+  guests only, not on gated articles (they show the gate's CTA). Appears
+  after 30% scroll or 25s, and not while the cookie banner is up
+  (`data-cookie-banner` on the banner root). Bottom bar on phones, corner
+  card from 768px; links to /subscribe. × is remembered for good
+  (`ralph-article-join-prompt-dismissed`, via `lib/safe-storage`). Hides
+  while the end-of-article strip is on screen. GTM:
+  `article_join_prompt_view` / `_click` / `_dismiss` with the slug.
+  Variants in `lib/animation/magazine.ts` (fade only with reduced motion).
+- End-of-article strip: real perks instead of "follow your favourite
+  writers, save articles" (neither exists); "Sign up free" →
+  `/join-ralph?tier=free`; "Log in" returns to the article.
+
+### First-issue line in the receipt + free welcome email
+- `lib/magazine/first-issue.ts` (+ test) / `first-issue-server.ts`: the
+  first issue for someone joining now = lowest issue above the last
+  Fulfil run, or last + 1 when the CMS has no row yet. Today: Issue 10
+  (Issue 9 run 22 Oct).
+- `SubscriptionReceipt` gets a "Your first copy" section: "Your first
+  magazine will be Issue 10. We expect to post it {timing} / We'll post it
+  as soon as it's printed, and you'll get a shipping email with tracking…
+  Issue 9 went out on 22 October, before you joined." Returning
+  subscribers get "next" wording. Lookup failure drops the section, not
+  the receipt.
+- Timing comes from the new CMS Site Copy field "Next print issue: when it
+  posts" (`magazine_next_issue_eta`, Magazine Section). Blank for now:
+  update it after each Fulfil run.
+- New `welcome-free` template (`WelcomeFree`, preview, sample, email-test
+  list, `docs/email-templates.md`), sent once by `lib/email/welcome.ts` on
+  email verification and Google account creation; skips paid members.
+- Data noticed, not changed: one paid subscriber (joined 6 Sep) has no
+  Issue 9 shipment, failed "no default shipping address" in Shopify (same
+  on the Issue 6 test). And a post-run subscriber was sent Issue 9 by hand
+  on 23 Oct; the email follows the "next unfulfilled issue" rule instead.
+
+### /subscribe + join flow
+
+#### Found
 - 9 of the 12 email/password sign-ups since 26 Oct never verified their
   email (Resend shows every verification email delivered), so they can't
   sign in. On /join-ralph, picking "Digital Ralph" went straight to
@@ -23,7 +80,7 @@ Branch `feat/subscribe-and-welcome`.
   password `resend-placeholder`, which would have overwritten the user's
   real password. Dormant until now (the slide was unreachable).
 
-### Added
+#### Added
 - `/subscribe` (was a redirect to `/?subscribe=1`): latest issue cover
   (Shopify "magazines" collection), Digital Ralph vs Physical Ralph with
   what each includes, buttons into `/join-ralph?tier=…&from=subscribe`
@@ -45,7 +102,7 @@ Branch `feat/subscribe-and-welcome`.
   sign-ups. Report: `SELECT after->>'landing', after->>'utm_source',
   count(*) FROM audit_log WHERE action='signup_attributed' GROUP BY 1,2`.
 
-### Changed
+#### Changed
 - /join-ralph: a tier chosen up front (`?tier=`) skips the tier slide
   after sign-up and goes to "verify your email"; with no tier, both
   choices now reach the verify slide (paid sends a fresh link with
@@ -64,15 +121,23 @@ Branch `feat/subscribe-and-welcome`.
 - `Button` passes `onClick` through when it renders a link.
 
 ### Verified
-- `tsc` clean; vitest 240/240 (new: join-intent, landings, intent on the
-  verify link, resend leaves the password alone). eslint: no new warnings.
-- Local dev (port 3005, worktree), as a guest, desktop + 375px: /subscribe
-  renders with UTMs on both buttons and no sideways scroll; /join-ralph
-  carries `landing`, utm_*, `intent=paid` as hidden fields; verify slide
+- `tsc` clean (both repos); ralph-world vitest 249/249 (new: join-intent,
+  landings, intent on the verify link, resend leaves the password alone,
+  first-issue picker, receipt first-issue section incl. lookup failure and
+  no email on renewals). eslint: no new errors (ArticleOverlay's 3 and
+  CookieBanner's 1 pre-date this).
+- Local dev (port 3005, this worktree), as a guest, desktop + 375px:
+  /subscribe renders with UTMs on both buttons and no sideways scroll;
+  /join-ralph carries `landing`, utm_*, `intent=paid`; the verify slide
   shows the paid wording; signed-out upgrade, login banner, resend and
-  verify routes answer as expected. No forms submitted (shared prod DB).
-- Not checked in a browser: the signed-in member and subscriber states of
-  /subscribe, and the Google return path (need a real sign-in).
+  verify routes answer as expected; Taskmaster gate now says "Subscribe
+  to keep reading"; join prompt appears after scrolling, hides at the end
+  strip, × is remembered across articles and reloads.
+- Emails rendered to HTML (receipt with and without timing, welcome).
+- No forms submitted, no emails sent, no Stripe sessions (shared prod DB).
+- Not checked in a browser: /subscribe's member and subscriber states,
+  the Google return path, the welcome/receipt sends end to end (need a
+  real sign-in / Stripe test).
 
 ---
 

@@ -30,7 +30,8 @@ import type { ReactElement } from 'react'
 // ── Template registry ──────────────────────────────────────────────────
 
 import { EmailVerification } from '@/components/emails/EmailVerification'
-import { SubscriptionReceipt } from '@/components/emails/SubscriptionReceipt'
+import { SubscriptionReceipt, type ReceiptFirstIssue } from '@/components/emails/SubscriptionReceipt'
+import { WelcomeFree } from '@/components/emails/WelcomeFree'
 import { SubscriptionCancelled } from '@/components/emails/SubscriptionCancelled'
 import { SubscriptionCancelScheduled } from '@/components/emails/SubscriptionCancelScheduled'
 import { PaymentFailed } from '@/components/emails/PaymentFailed'
@@ -42,6 +43,7 @@ import { ContactJpNotification } from '@/components/emails/ContactJpNotification
 export type TemplateId =
   | 'email-verification'
   | 'subscription-receipt'
+  | 'welcome-free'
   | 'subscription-cancelled'
   | 'subscription-cancel-scheduled'
   | 'payment-failed'
@@ -69,12 +71,29 @@ const TEMPLATES = {
       periodEnd: string
       amount: string
       manageUrl: string
+      firstIssue?: ReceiptFirstIssue | null
     }) => SubscriptionReceipt(props),
   } as TemplateEntry<{
     recipientName?: string | null
     periodEnd: string
     amount: string
     manageUrl: string
+    firstIssue?: ReceiptFirstIssue | null
+  }>,
+
+  'welcome-free': {
+    subject: () => 'Welcome to Ralph',
+    render: (props: {
+      recipientName?: string | null
+      magazineUrl: string
+      tvUrl: string
+      subscribeUrl: string
+    }) => WelcomeFree(props),
+  } as TemplateEntry<{
+    recipientName?: string | null
+    magazineUrl: string
+    tvUrl: string
+    subscribeUrl: string
   }>,
 
   'subscription-cancelled': {

@@ -9,16 +9,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
  * exercise our code, not the full Stripe schema.
  */
 
-const { dbMock, logActionMock } = vi.hoisted(() => ({
+const { dbMock, logActionMock, sendTemplateMock, firstIssueMock } = vi.hoisted(() => ({
   dbMock: {
     select: vi.fn(),
     update: vi.fn(),
   },
   logActionMock: vi.fn().mockResolvedValue(undefined),
+  sendTemplateMock: vi.fn().mockResolvedValue({ sent: true }),
+  firstIssueMock: vi.fn(),
 }))
 
 vi.mock('@/lib/db', () => ({ getDb: () => dbMock }))
 vi.mock('@/lib/audit', () => ({ logAction: logActionMock }))
+vi.mock('@/lib/email/send', () => ({ sendTemplate: sendTemplateMock }))
+vi.mock('@/lib/magazine/first-issue-server', () => ({
+  getFirstIssueForSubscriber: firstIssueMock,
+}))
 
 import {
   handleCheckoutSessionCompleted,
@@ -401,5 +407,74 @@ describe('handleInvoicePaid', () => {
     expect(setArg.tier).toBe('paid')
     expect(setArg.subscriptionStatus).toBe('active')
     expect(setArg.subscriptionCurrentPeriodEnd).toBeUndefined()
+  })
+
+  describe('first invoice of a new subscription → receipt with first issue', () => {
+    // select() is used twice: resolveUserId, then the contact lookup (with innerJoin).
+    function stubUserThenContact() {
+      const chain = (rows: unknown[]) => {
+        const limit = vi.fn().mockResolvedValue(rows)
+        const where = vi.fn(() => ({ limit }))
+        const innerJoin = vi.fn(() => ({ where }))
+        return { from: vi.fn(() => ({ where, innerJoin })) }
+      }
+      dbMock.select
+        .mockReturnValueOnce(chain([{ id: 'user-new' }]))
+        .mockReturnValueOnce(chain([{ email: 'new@example.com', displayName: 'Colin' }]))
+    }
+    const invoice = (billing_reason: string) =>
+      asEvent({
+        type: 'invoice.paid',
+        data: {
+          object: {
+            customer: 'cus_new',
+            billing_reason,
+            lines: { data: [{ period: { end: 1_800_000_000 } }] },
+          },
+        },
+      })
+
+    beforeEach(() => {
+      sendTemplateMock.mockClear()
+      firstIssueMock.mockReset()
+    })
+
+    it('names the next unfulfilled issue and when the last one went out', async () => {
+      stubUserThenContact()
+      stubUpdate()
+      firstIssueMock.mockResolvedValue({
+        issueNumber: 10,
+        eta: null,
+        previous: { issueNumber: 9, fulfilledAt: new Date('2026-10-22T15:40:19Z') },
+        returning: false,
+      })
+      await handleInvoicePaid(invoice('subscription_create'))
+      expect(sendTemplateMock).toHaveBeenCalledTimes(1)
+      const call = sendTemplateMock.mock.calls[0][0]
+      expect(call.templateId).toBe('subscription-receipt')
+      expect(call.props.firstIssue).toEqual({
+        issueNumber: 10,
+        eta: null,
+        previousIssueNumber: 9,
+        previousSentOn: '22 October',
+        returning: false,
+      })
+    })
+
+    it('still sends the receipt if the issue lookup fails', async () => {
+      stubUserThenContact()
+      stubUpdate()
+      firstIssueMock.mockRejectedValue(new Error('db down'))
+      await handleInvoicePaid(invoice('subscription_create'))
+      expect(sendTemplateMock).toHaveBeenCalledTimes(1)
+      expect(sendTemplateMock.mock.calls[0][0].props.firstIssue).toBeNull()
+    })
+
+    it('does not email on renewals', async () => {
+      stubUserThenContact()
+      stubUpdate()
+      await handleInvoicePaid(invoice('subscription_cycle'))
+      expect(sendTemplateMock).not.toHaveBeenCalled()
+    })
   })
 })

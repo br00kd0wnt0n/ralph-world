@@ -83,3 +83,21 @@ export const overlayContentVariants: Variants = {
     transition: { duration: 0.4, ease: 'easeOut', delay: 0.1 },
   },
 }
+
+// ── Article join prompt (guests) ──
+// Rises a little and fades in; leaves the same way. Small travel on
+// purpose so it reads as a nudge, not an interruption. With reduced motion
+// the component drops the `y` and keeps the fade.
+export const joinPromptVariants: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: 24,
+    transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
+  },
+}

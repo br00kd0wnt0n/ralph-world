@@ -154,6 +154,7 @@ export default function CookieBanner({
       role="dialog"
       aria-modal="false"
       aria-label="Cookie preferences"
+      data-cookie-banner
       className="fixed inset-x-0 bottom-0 z-[200] p-3 sm:p-4 pointer-events-none"
     >
       <div className="max-w-3xl mx-auto bg-white border-2 border-black rounded-lg shadow-2xl p-5 sm:p-6 pointer-events-auto">

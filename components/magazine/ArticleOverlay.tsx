@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useCallback, useState, useMemo } from 'react'
+import { useEffect, useCallback, useState, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { overlayContentVariants } from '@/lib/animation/magazine'
 import { useAuth } from '@/context/AuthContext'
 import BlockRenderer from './BlockRenderer'
+import ArticleJoinPrompt from './ArticleJoinPrompt'
 import ShopCalloutBadge from './ShopCalloutBadge'
 import Button from '@/components/ui/Button'
 import ShadowCloseButton from '@/components/ui/ShadowCloseButton'
@@ -30,6 +31,9 @@ export default function ArticleOverlay({
 }: ArticleOverlayProps) {
   const { user, tier } = useAuth()
   const [mounted, setMounted] = useState(false)
+  // For the guest join prompt: the scrolling element + the end strip.
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const endStripRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
 
   // Share the article's canonical pretty URL. Facebook/X open a share popup;
@@ -189,9 +193,15 @@ export default function ArticleOverlay({
         <ShadowCloseButton onClick={onClose} />
       </div>
 
+      {/* Guest join nudge — guests on open articles only; gated articles
+          already show the gate's call to action. Sits on the fixed frame. */}
+      {!user && !gated && (
+        <ArticleJoinPrompt slug={article.slug} scrollRef={scrollRef} endRef={endStripRef} />
+      )}
+
       {/* Scrollable content — the overlay frame + close button stay fixed
           (frame is overflow-hidden); only this inner wrapper scrolls. */}
-      <div className="h-full overflow-y-auto overscroll-none">
+      <div ref={scrollRef} className="h-full overflow-y-auto overscroll-none">
       {/* Middle container - repeating bg image + responsive padding */}
       <div
         className="relative min-h-full p-5 pr-8 min-[576px]:p-8 min-[576px]:px-10 md:p-12 min-[992px]:p-[70px]"
@@ -402,7 +412,7 @@ export default function ArticleOverlay({
 
         {/* Guest upsell strip — shown at end of fully accessible articles for non-logged-in readers */}
         {!user && !gated && (
-          <div className="mt-10 mb-2 rounded-2xl border border-ralph-pink/30 bg-white px-6 py-8 text-center shadow-sm">
+          <div ref={endStripRef} className="mt-10 mb-2 rounded-2xl border border-ralph-pink/30 bg-white px-6 py-8 text-center shadow-sm">
             <p className="text-xs font-bold uppercase tracking-widest text-ralph-pink mb-3">
               Free to read
             </p>
@@ -410,12 +420,13 @@ export default function ArticleOverlay({
               Enjoying Ralph?
             </h3>
             <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto leading-relaxed">
-              Create a free account to follow your favourite writers, save articles, and get access to the full magazine experience.
+              Create a free account for unlimited Ralph TV and tickets to our
+              IRL events.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button label="Sign up free" href="/join-ralph" filled />
+              <Button label="Sign up free" href="/join-ralph?tier=free" filled />
               <a
-                href="/login"
+                href={`/login?callbackUrl=${encodeURIComponent(`/magazine/${article.slug}`)}`}
                 className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
               >
                 Already a member? Log in

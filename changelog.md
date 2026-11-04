@@ -4,6 +4,78 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-04 — /subscribe landing page + join flow fixes
+
+**Session goal:** a single page Vicky can point ads and emails at (the
+campaign KPI is registrations), and fix why sign-ups weren't finishing.
+Branch `feat/subscribe-and-welcome`.
+
+### Found
+- 9 of the 12 email/password sign-ups since 26 Oct never verified their
+  email (Resend shows every verification email delivered), so they can't
+  sign in. On /join-ralph, picking "Digital Ralph" went straight to
+  /magazine: the "verify your email" slide existed but nothing linked to it.
+- Picking "Physical Ralph" went to `/api/account/upgrade`, which needs a
+  signed-in user; an unverified account can't sign in, so it bounced to
+  `/login?callbackUrl=/account` and the paid choice was lost. Google
+  sign-ups on /join-ralph skipped the tier slide entirely.
+- The verify slide's "Send a new verify link" re-ran sign-up with the
+  password `resend-placeholder`, which would have overwritten the user's
+  real password. Dormant until now (the slide was unreachable).
+
+### Added
+- `/subscribe` (was a redirect to `/?subscribe=1`): latest issue cover
+  (Shopify "magazines" collection), Digital Ralph vs Physical Ralph with
+  what each includes, buttons into `/join-ralph?tier=…&from=subscribe`
+  carrying utm_* tags. Signed-in free members get "Upgrade for £3 a month"
+  straight to Stripe; subscribers get "Your account". Clicks go to GTM as
+  `subscribe_cta_click`. Copy in `components/subscribe/copy.ts`. In the
+  sitemap. Footer "Sign up" already pointed here; nav and the modal unchanged.
+- `lib/join-intent.ts`: a paid choice rides on the verification link as
+  `intent=paid`; `/api/auth/verify-email` turns it into
+  `/login?callbackUrl=/account?upgrade=paid`, and `/account?upgrade=paid`
+  already hands off to Stripe. Login shows "Email verified. Sign in to
+  finish your subscription."
+- `POST /api/auth/resend-verification` (rate limited, never touches the
+  password, always answers ok).
+- `lib/data/latest-magazine.ts` (shared cover lookup for /join-ralph and
+  /subscribe).
+- Attribution: `subscribe` and `join-ralph` join `issue9` as signup
+  landings (`SIGNUP_LANDINGS` in `lib/attribution.ts`), for email and Google
+  sign-ups. Report: `SELECT after->>'landing', after->>'utm_source',
+  count(*) FROM audit_log WHERE action='signup_attributed' GROUP BY 1,2`.
+
+### Changed
+- /join-ralph: a tier chosen up front (`?tier=`) skips the tier slide
+  after sign-up and goes to "verify your email"; with no tier, both
+  choices now reach the verify slide (paid sends a fresh link with
+  `intent=paid`). Verify slide: paid wording, "Read the magazine while you
+  wait" link. Google returns to /join-ralph (`?joined=1`): new accounts
+  are attributed, then go to checkout (paid), /magazine (free) or the
+  tier slide; existing members go to /account as before. Signed-in members
+  on the tier slide go straight to /magazine or Stripe. GTM events
+  `join_signup`, `join_tier_choice`.
+- `/api/account/upgrade` when signed out → `/login?callbackUrl=/account?upgrade=paid`.
+- Copy: dropped "we'll switch on our TV channel" from the paid tier
+  (TV is unlimited for every signed-in member; only guests get 10 minutes)
+  on the tier slide and the subscribe modal's fallback text. The live modal
+  text is CMS-edited (`subscribe_paid_body`, still mentions TV): to change
+  in the CMS.
+- `Button` passes `onClick` through when it renders a link.
+
+### Verified
+- `tsc` clean; vitest 240/240 (new: join-intent, landings, intent on the
+  verify link, resend leaves the password alone). eslint: no new warnings.
+- Local dev (port 3005, worktree), as a guest, desktop + 375px: /subscribe
+  renders with UTMs on both buttons and no sideways scroll; /join-ralph
+  carries `landing`, utm_*, `intent=paid` as hidden fields; verify slide
+  shows the paid wording; signed-out upgrade, login banner, resend and
+  verify routes answer as expected. No forms submitted (shared prod DB).
+- Not checked in a browser: the signed-in member and subscriber states of
+  /subscribe, and the Google return path (need a real sign-in).
+
+---
+
 ## 2026-11-03 — Ralph TV player analytics (feeds broadcaster.ralph.world/stats)
 
 **Session goal:** instrument the TV page so the new Ralph TV stats page can

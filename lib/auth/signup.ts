@@ -6,6 +6,7 @@ import { hashPassword, validatePassword } from './passwords'
 import { issueVerificationToken, purgeExpiredTokens } from './verification-tokens'
 import { sendTemplate } from '@/lib/email/send'
 import { logSignupConsents, logConsent } from '@/lib/consent'
+import type { JoinIntent } from '@/lib/join-intent'
 
 /**
  * Email/password signup — Task 1.3, arch doc §4.
@@ -40,6 +41,8 @@ export async function signupWithPassword(args: {
   /** True iff the user ticked the marketing opt-in box. Defaults to false. */
   marketingOptIn?: boolean
   appUrl: string
+  /** 'paid' = the visitor chose the paid tier; the verify link carries it to checkout. */
+  intent?: JoinIntent | null
   now?: () => number
 }): Promise<SignupResult> {
   const email = args.email.trim().toLowerCase()
@@ -88,7 +91,7 @@ export async function signupWithPassword(args: {
       .update(users)
       .set({ passwordHash, name: args.name ?? existing.email })
       .where(eq(users.id, existing.id))
-    await sendVerificationEmail({ userId: existing.id, email, name: args.name ?? null, appUrl: args.appUrl, now: args.now })
+    await sendVerificationEmail({ userId: existing.id, email, name: args.name ?? null, appUrl: args.appUrl, intent: args.intent, now: args.now })
     return { ok: true, userId: existing.id, email }
   }
 
@@ -151,7 +154,7 @@ export async function signupWithPassword(args: {
     })()
   }
 
-  await sendVerificationEmail({ userId, email, name: args.name ?? null, appUrl: args.appUrl, now: args.now })
+  await sendVerificationEmail({ userId, email, name: args.name ?? null, appUrl: args.appUrl, intent: args.intent, now: args.now })
 
   // Shopify customer auto-create (Task 1.6). Fire-and-forget — must not
   // block the signup response. Dynamic import keeps the Shopify module
@@ -177,13 +180,14 @@ export async function sendVerificationEmail(args: {
   email: string
   name?: string | null
   appUrl: string
+  intent?: JoinIntent | null
   now?: () => number
 }): Promise<{ sent: boolean; skipped?: boolean }> {
   // Cleanup expired tokens for this email first (best-effort).
   await purgeExpiredTokens({ email: args.email, now: args.now })
 
   const { token } = await issueVerificationToken({ email: args.email, now: args.now })
-  const verificationUrl = buildVerificationUrl(args.appUrl, args.email, token)
+  const verificationUrl = buildVerificationUrl(args.appUrl, args.email, token, args.intent)
 
   const result = await sendTemplate({
     userId: args.userId,
@@ -196,8 +200,47 @@ export async function sendVerificationEmail(args: {
     : { sent: false, skipped: true }
 }
 
-export function buildVerificationUrl(appUrl: string, email: string, token: string): string {
+export function buildVerificationUrl(
+  appUrl: string,
+  email: string,
+  token: string,
+  intent?: JoinIntent | null
+): string {
   const base = appUrl.replace(/\/+$/, '')
   const qs = new URLSearchParams({ email, token })
+  if (intent) qs.set('intent', intent)
   return `${base}/api/auth/verify-email?${qs.toString()}`
+}
+
+/**
+ * Resend the verification link for an account that hasn't verified yet,
+ * without touching its password. Silent no-op for unknown or already
+ * verified addresses, so callers can always answer "check your inbox"
+ * without revealing which addresses have accounts.
+ */
+export async function resendVerificationEmail(args: {
+  email: string
+  appUrl: string
+  intent?: JoinIntent | null
+  now?: () => number
+}): Promise<{ sent: boolean }> {
+  const email = args.email.trim().toLowerCase()
+  if (!EMAIL_RE.test(email)) return { sent: false }
+  const user = (
+    await getDb()
+      .select({ id: users.id, name: users.name, emailVerified: users.emailVerified })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1)
+  )[0]
+  if (!user || user.emailVerified) return { sent: false }
+  const result = await sendVerificationEmail({
+    userId: user.id,
+    email,
+    name: user.name && user.name !== email ? user.name : null,
+    appUrl: args.appUrl,
+    intent: args.intent,
+    now: args.now,
+  })
+  return { sent: result.sent }
 }

@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { getDb } from '@/lib/db'
 import { profiles } from '@/lib/db/schema'
 import { createSubscriptionCheckout } from '@/lib/stripe/checkout'
+import { PAID_CHECKOUT_PATH } from '@/lib/join-intent'
 
 /**
  * Paid-tier checkout entry — Phase 2 (Stripe).
@@ -18,15 +19,17 @@ import { createSubscriptionCheckout } from '@/lib/stripe/checkout'
  * changed: we now create a Stripe Checkout session and 303 to it.
  *
  * Failure modes:
- *   - Not signed in → /login?callbackUrl=/account
+ *   - Not signed in → /login?callbackUrl=/account?upgrade=paid
  *   - Stripe fails → /account?upgrade=error (existing UI surfaces a banner)
  */
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id || !session.user.email) {
-    return NextResponse.redirect(
-      new URL('/login?callbackUrl=/account', baseUrl())
-    )
+    // Keep the paid choice: after signing in, /account?upgrade=paid comes
+    // straight back here.
+    const loginUrl = new URL('/login', baseUrl())
+    loginUrl.searchParams.set('callbackUrl', PAID_CHECKOUT_PATH)
+    return NextResponse.redirect(loginUrl)
   }
 
   // Find existing stripe_customer_id (resubscribe case).

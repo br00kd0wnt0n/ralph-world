@@ -13,7 +13,7 @@ type ChangeFreq = Entry['changeFrequency']
 
 // Static, publicly-indexable top-level routes. Auth pages (/account, /login,
 // /reset-password) are intentionally excluded — they're noindex + robots-
-// disallowed. Redirect stubs (/subscribe) and deleted routes (/play) removed.
+// disallowed. Deleted routes (/play) removed.
 const STATIC_ROUTES: { path: string; priority: number; changeFrequency: ChangeFreq }[] = [
   { path: '', priority: 1.0, changeFrequency: 'daily' },
   { path: '/magazine', priority: 0.9, changeFrequency: 'daily' },
@@ -21,6 +21,7 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: ChangeFr
   { path: '/events', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/shop', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/lab', priority: 0.7, changeFrequency: 'weekly' },
+  { path: '/subscribe', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/join-ralph', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/issue9', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/work-with-us', priority: 0.6, changeFrequency: 'monthly' },

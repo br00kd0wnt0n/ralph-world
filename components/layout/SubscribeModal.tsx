@@ -43,7 +43,7 @@ export default function SubscribeModal({
     copy?.subscribe_paid_heading ?? 'Prefer your culture more hands-on?'
   const paidBody =
     copy?.subscribe_paid_body ??
-    "Then you need a bit of The Ralph™ in your life. For just £3 a month you'll get our quarterly fun, glossy mag straight through your letterbox. On top of that, we'll switch on our TV channel for you, plus everything else Ralph World has to offer."
+    "Then you need a bit of The Ralph™ in your life. For just £3 a month you'll get our quarterly fun, glossy mag straight through your letterbox, plus everything else Ralph World has to offer."
   const paidCta = copy?.subscribe_paid_cta ?? 'Join for £3 per month'
   const smallprint =
     copy?.subscribe_paid_smallprint ??

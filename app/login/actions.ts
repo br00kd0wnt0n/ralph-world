@@ -3,7 +3,8 @@
 import { signIn } from '@/lib/auth'
 import { AuthError } from 'next-auth'
 import { signupWithPassword } from '@/lib/auth/signup'
-import { pickAttribution } from '@/lib/attribution'
+import { isSignupLanding, pickAttribution } from '@/lib/attribution'
+import { parseJoinIntent } from '@/lib/join-intent'
 import { recordSignupAttribution } from '@/lib/attribution-server'
 
 /**
@@ -95,9 +96,6 @@ export async function signinWithCredentials(
   }
 }
 
-// Landing pages allowed to attribute a signup to themselves.
-const LANDINGS = new Set(['issue9'])
-
 export interface SignupResult {
   ok: boolean
   error?:
@@ -121,6 +119,9 @@ export async function signupAction(
   const marketingOptIn = marketingRaw === 'on' || marketingRaw === 'true' || marketingRaw === '1'
 
   const landing = String(formData.get('landing') ?? '')
+  // 'paid' when the visitor already chose Physical Ralph (/subscribe →
+  // /join-ralph?tier=paid); the verify link then leads on to checkout.
+  const intent = parseJoinIntent(formData.get('intent'))
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
@@ -128,11 +129,12 @@ export async function signupAction(
     'https://ralph.world'
 
   try {
-    const result = await signupWithPassword({ email, password, name, marketingOptIn, appUrl })
+    const result = await signupWithPassword({ email, password, name, marketingOptIn, appUrl, intent })
     if (result.ok) {
-      // Campaign landing pages (/issue9) pass `landing` + utm_* as hidden
-      // fields. Best-effort; never blocks the signup response.
-      if (LANDINGS.has(landing)) {
+      // Campaign landing pages (/issue9, /subscribe, /join-ralph) pass
+      // `landing` + utm_* as hidden fields. Best-effort; never blocks the
+      // signup response.
+      if (isSignupLanding(landing)) {
         void recordSignupAttribution({
           userId: result.userId,
           landing,

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth, signIn } from '@/lib/auth'
 import { LoginForm, type BannerState } from './LoginForm'
+import { PAID_CHECKOUT_PATH } from '@/lib/join-intent'
 
 export const metadata: Metadata = {
   title: 'Log in',
@@ -99,7 +100,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const initialMode: 'signin' | 'signup' =
     rawMode === 'signup' ? 'signup' : 'signin'
-  const banner = bannerFor({ verify, reason, error, reset })
+  const banner =
+    verify === 'ok' && callbackUrl === PAID_CHECKOUT_PATH
+      ? { tone: 'success' as const, text: 'Email verified. Sign in to finish your subscription.' }
+      : bannerFor({ verify, reason, error, reset })
 
   // Google sign-in must stay a server action so it can call signIn()
   // directly (it's not allowed from client code). Defined here and

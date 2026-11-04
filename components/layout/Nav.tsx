@@ -56,7 +56,8 @@ export default function Nav() {
   const { setOpen: setMobileOpen } = useMenu()
   const [subscribeOpen, setSubscribeOpen] = useState(false)
 
-  // /subscribe redirects to /?subscribe=1 — pop the modal open on arrival.
+  // ?subscribe=1 (old /subscribe redirect target, still in some links) —
+  // pop the modal open on arrival.
   // Without this the visitor lands on the (dark) homepage with a stray
   // query flag and nothing appears to happen, which read to testers as a
   // black-on-black page.

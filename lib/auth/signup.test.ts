@@ -32,7 +32,7 @@ vi.mock('./verification-tokens', () => ({
 }))
 vi.mock('@/lib/consent', () => ({ logSignupConsents: logConsentMock }))
 
-import { signupWithPassword, buildVerificationUrl } from './signup'
+import { signupWithPassword, buildVerificationUrl, resendVerificationEmail } from './signup'
 
 /** Helper: stub a fresh DB chain that resolves to `users` lookup → empty. */
 function setupDb({
@@ -90,6 +90,16 @@ describe('buildVerificationUrl', () => {
   it('strips a trailing slash on the base URL', () => {
     const url = buildVerificationUrl('https://ralph.world///', 'a@b.co', 't')
     expect(url.startsWith('https://ralph.world/api/auth/verify-email')).toBe(true)
+  })
+
+  it('carries a paid-tier choice as intent=paid', () => {
+    const url = buildVerificationUrl('https://ralph.world', 'a@b.co', 't', 'paid')
+    expect(new URL(url).searchParams.get('intent')).toBe('paid')
+  })
+
+  it('leaves intent off when none is given', () => {
+    const url = buildVerificationUrl('https://ralph.world', 'a@b.co', 't', null)
+    expect(new URL(url).searchParams.has('intent')).toBe(false)
   })
 })
 
@@ -196,5 +206,53 @@ describe('signupWithPassword — already registered', () => {
     expect(sendTemplateMock).toHaveBeenCalledTimes(1)
     // Should NOT re-log consents — they were logged on the original signup.
     expect(logConsentMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('signupWithPassword — paid intent', () => {
+  it('puts intent=paid on the verification link', async () => {
+    setupDb({ existingUser: null, insertedUserId: 'u-paid' })
+    await signupWithPassword({
+      email: 'paid@example.com',
+      password: 'correct horse battery staple',
+      appUrl: 'https://ralph.world',
+      intent: 'paid',
+    })
+    const call = sendTemplateMock.mock.calls[0][0]
+    expect(call.props.verificationUrl).toContain('intent=paid')
+  })
+})
+
+describe('resendVerificationEmail', () => {
+  it('resends to an unverified account without touching the password', async () => {
+    setupDb({
+      existingUser: { id: 'u3', email: 'wait@example.com', emailVerified: null, passwordHash: 'keep-me' },
+    })
+    const result = await resendVerificationEmail({
+      email: ' Wait@Example.com ',
+      appUrl: 'https://ralph.world',
+      intent: 'paid',
+    })
+    expect(result.sent).toBe(true)
+    expect(dbMock.update).not.toHaveBeenCalled()
+    const call = sendTemplateMock.mock.calls[0][0]
+    expect(call.to).toBe('wait@example.com')
+    expect(call.props.verificationUrl).toContain('intent=paid')
+  })
+
+  it('does nothing for an already verified account', async () => {
+    setupDb({
+      existingUser: { id: 'u4', email: 'done@example.com', emailVerified: new Date(), passwordHash: 'x' },
+    })
+    const result = await resendVerificationEmail({ email: 'done@example.com', appUrl: 'https://ralph.world' })
+    expect(result.sent).toBe(false)
+    expect(sendTemplateMock).not.toHaveBeenCalled()
+  })
+
+  it('does nothing for an unknown address', async () => {
+    setupDb({ existingUser: null })
+    const result = await resendVerificationEmail({ email: 'nobody@example.com', appUrl: 'https://ralph.world' })
+    expect(result.sent).toBe(false)
+    expect(sendTemplateMock).not.toHaveBeenCalled()
   })
 })

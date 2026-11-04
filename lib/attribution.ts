@@ -45,6 +45,19 @@ export function pickAttribution(
   return out
 }
 
+/**
+ * Pages allowed to attribute a new account to themselves (the `landing`
+ * value on `signup_attributed` audit rows). `subscribe` = arrived at
+ * /join-ralph from the /subscribe landing page; `join-ralph` = any other
+ * route into /join-ralph.
+ */
+export const SIGNUP_LANDINGS = ['issue9', 'subscribe', 'join-ralph'] as const
+export type SignupLanding = (typeof SIGNUP_LANDINGS)[number]
+
+export function isSignupLanding(value: unknown): value is SignupLanding {
+  return typeof value === 'string' && (SIGNUP_LANDINGS as readonly string[]).includes(value)
+}
+
 /** Append attribution to a same-site path, e.g. an OAuth callbackUrl. */
 export function withAttribution(path: string, attribution: Attribution): string {
   const [base, query = ''] = path.split('?')

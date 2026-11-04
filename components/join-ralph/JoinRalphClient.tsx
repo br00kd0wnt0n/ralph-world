@@ -1,12 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { sectionPageVariants } from '@/lib/animation/page-transitions'
 import Button from '@/components/ui/Button'
 import { LoginForm } from '@/app/login/LoginForm'
+import { useAuth } from '@/context/AuthContext'
+import { pickAttribution, withAttribution, type SignupLanding } from '@/lib/attribution'
+import { PAID_CHECKOUT_PATH } from '@/lib/join-intent'
+import { trackEvent } from '@/lib/gtm-client-init'
 
 type Tier = 'free' | 'paid'
 type Step = 1 | 2 | 3
@@ -62,10 +67,20 @@ export default function JoinRalphClient({
 }) {
   const router = useRouter()
   const params = useSearchParams()
+  const { user, tier: memberTier } = useAuth()
 
   const rawStep = parseInt(params.get('step') ?? '1', 10) || 1
   const step = Math.max(1, Math.min(3, rawStep)) as Step
-  const tier: Tier = params.get('tier') === 'paid' ? 'paid' : 'free'
+  // ?tier= set = the visitor already picked a tier (on /subscribe or the
+  // subscribe modal), so the tier slide is skipped after sign-up.
+  const tierParam = params.get('tier')
+  const preselected: Tier | null =
+    tierParam === 'paid' ? 'paid' : tierParam === 'free' ? 'free' : null
+  // ?from=subscribe = arrived from the /subscribe landing page.
+  const landing: SignupLanding = params.get('from') === 'subscribe' ? 'subscribe' : 'join-ralph'
+  const attribution = useMemo(() => pickAttribution(params), [params])
+  // Back from Google sign-in (?joined=1).
+  const joined = params.get('joined') === '1'
   // Preview mode (?preview=1): seed placeholder signup fields so the tier +
   // verify slides can be styled without walking the flow. Dev/design aid only.
   const preview = params.get('preview') === '1'
@@ -75,35 +90,110 @@ export default function JoinRalphClient({
   // address. Trade-off: a hard refresh on slide 2/3 bounces back to slide 1.
   const [signupEmail, setSignupEmail] = useState(preview ? 'you@example.com' : '')
   const [signupName, setSignupName] = useState(preview ? 'Alex' : '')
+  const [paidChosen, setPaidChosen] = useState(preselected === 'paid')
   const [direction, setDirection] = useState(0)
 
-  function buildHref(targetStep: number, targetTier: Tier = tier) {
-    const sp = new URLSearchParams()
+  // Keeps tier / from / utm_* across steps; drops the one-shot `joined`.
+  function buildHref(targetStep: number) {
+    const sp = new URLSearchParams(params.toString())
     sp.set('step', String(targetStep))
-    sp.set('tier', targetTier)
+    sp.delete('joined')
     return `/join-ralph?${sp.toString()}`
   }
 
-  function goToStep(targetStep: number, targetTier: Tier = tier) {
+  function goToStep(targetStep: number) {
     setDirection(targetStep > step ? 1 : -1)
-    router.push(buildHref(targetStep, targetTier))
+    router.push(buildHref(targetStep))
   }
 
-  // Steps 2 (tier) and 3 (verify) are only reachable after a signup this
-  // session; a hard refresh loses that state — bounce back to the form.
-  useEffect(() => {
-    if (!preview && (step === 2 || step === 3) && !signupEmail) {
-      router.replace(buildHref(1))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, signupEmail, preview])
+  // Google returns here; email/password sign-in goes straight on (paid
+  // choice → checkout via /account?upgrade=paid).
+  const googleCallbackUrl = useMemo(() => {
+    const sp = new URLSearchParams()
+    sp.set('joined', '1')
+    if (preselected) sp.set('tier', preselected)
+    if (landing === 'subscribe') sp.set('from', 'subscribe')
+    return withAttribution(`/join-ralph?${sp.toString()}`, attribution)
+  }, [preselected, landing, attribution])
+  const signinCallbackUrl = preselected === 'paid' ? PAID_CHECKOUT_PATH : '/account'
 
-  // New account created → carry the details and move to the tier slide.
+  // Step 3 (verify) is only reachable after a signup this session; a hard
+  // refresh loses that state, so bounce back to the form. Step 2 (tier) also
+  // works for a signed-in member (new Google account, or the subscribe
+  // modal's upgrade button).
+  useEffect(() => {
+    if (preview || joined) return
+    const ok = step === 1 || !!signupEmail || (step === 2 && !!user)
+    if (!ok) router.replace(buildHref(1))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, signupEmail, preview, joined, user])
+
+  // Back from Google: record where a new account came from, then carry on.
+  // `recorded` is only true for an account created in the last 30 minutes,
+  // so an existing member who just signed in goes to /account as before.
+  const handledRef = useRef(false)
+  useEffect(() => {
+    if (!joined || !user || handledRef.current) return
+    handledRef.current = true
+    void (async () => {
+      let isNew = false
+      try {
+        const res = await fetch('/api/attribution/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ landing, attribution }),
+        })
+        isNew = Boolean(((await res.json()) as { recorded?: boolean }).recorded)
+      } catch {
+        // Best-effort; fall through with isNew = false.
+      }
+      if (isNew) trackEvent('join_signup', { method: 'google', tier: preselected ?? 'none', landing, ...attribution })
+      if (memberTier === 'paid') {
+        window.location.assign('/account')
+      } else if (preselected === 'paid') {
+        window.location.assign('/api/account/upgrade')
+      } else if (preselected === 'free') {
+        router.replace('/magazine')
+      } else if (isNew) {
+        setDirection(1)
+        router.replace(buildHref(2))
+      } else {
+        router.replace('/account')
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joined, user])
+
+  // New account created. Tier already chosen → straight to "verify your
+  // email"; otherwise ask which tier first.
   function handleSignupSuccess(fields: { email: string; name: string }) {
     setSignupEmail(fields.email)
     setSignupName(fields.name)
+    trackEvent('join_signup', { method: 'email', tier: preselected ?? 'none', landing, ...attribution })
     setDirection(1)
-    router.push(buildHref(2))
+    router.push(buildHref(preselected ? 3 : 2))
+  }
+
+  function handleTierChoice(t: Tier) {
+    trackEvent('join_tier_choice', { tier: t, landing, ...attribution })
+    if (user) {
+      // Signed in (Google, or an existing member): free → the magazine,
+      // paid → Stripe checkout.
+      if (t === 'free') router.push('/magazine')
+      else window.location.href = '/api/account/upgrade'
+      return
+    }
+    // Just signed up with email: can't check out until verified + signed in.
+    // For paid, send a fresh verify link that leads on to checkout.
+    setPaidChosen(t === 'paid')
+    if (t === 'paid' && signupEmail && !preview) {
+      void fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: signupEmail, intent: 'paid' }),
+      }).catch(() => {})
+    }
+    goToStep(3)
   }
 
   return (
@@ -186,45 +276,52 @@ export default function JoinRalphClient({
                 transition={slideTransition}
                 className="pb-6"
               >
-                {step === 1 && (
-                  <Slide1
-                    magCoverUrl={magCoverUrl}
-                    right={
-                      <LoginForm
-                        bare
-                        heading="Log in or sign up to Ralph.World"
-                        callbackUrl="/account"
-                        initialMode="signup"
-                        banner={null}
-                        googleAction={async () => {
-                          await signIn('google', { callbackUrl: '/account' })
-                        }}
-                        onSignupSuccess={handleSignupSuccess}
+                {joined && user ? (
+                  // Back from Google — the effect above moves us on.
+                  <p className="py-24 text-center text-black light:text-white" style={bodyCopyStyle}>
+                    One sec…
+                  </p>
+                ) : (
+                  <>
+                    {step === 1 && (
+                      <Slide1
+                        magCoverUrl={magCoverUrl}
+                        right={
+                          <LoginForm
+                            bare
+                            heading="Log in or sign up to Ralph.World"
+                            callbackUrl={signinCallbackUrl}
+                            initialMode="signup"
+                            banner={null}
+                            googleAction={async () => {
+                              await signIn('google', { callbackUrl: googleCallbackUrl })
+                            }}
+                            onSignupSuccess={handleSignupSuccess}
+                            signupHiddenFields={{
+                              landing,
+                              ...attribution,
+                              ...(preselected === 'paid' ? { intent: 'paid' } : {}),
+                            }}
+                          />
+                        }
                       />
-                    }
-                  />
-                )}
-                {step === 2 && (
-                  <TierSlide
-                    onSelectTier={(t) => {
-                      if (t === 'free') {
-                        // Digital Ralph — straight to the magazine.
-                        router.push('/magazine')
-                      } else {
-                        // Physical Ralph — Stripe checkout (bounces to login
-                        // first if the just-signed-up user isn't authed yet).
-                        window.location.href = '/api/account/upgrade'
-                      }
-                    }}
-                    firstName={signupName}
-                  />
-                )}
-                {step === 3 && (
-                  <VerifySlide
-                    email={signupEmail}
-                    firstName={signupName}
-                    onBack={() => goToStep(2)}
-                  />
+                    )}
+                    {step === 2 && (
+                      <TierSlide
+                        onSelectTier={handleTierChoice}
+                        firstName={signupName || user?.name?.split(' ')[0] || ''}
+                      />
+                    )}
+                    {step === 3 && (
+                      <VerifySlide
+                        email={signupEmail}
+                        firstName={signupName}
+                        paid={paidChosen}
+                        // Back to the tier slide only if that's where they came from.
+                        onBack={preselected ? undefined : () => goToStep(2)}
+                      />
+                    )}
+                  </>
                 )}
               </motion.div>
             </AnimatePresence>
@@ -371,8 +468,7 @@ function TierSlide({
         <p className="text-black light:text-white mb-5" style={bodyStyle}>
           Or for just £3 a month you&apos;ll also get everything Digital Ralph
           has to offer, plus our quarterly fun, glossy mag straight through
-          your letterbox. If that wasn&apos;t enough we&apos;ll switch on our
-          TV channel for you too.
+          your letterbox, with UK postage included.
         </p>
         <div className="flex justify-end">
           <Button
@@ -393,11 +489,14 @@ function TierSlide({
 function VerifySlide({
   email,
   firstName,
+  paid,
   onBack,
 }: {
   email: string
   firstName: string
-  onBack: () => void
+  /** Chose Physical Ralph: the link leads on to checkout after sign-in. */
+  paid: boolean
+  onBack?: () => void
 }) {
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
@@ -406,10 +505,12 @@ function VerifySlide({
     if (!email || resending) return
     setResending(true)
     try {
-      await fetch('/api/auth/signup', {
+      // Dedicated endpoint: re-running sign-up here would overwrite the
+      // account's password.
+      await fetch('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: 'resend-placeholder' }),
+        body: JSON.stringify({ email, ...(paid ? { intent: 'paid' } : {}) }),
       })
       setResent(true)
     } finally {
@@ -421,7 +522,7 @@ function VerifySlide({
     <div>
       {/* Centred column with the character to the side. */}
       <div className="relative mx-auto w-full text-center" style={{ maxWidth: 620 }}>
-        <BackButton onClick={onBack} />
+        {onBack && <BackButton onClick={onBack} />}
         <div className="w-full">
           {/* Title with the wave character to its left */}
           <div className="relative flex justify-center mb-2">
@@ -467,6 +568,12 @@ function VerifySlide({
             We&apos;ve already pinged you an email to the above address. Simply
             press the link in that email to verify.
           </p>
+          {paid && (
+            <p className="mb-6 light:text-white!" style={bodyCopyStyle}>
+              Then sign in and we&apos;ll take you straight to checkout to start
+              your £3 a month subscription.
+            </p>
+          )}
 
           <p className="mb-2 light:text-white!" style={bodyCopyStyle}>No email? Check spam.</p>
           <p className="mb-6 light:text-white!" style={bodyCopyStyle}>Still nothing?</p>
@@ -484,6 +591,12 @@ function VerifySlide({
               minWidth={230}
             />
           </div>
+
+          <p className="mt-10 light:text-white!" style={bodyCopyStyle}>
+            <Link href="/magazine" className="underline hover:opacity-70 transition-opacity">
+              Read the magazine while you wait
+            </Link>
+          </p>
         </div>
       </div>
     </div>

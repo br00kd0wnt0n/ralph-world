@@ -1,11 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
-import { pickAttribution } from '@/lib/attribution'
+import { isSignupLanding, pickAttribution } from '@/lib/attribution'
 import { recordSignupAttribution } from '@/lib/attribution-server'
 
 export const runtime = 'nodejs'
-
-const LANDINGS = new Set(['issue9'])
 
 /**
  * POST /api/attribution/signup  { landing: 'issue9', attribution?: { utm_* } }
@@ -26,8 +24,8 @@ export async function POST(req: NextRequest) {
     landing?: unknown
     attribution?: unknown
   }
-  const landing = typeof body.landing === 'string' ? body.landing : ''
-  if (!LANDINGS.has(landing)) {
+  const landing = body.landing
+  if (!isSignupLanding(landing)) {
     return NextResponse.json({ error: 'Unknown landing' }, { status: 400 })
   }
 

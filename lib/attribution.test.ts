@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickAttribution, withAttribution } from './attribution'
+import { isSignupLanding, pickAttribution, withAttribution } from './attribution'
 
 describe('pickAttribution', () => {
   it('keeps only known utm keys', () => {
@@ -33,5 +33,15 @@ describe('withAttribution', () => {
 
   it('leaves the path alone when there is nothing to add', () => {
     expect(withAttribution('/issue9', {})).toBe('/issue9')
+  })
+})
+
+describe('isSignupLanding', () => {
+  it('accepts the known landing pages only', () => {
+    expect(isSignupLanding('issue9')).toBe(true)
+    expect(isSignupLanding('subscribe')).toBe(true)
+    expect(isSignupLanding('join-ralph')).toBe(true)
+    expect(isSignupLanding('elsewhere')).toBe(false)
+    expect(isSignupLanding(undefined)).toBe(false)
   })
 })

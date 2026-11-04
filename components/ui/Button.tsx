@@ -100,6 +100,7 @@ export default function Button({
       {href && !disabled ? (
         <Link
           href={href}
+          onClick={onClick}
           className="btn-press"
           style={mergedStyles}
           target={newTab ? '_blank' : undefined}

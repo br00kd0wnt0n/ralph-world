@@ -1,10 +1,11 @@
 'use client'
 
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   createContext,
   useContext,
+  useEffect,
   useRef,
   useState,
   useCallback,
@@ -12,6 +13,7 @@ import {
 } from 'react'
 import { LayoutRouterContext } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 import { useMenu } from '@/context/MenuContext'
+import { shouldRecoverPop } from '@/lib/overlay-history'
 
 // Context to let children know if we're exiting
 interface TransitionContextValue {
@@ -45,6 +47,27 @@ export default function PageTransitionWrapper({ children }: PageTransitionWrappe
   const { instantNav, setInstantNav } = useMenu()
   const [isExiting, setIsExiting] = useState(false)
   const prefersReducedMotion = useReducedMotion()
+  const router = useRouter()
+
+  // The magazine/shop/events overlays write URLs behind Next's back (see
+  // lib/overlay-history.ts), and Next ignores those entries on Back/Forward.
+  // If one belongs to a different page than the one on screen (the reader
+  // left via a link), render it via the router. router.replace also stamps
+  // Next's state onto the entry, so later Back/Forward through it is native.
+  const pathnameRef = useRef(pathname)
+  useEffect(() => {
+    pathnameRef.current = pathname
+  }, [pathname])
+  useEffect(() => {
+    function onPopState(event: PopStateEvent) {
+      const { pathname: target, search, hash } = window.location
+      if (shouldRecoverPop(event.state, target, pathnameRef.current)) {
+        router.replace(target + search + hash)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [router])
 
   // Skip the fade when navigating from the slide-in menu (so the new page is
   // ready before the panel slides it in) OR when the user requests reduced

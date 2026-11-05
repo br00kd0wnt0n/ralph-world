@@ -4,6 +4,48 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-05 — Back after leaving an overlay page shows the right page
+
+**Session goal:** fix a production bug shared by the magazine, shop and
+events overlays. Branch `fix/overlay-back-navigation`.
+
+### Bug
+Open `/magazine/<slug>`, close the article, click Shop, press Back: the URL
+became `/magazine` but the Shop page (and title "Shop | Ralph") stayed. Same
+from a grid card, a shop product (`/shop/<handle>`) or an events panel
+(`/events/<slug>`). The overlays write their URLs with
+`History.prototype.pushState`/`replaceState` and a null state, on purpose:
+Next 16's patched methods would change `usePathname()`, and
+`PageTransitionWrapper` would re-key and re-mount the page, losing the
+overlay. But Next's App Router popstate handler returns early on a null
+state, so Back onto one of those entries from another page rendered nothing.
+
+### Fix
+- `lib/overlay-history.ts` (new): `shouldRecoverPop()` is true when a
+  popstate lands on an entry Next ignores (no `__NA`) and its URL belongs to
+  a different page than the one Next is rendering. Same pathname (hash
+  entries) and the same overlay owner (`/magazine` ↔ `/magazine/<slug>`,
+  likewise shop and events) are left to the page's own popstate handling.
+- `components/layout/PageTransitionWrapper.tsx`: one global popstate
+  listener calls `router.replace(location)` in that case. That renders the
+  page the URL names, with the usual fade, and stamps Next's state onto the
+  entry, so later Back/Forward through it is handled by Next natively.
+- No overlay component changed. In-page open, close, Back and Forward work
+  as before.
+
+### Verified
+New `e2e/overlay-back-navigation.spec.ts`, headless Playwright at 1440px
+and 375px, against a local production build: 10/10 pass. The same spec
+against https://ralph.world (without the fix) fails 8/10 on the wrong page
+after Back; the 2 in-page tests pass on both. Covers: direct article link →
+close → Shop → Back (and Forward), grid card → close → Shop → Back → Back,
+in-page Back/Forward without a re-mount, shop product → close → Magazine →
+Back → Back, events panel → close → Lab → Back → Back. There were no upcoming
+events, so the events test replays `MinglingCharacters`' exact history
+calls. Unit tests: `lib/overlay-history.test.ts`.
+
+---
+
 ## 2026-11-05 — Magazine article links: Back button + "deep links don't open" finding
 
 **Session goal:** direct links to `/magazine/<slug>` were reported as not
@@ -46,7 +88,7 @@ direct load → one Back leaves; close → Back reopens → Forward closes; grid
 click → Back closes → Forward reopens; category after close; gated preview
 and gate. Signed-in not tested (no test login).
 
-### Known, not fixed (also on production)
+### Known, not fixed (also on production) — fixed in the entry above
 After closing an article, following a Next `<Link>` away (e.g. Shop) and then
 pressing Back changes the URL to `/magazine`, but the Shop page stays. Next
 ignores the null-state entries the overlays push. Shop (`/shop/<handle>`)

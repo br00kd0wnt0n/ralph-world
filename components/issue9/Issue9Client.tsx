@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext'
 import Button from '@/components/ui/Button'
 import { LoginForm } from '@/app/login/LoginForm'
 import { pickAttribution, withAttribution } from '@/lib/attribution'
+import { readBannerConsent } from '@/lib/shopify-consent-client'
 import { trackEvent } from '@/lib/gtm-client-init'
 import {
   ISSUE9_BUY_COPY,
@@ -73,7 +74,7 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
       const res = await fetch('/api/checkout/issue9', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attribution, testToken }),
+        body: JSON.stringify({ attribution, testToken, consent: readBannerConsent() }),
       })
       const data = (await res.json().catch(() => ({}))) as {
         checkoutUrl?: string

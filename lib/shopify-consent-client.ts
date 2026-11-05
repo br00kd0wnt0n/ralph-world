@@ -37,6 +37,25 @@ function getApi(): CustomerPrivacy | undefined {
   return w.Shopify?.customerPrivacy
 }
 
+/**
+ * The visitor's cookie banner choice, for building consent into Shopify
+ * checkout URLs: true = "Accept all", false = "Necessary only",
+ * undefined = no choice yet. Reads the same storage key as CookieBanner.
+ */
+export function readBannerConsent(): boolean | undefined {
+  try {
+    const raw = window.localStorage.getItem('ralph-cookie-consent')
+    if (!raw) return undefined
+    let choice: unknown = raw
+    if (raw.startsWith('{')) choice = (JSON.parse(raw) as { choice?: unknown }).choice
+    if (choice === 'cookies_all') return true
+    if (choice === 'cookies_necessary') return false
+  } catch {
+    /* blocked storage or bad JSON: treat as no choice */
+  }
+  return undefined
+}
+
 let loading: Promise<CustomerPrivacy | undefined> | null = null
 
 function loadApi(): Promise<CustomerPrivacy | undefined> {

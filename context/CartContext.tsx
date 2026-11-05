@@ -11,6 +11,7 @@ import {
 } from 'react'
 import type { ShopifyCart } from '@/lib/shopify/types'
 import { safeGet, safeSet, safeRemove } from '@/lib/safe-storage'
+import { readBannerConsent } from '@/lib/shopify-consent-client'
 
 interface CartContextValue {
   cart: ShopifyCart | null
@@ -22,6 +23,8 @@ interface CartContextValue {
   updateQty: (lineId: string, qty: number) => Promise<void>
   openCart: () => void
   closeCart: () => void
+  /** Fresh checkout URL with the visitor's cookie choice built in, or null. */
+  getCheckoutUrl: () => Promise<string | null>
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
@@ -184,6 +187,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const itemCount = cart?.totalQuantity ?? 0
 
+  // Shopify fixes the consent into each checkout URL when it's issued, so
+  // ask for a fresh one at checkout time with the current banner choice.
+  const getCheckoutUrl = useCallback(async (): Promise<string | null> => {
+    if (!cart || !tokenRef.current) return null
+    try {
+      const res = await fetch('/api/cart/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cartId: cart.id,
+          token: tokenRef.current,
+          consent: readBannerConsent(),
+        }),
+      })
+      if (!res.ok) return null
+      const data = (await res.json()) as { checkoutUrl?: string }
+      return data.checkoutUrl ?? null
+    } catch {
+      return null
+    }
+  }, [cart])
+
   return (
     <CartContext.Provider
       value={{
@@ -196,6 +221,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQty,
         openCart: () => setIsOpen(true),
         closeCart: () => setIsOpen(false),
+        getCheckoutUrl,
       }}
     >
       {children}

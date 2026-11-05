@@ -205,6 +205,37 @@ export const REMOVE_CART_LINES = `
   }
 `
 
+// Visitor consent for checkout. Shopify encodes it into checkoutUrl as `_cs`,
+// which is how Shopify checkout knows a headless visitor accepted cookies
+// (so app pixels like Meta's Purchase may fire). Needs Storefront API
+// 2025-10+. true/false = accepted/declined; undefined = no choice made, which
+// adds no directive (Shopify then treats consent as not provided).
+// https://shopify.dev/docs/storefronts/mobile/checkout-kit/privacy-compliance
+function visitorConsentDirective(consent: boolean | undefined): string {
+  if (consent === undefined) return ''
+  const v = consent ? 'true' : 'false'
+  return `@inContext(visitorConsent: { analytics: ${v}, marketing: ${v}, preferences: ${v}, saleOfData: ${v} })`
+}
+
+export function cartCheckoutUrlQuery(consent: boolean | undefined): string {
+  return `
+  query CartCheckoutUrl($id: ID!) ${visitorConsentDirective(consent)} {
+    cart(id: $id) { checkoutUrl }
+  }
+`
+}
+
+export function createCartWithAttributesMutation(consent: boolean | undefined): string {
+  return `
+  mutation CreateCartWithAttributes($lines: [CartLineInput!], $attributes: [AttributeInput!]) ${visitorConsentDirective(consent)} {
+    cartCreate(input: { lines: $lines, attributes: $attributes }) {
+      cart { id checkoutUrl }
+      userErrors { field message }
+    }
+  }
+`
+}
+
 export const GET_CART = `
   ${CART_FRAGMENT}
   query GetCart($id: ID!) {

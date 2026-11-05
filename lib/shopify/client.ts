@@ -4,7 +4,8 @@ import {
   GET_ALL_PRODUCTS,
   GET_PRODUCT_BY_HANDLE,
   CREATE_CART,
-  CREATE_CART_WITH_ATTRIBUTES,
+  createCartWithAttributesMutation,
+  cartCheckoutUrlQuery,
   CREATE_SUBSCRIPTION_CART,
   GET_VARIANT_SELLING_PLANS,
   ADD_CART_LINES,
@@ -27,15 +28,25 @@ interface ShopifyResponse<T> {
 const TIMEOUT_MS = 5000
 const DEFAULT_REVALIDATE = 300 // 5 minutes
 
+// visitorConsent on @inContext needs Storefront API 2025-10 or later. Only
+// the checkout-URL calls use it; everything else stays on the env version.
+const CONSENT_API_VERSION = '2025-10'
+
+export function withApiVersion(url: string, version: string): string {
+  return url.replace(/\/api\/[^/]+\/graphql\.json/, `/api/${version}/graphql.json`)
+}
+
 async function storefront<T>(
   query: string,
   variables: Record<string, unknown> = {},
-  revalidate: number | false = DEFAULT_REVALIDATE
+  revalidate: number | false = DEFAULT_REVALIDATE,
+  apiVersion?: string
 ): Promise<T | null> {
-  const url = process.env.SHOPIFY_STOREFRONT_URL
+  const envUrl = process.env.SHOPIFY_STOREFRONT_URL
   const token = process.env.SHOPIFY_STOREFRONT_TOKEN
 
-  if (!url || !token) return null
+  if (!envUrl || !token) return null
+  const url = apiVersion ? withApiVersion(envUrl, apiVersion) : envUrl
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
@@ -142,21 +153,49 @@ export async function createCart(variantId?: string): Promise<ShopifyCart | null
 
 // One-line cart with order attributes, for buy-now flows that skip the cart
 // drawer. Returns the Shopify-hosted checkoutUrl, or null on failure.
+// `consent` is the visitor's cookie banner choice, built into the URL so
+// Shopify checkout honours it (see visitorConsentDirective in queries.ts).
 export async function createCheckoutUrl(
   variantId: string,
-  attributes: Record<string, string>
+  attributes: Record<string, string>,
+  consent?: boolean
 ): Promise<string | null> {
-  const data = await storefront<{
+  const variables = {
+    lines: [{ merchandiseId: variantId, quantity: 1 }],
+    attributes: Object.entries(attributes).map(([key, value]) => ({ key, value })),
+  }
+  type Res = {
     cartCreate: { cart: { id: string; checkoutUrl: string } | null; userErrors: unknown[] }
-  }>(
-    CREATE_CART_WITH_ATTRIBUTES,
-    {
-      lines: [{ merchandiseId: variantId, quantity: 1 }],
-      attributes: Object.entries(attributes).map(([key, value]) => ({ key, value })),
-    },
-    false
+  }
+  const data = await storefront<Res>(
+    createCartWithAttributesMutation(consent),
+    variables,
+    false,
+    CONSENT_API_VERSION
   )
-  return data?.cartCreate?.cart?.checkoutUrl ?? null
+  const url = data?.cartCreate?.cart?.checkoutUrl
+  if (url) return url
+  // Never block a sale on consent: retry the old way (no consent in the URL).
+  if (consent === undefined) return null
+  const plain = await storefront<Res>(createCartWithAttributesMutation(undefined), variables, false)
+  return plain?.cartCreate?.cart?.checkoutUrl ?? null
+}
+
+// Fresh checkoutUrl for an existing cart, carrying the visitor's current
+// consent. Shopify fixes consent into each URL when it's issued, so the
+// basket asks for a new one at checkout time rather than reusing the URL
+// from when the cart was created.
+export async function getCheckoutUrl(
+  cartId: string,
+  consent?: boolean
+): Promise<string | null> {
+  const data = await storefront<{ cart: { checkoutUrl: string } | null }>(
+    cartCheckoutUrlQuery(consent),
+    { id: cartId },
+    false,
+    CONSENT_API_VERSION
+  )
+  return data?.cart?.checkoutUrl ?? null
 }
 
 export async function addCartLines(

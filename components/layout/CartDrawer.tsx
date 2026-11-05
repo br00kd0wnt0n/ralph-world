@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useEffect } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { formatPrice } from '@/lib/shopify/format'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
@@ -17,7 +17,27 @@ const gooperTitle: React.CSSProperties = {
 }
 
 export default function CartDrawer() {
-  const { cart, isOpen, closeCart, removeItem, updateQty, isLoading } = useCart()
+  const { cart, isOpen, closeCart, removeItem, updateQty, isLoading, getCheckoutUrl } = useCart()
+  const [goingToCheckout, setGoingToCheckout] = useState(false)
+  // Coming Back from checkout restores this page from the browser cache;
+  // reset the button so it isn't stuck on "Opening checkout…".
+  useEffect(() => {
+    const onShow = () => setGoingToCheckout(false)
+    window.addEventListener('pageshow', onShow)
+    return () => window.removeEventListener('pageshow', onShow)
+  }, [])
+
+  // Swap in a checkout URL carrying the visitor's cookie choice, so Shopify
+  // checkout knows whether pixels (e.g. Meta Purchase) may fire. Falls back
+  // to the basket's own URL if that request fails.
+  async function handleCheckout(e: React.MouseEvent<HTMLAnchorElement>) {
+    if (!cart?.checkoutUrl || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+    e.preventDefault()
+    if (goingToCheckout) return
+    setGoingToCheckout(true)
+    const fresh = await getCheckoutUrl()
+    window.location.assign(fresh ?? cart.checkoutUrl)
+  }
   const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   // ESC closes the drawer while open.
@@ -197,6 +217,8 @@ export default function CartDrawer() {
                 />
                 <a
                   href={cart.checkoutUrl}
+                  onClick={handleCheckout}
+                  aria-busy={goingToCheckout}
                   className="btn-press relative w-full inline-flex items-center justify-center light:bg-white!"
                   style={{
                     height: 48,
@@ -210,7 +232,7 @@ export default function CartDrawer() {
                     transition: 'transform 0.15s ease',
                   }}
                 >
-                  {isLoading ? 'Updating…' : 'Checkout'}
+                  {isLoading ? 'Updating…' : goingToCheckout ? 'Opening checkout…' : 'Checkout'}
                 </a>
               </div>
             ) : (

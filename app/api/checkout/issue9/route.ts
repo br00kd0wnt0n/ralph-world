@@ -19,7 +19,10 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as {
     attribution?: unknown
     testToken?: unknown
+    consent?: unknown
   }
+  // Cookie banner choice, built into the checkout URL for Shopify.
+  const consent = typeof body.consent === 'boolean' ? body.consent : undefined
   // Closed until ISSUE9_OPENS_AT, except for a test order carrying the token.
   const isTest = isIssue9TestToken(body.testToken)
   if (!isIssue9Open() && !isTest) {
@@ -57,7 +60,7 @@ export async function POST(request: Request) {
   if (getIssue9Mode() === 'preorder') attributes.preorder = 'true'
   if (isTest) attributes.test_order = 'true'
 
-  const checkoutUrl = await createCheckoutUrl(variant.id, attributes)
+  const checkoutUrl = await createCheckoutUrl(variant.id, attributes, consent)
   if (!checkoutUrl) {
     return NextResponse.json({ error: 'Checkout creation failed' }, { status: 502 })
   }

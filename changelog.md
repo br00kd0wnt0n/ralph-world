@@ -4,6 +4,56 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-05 — Magazine article links: Back button + "deep links don't open" finding
+
+**Session goal:** direct links to `/magazine/<slug>` were reported as not
+opening the article overlay (production, desktop + 375px). Branch
+`fix/magazine-deeplink-overlay`, not merged.
+
+### Finding: deep links were never broken
+In a real browser (headless Playwright) `/magazine/<slug>` opened 8/8 on
+production and 6/6 locally at 1440px and 375px. Gated articles still show
+the preview and gate. The failures came from testing in the
+Claude desktop app's built-in browser pane while it was **hidden**: a hidden
+pane never fires `requestAnimationFrame`. React 19.2's streaming SSR reveals
+each streamed Suspense boundary on an rAF (`$RC` → `requestAnimationFrame($RV)`), so
+the page content stayed in `<div hidden id="S:0">` and never hydrated. With
+rAF stubbed out, production shows the exact reported symptom (only the
+cookie dialog). If a page "doesn't hydrate" in the pane, check the pane is
+visible, or look for `div[hidden][id^="S:"]` / a non-empty `window.$RB`.
+
+### Fixed: article overlay history
+On production a shared article link took 3 Back presses to leave. The 2nd
+press showed `/magazine/<slug>` with no article. Causes: `ArticleOverlay`'s
+open effect pushed the slug URL even when already on it, and pushed again on
+every MagazineClient re-render (its deps included the un-memoised
+`onClose`). `openArticle`/`closeArticle` also pushed, so most opens and
+closes pushed twice. The popstate handler only closed the overlay, and the
+overlay's close branch then pushed `/magazine`, which wiped the forward stack.
+- `components/magazine/MagazineClient.tsx`: now the only place that writes
+  the URL. A direct load / `?read=` adds no entry. A click pushes one, and
+  close pushes `/magazine`. Popstate syncs the overlay to the URL: it reopens
+  on `/magazine/<slug>` and closes otherwise, without writing history. Stale
+  fetches from quick Back/Forward are dropped. `closeArticle` is memoised.
+- `components/magazine/ArticleOverlay.tsx`: the open effect is just scroll
+  lock + Esc. No history writes.
+- `components/magazine/CategoryTabs.tsx`: writes `/magazine?category=…` via
+  `History.prototype`. Before, it used `usePathname()`, which still reports
+  the slug path after closing a direct-loaded article.
+
+Verified locally with headless Playwright at 1440px and 375px (22 checks):
+direct load → one Back leaves; close → Back reopens → Forward closes; grid
+click → Back closes → Forward reopens; category after close; gated preview
+and gate. Signed-in not tested (no test login).
+
+### Known, not fixed (also on production)
+After closing an article, following a Next `<Link>` away (e.g. Shop) and then
+pressing Back changes the URL to `/magazine`, but the Shop page stays. Next
+ignores the null-state entries the overlays push. Shop (`/shop/<handle>`)
+and events (`/events/<slug>`) overlays use the same pattern.
+
+---
+
 ## 2026-11-04 — /subscribe page, join flow fixes, members tier, article join prompt, first-issue email
 
 **Session goal:** four subscription asks from Josh and Vicky: a single

@@ -95,36 +95,19 @@ export default function ArticleOverlay({
     }
   }, [article?.id, article?.shopCalloutUrl, article?.shopCalloutLabel])
 
+  // Scroll lock + Esc while open. The URL is owned by MagazineClient — this
+  // effect must not write history: it re-runs whenever `handleEsc` changes,
+  // and pushing here used to stack duplicate entries (Back needed 3 presses
+  // to leave a shared article link).
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-      window.addEventListener('keydown', handleEsc)
-      // Update URL without navigation. Use the un-patched
-      // History.prototype.pushState directly — Next.js 16's App Router
-      // monitors `window.history.pushState`, so a path change to
-      // `/magazine/[slug]` would otherwise trigger a soft navigation:
-      // the [slug]/page.tsx redirect fires → page re-mounts → overlay
-      // state is lost. Going through the prototype bypasses that.
-      if (article?.slug) {
-        History.prototype.pushState.call(
-          window.history,
-          null,
-          '',
-          `/magazine/${article.slug}`,
-        )
-      }
-    } else {
-      document.body.style.overflow = ''
-      // Only restore URL if we were showing an article
-      if (article) {
-        History.prototype.pushState.call(window.history, null, '', '/magazine')
-      }
-    }
+    if (!isOpen) return
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleEsc)
     return () => {
       document.body.style.overflow = ''
       window.removeEventListener('keydown', handleEsc)
     }
-  }, [isOpen, article, handleEsc])
+  }, [isOpen, handleEsc])
 
   if (!mounted || !isOpen || !article) return null
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import SectionIntro from '@/components/layout/SectionIntro'
@@ -66,59 +66,70 @@ export default function MagazineClient({
     return () => window.removeEventListener('popstate', sync)
   }, [])
 
-  async function openArticle(slug: string) {
+  // History is owned here and only here (ArticleOverlay never touches the
+  // URL). Rules: one entry per open/close the reader actually does, no entry
+  // when the address bar already shows the right URL, and Back/Forward just
+  // sync the overlay to whatever URL they land on.
+  //
+  // Writes go through History.prototype with a null state: Next 16's App
+  // Router patches window.history.pushState and would treat /magazine/[slug]
+  // as a navigation (PageTransitionWrapper re-keys on pathname → this
+  // component re-mounts → overlay state lost). Next's popstate handler
+  // ignores null-state entries, so traversing them leaves the page alone.
+  const latestRequest = useRef(0)
+
+  async function openArticle(slug: string, updateUrl = true) {
     if (!slug) return
+    const request = ++latestRequest.current
     const res = await fetch(`/api/articles/${encodeURIComponent(slug)}`)
-    if (res.ok) {
-      const data = await res.json()
-      setOverlayArticle(data)
-      setOverlayOpen(true)
-      // Reflect the pretty URL in the address bar (matches shop/events).
-      // Skip if we're already there (direct-hit / initialArticleSlug mount).
-      // History.prototype bypasses Next's router so the page doesn't re-mount.
-      if (window.location.pathname !== `/magazine/${slug}`) {
-        History.prototype.pushState.call(
-          window.history,
-          null,
-          '',
-          `/magazine/${slug}`,
-        )
-      }
+    // A newer open/close (e.g. rapid Back/Forward) superseded this one.
+    if (request !== latestRequest.current || !res.ok) return
+    const data = await res.json()
+    setOverlayArticle(data)
+    setOverlayOpen(true)
+    // Reflect the pretty URL in the address bar (matches shop/events).
+    const path = `/magazine/${slug}`
+    if (updateUrl && window.location.pathname !== path) {
+      History.prototype.pushState.call(window.history, null, '', path)
     }
   }
 
-  function closeArticle() {
+  const closeArticle = useCallback(() => {
+    latestRequest.current++
     setOverlayOpen(false)
     if (window.location.pathname.startsWith('/magazine/')) {
       History.prototype.pushState.call(window.history, null, '', '/magazine')
     }
-  }
-
-  // Re-open the article overlay when the URL carries ?read=slug — covers
-  // the "subscribe from gated article → OAuth → back to article" flow.
-  // openArticle calls setState inside an async fetch callback, not
-  // synchronously in this effect body, so the lint warning is a false
-  // positive.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    // From the /magazine/[slug] server route, or legacy ?read= (old links /
-    // subscribe→OAuth→return). openArticle fetches /api/articles (tier-gated),
-    // so the paywall is unchanged.
-    const slug = initialArticleSlug ?? params.get('read')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (slug) openArticle(slug)
   }, [])
 
-  // Handle back button closing overlay
+  // Open the article on mount: from the /magazine/[slug] server route
+  // (shared/social links), or legacy ?read=slug (old links). The address bar
+  // is already right in both cases, so no history entry is added — Back
+  // leaves the page as the reader expects. openArticle fetches
+  // /api/articles (tier-gated), so the paywall is unchanged. Mount-only on
+  // purpose: later Back/Forward is handled by the popstate effect below.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const slug = initialArticleSlug ?? params.get('read')
+    if (slug) openArticle(slug, false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Back/Forward: show the article the URL names, or close the overlay.
+  // Never writes history itself (that would wipe the forward stack).
   useEffect(() => {
     function onPopState() {
-      if (overlayOpen) {
+      const match = window.location.pathname.match(/^\/magazine\/([^/]+)\/?$/)
+      if (match) {
+        openArticle(decodeURIComponent(match[1]), false)
+      } else {
+        latestRequest.current++
         setOverlayOpen(false)
       }
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-  }, [overlayOpen])
+  }, [])
 
   // Normalise a tag into a category slug (matches the CMS category values).
   const normTag = (tag: string) =>

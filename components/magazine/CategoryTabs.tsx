@@ -1,7 +1,5 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-
 // Mirror this list in ralph-cms/components/cms/ArticleEditor.tsx
 // (CONTENT_CATEGORIES) so editors and readers see the same set.
 const CATEGORIES = [
@@ -24,8 +22,6 @@ export default function CategoryTabs({
   onChange,
   available,
 }: CategoryTabsProps) {
-  const pathname = usePathname()
-
   // Hide categories with no articles. Each visible tab gets an equal slice of
   // the container width.
   const categories = available
@@ -36,9 +32,14 @@ export default function CategoryTabs({
   function handleClick(value: string) {
     const next = value === active ? '' : value
     onChange(next)
-    // Update URL without server re-fetch
-    const url = next ? `${pathname}?category=${next}` : pathname
-    window.history.pushState(null, '', url)
+    // Update URL without server re-fetch. Always the /magazine listing, not
+    // usePathname(): MagazineClient changes the address bar behind Next's
+    // back (article overlay open/close), so after closing an article reached
+    // via /magazine/[slug], Next still reports the slug path. Write via
+    // History.prototype for the same reason: Next's patched pushState would
+    // pick up the path change and re-mount the page.
+    const url = next ? `/magazine?category=${next}` : '/magazine'
+    History.prototype.pushState.call(window.history, null, '', url)
   }
 
   return (

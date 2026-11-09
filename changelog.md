@@ -86,6 +86,9 @@ consent change, which on its own didn't do it. Sales now record in Meta
   `snap.licdn.com`, `analytics.tiktok.com` in `script-src`. Both load and
   send after "Accept all"; Meta and GA confirmed sending too.
 
+- `/issue9` buy button reads "Buy now for £10" (was "Pay today, £10"),
+  matching the shop's product buttons (Vicky). `lib/issue9.ts`.
+
 ### Content (database, not in this repo)
 - Privacy policy, section 2 table: new row for Ralph TV viewing stats
   (anonymous, cookie-free, IP not stored, 90 days, legitimate interest).

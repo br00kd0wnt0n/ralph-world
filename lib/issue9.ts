@@ -69,7 +69,7 @@ export const ISSUE9_BUY_COPY: Record<Issue9Mode, Issue9BuyCopy> = {
     eyebrow: 'Out now',
     heading: 'Ralph Issue 09',
     body: '50 years of Aardman, plus hats, ice hockey and collective nouns.',
-    cta: 'Pay today, £{price}',
+    cta: 'Buy now for £{price}', // matches the shop's product buttons (Vicky, 9 Nov)
     notOpenYet: 'Pre-orders open Monday 19 October',
     note: 'Available now',
     unavailable: 'Sold out',

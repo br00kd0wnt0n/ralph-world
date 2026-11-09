@@ -35,7 +35,7 @@ interface Issue9ClientProps {
   } | null
 }
 
-// "10.00" → "10", "10.50" stays "10.50" (button reads "Pay today, £10").
+// "10.00" → "10", "10.50" stays "10.50" (button reads "Buy now for £10").
 function displayPrice(price: string | undefined): string {
   return (price ?? '').replace(/\.00$/, '')
 }

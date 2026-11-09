@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { initSentryClient } from '@/lib/sentry-client-init'
 import { initGTM } from '@/lib/gtm-client-init'
 import { syncShopifyConsent } from '@/lib/shopify-consent-client'
+import { persistClickIdAfterConsent } from '@/lib/fbclid-client'
 import Button from '@/components/ui/Button'
 
 const STORAGE_KEY = 'ralph-cookie-consent'
@@ -80,6 +81,7 @@ export default function CookieBanner({
       const versionMatches = stored?.version === currentPolicyVersion
       if (stored?.choice === 'cookies_all' && versionMatches) {
         initSentryClient()
+        persistClickIdAfterConsent()
         initGTM()
       }
       // Returning visitors who chose before this was wired up: copy their
@@ -141,6 +143,9 @@ export default function CookieBanner({
 
     if (choice === 'cookies_all') {
       initSentryClient()
+      // Before GTM, so the Meta pixel finds the ad click from the landing
+      // page even if the visitor has browsed on since (lib/fbclid-client.ts).
+      persistClickIdAfterConsent()
       initGTM()
     }
     setOpen(false)

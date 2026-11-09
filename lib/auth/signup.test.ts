@@ -92,6 +92,16 @@ describe('buildVerificationUrl', () => {
     expect(url.startsWith('https://ralph.world/api/auth/verify-email')).toBe(true)
   })
 
+  it('carries an article to return to as next', () => {
+    const url = buildVerificationUrl('https://ralph.world', 'a@b.co', 't', null, '/magazine/some-story')
+    expect(new URL(url).searchParams.get('next')).toBe('/magazine/some-story')
+  })
+
+  it('drops a return path that is not a magazine article', () => {
+    const url = buildVerificationUrl('https://ralph.world', 'a@b.co', 't', null, 'https://evil.com')
+    expect(new URL(url).searchParams.has('next')).toBe(false)
+  })
+
   it('carries a paid-tier choice as intent=paid', () => {
     const url = buildVerificationUrl('https://ralph.world', 'a@b.co', 't', 'paid')
     expect(new URL(url).searchParams.get('intent')).toBe('paid')

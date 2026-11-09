@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button'
 import { LoginForm } from '@/app/login/LoginForm'
 import { useAuth } from '@/context/AuthContext'
 import { pickAttribution, withAttribution, type SignupLanding } from '@/lib/attribution'
-import { PAID_CHECKOUT_PATH } from '@/lib/join-intent'
+import { PAID_CHECKOUT_PATH, parseReturnPath } from '@/lib/join-intent'
 import { trackEvent } from '@/lib/gtm-client-init'
 
 type Tier = 'free' | 'paid'
@@ -79,6 +79,9 @@ export default function JoinRalphClient({
   // ?from=subscribe = arrived from the /subscribe landing page.
   const landing: SignupLanding = params.get('from') === 'subscribe' ? 'subscribe' : 'join-ralph'
   const attribution = useMemo(() => pickAttribution(params), [params])
+  // ?next=/magazine/<slug>: arrived from an article's sign-up gate, so
+  // free members and returning members go back to that article.
+  const returnTo = parseReturnPath(params.get('next'))
   // Back from Google sign-in (?joined=1).
   const joined = params.get('joined') === '1'
   // Preview mode (?preview=1): seed placeholder signup fields so the tier +
@@ -113,9 +116,10 @@ export default function JoinRalphClient({
     sp.set('joined', '1')
     if (preselected) sp.set('tier', preselected)
     if (landing === 'subscribe') sp.set('from', 'subscribe')
+    if (returnTo) sp.set('next', returnTo)
     return withAttribution(`/join-ralph?${sp.toString()}`, attribution)
-  }, [preselected, landing, attribution])
-  const signinCallbackUrl = preselected === 'paid' ? PAID_CHECKOUT_PATH : '/account'
+  }, [preselected, landing, attribution, returnTo])
+  const signinCallbackUrl = preselected === 'paid' ? PAID_CHECKOUT_PATH : (returnTo ?? '/account')
 
   // Step 3 (verify) is only reachable after a signup this session; a hard
   // refresh loses that state, so bounce back to the form. Step 2 (tier) also
@@ -149,14 +153,18 @@ export default function JoinRalphClient({
       }
       if (isNew) trackEvent('join_signup', { method: 'google', tier: preselected ?? 'none', landing, ...attribution })
       if (memberTier === 'paid') {
-        window.location.assign('/account')
+        window.location.assign(returnTo ?? '/account')
       } else if (preselected === 'paid') {
         window.location.assign('/api/account/upgrade')
       } else if (preselected === 'free') {
-        router.replace('/magazine')
+        // Full load so the article opens with the new session.
+        if (returnTo) window.location.assign(returnTo)
+        else router.replace('/magazine')
       } else if (isNew) {
         setDirection(1)
         router.replace(buildHref(2))
+      } else if (returnTo) {
+        window.location.assign(returnTo)
       } else {
         router.replace('/account')
       }
@@ -179,8 +187,10 @@ export default function JoinRalphClient({
     if (user) {
       // Signed in (Google, or an existing member): free → the magazine,
       // paid → Stripe checkout.
-      if (t === 'free') router.push('/magazine')
-      else window.location.href = '/api/account/upgrade'
+      if (t === 'free') {
+        if (returnTo) window.location.assign(returnTo)
+        else router.push('/magazine')
+      } else window.location.href = '/api/account/upgrade'
       return
     }
     // Just signed up with email: can't check out until verified + signed in.
@@ -190,7 +200,7 @@ export default function JoinRalphClient({
       void fetch('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: signupEmail, intent: 'paid' }),
+        body: JSON.stringify({ email: signupEmail, intent: 'paid', ...(returnTo ? { next: returnTo } : {}) }),
       }).catch(() => {})
     }
     goToStep(3)
@@ -301,6 +311,7 @@ export default function JoinRalphClient({
                               landing,
                               ...attribution,
                               ...(preselected === 'paid' ? { intent: 'paid' } : {}),
+                              ...(returnTo ? { next: returnTo } : {}),
                             }}
                           />
                         }
@@ -317,6 +328,7 @@ export default function JoinRalphClient({
                         email={signupEmail}
                         firstName={signupName}
                         paid={paidChosen}
+                        returnTo={returnTo}
                         // Back to the tier slide only if that's where they came from.
                         onBack={preselected ? undefined : () => goToStep(2)}
                       />
@@ -490,12 +502,15 @@ function VerifySlide({
   email,
   firstName,
   paid,
+  returnTo,
   onBack,
 }: {
   email: string
   firstName: string
   /** Chose Physical Ralph: the link leads on to checkout after sign-in. */
   paid: boolean
+  /** Article the verify link leads back to (from an article's sign-up gate). */
+  returnTo: string | null
   onBack?: () => void
 }) {
   const [resending, setResending] = useState(false)
@@ -510,7 +525,11 @@ function VerifySlide({
       await fetch('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, ...(paid ? { intent: 'paid' } : {}) }),
+        body: JSON.stringify({
+          email,
+          ...(paid ? { intent: 'paid' } : {}),
+          ...(returnTo ? { next: returnTo } : {}),
+        }),
       })
       setResent(true)
     } finally {
@@ -568,12 +587,17 @@ function VerifySlide({
             We&apos;ve already pinged you an email to the above address. Simply
             press the link in that email to verify.
           </p>
-          {paid && (
+          {paid ? (
             <p className="mb-6 light:text-white!" style={bodyCopyStyle}>
               Then sign in and we&apos;ll take you straight to checkout to start
               your £3 a month subscription.
             </p>
-          )}
+          ) : returnTo ? (
+            <p className="mb-6 light:text-white!" style={bodyCopyStyle}>
+              Then sign in and we&apos;ll take you back to the article you were
+              reading.
+            </p>
+          ) : null}
 
           <p className="mb-2 light:text-white!" style={bodyCopyStyle}>No email? Check spam.</p>
           <p className="mb-6 light:text-white!" style={bodyCopyStyle}>Still nothing?</p>

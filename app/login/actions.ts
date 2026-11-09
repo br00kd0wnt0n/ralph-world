@@ -4,7 +4,7 @@ import { signIn } from '@/lib/auth'
 import { AuthError } from 'next-auth'
 import { signupWithPassword } from '@/lib/auth/signup'
 import { isSignupLanding, pickAttribution } from '@/lib/attribution'
-import { parseJoinIntent } from '@/lib/join-intent'
+import { parseJoinIntent, parseReturnPath } from '@/lib/join-intent'
 import { recordSignupAttribution } from '@/lib/attribution-server'
 
 /**
@@ -122,6 +122,9 @@ export async function signupAction(
   // 'paid' when the visitor already chose Physical Ralph (/subscribe →
   // /join-ralph?tier=paid); the verify link then leads on to checkout.
   const intent = parseJoinIntent(formData.get('intent'))
+  // An article's sign-up gate passes `next` so the verify link brings the
+  // reader back to that article.
+  const returnTo = parseReturnPath(formData.get('next'))
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
@@ -129,7 +132,7 @@ export async function signupAction(
     'https://ralph.world'
 
   try {
-    const result = await signupWithPassword({ email, password, name, marketingOptIn, appUrl, intent })
+    const result = await signupWithPassword({ email, password, name, marketingOptIn, appUrl, intent, returnTo })
     if (result.ok) {
       // Campaign landing pages (/issue9, /subscribe, /join-ralph) pass
       // `landing` + utm_* as hidden fields. Best-effort; never blocks the

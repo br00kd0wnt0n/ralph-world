@@ -318,7 +318,6 @@ export default function MagazineClient({
         article={overlayArticle}
         isOpen={overlayOpen}
         onClose={closeArticle}
-        onSubscribe={() => setSubscribeOpen(true)}
       />
 
       <SubscribeModal

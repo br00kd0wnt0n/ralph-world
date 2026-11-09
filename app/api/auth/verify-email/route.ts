@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { consumeVerificationToken } from '@/lib/auth/verification-tokens'
-import { PAID_CHECKOUT_PATH, parseJoinIntent } from '@/lib/join-intent'
+import { PAID_CHECKOUT_PATH, parseJoinIntent, parseReturnPath } from '@/lib/join-intent'
 import { sendFreeWelcome } from '@/lib/email/welcome'
 
 export const runtime = 'nodejs'
@@ -44,8 +44,12 @@ export async function GET(request: NextRequest) {
 
   loginUrl.searchParams.set('verify', 'ok')
   // Chose the paid tier at sign-up → after signing in, go to checkout.
+  // Came from an article's sign-up gate → back to that article.
+  const returnTo = parseReturnPath(request.nextUrl.searchParams.get('next'))
   if (parseJoinIntent(request.nextUrl.searchParams.get('intent'))) {
     loginUrl.searchParams.set('callbackUrl', PAID_CHECKOUT_PATH)
+  } else if (returnTo) {
+    loginUrl.searchParams.set('callbackUrl', returnTo)
   }
   return NextResponse.redirect(loginUrl)
 }

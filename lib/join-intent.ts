@@ -20,3 +20,15 @@ export const PAID_CHECKOUT_PATH = '/account?upgrade=paid'
 export function parseJoinIntent(value: unknown): JoinIntent | null {
   return value === 'paid' ? 'paid' : null
 }
+
+/**
+ * Where to send someone after they join or sign in, as `?next=`. Set by
+ * an article's sign-up gate so the reader lands back on that article.
+ * Only magazine article paths are accepted, so it can't become an open
+ * redirect.
+ */
+const RETURN_PATH_RE = /^\/magazine\/[a-z0-9][a-z0-9-]{0,199}$/i
+
+export function parseReturnPath(value: unknown): string | null {
+  return typeof value === 'string' && RETURN_PATH_RE.test(value) ? value : null
+}

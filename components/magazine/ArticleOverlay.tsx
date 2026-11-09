@@ -15,19 +15,18 @@ import { resolveTheme } from '@/lib/article-themes'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { isPremiumContent, type AccessTier } from '@/lib/entitlements'
 import { sanitizeArticleHtml } from '@/lib/sanitize'
+import { trackEvent } from '@/lib/gtm-client-init'
 
 interface ArticleOverlayProps {
   article: ArticleFull | null
   isOpen: boolean
   onClose: () => void
-  onSubscribe: () => void
 }
 
 export default function ArticleOverlay({
   article,
   isOpen,
   onClose,
-  onSubscribe,
 }: ArticleOverlayProps) {
   const { user, tier } = useAuth()
   const [mounted, setMounted] = useState(false)
@@ -147,6 +146,15 @@ export default function ArticleOverlay({
   const gateReason: 'guest' | 'upgrade' | null = article.gateReason ?? null
   const gated = article.gated === true
   const visibleBlocks = blocks
+
+  // Gate calls to action are plain links, not the subscribe pop-up: that
+  // pop-up renders inside <main>, underneath this overlay, so it opened out
+  // of sight. Sign-up and log-in carry the article path so the reader comes
+  // back here afterwards.
+  const articlePath = `/magazine/${article.slug}`
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(articlePath)}`
+  const trackGateClick = (action: 'signup' | 'subscribe' | 'upgrade') =>
+    trackEvent('article_gate_click', { action, article: article.slug, access_tier: articleAccessTier })
 
   const theme = resolveTheme(article.backgroundCanvasColour)
 
@@ -409,7 +417,7 @@ export default function ArticleOverlay({
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button label="Sign up free" href="/join-ralph?tier=free" filled />
               <a
-                href={`/login?callbackUrl=${encodeURIComponent(`/magazine/${article.slug}`)}`}
+                href={loginHref}
                 className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
               >
                 Already a member? Log in
@@ -438,12 +446,14 @@ export default function ArticleOverlay({
                     month to read the whole thing and get the print magazine
                     through your letterbox.
                   </p>
-                  <button
-                    onClick={onSubscribe}
-                    className="rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
+                  <a
+                    href="/subscribe"
+                    onClick={() => trackGateClick('subscribe')}
+                    className="inline-block rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
                   >
                     See the options
-                  </button>
+                  </a>
+                  <GateLogin href={loginHref} label="Already a subscriber? Log in" />
                 </>
               ) : gateReason === 'guest' ? (
                 <>
@@ -454,12 +464,14 @@ export default function ArticleOverlay({
                     Create a free account to read the full article and access all
                     of Ralph&apos;s magazine content.
                   </p>
-                  <button
-                    onClick={onSubscribe}
-                    className="rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
+                  <a
+                    href={`/join-ralph?tier=free&next=${encodeURIComponent(articlePath)}`}
+                    onClick={() => trackGateClick('signup')}
+                    className="inline-block rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
                   >
                     Sign up to read
-                  </button>
+                  </a>
+                  <GateLogin href={loginHref} label="Already a member? Log in" />
                 </>
               ) : (
                 <>
@@ -473,12 +485,13 @@ export default function ArticleOverlay({
                     This piece is for paid subscribers. Upgrade for £3/month to
                     read the whole thing plus every future issue.
                   </p>
-                  <button
-                    onClick={onSubscribe}
-                    className="rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
+                  <a
+                    href="/api/account/upgrade"
+                    onClick={() => trackGateClick('upgrade')}
+                    className="inline-block rounded-full bg-ralph-pink px-8 py-3 text-black font-medium hover:bg-ralph-pink/90 transition-colors"
                   >
                     Upgrade to paid
-                  </button>
+                  </a>
                 </>
               )}
             </div>
@@ -503,5 +516,18 @@ export default function ArticleOverlay({
       </motion.div>
     </AnimatePresence>,
     document.body
+  )
+}
+
+function GateLogin({ href, label }: { href: string; label: string }) {
+  return (
+    <p className="mt-4">
+      <a
+        href={href}
+        className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
+      >
+        {label}
+      </a>
+    </p>
   )
 }

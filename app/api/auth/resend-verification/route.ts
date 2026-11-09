@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { resendVerificationEmail } from '@/lib/auth/signup'
-import { parseJoinIntent } from '@/lib/join-intent'
+import { parseJoinIntent, parseReturnPath } from '@/lib/join-intent'
 import { rateLimited, clientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
 /**
- * POST /api/auth/resend-verification  { email, intent?: 'paid' }
+ * POST /api/auth/resend-verification  { email, intent?: 'paid', next?: '/magazine/<slug>' }
  *
  * Sends a fresh verification link to an unverified account. Used by the
  * /join-ralph verify slide ("Send a new verify link") and by its tier slide
@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as {
     email?: unknown
     intent?: unknown
+    next?: unknown
   }
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
   if (!email) {
@@ -42,7 +43,12 @@ export async function POST(request: NextRequest) {
     `${request.nextUrl.protocol}//${request.nextUrl.host}`
 
   try {
-    await resendVerificationEmail({ email, appUrl, intent: parseJoinIntent(body.intent) })
+    await resendVerificationEmail({
+      email,
+      appUrl,
+      intent: parseJoinIntent(body.intent),
+      returnTo: parseReturnPath(body.next),
+    })
   } catch (err) {
     console.error('[resend-verification] failed:', err)
     return NextResponse.json({ ok: false, error: 'unknown' }, { status: 500 })

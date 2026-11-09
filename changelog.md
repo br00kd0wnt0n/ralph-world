@@ -4,6 +4,49 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-09 — Article gate buttons work, and bring readers back
+
+**Reported by the team:** "Sign up to read" on articles set to "Free
+account required" did nothing.
+
+**Cause:** the gate buttons opened the subscribe pop-up, which renders
+inside `<main>` (a z-10 stacking context), underneath the article
+overlay, which is portalled to `<body>` at z-100. The pop-up opened out
+of sight. This had been broken since before 2026-11-04 for every gate
+button ("Sign up to read", "Upgrade to paid"). It only came to light
+once articles were set to the members tier.
+
+**Fix:** the gate calls to action are now plain links:
+- Guest on a members article → `/join-ralph?tier=free&next=/magazine/<slug>`,
+  plus "Already a member? Log in" → `/login?callbackUrl=/magazine/<slug>`
+- Guest on a paid-only article → `/subscribe`, plus a subscriber log-in link
+- Signed-in free member on a paid article → `/api/account/upgrade` (Stripe)
+- GTM event `article_gate_click` with `action`, `article`, `access_tier`
+
+**Return to the article:** `?next=` is threaded through the free join
+flow so readers land back on the article:
+- `lib/join-intent.ts`: `parseReturnPath()` accepts only
+  `/magazine/<slug>`, so the parameter can't be an open redirect.
+- Join page: Google return, tier choice and step-1 sign-in all go to
+  `next` when set. The signup form sends `next` as a hidden field. The
+  verify slide says "we'll take you back to the article".
+- `buildVerificationUrl` adds `next`. `/api/auth/verify-email` turns it
+  into the `/login` callbackUrl. A paid intent still wins (checkout).
+- `/api/auth/resend-verification` accepts `next`.
+
+**Not changed:** the paid path still ends on `/account` after Stripe
+checkout. The Lab's locked items were fine (LabClient closes its overlay
+before opening the pop-up).
+
+**Verified:** tsc clean. vitest 270/270 after rebasing onto the Meta tracking work (4 new tests for return paths).
+In the local browser, on a members article: the gate links point to the
+right places, the join page carries `next` into the sign-up form, and
+the log-in page gets the article as its callback. Not tested end to end:
+a real email sign-up and verify (shared prod DB + real email), Google
+return, or a signed-in upgrade click.
+
+---
+
 ## 2026-11-09 — Meta purchase tracking: consent in checkout URL, ad clicks kept
 
 **Session goal:** get Shopify purchases from ralph.world reaching Meta

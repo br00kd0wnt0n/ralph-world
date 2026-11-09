@@ -4,6 +4,61 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-09 — Meta purchase tracking: consent in checkout URL, ad clicks kept
+
+**Session goal:** get Shopify purchases from ralph.world reaching Meta
+(dataset 1009944558609287) and credited to ads. Follows the 2 Nov
+consent change, which on its own didn't do it. Sales now record in Meta
+(Vicky, 9 Nov).
+
+### Changed
+- **Consent in the checkout URL** (`64955e3`, 5 Nov). Shopify support
+  confirmed checkout still saw consent as "not allowed" on Vicky's test
+  order #VJ88K1LA1. Headless checkout reads consent from the checkoutUrl's
+  `_cs` parameter, which Shopify only adds when the URL is requested with
+  `@inContext(visitorConsent: …)` on Storefront API 2025-10+.
+  - `lib/shopify/queries.ts`: `cartCheckoutUrlQuery` /
+    `createCartWithAttributesMutation` take the banner choice (no choice =
+    no directive). `lib/shopify/client.ts`: `getCheckoutUrl`,
+    `withApiVersion`; the checkout calls use 2025-10, the rest stay on the
+    env version.
+  - New `POST /api/cart/checkout` `{ cartId, token, consent }`. The basket
+    Checkout button fetches a fresh URL on click; falls back to the cart's
+    own URL.
+  - `/api/checkout/issue9` takes `consent`; if the consent call fails it
+    retries without it, so a sale is never blocked.
+  - `readBannerConsent()` in `lib/shopify-consent-client.ts`.
+  - Checked live: Accept all → `_cs=3AMPS.`, Necessary only → `_cs=3amps.`,
+    no choice → no `_cs`. Basket and /issue9 both.
+- **Ad clicks kept when cookies are accepted later** (`30c65d9`). Meta's
+  pixel only turns `fbclid` into `_fbc` if it's still in the URL when the
+  pixel starts, and ours starts after "Accept all". Visitors who landed from
+  an ad, browsed, then accepted lost the click, so sales couldn't be
+  credited to the ad. Reproduced live with a test fbclid. New
+  `lib/fbclid-client.ts` holds the landing `fbclid` in memory (nothing
+  stored before consent) and writes `_fbc` (`fb.1.<ms>.<fbclid>`, on
+  .ralph.world so checkout sees it) on "Accept all", before GTM starts.
+  5 tests.
+- **CSP allows LinkedIn Insight and the TikTok pixel** (`2cdbdca`, 3 Nov):
+  `snap.licdn.com`, `analytics.tiktok.com` in `script-src`. Both load and
+  send after "Accept all"; Meta and GA confirmed sending too.
+
+### Content (database, not in this repo)
+- Privacy policy, section 2 table: new row for Ralph TV viewing stats
+  (anonymous, cookie-free, IP not stored, 90 days, legitimate interest).
+  Edited in `legal_pages` directly, not via the CMS, so the cookie policy
+  version wasn't bumped and nobody was re-prompted (no cookie change).
+  "Last updated" set to 3 Nov. Audit row `legal_page.edit`.
+
+### Notes
+- Meta Pixel Helper and the "Test events" tab don't see Shopify's
+  checkout pixel (it runs in a sandbox). Check Purchases in Events Manager
+  or ask Meta/Shopify support.
+- Sales from visitors who chose "Necessary only", use ad blockers, or
+  switch device won't be credited to ads. That's expected.
+
+---
+
 ## 2026-11-05 — Back after leaving an overlay page shows the right page
 
 **Session goal:** fix a production bug shared by the magazine, shop and
@@ -277,6 +332,7 @@ backend + dashboard half). Branch `feat/viewer-analytics`, not merged.
 
 ### Open
 - Privacy policy: add a line for the anonymous, cookie-less player stats.
+  Done 3 Nov (see 2026-11-09 entry).
 - GTM: optional trigger `^ralphtv_` -> GA4 event tag if GA should get them
   (prompt 04 Phase A manual steps); nothing happens until then.
 
@@ -321,6 +377,7 @@ marketing and blocked the Meta app pixel's `checkout_completed`.
 - CSP blocks two scripts added in GTM: LinkedIn Insight
   (`snap.licdn.com`) and the TikTok pixel (`analytics.tiktok.com`). Neither
   runs on ralph.world. Allow them in `next.config.ts` if they're wanted.
+  Fixed 3 Nov (`2cdbdca`).
 
 ---
 

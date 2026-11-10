@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { initSentryClient } from '@/lib/sentry-client-init'
 import { initGTM } from '@/lib/gtm-client-init'
 import { syncShopifyConsent } from '@/lib/shopify-consent-client'
+import { noteBannerState, noteConsentChoice } from '@/lib/analytics/visit-tracker'
 import { persistClickIdAfterConsent } from '@/lib/fbclid-client'
 import Button from '@/components/ui/Button'
 
@@ -93,12 +94,16 @@ export default function CookieBanner({
           { onlyIfDifferent: true }
         )
       }
-      if (!stored || !versionMatches) {
+      const show = !stored || !versionMatches
+      // Anonymous visit stats: was the banner in front of this visitor?
+      noteBannerState(show)
+      if (show) {
         setOpen(true)
       }
     } catch {
       // Private mode / blocked storage — show the banner so the user can
       // make a fresh choice for this session.
+      noteBannerState(true)
       setOpen(true)
     }
 
@@ -140,6 +145,7 @@ export default function CookieBanner({
     // Shopify checkout has no banner of its own, so it needs this choice
     // to decide whether pixels (e.g. Meta Purchase) may fire.
     void syncShopifyConsent(choice === 'cookies_all', shopifyStorefrontToken)
+    noteConsentChoice(choice)
 
     if (choice === 'cookies_all') {
       initSentryClient()

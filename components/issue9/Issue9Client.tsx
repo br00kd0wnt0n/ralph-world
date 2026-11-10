@@ -12,6 +12,7 @@ import { LoginForm } from '@/app/login/LoginForm'
 import { pickAttribution, withAttribution } from '@/lib/attribution'
 import { readBannerConsent } from '@/lib/shopify-consent-client'
 import { trackEvent } from '@/lib/gtm-client-init'
+import { trackVisit } from '@/lib/analytics/visit-tracker'
 import {
   ISSUE9_BUY_COPY,
   ISSUE9_JOIN_COPY,
@@ -111,6 +112,18 @@ export default function Issue9Client({ mode: liveMode, open, product }: Issue9Cl
     void post('/api/attribution/signup', { landing: LANDING, attribution })
     router.replace(withAttribution('/issue9', attribution), { scroll: false })
   }, [joined, user, attribution, router])
+
+  // Anonymous, cookie-free visit count (compares ad clicks with real
+  // visits; GA only sees visitors who accept cookies). Once per mount, and
+  // not for returns from sign-in, previews or test links.
+  const visitTrackedRef = useRef(false)
+  useEffect(() => {
+    if (visitTrackedRef.current) return
+    visitTrackedRef.current = true
+    if (joined || params.get('preview') || params.get('test')) return
+    trackVisit('/issue9')
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per page load
+  }, [])
 
   // ?test=<token> opens the button early for a test order; the checkout
   // route checks the token, so a wrong one just gets the not-open message.

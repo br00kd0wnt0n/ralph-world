@@ -9,6 +9,7 @@ import {
   jsonb,
   uniqueIndex,
   primaryKey,
+  index,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
@@ -476,3 +477,47 @@ export const legalPages = pgTable('legal_pages', {
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
 })
+
+/**
+ * Anonymous page visit stats (lib/analytics/visit-tracker.ts). One 'view'
+ * row per page load, plus a 'consent_all' / 'consent_necessary' row if the
+ * visitor answers the cookie banner on that page load.
+ *
+ * Cookie-free and not personal data: visit_id is a random id held in memory
+ * for one page load only (never stored on the device), and there is no IP,
+ * user agent, user id or email. Used to compare ad clicks with real visits,
+ * which Google Analytics can't do because it only runs after "Accept all".
+ * Rows older than 90 days are deleted (app/api/visits/route.ts).
+ * Table created by scripts/create-page-visits.sql.
+ */
+export const pageVisits = pgTable(
+  'page_visits',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    at: timestamp('at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+    visitId: uuid('visit_id').notNull(),
+    event: text('event').notNull(), // 'view' | 'consent_all' | 'consent_necessary'
+    path: text('path').notNull(),
+    // 'meta' | 'tiktok' | 'linkedin' | 'email' | 'google' | 'other' | 'direct'
+    // | 'internal' (reached by clicking around the site, not the first page)
+    source: text('source').notNull(),
+    clickId: boolean('click_id').default(false).notNull(), // fbclid/ttclid/li_fat_id present
+    // Paid ad click: utm_medium says paid/cpc, or a TikTok/LinkedIn ad click id.
+    // (fbclid alone isn't proof: Meta adds it to organic link clicks too.)
+    paid: boolean('paid').default(false).notNull(),
+    utmSource: text('utm_source'),
+    utmMedium: text('utm_medium'),
+    utmCampaign: text('utm_campaign'),
+    utmContent: text('utm_content'),
+    referrerHost: text('referrer_host'),
+    // 'instagram' | 'facebook' | 'tiktok' | 'linkedin' | 'browser'
+    browser: text('browser'),
+    device: text('device'), // 'mobile' | 'desktop'
+    // Cookie banner on arrival: 'shown' | 'already_chosen' | 'unknown'
+    banner: text('banner'),
+  },
+  (table) => [
+    index('page_visits_at_idx').on(table.at),
+    uniqueIndex('page_visits_visit_event_unique').on(table.visitId, table.event),
+  ]
+)

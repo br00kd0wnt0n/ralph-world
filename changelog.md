@@ -4,6 +4,62 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-10 — Emails were not sending (4–10 Nov): Resend key fixed
+
+**Found while** pulling registration numbers for the Ralph London
+dashboard: 0 of 10 email-and-password sign-ups since 26 Oct had
+verified.
+
+**What was broken:** no transactional email from ralph.world had gone
+out since 27 Oct 12:50. From 4 Nov 09:32 to 10 Nov 16:02, all 36 sends
+failed: verification, welcome-free and password-reset. `email_events`
+showed only `send_attempted` rows, never `sent`. People who signed up
+with email and password couldn't verify, so they couldn't log in.
+Google sign-ins were unaffected.
+
+**Cause:** the `RESEND_API_KEY` on the Railway ralph-world service was
+no longer a valid key. Resend replied "API key is invalid", seen in
+Railway logs as `[reset-password] failed to send reset email: Error:
+Resend rejected send: API key is invalid`.
+- Resend doesn't log requests made with a key it doesn't recognise, so
+  its dashboard showed no activity, which made it look like the site
+  wasn't calling Resend at all.
+- No code change caused it. Nothing touching email changed between 27
+  Oct and 4 Nov. The first failure (09:32) came before eff4de0 (15:32).
+- The `send.ralph.world` DNS records (DKIM, SPF, MX) were intact.
+- A replacement key added on 10 Nov was also invalid, and hadn't been
+  deployed yet.
+
+**Fix (config only, no code):**
+- Copied the ralph-cms service's `RESEND_API_KEY`, checked as valid
+  against the Resend API, into ralph-world with the Railway CLI. The
+  value was never displayed.
+- Redeployed (deployment dd80e61c, live 16:03).
+- **Both services now share one Resend key.** Revoking it stops email
+  from both.
+
+**Verified:** a password reset at 16:03 was sent and delivered in about
+6s (`sent`, then `email.sent`, then `email.delivered`).
+
+**Backlog:** resent verification emails to the 9 external sign-ups from
+4–10 Nov, via `/api/auth/resend-verification`, in two batches because
+of its limit of 5 per IP per 15 minutes: 5 at 16:10, 4 at about 16:27.
+There was no stored join intent or `next`, so they got the standard
+link. Six team test accounts from 27 Oct remain unverified: their
+emails were delivered, the links just weren't clicked.
+
+**Follow-ups:**
+- Tidy up unused keys in Resend → API Keys, keeping the shared one.
+- The `send_attempted`-only state is silent. An alert, such as Sentry
+  on `Resend rejected send` or a check for attempts with no matching
+  `sent` row, would have caught this within hours rather than days.
+- Dashboard: registrations for w/c 2 Nov and 9 Nov include people who
+  couldn't log in until 10 Nov.
+- The Railway CLI is now linked in ralph-world (project RALPH WORLD
+  2.0). Use `railway logs --service ralph-world` for production logs.
+
+---
+
 ## 2026-11-09 — Article gate buttons work, and bring readers back
 
 **Reported by the team:** "Sign up to read" on articles set to "Free

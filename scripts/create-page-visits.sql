@@ -20,3 +20,6 @@ CREATE TABLE IF NOT EXISTS page_visits (
 );
 CREATE INDEX IF NOT EXISTS page_visits_at_idx ON page_visits (at);
 CREATE UNIQUE INDEX IF NOT EXISTS page_visits_visit_event_unique ON page_visits (visit_id, event);
+-- The site connects as ralph_world (scripts/db-roles-phase-1.sql), which has
+-- no default privileges on new tables. DELETE is for the 90-day clean-up.
+GRANT SELECT, INSERT, DELETE ON page_visits TO ralph_world;

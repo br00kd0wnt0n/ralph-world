@@ -4,6 +4,64 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-10 — Issue 9 anonymous visit counter
+
+**Why:** Dave (Ralph London) saw roughly 1,400–1,500 paid link clicks
+against 240 Issue 9 visits in Google Analytics. GA only runs after
+"Accept all", and paid visitors arrive in in-app browsers with the
+banner showing, so GA can't measure clicks against visits. Railway keeps
+HTTP logs only for the live deployment, so there was no history to fall
+back on.
+
+**What:** `c1bf745`, plus a permissions fix.
+- `lib/analytics/visit-tracker.ts` sends one `sendBeacon` per /issue9
+  page load to `/api/visits`, whatever the cookie choice.
+  - The visit id is random and kept in memory for that page load only.
+    Nothing is stored on the device.
+  - Skips `?joined`, `?preview`, `?test` and automated browsers.
+- `CookieBanner` reports whether the banner was shown and the choice made,
+  so the stats show how many paid visitors GA never sees.
+- `/api/visits`:
+  - classifies source (meta / tiktok / linkedin / email / google / other /
+    direct / internal) and paid or organic, from UTMs and click ids.
+    `fbclid` alone isn't counted as paid, because Meta adds it to organic
+    posts too;
+  - classifies device and in-app browser from the user agent, and drops
+    bots and link-preview fetchers;
+  - stores no IP, user agent, user id or email;
+  - always returns 204;
+  - deletes rows older than 90 days, opportunistically on about 1% of
+    requests.
+- `page_visits` table, created by `scripts/create-page-visits.sql`.
+- **The site's database role needed a grant.** The site connects as
+  `ralph_world`, which has no default privileges on new tables. The first
+  live beacon failed with "permission denied" until
+  `GRANT SELECT, INSERT, DELETE ON page_visits TO ralph_world` was run.
+  The grant is now in the script. Any new table the site writes to needs
+  the same step.
+- Weekly report: `psql "$DATABASE_URL" -f scripts/page-visits-report.sql`
+  gives visits by week, source and paid/organic, with banner shown,
+  accepted all, necessary only and no choice.
+- Privacy policy: added an "Issue 9 page visit stats" row next to the
+  Ralph TV row, set directly in `legal_pages` with no policy-version bump
+  (`last_updated_override` 2026-11-10, audit row `legal_page.edit`).
+
+**Verified:**
+- 18 new tests; full suite 288/288; tsc clean.
+- Local run: a paid Meta view with the banner shown, then `consent_all`
+  on the same visit id.
+- Live: a server-side test POST stored correctly. The test rows were
+  deleted and the table starts empty.
+- Note: in a hidden browser pane the page's intro animation never
+  completes, so the Issue 9 section never starts and no beacon is sent.
+  That's an artefact of testing, not something real visitors hit.
+
+**UTMs:** for Meta, use the ad-level URL parameters
+`utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign=issue9&utm_content={{ad.name}}&utm_term={{adset.name}}`.
+TikTok and LinkedIn ads currently carry no UTMs.
+
+---
+
 ## 2026-11-10 — Emails were not sending (4–10 Nov): Resend key fixed
 
 **Found while** pulling registration numbers for the Ralph London

@@ -43,7 +43,7 @@ Resend rejected send: API key is invalid`.
 
 **Backlog:** resent verification emails to the 9 external sign-ups from
 4–10 Nov, via `/api/auth/resend-verification`, in two batches because
-of its limit of 5 per IP per 15 minutes: 5 at 16:10, 4 at about 16:27.
+of its limit of 5 per IP per 15 minutes: 5 at 16:05, 4 at 16:21. All 9 were delivered, and one person had verified by 16:11 (welcome email sent).
 There was no stored join intent or `next`, so they got the standard
 link. Six team test accounts from 27 Oct remain unverified: their
 emails were delivered, the links just weren't clicked.

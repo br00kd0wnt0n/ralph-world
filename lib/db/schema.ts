@@ -134,6 +134,11 @@ export const articles = pgTable('articles', {
   shopCalloutLabel: text('shop_callout_label'),
   shopCalloutEyebrow: text('shop_callout_eyebrow'),
   shopCalloutCta: text('shop_callout_cta'),
+  // Optional "Search & sharing" overrides (CMS → editor panel). NULL/blank
+  // = the site's automatic fallback. scripts/add-seo-fields.sql.
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  seoImageUrl: text('seo_image_url'),
   publishedAt: timestamp('published_at', { mode: 'date' }),
 })
 
@@ -158,6 +163,11 @@ export const events = pgTable('events', {
   rsvpEnabled: boolean('rsvp_enabled').default(false),
   rsvpCapacity: integer('rsvp_capacity'),
   externalTicketUrl: text('external_ticket_url'),
+  // Optional "Search & sharing" overrides (CMS → editor panel). NULL/blank
+  // = the site's automatic fallback. scripts/add-seo-fields.sql.
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  seoImageUrl: text('seo_image_url'),
 })
 
 export const eventRsvps = pgTable(
@@ -236,6 +246,11 @@ export const caseStudies = pgTable('case_studies', {
   // Ordered case-study sections — scroll-driven modules on the public
   // renderer. See CaseStudySection type in the viewer for shape.
   sections: jsonb('sections'),
+  // Optional "Search & sharing" overrides (CMS → editor panel). NULL/blank
+  // = the site's automatic fallback. scripts/add-seo-fields.sql.
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  seoImageUrl: text('seo_image_url'),
   sortOrder: integer('sort_order').default(0),
   publishedAt: timestamp('published_at', { mode: 'date' }),
 })

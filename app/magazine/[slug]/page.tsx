@@ -8,6 +8,7 @@ import {
 import { getSiteCopy } from '@/lib/data/site-copy'
 import MagazineClient from '@/components/magazine/MagazineClient'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { BASE_OPEN_GRAPH, resolveArticleSeo, shareImages } from '@/lib/seo'
 
 export const revalidate = 60
 
@@ -21,26 +22,24 @@ export async function generateMetadata({
   params,
 }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params
-  const article = await getArticleBySlug(slug)
+  const [article, copy] = await Promise.all([getArticleBySlug(slug), getSiteCopy()])
   if (!article) {
     return { title: 'Article', robots: { index: false, follow: false } }
   }
-  const title = article.title || 'Article'
-  const description =
-    article.subtitle?.trim() ||
-    article.intro?.trim().slice(0, 200) ||
-    'Read it on Ralph.'
-  const image = article.leadMediaUrl || article.cardImageUrl || undefined
+  // CMS "Search & sharing" overrides, else title / subtitle-or-intro /
+  // lead-or-card image (lib/seo.ts).
+  const { title, description, image } = resolveArticleSeo(article)
   return {
     title,
     description,
     alternates: { canonical: `/magazine/${slug}` },
     openGraph: {
+      ...BASE_OPEN_GRAPH,
       type: 'article',
       title,
       description,
       url: `/magazine/${slug}`,
-      images: image ? [{ url: image }] : undefined,
+      images: shareImages(image, copy.seo_default_image),
       publishedTime: article.publishedAt
         ? new Date(article.publishedAt).toISOString()
         : undefined,

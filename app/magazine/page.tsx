@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { getPublishedArticles, getCoverStory } from '@/lib/data/magazine'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import { getShopPageData } from '@/lib/data/shop'
@@ -7,17 +8,9 @@ import MagazineClient from '@/components/magazine/MagazineClient'
 
 export const revalidate = 60
 
-export const metadata: Metadata = {
-  title: 'Magazine',
-  description:
-    'Long reads, sharp takes, and proper pop-culture coverage from Ralph.',
-  alternates: { canonical: '/magazine' },
-  openGraph: {
-    title: 'Ralph Magazine',
-    description:
-      'Long reads, sharp takes, and proper pop-culture coverage.',
-    url: '/magazine',
-  },
+// Site Copy → Page SEO.
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await getSiteCopy(), 'magazine', { path: '/magazine' })
 }
 
 export default async function MagazinePage() {

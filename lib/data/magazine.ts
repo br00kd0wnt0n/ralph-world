@@ -32,6 +32,10 @@ export interface ArticleFull extends ArticleSummary {
   backgroundFrameValue: string | null
   titleImageUrl: string | null
   contentBlocks: unknown
+  /** CMS "Search & sharing" overrides. Blank = automatic (lib/seo.ts). */
+  seoTitle?: string | null
+  seoDescription?: string | null
+  seoImageUrl?: string | null
   /** Set by GET /api/articles/[slug] — true when the body was withheld. */
   gated?: boolean
   /** CTA driver: 'guest' (sign up) | 'upgrade' (go paid) | null. */

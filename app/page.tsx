@@ -6,19 +6,16 @@ import FooterPlanet from '@/components/home/FooterPlanet'
 import CanvasStage from '@/components/anim/CanvasStage'
 import type { ModuleCardData } from '@/components/home/PlanetSection'
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 60
 
-export const metadata: Metadata = {
-  // `absolute` bypasses the layout's "%s | Ralph" template on the home page.
-  title: { absolute: 'Ralph — The Entertainment People' },
-  description:
-    'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
-  alternates: { canonical: '/' },
-  // No page-level openGraph: Next does NOT deep-merge openGraph across segments,
-  // so re-declaring it here dropped the root's siteName/type/locale (→ og:site_name
-  // was missing). Inheriting the root layout's openGraph keeps them, and the
-  // title/description/url are identical anyway.
+// Site Copy → Page SEO → Homepage. The title is used as-is (no " | Ralph").
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await getSiteCopy(), 'home', {
+    path: '/',
+    absoluteTitle: true,
+  })
 }
 
 export default async function Home() {

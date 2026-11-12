@@ -1,21 +1,14 @@
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { getActiveEvents } from '@/lib/data/events'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import EventsClient from '@/components/events/EventsClient'
 
 export const revalidate = 60
 
-export const metadata: Metadata = {
-  title: 'Events',
-  description:
-    'Ralph does things in rooms. Screenings, parties, panels, and the occasional pop-up.',
-  alternates: { canonical: '/events' },
-  openGraph: {
-    title: 'Ralph Events',
-    description:
-      'Screenings, parties, panels, and the occasional pop-up.',
-    url: '/events',
-  },
+// Site Copy → Page SEO.
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await getSiteCopy(), 'events', { path: '/events' })
 }
 
 export default async function EventsPage() {

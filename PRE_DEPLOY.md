@@ -194,7 +194,7 @@ Railway for ralph-cms:
 - [ ] Update ralph.world DNS A/CNAME to Railway
 - [ ] Verify Google OAuth callback URLs include the production domain
 - [ ] Verify Shopify webhook URL matches
-- [ ] Hit `/robots.txt`, `/sitemap.xml`, `/opengraph-image` to confirm
+- [ ] Hit `/robots.txt`, `/sitemap.xml`, `/og-default.png` to confirm
       all render
 - [ ] Social share preview test (Twitter/Facebook debugger) — force
       re-scrape of OG tags on the new domain

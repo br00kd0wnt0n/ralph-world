@@ -4,6 +4,7 @@ import { getActiveEvents, getEventBySlug } from '@/lib/data/events'
 import { getSiteCopy } from '@/lib/data/site-copy'
 import EventsClient from '@/components/events/EventsClient'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { BASE_OPEN_GRAPH, resolveEventSeo, shareImages } from '@/lib/seo'
 
 export const revalidate = 60
 
@@ -17,26 +18,24 @@ export async function generateMetadata({
   params,
 }: EventSlugPageProps): Promise<Metadata> {
   const { slug } = await params
-  const event = await getEventBySlug(slug)
+  const [event, copy] = await Promise.all([getEventBySlug(slug), getSiteCopy()])
   if (!event) {
     return { title: 'Event', robots: { index: false, follow: false } }
   }
-  const title = event.title || 'Event'
-  const description =
-    event.descriptionShort?.trim().slice(0, 200) ||
-    [event.locationName, event.locationAddress].filter(Boolean).join(', ') ||
-    'A Ralph event.'
-  const image = event.thumbnailUrl || undefined
+  // CMS "Search & sharing" overrides, else title / short description or
+  // location / thumbnail (lib/seo.ts).
+  const { title, description, image } = resolveEventSeo(event)
   return {
     title,
     description,
     alternates: { canonical: `/events/${slug}` },
     openGraph: {
+      ...BASE_OPEN_GRAPH,
       type: 'website',
       title,
       description,
       url: `/events/${slug}`,
-      images: image ? [{ url: image }] : undefined,
+      images: shareImages(image, copy.seo_default_image),
     },
   }
 }

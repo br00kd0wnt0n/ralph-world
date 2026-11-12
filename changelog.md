@@ -4,6 +4,95 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-12 — Editable SEO: per-item "Search & sharing" and Site Copy "Page SEO"
+
+**Why:** the 12 Nov audit found that none of the site's titles, meta
+descriptions or share images were editable. Every one was hard-coded or
+derived from content.
+
+**What (ralph-world side; the editors are in ralph-cms, same date):**
+- **New columns** on `articles`, `events`, `case_studies`: `seo_title`,
+  `seo_description`, `seo_image_url`, all optional.
+  `scripts/add-seo-fields.sql` is idempotent and adds no tables. It also
+  checks that `ralph_world` can SELECT the columns and `ralph_cms` can
+  UPDATE them. Drizzle schema updated in both repos.
+  - **Run it before deploying either service.** Both apps `select()` every
+    column, so code that knows the columns fails against a database that
+    doesn't have them. Articles, events and case studies would 404.
+- **`lib/seo.ts`** holds all the metadata rules, with 19 unit tests:
+  - Articles: SEO fields, else title / subtitle, else intro / lead
+    image, else card image. The intro is now stripped of HTML. It used to
+    be sliced raw, so descriptions could contain `<p>`.
+  - Events: SEO fields, else title / short description, else location /
+    thumbnail.
+  - Case studies: SEO fields, else title / subtitle / thumbnail.
+    **Fixed the double "Ralph" title:** `"X — Ralph"` plus the layout
+    template gave "X — Ralph | Ralph". Now it's "X | Ralph".
+  - Fixed pages use `buildPageMetadata()` with Site Copy keys
+    `seo_{home,magazine,events,tv,shop,lab,work_with_us,subscribe,join_ralph,issue9,contact}_{title,description,image}`.
+    Defaults are the old hard-coded values. Blank means the default.
+    Issue 9 keeps its pre-order wording while the field is untouched.
+  - Site-wide `seo_default_description` and `seo_default_image` feed the
+    root layout, which is now `generateMetadata`.
+  - Share images: the page's own image, then its automatic image
+    (Subscribe: latest magazine cover; Issue 9: product image), then the
+    default image, then `public/og-default.png`.
+- **Default share card moved** from `app/opengraph-image.png` to
+  `public/og-default.png`. File-based metadata outranks config, so the CMS
+  default image could never have applied.
+- **Every page that sets `openGraph` now includes `og:site_name`, locale
+  and an image.** Next replaces `openGraph` per segment rather than
+  merging it, so section pages had been shipping without `og:site_name`.
+- **Small visible changes:**
+  - Section-page share titles now match the page title ("Magazine",
+    not "Ralph Magazine").
+  - Share descriptions now match the meta description (they were
+    slightly shorter variants).
+  - The root `og:description` now equals the default description.
+- **Revalidation (`/api/revalidate`):**
+  - The allow-list was missing `/work-with-us`, so the CMS's case-study
+    reorder and delete pings for it were silently dropped. Added it, plus
+    `/subscribe`, `/join-ralph`, `/issue9` and `/contact`.
+  - Tag busts now use `revalidateTag(tag, { expire: 0 })` instead of
+    `'default'`. A named profile is stale-while-revalidate, so the first
+    request after a CMS save could still get old copy. Checked in a
+    production build: first request after the bust shows the new title.
+
+**Dead Site Copy fields (agreed with Brook):**
+- Removed the Magazine, Events, TV, Shop and Lab hero themes. Section pages
+  open with title art over the starfield (`SectionIntro`), so a hero
+  colour has nowhere to go. `MagazineHero` and `EventsHero` are no longer
+  rendered anywhere.
+- Removed `magazine_shop_cta` (the shop link is now the "got coin" sprite,
+  with its words in the artwork), `events_past_heading` (the Events page
+  has no past-events section) and `subscribe_paid_price` (the pop-up has
+  no price line).
+- **Connected `subscribe_modal_theme`.** `SubscribeModal` reads it from
+  site copy. With a non-default theme, the top canvas, arch fill, close
+  button and placeholders all follow the theme, so Ivory and Cream no
+  longer put a white × on white.
+- Old values for removed keys stay in `homepage_config`, unused.
+
+**Verified:**
+- tsc clean, vitest 307/307, lint clean on changed files, `next build` OK.
+- The CMS mirror of the fallbacks gives identical output to `lib/seo.ts`
+  over 1,875 input combinations (one-off check, not committed).
+- Local run against a throwaway Postgres (`drizzle-kit push` +
+  `add-seo-fields.sql` + seed; never the shared DB): `<title>`,
+  description and `og:*` checked on an article, an event, a case study,
+  all 11 fixed pages and a legal page, with fields blank (identical to
+  the old output) and filled. Saves from the CMS editors and Site Copy
+  showed up on the next request.
+- The SQL script re-runs cleanly, and fails loudly when `ralph_world`
+  loses SELECT.
+
+**Known, not changed:** the site nav draws on top of the subscribe
+pop-up. The default purple hides it, but the nav's white icons sit on
+the pale themes. This is existing layering, and the pop-up is still
+mostly placeholders.
+
+---
+
 ## 2026-11-10 — Issue 9 anonymous visit counter
 
 **Why:** Dave (Ralph London) saw roughly 1,400–1,500 paid link clicks

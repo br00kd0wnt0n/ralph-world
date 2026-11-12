@@ -193,6 +193,8 @@ npm run dev
 
 ### Utilities / shared logic
 - Route error boundary: `app/error.tsx`
+- SEO metadata (titles, descriptions, share images + fallbacks): `lib/seo.ts`
+  (mirrored in ralph-cms `lib/seo.ts`; columns from `scripts/add-seo-fields.sql`)
 - Section theme palette: `lib/section-themes.ts` (hero bg/text pairs)
 - Article theme palette: `lib/article-themes.ts` (article canvas)
 - Event accent palette: `lib/event-themes.ts`

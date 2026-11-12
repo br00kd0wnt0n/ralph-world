@@ -6,6 +6,8 @@ import { formatPrice } from '@/lib/shopify/format'
 import ShopClient from '@/components/shop/ShopClient'
 import { getIssue9ProductHandle } from '@/lib/issue9'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { getSiteCopy } from '@/lib/data/site-copy'
+import { BASE_OPEN_GRAPH, shareImages } from '@/lib/seo'
 
 export const revalidate = 300
 
@@ -19,7 +21,7 @@ export async function generateMetadata({
   params,
 }: ShopHandlePageProps): Promise<Metadata> {
   const { handle } = await params
-  const product = await getProductByHandle(handle)
+  const [product, copy] = await Promise.all([getProductByHandle(handle), getSiteCopy()])
   if (!product) {
     return { title: 'Product', robots: { index: false, follow: false } }
   }
@@ -32,11 +34,12 @@ export async function generateMetadata({
     description,
     alternates: { canonical: `/shop/${handle}` },
     openGraph: {
+      ...BASE_OPEN_GRAPH,
       type: 'website',
       title: product.title,
       description,
       url: `/shop/${handle}`,
-      images: image ? [{ url: image }] : undefined,
+      images: shareImages(image, copy.seo_default_image),
     },
   }
 }

@@ -8,14 +8,11 @@ import { homepageConfig } from '@/lib/db/schema'
  * These are the fallback when no DB override exists.
  */
 export const DEFAULT_COPY = {
-  // Per-section theme keys (see lib/section-themes.ts for allowed values
-  // per key). Defaults match the brand colours in the design.
+  // Theme keys (see lib/section-themes.ts for allowed values per key).
+  // Only the homepage hero and the subscribe pop-up take a theme: the
+  // section pages open with title art over the starfield, so the old
+  // magazine/events/tv/shop/lab hero themes were removed (2026-11-12).
   home_hero_theme: 'midnight',
-  magazine_hero_theme: 'ralph-orange',
-  events_hero_theme: 'ralph-teal',
-  tv_hero_theme: 'ralph-pink',
-  lab_hero_theme: 'ralph-yellow',
-  shop_hero_theme: 'ralph-green',
   subscribe_modal_theme: 'ralph-purple',
 
   // Homepage hero
@@ -43,13 +40,11 @@ export const DEFAULT_COPY = {
   magazine_hero_intro_1:
     'Stories, interviews and photo essays about the people and things that make pop culture worth caring about.',
   magazine_hero_intro_2: 'Edited by the Ralph team',
-  magazine_shop_cta: 'Got coin? Get mag',
 
   // Events section
   events_hero_heading: "LET'S MEET UP",
   events_hero_subtitle: 'For real. IRL.',
   events_hero_helper: 'Check below for the latest events.',
-  events_past_heading: 'Mate, you missed a classic, check these out',
 
   // TV section
   tv_hero_heading: 'Ralph TV',
@@ -111,12 +106,65 @@ export const DEFAULT_COPY = {
     "For the princely sum of just your email address, you can enjoy access to all our editorial content, buy tickets to one of our amazing IRL events and much more. Sounds good, right? Then what's stopping you?",
   subscribe_free_cta: 'Hook me up for free',
   subscribe_paid_heading: 'Prefer your culture more hands-on?',
-  subscribe_paid_price: '£3 a month*',
   subscribe_paid_body:
     "Then you need a bit of The Ralph™ in your life. For just £3 a month you'll get our quarterly fun, glossy mag straight through your letterbox. On top of that, we'll switch on our TV channel for you, plus everything else Ralph World has to offer.",
   subscribe_paid_cta: 'Join for £3 per month',
   subscribe_paid_smallprint:
     'Billed monthly at £3. Includes VAT and UK postage for the quarterly magazine.',
+
+  // Page SEO (Site Copy → "Page SEO"). Title, meta description and share
+  // image per fixed page, read by each page's metadata via buildPageMetadata
+  // (lib/seo.ts). Defaults are the values that were hard-coded before the
+  // CMS fields existed. Titles get " | Ralph" from the layout template,
+  // except the homepage, whose title is used as-is. Blank image = the
+  // page's automatic image (if any), then seo_default_image, then
+  // /og-default.png.
+  seo_default_description:
+    'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
+  seo_default_image: '',
+  seo_home_title: 'Ralph — The Entertainment People',
+  seo_home_description:
+    'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
+  seo_home_image: '',
+  seo_magazine_title: 'Magazine',
+  seo_magazine_description:
+    'Long reads, sharp takes, and proper pop-culture coverage from Ralph.',
+  seo_magazine_image: '',
+  seo_events_title: 'Events',
+  seo_events_description:
+    'Ralph does things in rooms. Screenings, parties, panels, and the occasional pop-up.',
+  seo_events_image: '',
+  seo_tv_title: 'Ralph TV',
+  seo_tv_description:
+    'Live and on-demand — Ralph TV streams culture, interviews, and nonsense around the clock.',
+  seo_tv_image: '',
+  seo_shop_title: 'Shop',
+  seo_shop_description:
+    'The Ralph magazine, merch, and limited runs — made for people who like good stuff.',
+  seo_shop_image: '',
+  seo_lab_title: 'Lab',
+  seo_lab_description:
+    'Experiments, tools, generators and oddities from the Ralph lab.',
+  seo_lab_image: '',
+  seo_work_with_us_title: 'Work with Us',
+  seo_work_with_us_description:
+    'Work with Ralph — campaigns, content and culture from the Entertainment People.',
+  seo_work_with_us_image: '',
+  seo_subscribe_title: 'Join Ralph',
+  seo_subscribe_description:
+    'Join Ralph for free to read the magazine and watch Ralph TV, or get the print magazine through your letterbox every quarter for £3 a month.',
+  seo_subscribe_image: '',
+  seo_join_ralph_title: 'Join Ralph',
+  seo_join_ralph_description:
+    'Join the Ralph community and get access to exclusive content.',
+  seo_join_ralph_image: '',
+  seo_issue9_title: 'Ralph Issue 09',
+  seo_issue9_description:
+    'Issue 09 of Ralph magazine is out now. Get your copy and join Ralph World.',
+  seo_issue9_image: '',
+  seo_contact_title: 'Contact',
+  seo_contact_description: 'Get in touch with the Ralph team.',
+  seo_contact_image: '',
 
   // Footer
   footer_tagline: 'The Entertainment People',

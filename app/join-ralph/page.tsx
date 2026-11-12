@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { getLatestMagazine } from '@/lib/data/latest-magazine'
 import JoinRalphClient from '@/components/join-ralph/JoinRalphClient'
+import { getSiteCopy } from '@/lib/data/site-copy'
+import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
 
-export const metadata: Metadata = {
-  title: 'Join Ralph',
-  description: 'Join the Ralph community and get access to exclusive content.',
-  alternates: { canonical: '/join-ralph' },
+// Site Copy → Page SEO.
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await getSiteCopy(), 'join_ralph', { path: '/join-ralph' })
 }
 
 export default async function JoinRalphPage() {

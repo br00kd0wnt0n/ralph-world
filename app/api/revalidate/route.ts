@@ -29,6 +29,14 @@ const ALLOWED_PATH_PREFIXES = [
   '/homepage',
   '/issues',
   '/case-studies',
+  // Fixed pages whose metadata comes from Site Copy → Page SEO. Before
+  // 2026-11-12, /work-with-us was missing here, so case study reorders and
+  // deletes that asked for it were silently dropped.
+  '/work-with-us',
+  '/subscribe',
+  '/join-ralph',
+  '/issue9',
+  '/contact',
 ]
 const MAX_ITEMS = 50
 
@@ -92,10 +100,14 @@ export async function POST(request: Request) {
   // here. Without this, a CMS toggle change would wait up to 5 minutes
   // for the natural TTL to expire.
   //
-  // Next.js 16 requires a profile argument; 'default' triggers an
-  // immediate cache bust for tagged unstable_cache entries.
+  // Next.js 16 requires a profile argument. A named profile ('default',
+  // 'max') is stale-while-revalidate: the first request after a save still
+  // gets the old copy and only triggers a background refresh. `expire: 0`
+  // expires the entry now, so the next request (and the page re-render
+  // that revalidatePath asks for) reads fresh copy, page metadata included.
+  // (updateTag would do the same but is only allowed in Server Actions.)
   for (const tag of tags) {
-    revalidateTag(tag, 'default')
+    revalidateTag(tag, { expire: 0 })
   }
 
   return NextResponse.json({ ok: true, revalidated: { paths, tags } })

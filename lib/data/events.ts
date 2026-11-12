@@ -22,6 +22,10 @@ export interface EventRow {
   rsvpEnabled: boolean | null
   rsvpCapacity: number | null
   isPast: boolean | null
+  /** CMS "Search & sharing" overrides. Blank = automatic (lib/seo.ts). */
+  seoTitle?: string | null
+  seoDescription?: string | null
+  seoImageUrl?: string | null
 }
 
 export async function getActiveEvents(): Promise<EventRow[]> {

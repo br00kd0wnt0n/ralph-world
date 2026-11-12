@@ -50,7 +50,7 @@ ralph-world/
 │   ├── page.tsx                # Homepage
 │   ├── robots.ts               # /robots.txt (disallow api/account/login)
 │   ├── sitemap.ts              # /sitemap.xml (public top-level routes)
-│   ├── opengraph-image.tsx     # Default 1200x630 OG image (edge-rendered)
+│   ├── (share image)           # public/og-default.png: last-resort og:image (see lib/seo.ts)
 │   ├── tv/page.tsx             # Ralph TV (Phase 4)
 │   ├── magazine/page.tsx       # Magazine listing (Phase 3)
 │   ├── events/page.tsx         # Events (Phase 5)
@@ -241,6 +241,16 @@ Password storage: `users.password_hash` (text, nullable). bcryptjs cost factor 1
 | Method | Path | Purpose |
 |---|---|---|
 | GET | /api/health | Railway health check (Postgres ping) |
+
+### SEO metadata (titles, descriptions, share images)
+- All rules live in `lib/seo.ts`. Every route's `<title>`, meta description and `og:*` tags come from there.
+- **Fixed pages** (homepage, Magazine, Events, TV, Shop, Lab, Work with us, Subscribe, Join Ralph, Issue 9, Contact) use `buildPageMetadata(copy, id, …)`, reading Site Copy keys `seo_<page>_title|description|image`. Defaults in `DEFAULT_COPY` are the values that used to be hard-coded. A blank value means the default.
+- **Articles, events, case studies** use `resolveArticleSeo` / `resolveEventSeo` / `resolveCaseStudySeo`. The optional `seo_title`, `seo_description` and `seo_image_url` columns win. When they're blank, the old automatic logic applies.
+- **Share image order:** the page's own image, then its automatic image (e.g. the magazine cover), then Site Copy `seo_default_image`, then `public/og-default.png`. `shareImages()` always returns at least one image.
+- Next replaces `openGraph` wholesale per segment, so every page that sets it spreads `BASE_OPEN_GRAPH` (site name, locale) and passes `images`.
+- The default card is **not** `app/opengraph-image.png`. File-based metadata outranks config, so the CMS default image could never apply.
+- The CMS mirrors the fallbacks for its live preview (ralph-cms `lib/seo.ts`). Change both together.
+- **Freshness:** the root layout reads the session, so every page renders on demand. Site Copy (including Page SEO) is cached by `unstable_cache` with the tag `site-copy`. The CMS busts it through `/api/revalidate`, which expires the tag immediately (`{ expire: 0 }`), so the next request is fresh. Item SEO columns are read uncached on each request.
 
 ## Key boundaries
 - Browser → DB: never directly. All DB queries server-side via API routes or server components

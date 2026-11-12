@@ -1,15 +1,18 @@
 import type { Metadata } from 'next'
 import Footer from '@/components/layout/Footer'
 import { getSiteCopy } from '@/lib/data/site-copy'
+import { buildPageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Contact',
-  description: 'Get in touch with the Ralph team.',
-  alternates: {
-    canonical: '/contact',
-    // Reciprocal hreflang cluster with the JP contact page.
-    languages: { en: '/contact', 'ja-JP': '/jp/contact' },
-  },
+// Site Copy → Page SEO.
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await getSiteCopy(), 'contact', {
+    path: '/contact',
+    alternates: {
+      canonical: '/contact',
+      // Reciprocal hreflang cluster with the JP contact page.
+      languages: { en: '/contact', 'ja-JP': '/jp/contact' },
+    },
+  })
 }
 
 export default async function ContactPage() {

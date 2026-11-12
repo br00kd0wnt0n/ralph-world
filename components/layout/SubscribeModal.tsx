@@ -56,11 +56,19 @@ export default function SubscribeModal({
   const headingLines =
     headingWords.length === 2 ? headingWords : [heading]
 
-  const theme = resolveSectionTheme('subscribe_modal', themeKey)
-  // Default (ralph-purple) keeps the hard-coded #0F0420 palette the
-  // embedded SVG illustrations are matched to. Any other theme swaps
-  // the outer canvas only.
+  // Theme comes from Site Copy → Subscribe Modal → Theme (a `themeKey`
+  // prop still wins, for one-off overrides). Default (ralph-purple) keeps
+  // the hard-coded #0F0420 palette the embedded SVG illustrations are
+  // matched to. Any other theme recolours the top canvas: background, arch
+  // fill, close button and placeholders all follow it, so the light
+  // swatches (Ivory, Cream) don't leave a white close button on white.
+  const theme = resolveSectionTheme(
+    'subscribe_modal',
+    themeKey ?? copy?.subscribe_modal_theme
+  )
   const isDefault = theme.key === 'ralph-purple'
+  const canvasBg = isDefault ? '#0F0420' : theme.bg
+  const canvasText = isDefault ? '#FFFFFF' : theme.text
   const trapRef = useFocusTrap<HTMLDivElement>(isOpen)
 
   useEffect(() => {
@@ -102,16 +110,13 @@ export default function SubscribeModal({
       aria-modal="true"
       aria-labelledby="subscribe-modal-title"
       className="fixed inset-0 z-50 overflow-y-auto"
-      style={
-        isDefault
-          ? { backgroundColor: '#0F0420' }
-          : { backgroundColor: theme.bg, color: theme.text }
-      }
+      style={{ backgroundColor: canvasBg, color: canvasText }}
     >
       {/* Close button */}
       <button
         onClick={onClose}
-        className="fixed top-5 right-6 text-white/70 hover:text-white text-2xl transition-colors z-20"
+        className="fixed top-5 right-6 text-2xl opacity-70 hover:opacity-100 transition-opacity z-20"
+        style={{ color: canvasText }}
         aria-label="Close"
       >
         &#10005;
@@ -120,19 +125,19 @@ export default function SubscribeModal({
       {/* Top dark section with characters on the arch */}
       <div className="relative h-[220px] md:h-[280px] overflow-hidden">
         {/* Character placeholders sitting on the arch */}
-        <div className="absolute left-[5%] bottom-4 w-20 h-14 bg-white/5 border border-white/20 rounded flex items-center justify-center text-[8px] text-white/40">
+        <div className="absolute left-[5%] bottom-4 w-20 h-14 bg-current/5 border border-current/20 rounded flex items-center justify-center text-[8px] text-current/40">
           satellite
         </div>
-        <div className="absolute left-[25%] bottom-8 w-12 h-20 bg-white/5 border border-white/20 rounded flex items-center justify-center text-[8px] text-white/40">
+        <div className="absolute left-[25%] bottom-8 w-12 h-20 bg-current/5 border border-current/20 rounded flex items-center justify-center text-[8px] text-current/40">
           alien
         </div>
-        <div className="absolute left-[42%] bottom-6 w-20 h-24 bg-white/5 border border-white/20 rounded flex items-center justify-center text-[8px] text-white/40">
+        <div className="absolute left-[42%] bottom-6 w-20 h-24 bg-current/5 border border-current/20 rounded flex items-center justify-center text-[8px] text-current/40">
           ralph-flag
         </div>
-        <div className="absolute right-[22%] bottom-6 w-14 h-20 bg-white/5 border border-white/20 rounded flex items-center justify-center text-[8px] text-white/40">
+        <div className="absolute right-[22%] bottom-6 w-14 h-20 bg-current/5 border border-current/20 rounded flex items-center justify-center text-[8px] text-current/40">
           char
         </div>
-        <div className="absolute right-[5%] bottom-4 w-20 h-12 bg-white/5 border border-white/20 rounded flex items-center justify-center text-[8px] text-white/40">
+        <div className="absolute right-[5%] bottom-4 w-20 h-12 bg-current/5 border border-current/20 rounded flex items-center justify-center text-[8px] text-current/40">
           ufo
         </div>
 
@@ -145,7 +150,7 @@ export default function SubscribeModal({
         >
           <path
             d="M0,120 L0,80 Q720,-20 1440,80 L1440,120 Z"
-            fill="#0F0420"
+            fill={canvasBg}
             stroke="#FF2098"
             strokeWidth="4"
           />

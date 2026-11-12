@@ -21,6 +21,7 @@ import CookieBanner from '@/components/legal/CookieBanner'
 import { getCurrentPolicyVersion } from '@/lib/consent'
 import { SiteCopyProvider } from '@/components/layout/SiteCopyContext'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { BASE_OPEN_GRAPH, copyOrDefault, shareImages } from '@/lib/seo'
 
 const playfair = Playfair_Display({
   variable: '--font-display',
@@ -43,36 +44,42 @@ function publicStorefrontToken(): string | undefined {
   return token && /^[0-9a-f]{32}$/i.test(token) ? token : undefined
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: 'Ralph — The Entertainment People',
-    template: '%s | Ralph',
-  },
-  description:
-    'Ralph.World — pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
-  // Icons are auto-detected from app/favicon.ico, app/icon.png and
-  // app/apple-icon.png (Next file-based metadata). The PWA icon set
-  // (192/512 + maskable) is declared in public/manifest.webmanifest.
-  manifest: '/manifest.webmanifest',
-  openGraph: {
-    type: 'website',
-    siteName: 'Ralph',
-    locale: 'en_GB',
-    url: SITE_URL,
-    title: 'Ralph — The Entertainment People',
-    description:
-      'Pop culture for the fun of it. Magazine, TV, events, shop, and lab.',
-    // Default share card is the static file-convention image at
-    // app/opengraph-image.png (1200×630) — it's inherited by every route,
-    // including ones that set their own openGraph, so no images: [] here.
-  },
-  twitter: {
-    // Only the card type is set globally. Title/description/image are left
-    // to each page's openGraph (Twitter falls back to og: tags) so article/
-    // product/event cards show their own titles, not the site default.
-    card: 'summary_large_image',
-  },
+// Root defaults. The description and default share image are editable in
+// the CMS (Site Copy → Page SEO → "Site defaults"); every route without its
+// own values inherits them. getSiteCopy is cached and tagged 'site-copy', so
+// a CMS save refreshes these with the rest of the copy.
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = await getSiteCopy()
+  const description = copyOrDefault(copy, 'seo_default_description')
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: 'Ralph — The Entertainment People',
+      template: '%s | Ralph',
+    },
+    description,
+    // Icons are auto-detected from app/favicon.ico, app/icon.png and
+    // app/apple-icon.png (Next file-based metadata). The PWA icon set
+    // (192/512 + maskable) is declared in public/manifest.webmanifest.
+    manifest: '/manifest.webmanifest',
+    openGraph: {
+      ...BASE_OPEN_GRAPH,
+      type: 'website',
+      url: SITE_URL,
+      title: 'Ralph — The Entertainment People',
+      description,
+      // The CMS default image, else /og-default.png. Pages that set their
+      // own openGraph must pass images too (see shareImages in lib/seo.ts):
+      // Next replaces openGraph wholesale rather than merging it.
+      images: shareImages(copy.seo_default_image),
+    },
+    twitter: {
+      // Only the card type is set globally. Title/description/image are left
+      // to each page's openGraph (Twitter falls back to og: tags) so article/
+      // product/event cards show their own titles, not the site default.
+      card: 'summary_large_image',
+    },
+  }
 }
 
 // theme-color drives the mobile browser chrome; black matches the site bg.

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import { getSiteCopy, getTvPreviewSettings } from '@/lib/data/site-copy'
 import RalphTVClient from '@/components/tv/RalphTVClient'
 
@@ -9,17 +10,9 @@ import RalphTVClient from '@/components/tv/RalphTVClient'
 // only the gate flag is read fresh via getTvPreviewSettings().
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-  title: 'Ralph TV',
-  description:
-    'Live and on-demand — Ralph TV streams culture, interviews, and nonsense around the clock.',
-  alternates: { canonical: '/tv' },
-  openGraph: {
-    title: 'Ralph TV',
-    description:
-      'Live and on-demand. Culture, interviews, and nonsense around the clock.',
-    url: '/tv',
-  },
+// Site Copy → Page SEO.
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await getSiteCopy(), 'tv', { path: '/tv' })
 }
 
 export default async function RalphTVPage() {

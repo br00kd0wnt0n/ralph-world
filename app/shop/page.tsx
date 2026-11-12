@@ -1,19 +1,14 @@
 import type { Metadata } from 'next'
 import { getShopPageData } from '@/lib/data/shop'
 import ShopClient from '@/components/shop/ShopClient'
+import { getSiteCopy } from '@/lib/data/site-copy'
+import { buildPageMetadata } from '@/lib/seo'
 
 export const revalidate = 300
 
-export const metadata: Metadata = {
-  title: 'Shop',
-  description:
-    'The Ralph magazine, merch, and limited runs — made for people who like good stuff.',
-  alternates: { canonical: '/shop' },
-  openGraph: {
-    title: 'Ralph Shop',
-    description: 'The magazine, merch, and limited runs.',
-    url: '/shop',
-  },
+// Site Copy → Page SEO.
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await getSiteCopy(), 'shop', { path: '/shop' })
 }
 
 export default async function ShopPage() {

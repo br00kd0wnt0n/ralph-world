@@ -5,6 +5,8 @@ import {
   getCaseStudyBySlug,
   getPublishedCaseStudySlugs,
 } from '@/lib/data/case-studies'
+import { getSiteCopy } from '@/lib/data/site-copy'
+import { BASE_OPEN_GRAPH, resolveCaseStudySeo, shareImages } from '@/lib/seo'
 
 // Case studies are edited from the CMS; a revalidateTag('case-studies')
 // on save invalidates immediately, so this TTL is only the safety net
@@ -19,19 +21,23 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const study = await getCaseStudyBySlug(slug)
+  const [study, copy] = await Promise.all([getCaseStudyBySlug(slug), getSiteCopy()])
   if (!study) return { title: 'Not found' }
-  const title = study.title
-    ? `${study.title} — Ralph`
-    : 'Case Study — Ralph'
+  // CMS "Search & sharing" overrides, else title / subtitle / thumbnail
+  // (lib/seo.ts). The title is bare: the layout template adds " | Ralph"
+  // (it used to add it on top of a hard-coded " — Ralph").
+  const { title, description, image } = resolveCaseStudySeo(study)
   return {
     title,
-    description: study.subtitle ?? undefined,
+    description,
     alternates: { canonical: `/case-studies/${slug}` },
     openGraph: {
-      title: study.title ?? undefined,
-      description: study.subtitle ?? undefined,
-      images: study.thumbnailUrl ? [study.thumbnailUrl] : undefined,
+      ...BASE_OPEN_GRAPH,
+      type: 'website',
+      title,
+      description,
+      url: `/case-studies/${slug}`,
+      images: shareImages(image, copy.seo_default_image),
     },
   }
 }

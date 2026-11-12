@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { getLatestMagazine } from '@/lib/data/latest-magazine'
 import { pickAttribution } from '@/lib/attribution'
 import SubscribeClient from '@/components/subscribe/SubscribeClient'
+import { getSiteCopy } from '@/lib/data/site-copy'
+import { buildPageMetadata } from '@/lib/seo'
 
 // The campaign landing page Vicky points ads + emails at. utm_* tags are read
 // here (server-side, so the page renders in full on first load) and passed
@@ -9,24 +11,13 @@ import SubscribeClient from '@/components/subscribe/SubscribeClient'
 // (fetch-cached); the member's tier is read client-side from the session the
 // root layout seeds.
 
-const title = 'Join Ralph'
-const description =
-  'Join Ralph for free to read the magazine and watch Ralph TV, or get the print magazine through your letterbox every quarter for £3 a month.'
-
+// Site Copy → Page SEO. Blank image = the latest magazine cover.
 export async function generateMetadata(): Promise<Metadata> {
-  const latest = await getLatestMagazine()
-  return {
-    title,
-    description,
-    alternates: { canonical: '/subscribe' },
-    openGraph: {
-      type: 'website',
-      title,
-      description,
-      url: '/subscribe',
-      images: latest ? [{ url: latest.imageUrl }] : undefined,
-    },
-  }
+  const [copy, latest] = await Promise.all([getSiteCopy(), getLatestMagazine()])
+  return buildPageMetadata(copy, 'subscribe', {
+    path: '/subscribe',
+    autoImage: latest?.imageUrl,
+  })
 }
 
 export default async function SubscribePage({

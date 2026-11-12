@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { buildPageMetadata } from '@/lib/seo'
 import SectionIntro from '@/components/layout/SectionIntro'
 import PlayPlanets from '@/components/play/PlayPlanets'
 import ParallaxPlanets from '@/components/play/ParallaxPlanets'
@@ -10,15 +11,9 @@ import { getSiteCopy } from '@/lib/data/site-copy'
 
 export const revalidate = 60
 
-export const metadata: Metadata = {
-  title: 'Work with Us',
-  description:
-    'Work with Ralph — campaigns, content and culture from the Entertainment People.',
-  alternates: { canonical: '/work-with-us' },
-  openGraph: {
-    title: 'Work with Ralph',
-    description: 'Campaigns, content and culture from the Entertainment People.',
-  },
+// Site Copy → Page SEO.
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata(await getSiteCopy(), 'work_with_us', { path: '/work-with-us' })
 }
 
 export default async function PlayWithRalph() {

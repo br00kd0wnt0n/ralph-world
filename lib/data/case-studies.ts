@@ -39,6 +39,10 @@ export interface CaseStudyFull extends CaseStudyRow {
   outroHeading: string | null
   outroSubtitle: string | null
   sections: CaseStudySection[]
+  /** CMS "Search & sharing" overrides. Blank = automatic (lib/seo.ts). */
+  seoTitle: string | null
+  seoDescription: string | null
+  seoImageUrl: string | null
 }
 
 export function resolveCaseStudyUrl(row: {
@@ -111,6 +115,9 @@ export async function getCaseStudyBySlug(
       outroHeading: row.outroHeading,
       outroSubtitle: row.outroSubtitle,
       sections: (row.sections as CaseStudySection[] | null) ?? [],
+      seoTitle: row.seoTitle,
+      seoDescription: row.seoDescription,
+      seoImageUrl: row.seoImageUrl,
     }
   } catch {
     return null

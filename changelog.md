@@ -36,6 +36,19 @@ meta-refreshes to ralph.world without the query. Ads should point at
 `https://ralph.world/issue9` directly. Ask Vicky/Tom to check ads,
 Instagram product tags and catalog URLs.
 
+**Follow-up (12 Nov):** drafted a note for Vicky asking her to switch
+these to `https://ralph.world/issue9`:
+- the website URL on every Issue 9 ad in Ads Manager;
+- Instagram and Facebook product tags;
+- any catalog or shop ads;
+- link in bio, Linktree and emails.
+
+The note includes the Meta URL parameters to paste under Tracking → URL
+parameters, with ad names matching the "Execution" column in Dave's ad
+log. It also asks her to flag anything that can only use the Shopify
+product link. If something does, the `shop.ralph.world` theme redirect
+would need to keep the query string too.
+
 **Early visit numbers (about 2 days):** 119 visits:
 - 84 internal, mostly from this leak;
 - 11 Meta paid;

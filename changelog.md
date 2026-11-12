@@ -4,6 +4,52 @@ All notable changes documented here, organised by session. Most recent on top.
 
 ---
 
+## 2026-11-12 — Old Issue 9 shop link kept dropping ad tracking
+
+**Found in** the first 2 days of visit-counter data (10 Nov 21:15 to 12
+Nov 15:33): 84 of 119 /issue9 visits arrived "internal". 53 of those
+were in the Facebook or Instagram in-app browsers, with no UTMs.
+
+**Cause:** `/shop/ralph-mag-9`, the Issue 9 product page, redirects to
+/issue9 using `redirect()` inside `app/shop/[handle]/page.tsx`. That page
+streams, so the redirect ran in the browser (meta refresh / client
+navigation) and dropped the query string. Any ad, Instagram product tag,
+catalog item or `shop.ralph.world/products/ralph-mag-9` link (the Shopify
+theme meta-refreshes there, also dropping the query) therefore:
+- lost its utm_* tags and Meta's fbclid, so neither GA, Meta nor the
+  visit counter could credit the ad;
+- looked like an internal visit from another ralph.world page.
+
+**Fix:** a server-side redirect in `next.config.ts`, `/shop/<ISSUE9_PRODUCT_HANDLE
+or ralph-mag-9>` → `/issue9`, temporary (307). Next carries the query
+string over, so the tags and fbclid arrive on /issue9 and the browser
+records /issue9 as the landing page. The in-page `redirect()` stays as a
+fallback.
+
+**Verified locally:** with tags and fbclid, a 307 to
+`/issue9?utm_source=ig&…&fbclid=ABC123`; without a query, a 307 to /issue9;
+other product handles return 200 as before. In the browser, the
+navigation entry is /issue9, so the counter counts it as a landing.
+
+**Not fixed here (Shopify side):** `shop.ralph.world/products/ralph-mag-9`
+meta-refreshes to ralph.world without the query. Ads should point at
+`https://ralph.world/issue9` directly. Ask Vicky/Tom to check ads,
+Instagram product tags and catalog URLs.
+
+**Early visit numbers (about 2 days):** 119 visits:
+- 84 internal, mostly from this leak;
+- 11 Meta paid;
+- 11 Meta organic;
+- 9 "other" (ad-scanning and preview services);
+- 3 direct;
+- 1 email.
+
+Of the 28 visitors who saw the cookie banner (excluding scanners), 11
+chose "Accept all" (39%), 6 "Necessary only" and 11 no choice. So GA
+sees about 4 in 10 visitors at best.
+
+---
+
 ## 2026-11-12 — Editable SEO: per-item "Search & sharing" and Site Copy "Page SEO"
 
 **Why:** the 12 Nov audit found that none of the site's titles, meta

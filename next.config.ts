@@ -91,12 +91,25 @@ const nextConfig: NextConfig = {
   // NOTE: that domain's DNS zone also carries company email (Google Workspace
   // MX, SPF, DKIM). Only the apex and www web records should ever change.
   async redirects() {
-    return ['ralphandco.com', 'www.ralphandco.com'].map((host) => ({
-      source: '/:path*',
-      has: [{ type: 'host' as const, value: host }],
-      destination: 'https://ralph.world/',
-      permanent: true,
-    }))
+    return [
+      ...['ralphandco.com', 'www.ralphandco.com'].map((host) => ({
+        source: '/:path*',
+        has: [{ type: 'host' as const, value: host }],
+        destination: 'https://ralph.world/',
+        permanent: true,
+      })),
+      // Issue 9 is sold only through /issue9. The old product URL is still
+      // linked from ads, Instagram product tags and shop.ralph.world. Redirect
+      // it on the server so utm_* tags and Meta's fbclid come along: the
+      // in-page redirect() in app/shop/[handle] runs in the browser after
+      // streaming starts and dropped them, so those visits lost their ad
+      // credit. Temporary (307) so browsers don't cache it past the campaign.
+      {
+        source: `/shop/${process.env.ISSUE9_PRODUCT_HANDLE || 'ralph-mag-9'}`,
+        destination: '/issue9',
+        permanent: false,
+      },
+    ]
   },
 }
 
